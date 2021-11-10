@@ -7,7 +7,7 @@
 # |___/\___|_| |_|___/\___/|_|  |___/
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 #  _____                    _       _
 # |_   _|__ _ __ ___  _ __ | | __ _| |_ ___    ___  ___ _ __  ___  ___  _ __ ___
@@ -74,7 +74,7 @@
 
     favorite_playlist_of_nearest_person:
       value_template: >
-        {% if is_state_attr("proximity.home", "nearest", "basnijholt-iphone") %}
+        {% if is_state_attr("proximity.home", "nearest", "tom-iphone") %}
         6rPTm9dYftKcFAfwyRqmDZ
         {% else %}
         6rPTm9dYftKcFAfwyRqmDZ
@@ -110,7 +110,7 @@
         {% set seven_oclock = as_timestamp(now().replace(hour=19).replace(minute=0).replace(second=0)) %}
 
         {% if t_today > hours_per_day_excluding_today
-              or (not is_state("person.bas", "Work") and t_today > 0)
+              or (not is_state("person.tom", "Work") and t_today > 0)
               or (as_timestamp(now()) > seven_oclock)
               or day == 0
               or now().weekday() > 4
@@ -227,12 +227,12 @@
     nearest_iphone_notify:
       friendly_name: Nearest iPhone's notify service
       value_template: >
-        {% if is_state("person.bas", "home") and is_state("person.marcella", "home") %}
+        {% if is_state("person.tom", "home") and is_state("person.tanja", "home") %}
           notify.all_iphones
-        {% elif is_state_attr("proximity.home", "nearest", "basnijholt-iphone") %}
-          notify.mobile_app_basnijholt_iphone
+        {% elif is_state_attr("proximity.home", "nearest", "tom-iphone") %}
+          notify.mobile_app_tom_iphone
         {% else %}
-          notify.mobile_app_marcella_iphone
+          notify.mobile_app_tanja_iphone
         {% endif %}
 
     half_hour_before_alarm:
@@ -251,10 +251,10 @@
         {% set before_alarm = t_alarm + t_start - 60 * 10 %}
         {{ before_alarm | timestamp_custom("%H:%M", True) }}
 
-    hours_outside_per_day_marcella: # XXX: fails when returns "0m"
+    hours_outside_per_day_tanja: # XXX: fails when returns "0m"
       friendly_name: Ten minutes before alarm
       value_template: >
-        {% set value = state_attr("sensor.quarantine_meter_marcella", "value") %}
+        {% set value = state_attr("sensor.quarantine_meter_tanja", "value") %}
         {% if value != None %}
         {% set d, h, m = value.split() %}
         {% set d, h, m = d[:-1] | int, h[:-1] | int, m[:-1] | int %}
@@ -262,10 +262,10 @@
         {{ (hours_outside / 14) | round(1) }}
         {% endif %}
 
-    hours_outside_per_day_bas: # XXX: fails when returns "0m"
+    hours_outside_per_day_tom: # XXX: fails when returns "0m"
       friendly_name: Ten minutes before alarm
       value_template: >
-        {% set value = state_attr("sensor.quarantine_meter_bas", "value") %}
+        {% set value = state_attr("sensor.quarantine_meter_tom", "value") %}
         {% if value != None %}
         {% set d, h, m = value.split() %}
         {% set d, h, m = d[:-1] | int, h[:-1] | int, m[:-1] | int %}
@@ -399,7 +399,7 @@
     - path: "basnijholt/lovelace-ios-light-mode-theme"
     - path: "basnijholt/lovelace-ios-themes"
     - path: "python-adaptive/adaptive"
-    - path: "basnijholt/home-assistant-config"
+    - path: "tmttn/home-assistant-config"
 
 - platform: dutch_public_transport_api
   name: Bus from Rotterdam to Delft
@@ -481,8 +481,8 @@
   end: "{{ now() }}"
 
 - platform: history_stats
-  name: Quarantine meter Bas
-  entity_id: person.bas
+  name: Quarantine meter Tom
+  entity_id: person.tom
   state: "home"
   type: ratio
   duration:
@@ -490,8 +490,8 @@
   end: "{{ now() }}"
 
 - platform: history_stats
-  name: Quarantine meter Marcella
-  entity_id: person.marcella
+  name: Quarantine meter Tanja
+  entity_id: person.tanja
   state: "home"
   type: ratio
   duration:
@@ -499,8 +499,8 @@
   end: "{{ now() }}"
 
 - platform: history_stats
-  name: Quarantine meter Bas times left
-  entity_id: person.bas
+  name: Quarantine meter Tom times left
+  entity_id: person.tom
   state: "home"
   type: count
   duration:
@@ -508,8 +508,8 @@
   end: "{{ now() }}"
 
 - platform: history_stats
-  name: Quarantine meter Marcella times left
-  entity_id: person.marcella
+  name: Quarantine meter Tanja times left
+  entity_id: person.tanja
   state: "home"
   type: count
   duration:
@@ -579,7 +579,7 @@
 
 - platform: history_stats
   name: Time at work this week
-  entity_id: person.bas
+  entity_id: person.tom
   state: Work
   type: time
   start: >
@@ -588,7 +588,7 @@
 
 - platform: history_stats
   name: Time at work today
-  entity_id: person.bas
+  entity_id: person.tom
   state: Work
   type: time
   start: >
@@ -598,7 +598,7 @@
 
 - platform: history_stats
   name: Time at work on Monday
-  entity_id: person.bas
+  entity_id: person.tom
   state: Work
   type: time
   duration:
@@ -610,7 +610,7 @@
 
 - platform: history_stats
   name: Time at work on Tuesday
-  entity_id: person.bas
+  entity_id: person.tom
   state: Work
   type: time
   duration:
@@ -622,7 +622,7 @@
 
 - platform: history_stats
   name: Time at work on Wednessday
-  entity_id: person.bas
+  entity_id: person.tom
   state: Work
   type: time
   duration:
@@ -634,7 +634,7 @@
 
 - platform: history_stats
   name: Time at work on Thursday
-  entity_id: person.bas
+  entity_id: person.tom
   state: Work
   type: time
   duration:
@@ -646,7 +646,7 @@
 
 - platform: history_stats
   name: Time at work on Friday
-  entity_id: person.bas
+  entity_id: person.tom
   state: Work
   type: time
   duration:
@@ -869,5 +869,20 @@
 - platform: command_line
   command: !secret portfolio_value
   name: portfolio_value
-  unit_of_measurement: '€'
+  unit_of_measurement: "€"
   scan_interval: 20
+
+- platform: afvalbeheer
+  wastecollector: Limburg.NET
+  resources:
+    - restafval
+    - gft
+    - papier
+    - pmd
+  postcode: 3740
+  streetname: Bunderstraat
+  cityname: Bilzen
+  streetnumber: 4
+  upcomingsensor: 1
+  builtinicons: 1
+  dutch: 1

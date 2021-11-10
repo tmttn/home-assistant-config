@@ -7,7 +7,7 @@
 #  \__,_|_|  |_|  |_| \_/ |_|_| |_|\__, |
 #                                  |___/
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 # XXX: sometimes triggers when leaving!
 - alias: "Arriving: switch music from iPhone to speakers if no one is home"
@@ -18,15 +18,15 @@
     to: "on"
   condition:
     - condition: state
-      entity_id: person.marcella
+      entity_id: person.tanja
       state: not_home
     - condition: state
       entity_id: input_boolean.guest_mode
       state: "off"
-    - "{{ is_state_attr('media_player.spotify', 'source', 'basnijholt-iphone') }}"
+    - "{{ is_state_attr('media_player.spotify', 'source', 'tom-iphone') }}"
     - "{{ is_state('media_player.spotify', 'playing') }}"
   action:
-    - service: notify.mobile_app_basnijholt_iphone
+    - service: notify.mobile_app_tom_iphone
       data:
         title: "Arriving"
         message: "Switched music from phone to speakers"

@@ -7,7 +7,7 @@
 # |_| |_|  \___/|_| |_|\__\___|_| |_|\__,_|
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - alias: "Frontend: turn on dark mode"
   trigger:
     - platform: time

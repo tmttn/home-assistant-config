@@ -7,7 +7,7 @@
 #  \__| .__/|_|_|_| |_|_|\_\
 #     |_|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 discovery: false
 switch:
   - host: !secret ip_hs110

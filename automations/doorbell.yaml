@@ -7,7 +7,7 @@
 #  \__,_|\___/ \___/|_|  |_.__/ \___|_|_|
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - alias: "Doorbell: click the button"
   initial_state: "on"
   trigger:

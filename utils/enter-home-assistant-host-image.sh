@@ -7,6 +7,6 @@
 #  |_____|_| |_|\__\___|_|    |_| |_|\___/|___/\__| |_|_| |_| |_|\__,_|\__, |\___|
 #                                                                      |___/
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 docker exec -it homeassistant /bin/bash

@@ -7,7 +7,7 @@
 # |_|_| |_| .__/ \__,_|\__|___|___/\___|_|\___|\___|\__|___/
 #         |_|            |_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 sleep_mode:
   options:
     - total # everyone is sleeping

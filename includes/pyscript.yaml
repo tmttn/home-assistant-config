@@ -7,5 +7,5 @@
 # | .__/ \__, |___/\___|_|  |_| .__/ \__|
 # |_|    |___/                |_|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 allow_all_imports: true

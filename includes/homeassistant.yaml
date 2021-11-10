@@ -7,7 +7,7 @@
 # |_| |_|\___/|_| |_| |_|\___|\__,_|___/___/_|___/\__\__,_|_| |_|\__|
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 latitude: !secret latitude_home
 longitude: !secret longitude_home
 # internal_url:

@@ -7,7 +7,7 @@
 # |_|_| |_| .__/ \__,_|\__|___|_.__/ \___/ \___/|_|\___|\__,_|_| |_|___/
 #         |_|            |_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 # Automations
 start_the_music:
   name: Start speakers and music

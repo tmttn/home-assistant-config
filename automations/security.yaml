@@ -7,7 +7,7 @@
 # |___/\___|\___|\__,_|_|  |_|\__|\__, |
 #                                 |___/
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - alias: "Security: motion detected but we are not home"
   trigger:
     platform: state
@@ -90,11 +90,11 @@
     entity_id: input_boolean.office_door_open_warning
     state: "on"
   action:
-    - service: notify.bas
+    - service: notify.tom
       data:
         title: Security
         message: Office door opened!
-    - service: notify.mobile_app_basnijholt_iphone
+    - service: notify.mobile_app_tom_iphone
       data:
         title: Security
         message: Office door opened!

@@ -7,7 +7,7 @@
 # |_| |_| |_|\__, |\__|\__|
 #               |_|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 broker: !secret ip_mqtt
 username: mqtt
 password: !secret mqtt_user_pw

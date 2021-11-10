@@ -7,7 +7,7 @@
 # |_|_| |_|_| |_|\__,_/_/\_\__,_|_.__/
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 host: a0d7b954-influxdb
 port: 8086
 database: homeassistant

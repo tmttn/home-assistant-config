@@ -7,7 +7,7 @@
 #  \__,_|\__|_|_|_|\__|\__, |___|_| |_| |_|\___|\__\___|_|
 #                      |___/_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 daily_power_offpeak:
   source: sensor.energy_consumption_tarif_1
   cycle: daily

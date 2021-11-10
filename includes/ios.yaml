@@ -7,7 +7,7 @@
 # |_|\___/|___/
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 push:
   categories:
     - name: Turn off everything

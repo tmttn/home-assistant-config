@@ -7,7 +7,7 @@
 #  \__,_| .__/| .__/|_|\___|___\_/\_/ \__,_|\__\___|_| |_|
 #       |_|   |_|         |_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - alias: "Apple Watch: Play or Pause the TV"
   trigger:
     platform: event
@@ -196,7 +196,7 @@
       actionName: Portfolio value
   action:
     - variables:
-        iphone: "notify.mobile_app_basnijholt_iphone"
+        iphone: "notify.mobile_app_tom_iphone"
     - service: "{{ iphone }}"
       data:
         title: Portfolio value
@@ -299,17 +299,17 @@
       actionName: Where is
   variables:
     phone: >
-      {% if trigger.event.data.sourceDeviceName == 'basnijholt-iphone' %}
-        basnijholt
+      {% if trigger.event.data.sourceDeviceName == 'tom-iphone' %}
+        tom
       {% else %}
-        marcella
+        tanja
       {% endif %}
-    other_person: "{% if phone == 'basnijholt' %}Marcella{% else %}Bas{% endif %}"
+    other_person: "{% if phone == 'tom' %}Tanja{% else %}Tom{% endif %}"
     device_tracker: "device_tracker.{{ other_person }}_iphone"
   action:
     service: "notify.mobile_app_{{ phone }}_iphone"
     data:
-      message: "{{ other_person }} is {{ distance('device_tracker.basnijholt_iphone', 'device_tracker.marcella_iphone') | round(2) }} km away"
+      message: "{{ other_person }} is {{ distance('device_tracker.tom_iphone', 'device_tracker.tanja_iphone') | round(2) }} km away"
       data:
         push:
           category: MAP

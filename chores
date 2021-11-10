@@ -6,7 +6,7 @@
 #  | |___| | | | (_) | | |  __/\__ \
 #   \____|_| |_|\___/|_|  \___||___/
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 python3 utils/commit-updates.py
 pip3 -q install pyfiglet

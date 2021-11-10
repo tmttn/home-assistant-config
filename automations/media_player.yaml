@@ -7,7 +7,7 @@
 # |_| |_| |_|\___|\__,_|_|\__,_|____| .__/|_|\__,_|\__, |\___|_|
 #                             |_____|_|            |___/
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 - alias: "Media player: turn on Opt when TV is on and Spotify is not playing and not Usb"
   description: |

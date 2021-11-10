@@ -6,7 +6,7 @@
 # |___/\___|_|  |_| .__/ \__|___/
 #                 |_|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 start_speakers:
   alias: Start speakers
   description: Start a Spotify playlist on KEF speakers
@@ -335,73 +335,73 @@ fix_sound:
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: MENU  # Open "Menu"
+        button: MENU # Open "Menu"
     - delay:
         milliseconds: 1000
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: UP  # Navigate to "All settings"
+        button: UP # Navigate to "All settings"
     - delay:
         milliseconds: 500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: ENTER  # enter into "All settings"
+        button: ENTER # enter into "All settings"
     - delay:
         milliseconds: 1500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: DOWN  # Navigate to "Sound"
+        button: DOWN # Navigate to "Sound"
     - delay:
         milliseconds: 1500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: RIGHT  # Move into "Sound" menu
+        button: RIGHT # Move into "Sound" menu
     - delay:
         milliseconds: 500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: ENTER  # Enter "Sound Out" menu
+        button: ENTER # Enter "Sound Out" menu
     - delay:
         milliseconds: 1500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: DOWN  # Move to "Optical"
+        button: DOWN # Move to "Optical"
     - delay:
         milliseconds: 500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: DOWN  # Move to "Optical - LG Sound Sync"
+        button: DOWN # Move to "Optical - LG Sound Sync"
     - delay:
         milliseconds: 500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: ENTER  # Disable "LG Sound Sync"
+        button: ENTER # Disable "LG Sound Sync"
     - delay:
         milliseconds: 500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: ENTER  # Enable "LG Sound Sync"
+        button: ENTER # Enable "LG Sound Sync"
     - delay:
         milliseconds: 500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: BACK  # Go up one menu in "All settings"
+        button: BACK # Go up one menu in "All settings"
     - delay:
         milliseconds: 500
     - service: webostv.button
       entity_id: media_player.tv
       data:
-        button: BACK  # Close the "All settings" window
+        button: BACK # Close the "All settings" window
 
 sync_kef_dsp:
   alias: Sync KEF DSP setting with input_number, input_select, or input_boolean

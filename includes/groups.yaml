@@ -7,56 +7,56 @@
 #  \__, |_|  \___/ \__,_| .__/|___/
 #  |___/                |_|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 persons:
   name: People
   entities:
-    - person.bas
-    - person.marcella
+    - person.tom
+    - person.tanja
 
-iphone_bas:
-  - sensor.basnijholt_iphone_activity
-  - sensor.basnijholt_iphone_average_active_pace
-  - sensor.basnijholt_iphone_bssid
-  - sensor.basnijholt_iphone_battery_level
-  - sensor.basnijholt_iphone_battery_state
-  - sensor.basnijholt_iphone_connection_type
-  - sensor.basnijholt_iphone_distance
-  - sensor.basnijholt_iphone_floors_ascended
-  - sensor.basnijholt_iphone_floors_descended
-  - sensor.basnijholt_iphone_geocoded_location
-  - sensor.basnijholt_iphone_last_update_trigger
-  - sensor.basnijholt_iphone_sim_1
-  - sensor.basnijholt_iphone_ssid
-  - sensor.basnijholt_iphone_steps
-  - device_tracker.basnijholt_iphone
-  - device_tracker.basnijholt_iphone_router
+iphone_tom:
+  - sensor.tom_iphone_activity
+  - sensor.tom_iphone_average_active_pace
+  - sensor.tom_iphone_bssid
+  - sensor.tom_iphone_battery_level
+  - sensor.tom_iphone_battery_state
+  - sensor.tom_iphone_connection_type
+  - sensor.tom_iphone_distance
+  - sensor.tom_iphone_floors_ascended
+  - sensor.tom_iphone_floors_descended
+  - sensor.tom_iphone_geocoded_location
+  - sensor.tom_iphone_last_update_trigger
+  - sensor.tom_iphone_sim_1
+  - sensor.tom_iphone_ssid
+  - sensor.tom_iphone_steps
+  - device_tracker.tom_iphone
+  - device_tracker.tom_iphone_router
 
-iphone_marcella:
-  - sensor.marcella_iphone_activity
-  - sensor.marcella_iphone_average_active
-  - sensor.marcella_iphone_bssid
-  - sensor.marcella_iphone_battery_level
-  - sensor.marcella_iphone_battery_state
-  - sensor.marcella_iphone_connection_type
-  - sensor.marcella_iphone_distance
-  - sensor.marcella_iphone_floors_ascended
-  - sensor.marcella_iphone_floors_descended
-  - sensor.marcella_iphone_geocoded_location
-  - sensor.marcella_iphone_last_update_trigger
-  - sensor.marcella_iphone_sim_1
-  - sensor.marcella_iphone_sim_2
-  - sensor.marcella_iphone_ssid
-  - sensor.marcella_iphone_steps
-  - device_tracker.marcella_iphone
+iphone_tanja:
+  - sensor.tanja_iphone_activity
+  - sensor.tanja_iphone_average_active
+  - sensor.tanja_iphone_bssid
+  - sensor.tanja_iphone_battery_level
+  - sensor.tanja_iphone_battery_state
+  - sensor.tanja_iphone_connection_type
+  - sensor.tanja_iphone_distance
+  - sensor.tanja_iphone_floors_ascended
+  - sensor.tanja_iphone_floors_descended
+  - sensor.tanja_iphone_geocoded_location
+  - sensor.tanja_iphone_last_update_trigger
+  - sensor.tanja_iphone_sim_1
+  - sensor.tanja_iphone_sim_2
+  - sensor.tanja_iphone_ssid
+  - sensor.tanja_iphone_steps
+  - device_tracker.tanja_iphone
 
-ha_menu_lsx_control:
-  name: HA Menu - LSX volume
-  entities:
-    - input_select.lsx_volume
-    - input_select.lsx_source
+# ha_menu_lsx_control:
+#   name: HA Menu - LSX volume
+#   entities:
+#     - input_select.lsx_volume
+#     - input_select.lsx_source
 
-ha_menu_lsx_power:
-  name: HA Menu - LSX power
-  entities:
-    - switch.kef_lsx
+# ha_menu_lsx_power:
+#   name: HA Menu - LSX power
+#   entities:
+#     - switch.kef_lsx

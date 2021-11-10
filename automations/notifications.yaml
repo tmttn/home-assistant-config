@@ -7,15 +7,15 @@
 # |_| |_|\___/ \__|_|_| |_|\___\__,_|\__|_|\___/|_| |_|___/
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
-- alias: "Notifications: Marcella arrived at Rotterdam Centraal"
+- alias: "Notifications: tanja arrived at Rotterdam Centraal"
   trigger:
     platform: state
-    entity_id: device_tracker.marcella_iphone
+    entity_id: device_tracker.tanja_iphone
     to: rotterdam_centraal
   action:
-    service: notify.mobile_app_basnijholt_iphone
+    service: notify.mobile_app_tom_iphone
     data:
       title: "Arriving"
-      message: "Marcella arrived at Rotterdam Centraal"
+      message: "tanja arrived at Rotterdam Centraal"

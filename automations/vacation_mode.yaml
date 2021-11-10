@@ -7,7 +7,7 @@
 #   \_/ \__,_|\___\__,_|\__|_|\___/|_| |_|___|_| |_| |_|\___/ \__,_|\___|
 #                                       |_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - alias: "Vacation mode: auto turn on"
   initial_state: "on"
   trigger:

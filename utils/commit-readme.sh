@@ -5,5 +5,5 @@
 #  | (_| (_) | | | | | | | | | | | | ||_____| | |  __/ (_| | (_| | | | | | |  __/
 #   \___\___/|_| |_| |_|_| |_| |_|_|\__|    |_|  \___|\__,_|\__,_|_| |_| |_|\___|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 git commit -m "update automatically generated part of README.md ✏️" README.md

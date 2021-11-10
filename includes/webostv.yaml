@@ -7,7 +7,7 @@
 #   \_/\_/ \___|_.__/ \___/|___/\__| \_/
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 host: !secret ip_tv
 name: tv
 turn_on_action:

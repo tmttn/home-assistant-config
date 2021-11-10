@@ -7,7 +7,7 @@
 # |_|_|\__, |_| |_|\__|
 #      |___/
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 #  __  __                         _   _ _       _     _
 # |  \/  | __ _ _ __  _   _  __ _| | | (_) __ _| |__ | |_ ___
@@ -113,7 +113,6 @@
 #   | |/ _ \| | |/ _ \ __|
 #   | | (_) | | |  __/ |_
 #   |_|\___/|_|_|\___|\__|
-
 - alias: "Light: toggle toilet"
   trigger:
     platform: state
@@ -246,11 +245,11 @@
     - platform: event
       event_type: deconz_event
       event_data:
-        id: smart_switch_bedroom_bas
+        id: smart_switch_bedroom_tom
     - platform: event
       event_type: deconz_event
       event_data:
-        id: smart_switch_bedroom_marcella
+        id: smart_switch_bedroom_tanja
   condition:
     condition: state
     entity_id: input_boolean.bedroom_lights_automatically_turned_on

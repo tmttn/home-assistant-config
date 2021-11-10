@@ -7,7 +7,7 @@
 #   \_/ \__,_|\___|\__,_|\__,_|_| |_| |_|
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - platform: xiaomi_miio
   host: !secret ip_vacuum
   token: !secret vacuum_token
