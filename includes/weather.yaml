@@ -7,7 +7,7 @@
 #   \_/\_/ \___|\__,_|\__|_| |_|\___|_|
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - platform: buienradar
   latitude: !secret latitude_home
   longitude: !secret longitude_home

@@ -7,24 +7,24 @@
 # |_| |_|\___/ \__|_|_|  \__, |
 #                        |___/
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - platform: group
   name: all_iphones
   services:
-    - service: mobile_app_basnijholt_iphone
-    - service: mobile_app_marcella_iphone
+    - service: mobile_app_tom_iphone
+    - service: mobile_app_tanja_iphone
 
 - platform: group
   name: bas
   services:
-    - service: mobile_app_basnijholt_iphone
+    - service: mobile_app_tom_iphone
     - service: chrome
 
 - platform: group
   name: all
   services:
-    - service: mobile_app_basnijholt_iphone
-    - service: mobile_app_marcella_iphone
+    - service: mobile_app_tom_iphone
+    - service: mobile_app_tanja_iphone
     - service: tv
     - service: chrome
 

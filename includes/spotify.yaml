@@ -7,6 +7,6 @@
 # |___/ .__/ \___/ \__|_|_|  \__, |
 #     |_|                    |___/
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 client_id: !secret spotify_client_id
 client_secret: !secret spotify_client_secret

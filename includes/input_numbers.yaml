@@ -7,7 +7,7 @@
 # |_|_| |_| .__/ \__,_|\__|___|_| |_|\__,_|_| |_| |_|_.__/ \___|_|  |___/
 #         |_|            |_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 temperature_low:
   name: Temperature low

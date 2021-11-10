@@ -7,7 +7,7 @@
 # |___/_| |_|\___|_|_|___\___\___/|_| |_| |_|_| |_| |_|\__,_|_| |_|\__,_|___/
 #                   |_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 convert_lovelace: "python /config/utils/json2yaml.py /config/.storage/lovelace /config/lovelace-ui.yaml"
 update_dns: '/bin/bash /config/utils/update_dns.sh "{{ api }}" "{{ domain }}" "{{ subdomain }}"'
 chores: "/bin/bash /config/chores"

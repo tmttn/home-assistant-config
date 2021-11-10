@@ -7,7 +7,7 @@
 # |___/_|\___|\___| .__/___|_| |_| |_|\___/ \__,_|\___|
 #                 |_| |_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 - alias: "Night mode: automatically turn off when alarm turns off or at 7AM"
   trigger:
@@ -62,7 +62,7 @@
       entity_id: input_select.sleep_mode
       data:
         option: "total"
-    - service: notify.mobile_app_basnijholt_iphone
+    - service: notify.mobile_app_tom_iphone
       data:
         title: "Night mode"
         message: "Automatically switched from 'half' to 'total' sleeping mode! 💤🛌"

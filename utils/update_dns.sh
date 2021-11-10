@@ -6,7 +6,7 @@
 #  | |_| | |_) | (_| | (_| | ||  __/ | |_| | |\  |___) |
 #   \___/| .__/ \__,_|\__,_|\__\___| |____/|_| \_|____/
 #        |_|
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 # This script gets the external IP of your systems then connects to the Gandi
 # LiveDNS API and updates your dns record with the IP.

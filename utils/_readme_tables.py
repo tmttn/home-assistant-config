@@ -7,7 +7,7 @@
 #   ____|_|  \___|\__,_|\__,_|_| |_| |_|\___|  \__\__,_|_.__/|_|\___||___/
 #  |_____|
 #
-# - from github.com/basnijholt/home-assistant-config
+# - from github.com/tmttn/home-assistant-config
 
 # This script generates the HTML table in my README.md.
 # It is used in `update-readme.py`.

@@ -34,4 +34,4 @@
 * When sleep mode turns on, the temperature will be set to low
 * We will get a notification on our phones when either the dishwasher or washing machine is done
 
-Questions or suggestions? Ask Bas ❤️
+Questions or suggestions? Ask Tom ❤️

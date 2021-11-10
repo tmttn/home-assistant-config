@@ -7,7 +7,7 @@
 # |_|_| |_| .__/ \__,_|\__|___\__,_|\__,_|\__\___|\__|_|_| |_| |_|\___||___/
 #         |_|            |_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 alarm_clock:
   name: Alarm clock
   has_date: false

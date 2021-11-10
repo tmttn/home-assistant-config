@@ -6,7 +6,7 @@
 #   / ___ \ ___) | |___ | | | |  | (_| | |  | |_
 #  /_/   \_\____/ \____|___|___|  \__,_|_|   \__|
 #
-# - from github.com/basnijholt/home-assistant-config
+# - from github.com/tmttn/home-assistant-config
 
 # Use manually on http://patorjk.com/software/taag/#p=display&f=Standard&t=input_boolean
 
@@ -15,7 +15,7 @@ from pathlib import Path
 import pyfiglet
 
 start = "#-\n"
-end = "#- from github.com/basnijholt/home-assistant-config\n"
+end = "#- from github.com/tmttn/home-assistant-config\n"
 
 
 def remove_text(content):

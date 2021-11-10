@@ -7,7 +7,7 @@
 #  \__,_|\__|_|_|_|\__|_|\___||___/
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 
 - alias: "Utilities: washing machine or dishwasher started or finished"
   trigger:

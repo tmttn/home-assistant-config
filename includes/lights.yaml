@@ -7,42 +7,44 @@
 # |_|_|\__, |_| |_|\__|___/
 #      |___/
 #
-#- from github.com/basnijholt/home-assistant-config
-- platform: group
-  name: Living room lights
-  entities:
-    - light.sphere_1
-    - light.sphere_2
-    - light.corner_living_room
-    - light.ceiling_living_room
-    - light.tv_led
+#- from github.com/tmttn/home-assistant-config
 
-- platform: group
-  name: Bedroom lights
-  entities:
-    - light.philips_go
-    - light.bamboo
-    - light.ceiling_bedroom
-    - light.lampan
-    - light.bed_led
-    - light.bed_reading_up
-    - light.bed_reading_down
+# - platform: group
+#   name: Living room lights
+#   entities:
+#     - light.sphere_1
+#     - light.sphere_2
+#     - light.corner_living_room
+#     - light.ceiling_living_room
+#     - light.tv_led
 
-- platform: group
-  name: Automatic lights
-  entities:
-    - light.ceiling_kitchen
-    - light.kitchen_counter
-    - light.toilet
-    - light.ceiling_bathroom
-    - light.hall_lights
-    - light.stairs_lights
+# - platform: group
+#   name: Bedroom lights
+#   entities:
+#     - light.philips_go
+#     - light.bamboo
+#     - light.ceiling_bedroom
+#     - light.lampan
+#     - light.bed_led
+#     - light.bed_reading_up
+#     - light.bed_reading_down
+
+# - platform: group
+#   name: Automatic lights
+#   entities:
+#     - light.ceiling_kitchen
+#     - light.kitchen_counter
+#     - light.toilet
+#     - light.ceiling_bathroom
+#     - light.hall_lights
+#     - light.stairs_lights
 
 - platform: group
   name: Kitchen lights
   entities:
-    - light.ceiling_kitchen
-    - light.kitchen_counter
+    - light.keuken_1
+    - light.keuken_2
+    - light.keuken_3
 
 - platform: switch
   name: Kitchen counter

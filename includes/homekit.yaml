@@ -7,7 +7,7 @@
 # |_| |_|\___/|_| |_| |_|\___|_|\_\_|\__|
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 filter:
   exclude_domains:
     - automation

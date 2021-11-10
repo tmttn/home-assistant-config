@@ -7,18 +7,18 @@
 # | .__/ \___|_|  |___/\___/|_| |_|___/
 # |_|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - name: Bas
   id: bas
   user_id: 13984b139dd9426ca31369725c9e23e0
-  picture: !secret profile_photo_bas
+  picture: !secret profile_photo_tom
   device_trackers:
-    - device_tracker.basnijholt_iphone # from iOS app
+    - device_tracker.tom_iphone # from iOS app
     - device_tracker.bas_iphone_ping
-- name: Marcella
-  id: marcella
+- name: tanja
+  id: tanja
   user_id: 0d8b36da29974dec9a30f767931bde2c
-  picture: !secret profile_photo_marcella
+  picture: !secret profile_photo_tanja
   device_trackers:
-    - device_tracker.marcella_iphone # from iOS app
-    - device_tracker.marcella_iphone_ping
+    - device_tracker.tanja_iphone # from iOS app
+    - device_tracker.tanja_iphone_ping

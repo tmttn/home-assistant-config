@@ -7,7 +7,7 @@
 # /___\___/|_| |_|\___||___/
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - name: Home
   latitude: !secret latitude_home
   longitude: !secret longitude_home

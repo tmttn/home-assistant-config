@@ -7,7 +7,7 @@
 #   \_/\_/ \___/|_|  |_|\_\
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - alias: "Work: go home notification"
   trigger:
     platform: state
@@ -22,7 +22,7 @@
       entity_id: input_boolean.work_hour_notification_sent
       state: "off"
   action:
-    - service: notify.mobile_app_basnijholt_iphone
+    - service: notify.mobile_app_tom_iphone
       data:
         title: "Work"
         message: "You have worked 8 hours today, very good! Go home 🎉"
@@ -41,18 +41,18 @@
     service: input_boolean.turn_off
     entity_id: input_boolean.work_hour_notification_sent
 
-- alias: "Work: Bas left work notification for Marcella"
+- alias: "Work: Tom left work notification for Tanja"
   trigger:
     platform: state
-    entity_id: person.bas
+    entity_id: person.tom
     from: "Work"
   condition:
     condition: time
     after: "15:00:00"
     before: "22:00:00"
   action:
-    # service: notify.mobile_app_marcella_iphone
+    # service: notify.mobile_app_tanja_iphone
     service: notify.all_iphones
     data:
       title: "Work"
-      message: "Bas has left work! ♥️🎉"
+      message: "Tom has left work! ♥️🎉"

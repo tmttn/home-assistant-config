@@ -7,7 +7,7 @@
 #  \__,_|_|\__,_|_|  |_| |_| |_|___\___|_|\___/ \___|_|\_\
 #                             |_____|
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - alias: "Alarm clock: wake up with Spotify and light"
   trigger:
     platform: template
