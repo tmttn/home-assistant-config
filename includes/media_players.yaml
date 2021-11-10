@@ -9,10 +9,10 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
-- platform: kef_custom
-  type: LS50
-  name: KEF LS50
-  host: !secret ip_kef_ls50
-  maximum_volume: 0.6
-  volume_step: 0.05
-  standby_time: 60
+# - platform: kef_custom
+#   type: LS50
+#   name: KEF LS50
+#   host: !secret ip_kef_ls50
+#   maximum_volume: 0.6
+#   volume_step: 0.05
+#   standby_time: 60
