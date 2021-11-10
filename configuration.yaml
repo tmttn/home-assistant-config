@@ -1,0 +1,88 @@
+---
+#-
+#                   __ _                       _   _
+#   ___ ___  _ __  / _(_) __ _ _   _ _ __ __ _| |_(_) ___  _ __
+#  / __/ _ \| '_ \| |_| |/ _` | | | | '__/ _` | __| |/ _ \| '_ \
+# | (_| (_) | | | |  _| | (_| | |_| | | | (_| | |_| | (_) | | | |
+#  \___\___/|_| |_|_| |_|\__, |\__,_|_|  \__,_|\__|_|\___/|_| |_|
+#                        |___/
+#
+#- from github.com/tmttn/home-assistant-config
+
+# Configure a default setup of Home Assistant (frontend, api, etc)
+
+evohome:
+  username: !secret evohome_username
+  password: !secret evohome_password
+
+miele:
+  client_id: !secret miele_clientid
+  client_secret: !secret miele_clientsecret
+  lang: en
+
+# Example configuration.yaml entry
+withings:
+  client_id: !secret withings_clientid
+  client_secret: !secret withings_clientsecret
+
+# Core Configuration
+homeassistant: !include includes/homeassistant.yaml
+default_config:
+frontend:
+  themes: !include_dir_merge_named themes
+http: !include includes/http.yaml
+
+# Inputs
+input_boolean: !include includes/input_booleans.yaml
+input_datetime: !include includes/input_datetimes.yaml
+input_select: !include includes/input_selects.yaml
+input_number: !include includes/input_numbers.yaml
+
+# Logging and history
+logger: !include includes/logger.yaml
+recorder: !include includes/recorder.yaml
+device_tracker: !include includes/device_trackers.yaml
+
+# Managed via UI
+scene: !include scenes.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+
+# Others
+person: !include includes/persons.yaml
+zone: !include includes/zones.yaml
+group: !include includes/groups.yaml
+automation old: !include_dir_merge_list automations
+switch: !include includes/switches.yaml
+sensor: !include includes/sensors.yaml
+binary_sensor: !include includes/binary_sensors.yaml
+weather: !include includes/weather.yaml
+shell_command: !include includes/shell_commands.yaml
+notify: !include includes/notify.yaml
+light: !include includes/lights.yaml
+wake_on_lan:
+proximity: !include includes/proximity.yaml
+timer: !include includes/timers.yaml
+ios: !include includes/ios.yaml
+tplink: !include includes/tplink.yaml # causing https://github.com/home-assistant/core/issues/40743
+webostv: !include includes/webostv.yaml
+vacuum: !include includes/vacuum.yaml
+media_player: !include includes/media_players.yaml
+homekit: !include includes/homekit.yaml
+discovery: !include includes/discovery.yaml
+mqtt: !include includes/mqtt.yaml
+utility_meter: !include includes/utility_meter.yaml
+plant: !include includes/plant.yaml
+spotify: !include includes/spotify.yaml
+climate: !include includes/climate.yaml
+influxdb: !include includes/influxdb.yaml
+camera: !include includes/camera.yaml
+intent:
+intent_script: !include includes/intent_script.yaml
+# image_processing: !include includes/image_processing.yaml
+proxmoxve: !include includes/proxmoxve.yaml
+panel_iframe: !include includes/panel_iframe.yaml
+
+# Custom components
+pyscript: !include includes/pyscript.yaml
+adaptive_lighting: !include includes/adaptive_lighting.yaml
