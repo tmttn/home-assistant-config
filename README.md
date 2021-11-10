@@ -1,4 +1,5 @@
 # Thomas Metten's Home Assistant config files
+(Originally Bas Nijholt's config files, leaving quite some information in the readme for future reference)
 
 [![GitHub stars](https://img.shields.io/github/stars/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
@@ -9,7 +10,7 @@
 ![Lovelace UI](http://files.nijho.lt/ha-ui.gif)
 <img src="https://github.com/tmttn/home-assistant-macbook-touch-bar/raw/master/example-real-life.jpg?s=400" width="700" alt="MacBook touchbar">
 
-Using my [iOS Light and Dark Mode Themes](https://github.com/tmttn/lovelace-ios-themes).
+Using my [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-ios-themes).
 
 See also [my guide for my girlfriend ❤️](guide.md).
 
@@ -39,7 +40,7 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
 - [Sync volume TV ⇄ speakers 🔊](#media-player-)
 - [Security notifications when the front door 🚪 has been open for too long or motion is detected when no one is home](#security-)
 
-## My cool AppDaemon apps
+## Cool AppDaemon apps
 
 - [Sunrise emulator app](appdaemon/apps/wake_up_light.py) 🌅
 - [Wake up with Spotify app](appdaemon/apps/wake_up_with_spotify.py) that slowly ramps the volume 📢
