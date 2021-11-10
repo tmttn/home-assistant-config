@@ -10,4 +10,6 @@
 #- from github.com/tmttn/home-assistant-config
 discovery: false
 switch:
-  - host: !secret ip_hs110
+  - host: !secret ip_hs110_1
+  - host: !secret ip_hs110_2
+  - host: !secret ip_hs110_3
