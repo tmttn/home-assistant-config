@@ -13,5 +13,5 @@
 
 - platform: ping
   hosts: # Router -> Advanced -> Setup -> LAN Setup
-    bas_iphone_ping: 192.168.1.34
+    tom_iphone_ping: 192.168.1.34
     tanja_iphone_ping: 192.168.1.18
