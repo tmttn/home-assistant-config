@@ -16,9 +16,9 @@
     - device_tracker.tom_iphone # from iOS app
     - device_tracker.tom_iphone_ping
 - name: Tanja
- id: tanja
- user_id:  ee8e7976decf431bab31484bf0af4403
-# picture: !secret profile_photo_tanja
- device_trackers:
-   - device_tracker.tanja_iphone # from iOS app
-   - device_tracker.tanja_iphone_ping
+  id: tanja
+  user_id:  ee8e7976decf431bab31484bf0af4403
+  # picture: !secret profile_photo_tanja
+  device_trackers:
+    - device_tracker.tanja_iphone # from iOS app
+    - device_tracker.tanja_iphone_ping
