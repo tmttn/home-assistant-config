@@ -41,12 +41,12 @@ input_number: !include includes/input_numbers.yaml
 # Logging and history
 logger: !include includes/logger.yaml
 # recorder: !include includes/recorder.yaml
-# device_tracker: !include includes/device_trackers.yaml
+device_tracker: !include includes/device_trackers.yaml
 
 # Managed via UI
-# scene: !include scenes.yaml
-# automation: !include automations.yaml
-# script: !include scripts.yaml
+scene: !include scenes.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
 
 # Others
 person: !include includes/persons.yaml
