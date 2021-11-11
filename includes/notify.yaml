@@ -15,7 +15,7 @@
     - service: mobile_app_tanja_iphone
 
 - platform: group
-  name: bas
+  name: tom
   services:
     - service: mobile_app_tom_iphone
     - service: chrome
