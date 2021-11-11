@@ -12,10 +12,10 @@ latitude: !secret latitude_home
 longitude: !secret longitude_home
 # internal_url:
 # external_url:  # XXX: take from .storage config
-elevation: 0
+elevation: 60
 unit_system: metric
 legacy_templates: false
-time_zone: Europe/Amsterdam
+time_zone: Europe/Brussels
 name: Home
 whitelist_external_dirs:
   - /config/
@@ -32,13 +32,13 @@ customize:
     icon: mdi:bed-king
   light.toilet:
     icon: mdi:emoticon-poop
-  plant.ficus_microcarpa_ginseng:
-    friendly_name: Ficus microcarpa Ginseng
-  plant.kentia_palm:
-    friendly_name: Kentia Palm
-  plant.royal_haze:
-    friendly_name: Royal Haze
-  plant.northern_light:
-    friendly_name: Northern Light
-  plant.yucca_elephantipes:
-    friendly_name: Yucca Elephantipes
+  # plant.ficus_microcarpa_ginseng:
+  #   friendly_name: Ficus microcarpa Ginseng
+  # plant.kentia_palm:
+  #   friendly_name: Kentia Palm
+  # plant.royal_haze:
+  #   friendly_name: Royal Haze
+  # plant.northern_light:
+  #   friendly_name: Northern Light
+  # plant.yucca_elephantipes:
+  #   friendly_name: Yucca Elephantipes
