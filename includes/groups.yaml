@@ -32,23 +32,23 @@ iphone_tom:
   - device_tracker.tom_iphone
   - device_tracker.tom_iphone_router
 
-iphone_tanja:
-  - sensor.tanja_iphone_activity
-  - sensor.tanja_iphone_average_active
-  - sensor.tanja_iphone_bssid
-  - sensor.tanja_iphone_battery_level
-  - sensor.tanja_iphone_battery_state
-  - sensor.tanja_iphone_connection_type
-  - sensor.tanja_iphone_distance
-  - sensor.tanja_iphone_floors_ascended
-  - sensor.tanja_iphone_floors_descended
-  - sensor.tanja_iphone_geocoded_location
-  - sensor.tanja_iphone_last_update_trigger
-  - sensor.tanja_iphone_sim_1
-  - sensor.tanja_iphone_sim_2
-  - sensor.tanja_iphone_ssid
-  - sensor.tanja_iphone_steps
-  - device_tracker.tanja_iphone
+# iphone_tanja:
+#   - sensor.tanja_iphone_activity
+#   - sensor.tanja_iphone_average_active
+#   - sensor.tanja_iphone_bssid
+#   - sensor.tanja_iphone_battery_level
+#   - sensor.tanja_iphone_battery_state
+#   - sensor.tanja_iphone_connection_type
+#   - sensor.tanja_iphone_distance
+#   - sensor.tanja_iphone_floors_ascended
+#   - sensor.tanja_iphone_floors_descended
+#   - sensor.tanja_iphone_geocoded_location
+#   - sensor.tanja_iphone_last_update_trigger
+#   - sensor.tanja_iphone_sim_1
+#   - sensor.tanja_iphone_sim_2
+#   - sensor.tanja_iphone_ssid
+#   - sensor.tanja_iphone_steps
+#   - device_tracker.tanja_iphone
 
 # ha_menu_lsx_control:
 #   name: HA Menu - LSX volume
