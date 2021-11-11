@@ -8,9 +8,9 @@
 # |_|
 #
 #- from github.com/tmttn/home-assistant-config
-- name: Bas
-  id: bas
-  user_id: 13984b139dd9426ca31369725c9e23e0
+- name: Tom
+  id: tom
+  user_id: 2f3e92eecb694e6bbd64ac6eec8b81e3
   picture: !secret profile_photo_tom
   device_trackers:
     - device_tracker.tom_iphone # from iOS app
