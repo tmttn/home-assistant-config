@@ -21,10 +21,10 @@ vacation_mode:
   icon: mdi:airplane
 guest_mode:
   name: Guest mode
-  icon: mdi:human-male-female
-office_door_open_warning:
-  name: Office door is open warning
-  icon: mdi:door-open
+#   icon: mdi:human-male-female
+# office_door_open_warning:
+#   name: Office door is open warning
+#   icon: mdi:door-open
 bedroom_lights_automatically_turned_on:
   name: Will automatically turn off
   icon: mdi:ceiling-light
@@ -46,18 +46,18 @@ work_hour_notification_sent:
 alarm_clock:
   name: Alarm clock is on
   icon: mdi:alarm
-kef_ls50_desk_mode:
-  name: Desk mode
-  icon: mdi:equalizer
-kef_ls50_wall_mode:
-  name: Wall mode
-  icon: mdi:equalizer
-kef_ls50_phase_correction:
-  name: Phase correction
-  icon: mdi:equalizer
-kef_ls50_high_pass:
-  name: High pass
-  icon: mdi:equalizer
+# kef_ls50_desk_mode:
+#   name: Desk mode
+#   icon: mdi:equalizer
+# kef_ls50_wall_mode:
+#   name: Wall mode
+#   icon: mdi:equalizer
+# kef_ls50_phase_correction:
+#   name: Phase correction
+#   icon: mdi:equalizer
+# kef_ls50_high_pass:
+#   name: High pass
+#   icon: mdi:equalizer
 
 # Apps
 wake_up_light:
@@ -68,22 +68,22 @@ demo_wake_up_light:
   name: Demo - Start wake up light
   initial: "off"
   icon: mdi:weather-sunset-up
-start_kef_ls50:
-  name: Start KEF LS50
-  initial: "off"
-  icon: mdi:music
-start_kef_lsx:
-  name: Start KEF LSX
-  initial: "off"
-  icon: mdi:music
-start_spotify_on_kef_ls50:
-  name: Play Spotify on KEF LS50
-  initial: "off"
-  icon: mdi:music
-start_spotify_on_kef_lsx:
-  name: Play Spotify on KEF LSX
-  initial: "off"
-  icon: mdi:music
+# start_kef_ls50:
+#   name: Start KEF LS50
+#   initial: "off"
+#   icon: mdi:music
+# start_kef_lsx:
+#   name: Start KEF LSX
+#   initial: "off"
+#   icon: mdi:music
+# start_spotify_on_kef_ls50:
+#   name: Play Spotify on KEF LS50
+#   initial: "off"
+#   icon: mdi:music
+# start_spotify_on_kef_lsx:
+#   name: Play Spotify on KEF LSX
+#   initial: "off"
+#   icon: mdi:music
 wake_up_with_spotify:
   name: Start wake up with Spotify
   initial: "off"

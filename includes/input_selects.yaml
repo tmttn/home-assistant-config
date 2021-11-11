@@ -15,12 +15,12 @@ sleep_mode:
     - "off" # everyone is awake
   icon: mdi:bed-king
 
-cube_mode:
-  options:
-    - Volume
-    - Brightness
-    - Hue
-  icon: mdi:cube-outline
+# cube_mode:
+#   options:
+#     - Volume
+#     - Brightness
+#     - Hue
+#   icon: mdi:cube-outline
 
 last_script_living_room:
   options:
@@ -34,14 +34,14 @@ last_script_bedroom:
     - script.white_lights_bedroom
   icon: mdi:lightbulb-on
 
-bathroom_color:
-  options:
-    - red
-    - blue
-    - purple
-    - pink
-    - white
-  icon: mdi:lightbulb-on
+# bathroom_color:
+#   options:
+#     - red
+#     - blue
+#     - purple
+#     - pink
+#     - white
+#   icon: mdi:lightbulb-on
 
 theme:
   options:
@@ -55,49 +55,49 @@ theme:
   icon: mdi:format-color-fill
 
 # Bedroom speakers control (used with https://github.com/andrew-codechimp/ha-menu/)
-lsx_volume:
-  name: LSX volume
-  options:
-    - 00
-    - 05
-    - 10
-    - 15
-    - 20
-    - 25
-    - 30
-    - 35
-    - 40
-    - 45
-    - 50
-    - 55
-    - 60
-    - 65
-    - 70
-    - 75
-    - 80
-    - 85
-    - 90
-    - 95
+# lsx_volume:
+#   name: LSX volume
+#   options:
+#     - 00
+#     - 05
+#     - 10
+#     - 15
+#     - 20
+#     - 25
+#     - 30
+#     - 35
+#     - 40
+#     - 45
+#     - 50
+#     - 55
+#     - 60
+#     - 65
+#     - 70
+#     - 75
+#     - 80
+#     - 85
+#     - 90
+#     - 95
 
-lsx_source:
-  name: LSX source
-  options:
-    - Opt
-    - Wifi
-    - Bluetooth
-    - Aux
+# lsx_source:
+#   name: LSX source
+#   options:
+#     - Opt
+#     - Wifi
+#     - Bluetooth
+#     - Aux
 
-kef_ls50_sub_polarity:
-  name: Sub polarity
-  icon: mdi:equalizer
-  options:
-    - "+"
-    - "-"
+# kef_ls50_sub_polarity:
+#   name: Sub polarity
+#   icon: mdi:equalizer
+#   options:
+#     - "+"
+#     - "-"
 
-kef_ls50_bass_extension:
-  name: Bass extension
-  icon: mdi:equalizer
-  options:
-    - Standard
-    - Less
-    - Extra
+# kef_ls50_bass_extension:
+#   name: Bass extension
+#   icon: mdi:equalizer
+#   options:
+#     - Standard
+#     - Less
+#     - Extra
