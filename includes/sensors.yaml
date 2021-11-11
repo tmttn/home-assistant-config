@@ -389,7 +389,7 @@
 #         ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) "value"
 #         FROM information_schema.tables WHERE table_schema="homeassistant"
 #         GROUP BY table_schema;
-#      column: value
+#       column: value
 #       unit_of_measurement: MB
 
 - platform: github
@@ -866,11 +866,11 @@
   device_class: temperature
   state_class: measurement
 
-- platform: command_line
-  command: !secret portfolio_value
-  name: portfolio_value
-  unit_of_measurement: "€"
-  scan_interval: 20
+# - platform: command_line
+#   command: !secret portfolio_value
+#   name: portfolio_value
+#   unit_of_measurement: "€"
+#   scan_interval: 20
 
 - platform: afvalbeheer
   wastecollector: Limburg.NET
