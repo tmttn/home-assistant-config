@@ -8,15 +8,15 @@
 #
 #
 #- from github.com/tmttn/home-assistant-config
-- platform: mqtt
-  name: Thermostat
-  current_temperature_topic: events/central_heating/otmonitor/roomtemperature
-  temperature_command_topic: actions/otmonitor/setpoint
-  temperature_state_topic: events/central_heating/otmonitor/setpoint
-  min_temp: 5
-  max_temp: 35
-  initial: 17
-  modes:
-    - heat
-  temp_step: 0.5
-  precision: 0.5
+# - platform: mqtt
+#   name: Thermostat
+#   current_temperature_topic: events/central_heating/otmonitor/roomtemperature
+#   temperature_command_topic: actions/otmonitor/setpoint
+#   temperature_state_topic: events/central_heating/otmonitor/setpoint
+#   min_temp: 5
+#   max_temp: 35
+#   initial: 17
+#   modes:
+#     - heat
+#   temp_step: 0.5
+#   precision: 0.5
