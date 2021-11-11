@@ -9,35 +9,18 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
-# - platform: group
-#   name: Living room lights
-#   entities:
-#     - light.sphere_1
-#     - light.sphere_2
-#     - light.corner_living_room
-#     - light.ceiling_living_room
-#     - light.tv_led
+- platform: group
+  name: Bedroom lights
+  entities:
+    - light.grote_slaapkamer_1
+    - light.grote_slaapkamer_2
+    - light.grote_slaapkamer_nachtkastje_tom
 
-# - platform: group
-#   name: Bedroom lights
-#   entities:
-#     - light.philips_go
-#     - light.bamboo
-#     - light.ceiling_bedroom
-#     - light.lampan
-#     - light.bed_led
-#     - light.bed_reading_up
-#     - light.bed_reading_down
-
-# - platform: group
-#   name: Automatic lights
-#   entities:
-#     - light.ceiling_kitchen
-#     - light.kitchen_counter
-#     - light.toilet
-#     - light.ceiling_bathroom
-#     - light.hall_lights
-#     - light.stairs_lights
+- platform: group
+  name: Automatic lights
+  entities:
+    - light.kitchen_lights
+    - light.toilet
 
 - platform: group
   name: Kitchen lights
@@ -46,25 +29,36 @@
     - light.keuken_2
     - light.keuken_3
 
-- platform: switch
-  name: Kitchen counter
-  entity_id: switch.kitchen_counter
+- platform: group
+  name: Living room lights
+  entities:
+    - light.living_eettafel_1
+    - light.living_eettafel_2
+    - light.living_eettafel_3
+    - light.living_eettafel_4
+    - light.living_midden_1
+    - light.living_midden_2
+    - light.living_midden_3
+    - light.living_midden_4
+    - light.living_tv_backdrop
+    - light.de_kerstboom
 
 - platform: group
-  name: Stairs lights
+  name: Bathroom lights
   entities:
-    - light.stairs_up
-    - light.stairs_down
-
-- platform: group
-  name: Hall lights
-  entities:
-    - light.hall_1
-    - light.hall_2
-    - light.hall_3
+    - light.badkamer_1
+    - light.badkamer_2
+    - light.badkamer_3
+    - light.badkamer_4
 
 - platform: group
   name: Bed reading
   entities:
-    - light.bed_reading_up
-    - light.bed_reading_down
+    - light.grote_slaapkamer_nachtkastje_tom
+
+- platform: group
+  name: Terrace lights
+  entities:
+    - light.terras_hoek
+    - light.terras_muurtje
+    - light.terras_achterdeur
