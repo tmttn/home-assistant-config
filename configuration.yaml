@@ -59,7 +59,7 @@ zone: !include includes/zones.yaml
 # weather: !include includes/weather.yaml
 # shell_command: !include includes/shell_commands.yaml
 # notify: !include includes/notify.yaml
-# light: !include includes/lights.yaml
+light: !include includes/lights.yaml
 # wake_on_lan:
 # proximity: !include includes/proximity.yaml
 # timer: !include includes/timers.yaml
