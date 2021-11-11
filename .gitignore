@@ -119,6 +119,7 @@ venv.bak/
 ip_bans.yaml
 known_devices.yaml
 secrets.yaml
+.ssh
 
 ## Others
 ._includes

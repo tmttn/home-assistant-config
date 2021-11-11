@@ -344,11 +344,11 @@
     - time
 
 # Set up on Proxmox https://community.home-assistant.io/t/intel-nuc-proxmox-cpu-temperature-monitor-with-python-mqtt/194236/8
-- platform: mqtt
-  name: CPU Temperature
-  state_topic: "pve/cpu_temp"
-  unit_of_measurement: "°C"
-  value_template: "{{ value | multiply(0.001) | round(1) }}"
+# - platform: mqtt
+#   name: CPU Temperature
+#   state_topic: "pve/cpu_temp"
+#   unit_of_measurement: "°C"
+#   value_template: "{{ value | multiply(0.001) | round(1) }}"
 
 - platform: systemmonitor
   resources:
@@ -371,7 +371,7 @@
 - platform: version
   name: Latest Available Version
   beta: false
-  image: raspberrypi4
+  image: raspberrypi3
   source: hassio
 
 - platform: uptime
@@ -380,17 +380,17 @@
   file_paths:
     - /config/.storage/lovelace
 
-- platform: sql
-  db_url: !secret maria_db_url
-  queries:
-    - name: MariaDB size
-      query: >
-        SELECT table_schema AS "database",
-        ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) "value"
-        FROM information_schema.tables WHERE table_schema="homeassistant"
-        GROUP BY table_schema;
-      column: value
-      unit_of_measurement: MB
+# - platform: sql
+#   db_url: !secret maria_db_url
+#   queries:
+#     - name: MariaDB size
+#       query: >
+#         SELECT table_schema AS "database",
+#         ROUND(SUM(data_length + index_length) / 1024 / 1024, 1) "value"
+#         FROM information_schema.tables WHERE table_schema="homeassistant"
+#         GROUP BY table_schema;
+#      column: value
+#       unit_of_measurement: MB
 
 - platform: github
   access_token: !secret hass_sensor_gh_token
