@@ -11,9 +11,9 @@
 default: warning
 logs:
   # homeassistant.core: debug
-  custom_components.kef_custom: debug
-  custom_components.aiokef: debug
-  aiokef: debug
+  # custom_components.kef_custom: debug
+  # custom_components.aiokef: debug
+  # aiokef: debug
   homeassistant.components.tplink: debug
   # homeassistant.components.deconz: debug
   # pyotgw: warning

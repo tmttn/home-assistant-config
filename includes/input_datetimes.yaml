@@ -23,6 +23,16 @@ washing_machine_off:
   has_date: true
   has_time: true
 
+dryer_on:
+  name: Washing machine last started
+  has_date: true
+  has_time: true
+
+dryer_off:
+  name: Washing machine last done
+  has_date: true
+  has_time: true
+
 dishwasher_on:
   name: Dishwasher last started
   has_date: true

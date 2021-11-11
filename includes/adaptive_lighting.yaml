@@ -18,25 +18,10 @@
 
 - name: default
   lights:
-    - light.philips_go
-    - light.bamboo
-    - light.ceiling_bedroom
-    - light.lampan
-    - light.bed_reading
-    - light.ceiling_bathroom
+    - light.bedroom_lights
+    - light.bathroom_lights
     - light.toilet
-    - light.ceiling_kitchen
-    - light.stairs_lights
-    - light.hall_lights
-  min_brightness: 70
-  prefer_rgb_color: true
-  detect_non_ha_changes: true
-  interval: 30
-
-- name: default bed
-  lights:
-    - light.bed_led
-  sleep_brightness: 20
+    - light.kitchen_lights
   min_brightness: 70
   prefer_rgb_color: true
   detect_non_ha_changes: true
@@ -44,23 +29,8 @@
 
 - name: half and dim
   lights:
-    - light.philips_go
-    - light.bamboo
-    - light.ceiling_bedroom
-    - light.lampan
-    - light.bed_reading
-    - light.ceiling_bathroom
-    - light.hall_2
-    - light.hall_3
-  min_brightness: 70
-  prefer_rgb_color: true
-  detect_non_ha_changes: true
-  interval: 30
-
-- name: half and dim bed
-  lights:
-    - light.bed_led
-  sleep_brightness: 20
+    - light.bedroom_lights
+    - light.bathroom_lights
   min_brightness: 70
   prefer_rgb_color: true
   detect_non_ha_changes: true
@@ -69,10 +39,7 @@
 - name: half and full
   lights:
     - light.toilet
-    - light.ceiling_kitchen
-    - light.stairs_up
-    - light.stairs_down
-    - light.hall_1
+    - light.kitchen_lights
   min_brightness: 70
   prefer_rgb_color: true
   detect_non_ha_changes: true
