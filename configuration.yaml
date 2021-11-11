@@ -56,7 +56,7 @@ zone: !include includes/zones.yaml
 # switch: !include includes/switches.yaml
 # sensor: !include includes/sensors.yaml
 # binary_sensor: !include includes/binary_sensors.yaml
-# weather: !include includes/weather.yaml
+weather: !include includes/weather.yaml
 # shell_command: !include includes/shell_commands.yaml
 # notify: !include includes/notify.yaml
 light: !include includes/lights.yaml
