@@ -57,7 +57,7 @@
   entities:
     - light.living_room_dining_table_lights
     - light.living_room_middle_lights
-    - light.living_tv_backdrop
+    - light.tv_led
     - light.de_kerstboom
 
 - platform: group

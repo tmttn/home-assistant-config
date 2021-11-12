@@ -87,7 +87,7 @@
     data:
       topic: actions/otmonitor/outside
       payload_template: >
-        {{ state_attr("weather.huis", "temperature") }}
+        {{ state_attr("weather.buienradar", "temperature") }}
 
 - alias: "Climate: warning when heating on and living room door open"
   trigger:
