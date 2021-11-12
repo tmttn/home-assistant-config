@@ -11,7 +11,7 @@
 - name: Tom
   id: tom
   user_id: 20cd19234fc24a3b9cd28570ee787a43
-#  picture: !secret profile_photo_tom
+# picture: !secret profile_photo_tom
   device_trackers:
     - device_tracker.tom_iphone # from iOS app
     - device_tracker.tom_iphone_ping
