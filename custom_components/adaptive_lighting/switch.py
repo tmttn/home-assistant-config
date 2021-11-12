@@ -392,7 +392,7 @@ def _supported_features(hass: HomeAssistant, light: str):
     if COLOR_MODE_RGB in supported_color_modes:
         supported.add("color")
         # Adding brightness here, see
-        # comment https://github.com/tmttn/adaptive-lighting/issues/112#issuecomment-836944011
+        # comment https://github.com/basnijholt/adaptive-lighting/issues/112#issuecomment-836944011
         supported.add("brightness")
     if COLOR_MODE_RGBW in supported_color_modes:
         supported.add("color")
@@ -1050,7 +1050,7 @@ class SunLightSettings:
         def _replace_time(date: datetime.datetime, key: str) -> datetime.datetime:
             time = getattr(self, f"{key}_time")
             date_time = datetime.datetime.combine(date, time)
-            try:  # HA ≤2021.05, https://github.com/tmttn/adaptive-lighting/issues/128
+            try:  # HA ≤2021.05, https://github.com/basnijholt/adaptive-lighting/issues/128
                 utc_time = self.time_zone.localize(date_time).astimezone(dt_util.UTC)
             except AttributeError: # HA ≥2021.06
                 utc_time = date_time.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE).astimezone(dt_util.UTC)
