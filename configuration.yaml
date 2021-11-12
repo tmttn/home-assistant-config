@@ -54,8 +54,8 @@ zone: !include includes/zones.yaml
 group: !include includes/groups.yaml
 automation old: !include_dir_merge_list automations
 # switch: !include includes/switches.yaml
-# sensor: !include includes/sensors.yaml
-# binary_sensor: !include includes/binary_sensors.yaml
+sensor: !include includes/sensors.yaml
+binary_sensor: !include includes/binary_sensors.yaml
 weather: !include includes/weather.yaml
 # shell_command: !include includes/shell_commands.yaml
 notify: !include includes/notify.yaml
