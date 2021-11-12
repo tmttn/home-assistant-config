@@ -7,34 +7,34 @@
 #                 |_|
 #
 #- from github.com/tmttn/home-assistant-config
-start_speakers:
-  alias: Start speakers
-  description: Start a Spotify playlist on KEF speakers
-  fields:
-    volume:
-      description: Volume at which to play
-      example: "0.3"
-    source:
-      description: Which source to use on the speakers
-      example: Wifi
-    entity_id:
-      description: entity_id of the speaker
-      example: media_player.kef_ls50
-  sequence:
-    - service: media_player.turn_on
-      data:
-        entity_id: "{{ entity_id }}"
-    - service: media_player.select_source
-      data:
-        entity_id: "{{ entity_id }}"
-        source: "{{ source }}"
-    - wait_template: '{{ is_state("media_player.kef_ls50", "on") }}'
-      timeout: 00:01:00
-      continue_on_timeout: false
-    - service: media_player.volume_set
-      data:
-        entity_id: "{{ entity_id }}"
-        volume_level: "{{ volume }}"
+# start_speakers:
+#   alias: Start speakers
+#   description: Start a Spotify playlist on KEF speakers
+#   fields:
+#     volume:
+#       description: Volume at which to play
+#       example: "0.3"
+#     source:
+#       description: Which source to use on the speakers
+#       example: Wifi
+#     entity_id:
+#       description: entity_id of the speaker
+#       example: media_player.kef_ls50
+#   sequence:
+#     - service: media_player.turn_on
+#       data:
+#         entity_id: "{{ entity_id }}"
+#     - service: media_player.select_source
+#       data:
+#         entity_id: "{{ entity_id }}"
+#         source: "{{ source }}"
+#     - wait_template: '{{ is_state("media_player.kef_ls50", "on") }}'
+#       timeout: 00:01:00
+#       continue_on_timeout: false
+#     - service: media_player.volume_set
+#       data:
+#         entity_id: "{{ entity_id }}"
+#         volume_level: "{{ volume }}"
 
 start_spotify:
   alias: Start Spotify
@@ -96,27 +96,9 @@ cozy_lights_living_room:
   mode: parallel
   sequence:
     - data:
-        entity_id: light.sphere_1
-        hs_color:
-          - 336.293
-          - 80.392
-      service: light.turn_on
-    - data:
-        entity_id: light.sphere_2
-        hs_color:
-          - 299.147
-          - 82.745
-      service: light.turn_on
-    - data:
-        entity_id: light.corner_living_room
+        entity_id: light.de_kerstboom
         hs_color:
           - 26.667
-          - 88.235
-      service: light.turn_on
-    - data:
-        entity_id: light.ceiling_living_room
-        hs_color:
-          - 268.267
           - 88.235
       service: light.turn_on
     - data:
@@ -135,45 +117,15 @@ cozy_lights_bedroom:
   mode: parallel
   sequence:
     - data:
-        entity_id: light.bamboo
-        hs_color:
-          - 299.72
-          - 83.922
-      service: light.turn_on
-    - data:
-        entity_id: light.philips_go
-        hs_color:
-          - 0
-          - 100
-      service: light.turn_on
-    - data:
-        entity_id: light.bed_reading_up
+        entity_id: light.bed_reading
         hs_color:
           - 26.725
           - 89.804
       service: light.turn_on
     - data:
-        entity_id: light.bed_reading_down
-        hs_color:
-          - 26.725
-          - 89.804
-      service: light.turn_on
-    - data:
-        entity_id: light.lampan
-        hs_color:
-          - 269.86
-          - 84.314
-      service: light.turn_on
-    - data:
-        entity_id: light.ceiling_bedroom
+        entity_id: light.bedroom_ceiling_lights
         hs_color:
           - 22
-          - 100
-      service: light.turn_on
-    - data:
-        entity_id: light.bed_led
-        hs_color:
-          - 10
           - 100
       service: light.turn_on
     - service: input_select.select_option
@@ -242,10 +194,11 @@ turn_off_everything_non_automatic:
         entity_id:
           - light.living_room_lights
           - light.bedroom_lights
-    - service: media_player.turn_off
-      entity_id: media_player.kef_ls50
-    - service: media_player.turn_off
-      entity_id: media_player.kef_lsx
+          - light.bathroom_lights
+    # - service: media_player.turn_off
+    #   entity_id: media_player.kef_ls50
+    # - service: media_player.turn_off
+    #   entity_id: media_player.kef_lsx
     - service: media_player.turn_off
       entity_id: media_player.tv
 
@@ -329,152 +282,152 @@ update_dns:
         domain: !secret domain
         subdomain: !secret subdomain
 
-fix_sound:
-  alias: Fix Opt LG Sound Sync bug
-  sequence:
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: MENU # Open "Menu"
-    - delay:
-        milliseconds: 1000
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: UP # Navigate to "All settings"
-    - delay:
-        milliseconds: 500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: ENTER # enter into "All settings"
-    - delay:
-        milliseconds: 1500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: DOWN # Navigate to "Sound"
-    - delay:
-        milliseconds: 1500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: RIGHT # Move into "Sound" menu
-    - delay:
-        milliseconds: 500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: ENTER # Enter "Sound Out" menu
-    - delay:
-        milliseconds: 1500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: DOWN # Move to "Optical"
-    - delay:
-        milliseconds: 500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: DOWN # Move to "Optical - LG Sound Sync"
-    - delay:
-        milliseconds: 500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: ENTER # Disable "LG Sound Sync"
-    - delay:
-        milliseconds: 500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: ENTER # Enable "LG Sound Sync"
-    - delay:
-        milliseconds: 500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: BACK # Go up one menu in "All settings"
-    - delay:
-        milliseconds: 500
-    - service: webostv.button
-      entity_id: media_player.tv
-      data:
-        button: BACK # Close the "All settings" window
+# fix_sound:
+#   alias: Fix Opt LG Sound Sync bug
+#   sequence:
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: MENU # Open "Menu"
+#     - delay:
+#         milliseconds: 1000
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: UP # Navigate to "All settings"
+#     - delay:
+#         milliseconds: 500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: ENTER # enter into "All settings"
+#     - delay:
+#         milliseconds: 1500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: DOWN # Navigate to "Sound"
+#     - delay:
+#         milliseconds: 1500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: RIGHT # Move into "Sound" menu
+#     - delay:
+#         milliseconds: 500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: ENTER # Enter "Sound Out" menu
+#     - delay:
+#         milliseconds: 1500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: DOWN # Move to "Optical"
+#     - delay:
+#         milliseconds: 500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: DOWN # Move to "Optical - LG Sound Sync"
+#     - delay:
+#         milliseconds: 500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: ENTER # Disable "LG Sound Sync"
+#     - delay:
+#         milliseconds: 500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: ENTER # Enable "LG Sound Sync"
+#     - delay:
+#         milliseconds: 500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: BACK # Go up one menu in "All settings"
+#     - delay:
+#         milliseconds: 500
+#     - service: webostv.button
+#       entity_id: media_player.tv
+#       data:
+#         button: BACK # Close the "All settings" window
 
-sync_kef_dsp:
-  alias: Sync KEF DSP setting with input_number, input_select, or input_boolean
-  mode: parallel
-  max: 20
-  fields:
-    trigger_entity_id:
-      description: trigger_entity_id
-    attribute:
-      description: attribute
-    domain:
-      description: domain
-      example: select
-    name:
-      description: name
-      example: kef_ls50
-  variables:
-    media_player: "{{ 'media_player.{}'.format(name) }}"
-    input_helper: "{{ 'input_{}.{}_{}'.format(domain, name, attribute) }}"
-    attribute_value: "{{ state_attr(media_player, attribute) }}"
-    trigger_to_state: >
-      {% if trigger_entity_id == media_player %}
-        {{ state_attr(media_player, attribute) }}
-      {% else %}
-        {{ states(input_helper) }}
-      {% endif %}
-  sequence:
-    - condition: template
-      value_template: "{{ is_state(media_player, 'on') }}"
-    - choose:
-        # input_number
-        - conditions: "{{ domain == 'number' }}"
-          sequence:
-            choose:
-              # KEF has changed
-              - conditions: "{{ trigger_entity_id == media_player }}"
-                sequence:
-                  service: input_number.set_value
-                  data:
-                    entity_id: "{{ input_helper }}"
-                    value: "{{ attribute_value | float }}"
-              # input_number changed
-              - conditions: "{{ trigger_entity_id == input_helper }}"
-                sequence:
-                  service: kef_custom.set_{{ attribute }}
-                  data:
-                    entity_id: "{{ media_player }}"
-                    "{{ attribute[-2:] }}_value": "{{ trigger_to_state }}"
+# sync_kef_dsp:
+#   alias: Sync KEF DSP setting with input_number, input_select, or input_boolean
+#   mode: parallel
+#   max: 20
+#   fields:
+#     trigger_entity_id:
+#       description: trigger_entity_id
+#     attribute:
+#       description: attribute
+#     domain:
+#       description: domain
+#       example: select
+#     name:
+#       description: name
+#       example: kef_ls50
+#   variables:
+#     media_player: "{{ 'media_player.{}'.format(name) }}"
+#     input_helper: "{{ 'input_{}.{}_{}'.format(domain, name, attribute) }}"
+#     attribute_value: "{{ state_attr(media_player, attribute) }}"
+#     trigger_to_state: >
+#       {% if trigger_entity_id == media_player %}
+#         {{ state_attr(media_player, attribute) }}
+#       {% else %}
+#         {{ states(input_helper) }}
+#       {% endif %}
+#   sequence:
+#     - condition: template
+#       value_template: "{{ is_state(media_player, 'on') }}"
+#     - choose:
+#         # input_number
+#         - conditions: "{{ domain == 'number' }}"
+#           sequence:
+#             choose:
+#               # KEF has changed
+#               - conditions: "{{ trigger_entity_id == media_player }}"
+#                 sequence:
+#                   service: input_number.set_value
+#                   data:
+#                     entity_id: "{{ input_helper }}"
+#                     value: "{{ attribute_value | float }}"
+#               # input_number changed
+#               - conditions: "{{ trigger_entity_id == input_helper }}"
+#                 sequence:
+#                   service: kef_custom.set_{{ attribute }}
+#                   data:
+#                     entity_id: "{{ media_player }}"
+#                     "{{ attribute[-2:] }}_value": "{{ trigger_to_state }}"
 
-        # input_select or input_boolean
-        - conditions: "{{ domain in ('select', 'boolean') }}"
-          sequence:
-            choose:
-              # KEF has changed, select
-              - conditions: "{{ trigger_entity_id == media_player and domain == 'select' }}"
-                sequence:
-                  service: input_select.select_option
-                  data:
-                    entity_id: "{{ input_helper }}"
-                    option: "{{ attribute_value }}"
-              # KEF has changed, boolean
-              - conditions: "{{ trigger_entity_id == media_player and domain == 'boolean' }}"
-                sequence:
-                  service: "input_boolean.turn_{{ 'on' if attribute_value == 'True' else 'off' }}"
-                  data:
-                    entity_id: "{{ input_helper }}"
-              # input_select or input_boolean changed
-              - conditions: "{{ trigger_entity_id == input_helper }}"
-                sequence:
-                  service: kef_custom.set_mode
-                  data:
-                    entity_id: "{{ media_player }}"
-                    "{{ attribute }}": "{{ trigger_to_state }}"
+#         # input_select or input_boolean
+#         - conditions: "{{ domain in ('select', 'boolean') }}"
+#           sequence:
+#             choose:
+#               # KEF has changed, select
+#               - conditions: "{{ trigger_entity_id == media_player and domain == 'select' }}"
+#                 sequence:
+#                   service: input_select.select_option
+#                   data:
+#                     entity_id: "{{ input_helper }}"
+#                     option: "{{ attribute_value }}"
+#               # KEF has changed, boolean
+#               - conditions: "{{ trigger_entity_id == media_player and domain == 'boolean' }}"
+#                 sequence:
+#                   service: "input_boolean.turn_{{ 'on' if attribute_value == 'True' else 'off' }}"
+#                   data:
+#                     entity_id: "{{ input_helper }}"
+#               # input_select or input_boolean changed
+#               - conditions: "{{ trigger_entity_id == input_helper }}"
+#                 sequence:
+#                   service: kef_custom.set_mode
+#                   data:
+#                     entity_id: "{{ media_player }}"
+#                     "{{ attribute }}": "{{ trigger_to_state }}"
 
 utility_notification:
   mode: parallel
