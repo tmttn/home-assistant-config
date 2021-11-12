@@ -57,13 +57,8 @@ views:
         type: custom:slider-entity-row
       type: custom:fold-entity-row
     - entities:
-      - light.ceiling_bedroom
-      - light.lampan
-      - light.bamboo
-      - light.bed_reading_up
-      - light.bed_reading_down
-      - light.philips_go
-      - light.bed_led
+      - light.bedroom_ceiling_lights
+      - light.bed_reading
       - input_boolean.automatic_bedroom_lights
       - input_boolean.bedroom_lights_automatically_turned_on
       - entity: script.cozy_lights_bedroom
@@ -90,24 +85,8 @@ views:
       name: Bed
       type: custom:fold-entity-row
     - entities:
-      - light.ceiling_office
-      - light.ceiling_kitchen
-      - light.ceiling_bathroom
+      - light.kitchen_lights
       - light.toilet
-      - light.kitchen_counter
-      - entities:
-        - light.hall_1
-        - light.hall_2
-        - light.hall_3
-        head:
-          entity: light.hall_lights
-        type: custom:fold-entity-row
-      - entities:
-        - light.stairs_up
-        - light.stairs_down
-        head:
-          entity: light.stairs_lights
-        type: custom:fold-entity-row
       - entities:
         - icon: mdi:human-edit
           name: "{% set manual_control = (\n    (state_attr('switch.adaptive_lighting_default',\
@@ -171,7 +150,7 @@ views:
       head:
         entity: light.automatic_lights
         hide_when_off: false
-        name: Auto and office
+        name: Automatic
         type: custom:slider-entity-row
       type: custom:fold-entity-row
     show_header_toggle: false
@@ -180,92 +159,6 @@ views:
   - entity: weather.huis
     name: Weather
     type: custom:simple-weather-card
-  - cards:
-    - artwork: cover
-      background: /local/tv.jpg
-      entity: media_player.tv
-      hide:
-        controls: true
-        mute: false
-        play_stop: true
-        volume: false
-      icon: mdi:television
-      type: custom:mini-media-player
-    - artwork: cover
-      entity: media_player.spotify
-      hide:
-        power: true
-        source: false
-        volume: true
-      icon: mdi:spotify
-      type: custom:mini-media-player
-    - background: /local/kef_speakers.jpeg
-      entity: media_player.kef_ls50
-      hide:
-        controls: true
-        mute: false
-        play_stop: true
-        volume: false
-      type: custom:mini-media-player
-    - entities:
-      - entities:
-        - entity: input_number.kef_ls50_desk_db
-        - entity: input_number.kef_ls50_wall_db
-        - entity: input_number.kef_ls50_treble_db
-        - entity: input_number.kef_ls50_high_hz
-        - entity: input_number.kef_ls50_low_hz
-        - entity: input_number.kef_ls50_sub_db
-        - type: divider
-        - entity: input_select.kef_ls50_bass_extension
-        - entity: input_select.kef_ls50_sub_polarity
-        - type: divider
-        - entity: input_boolean.kef_ls50_desk_mode
-        - entity: input_boolean.kef_ls50_wall_mode
-        - entity: input_boolean.kef_ls50_phase_correction
-        - entity: input_boolean.kef_ls50_high_pass
-        head:
-          icon: mdi:equalizer
-          name: 'KEF LS50 Equalizer
-
-            '
-          type: custom:template-entity-row
-        type: custom:fold-entity-row
-      show_header_toggle: false
-      type: entities
-    - cards:
-      - icon: mdi:sofa
-        name: Play music in living room
-        styles:
-          card:
-          - font-size: 12px
-          - font-weight: bold
-          - height: 70px
-        tap_action:
-          action: call-service
-          service: script.start_spotify_playlist_of_nearest_person
-          service_data:
-            entity_id: media_player.kef_ls50
-            source: LS50 Wireless
-        type: custom:button-card
-      - icon: mdi:bed-king
-        name: Play music in bedroom
-        styles:
-          card:
-          - font-size: 12px
-          - font-weight: bold
-          - height: 70px
-        tap_action:
-          action: call-service
-          service: script.start_spotify_playlist_of_nearest_person
-          service_data:
-            entity_id: media_player.kef_lsx
-            source: LSX
-        type: custom:button-card
-      type: horizontal-stack
-    style: "ha-card {\n  --mini-media-player-base-color: red;\n  --mini-media-player-icon-color:\
-      \ red;\n  --mini-media-player-background-opacity: 0.1;\n  --mini-media-player-overlay-color:\
-      \ red;\n}\n"
-    type: vertical-stack
   - entities:
     - entity: sensor.adaptive
       type: custom:github-entity-row
@@ -1073,20 +966,6 @@ views:
       type: custom:fold-entity-row
     show_header_toggle: false
     type: entities
-  - entities:
-    - entity: sensor.bus_home_to_rotterdam_centraal
-      secondary: Next bus {{ states('sensor.bus_home_to_rotterdam_centraal_future_1')
-        }}
-      type: custom:template-entity-row
-    - entity: sensor.bus_from_rotterdam_to_delft
-      secondary: Next bus {{ states('sensor.bus_from_rotterdam_to_delft_future_1')
-        }}
-      type: custom:template-entity-row
-    - entity: sensor.bus_from_delft_to_rotterdam
-      secondary: Next bus {{ states('sensor.bus_from_delft_to_rotterdam_future_1')
-        }}
-      type: custom:template-entity-row
-    type: entities
   - cards:
     - content: '# Quarantine-o-meter
 
@@ -1393,12 +1272,6 @@ views:
     type: glance
   - columns: 3
     entities:
-    - entity: binary_sensor.motion_sensor_living_room_klok
-      name: Living room
-    - entity: sensor.motion_sensor_living_room_klok_light_level
-      name: ''
-    - entity: sensor.motion_sensor_living_room_klok_battery_level
-      name: ''
     - entity: binary_sensor.motion_sensor_kitchen
       name: Kitchen
     - entity: sensor.motion_sensor_kitchen_light_level
@@ -1410,36 +1283,6 @@ views:
     - entity: sensor.motion_sensor_toilet_light_level
       name: ''
     - entity: sensor.motion_sensor_toilet_battery_level
-      name: ''
-    - entity: binary_sensor.motion_sensor_hall
-      name: Hall
-    - entity: sensor.motion_sensor_hall_light_level
-      name: ''
-    - entity: sensor.motion_sensor_hall_battery_level
-      name: ''
-    - entity: binary_sensor.motion_sensor_bathroom
-      name: Bathroom
-    - entity: sensor.motion_sensor_bathroom_light_level
-      name: ''
-    - entity: sensor.motion_sensor_bathroom_battery_level
-      name: ''
-    - entity: binary_sensor.motion_sensor_bedroom_door
-      name: Bedroom door
-    - entity: sensor.motion_sensor_bedroom_door_light_level
-      name: ''
-    - entity: sensor.motion_sensor_bedroom_door_battery_level
-      name: ''
-    - entity: binary_sensor.motion_sensor_bedroom_kabinet
-      name: Bedroom kabinet
-    - entity: sensor.motion_sensor_bedroom_kabinet_light_level
-      name: ''
-    - entity: sensor.motion_sensor_bedroom_kabinet_battery_level
-      name: ''
-    - entity: binary_sensor.motion_sensor_bedroom_desk
-      name: Bedroom desk
-    - entity: sensor.motion_sensor_bedroom_desk_light_level
-      name: ''
-    - entity: sensor.motion_sensor_bedroom_desk_battery_level
       name: ''
     show_icon: true
     show_name: true
@@ -1469,27 +1312,6 @@ views:
     - entity: binary_sensor.any_light_on
     show_header_toggle: false
     title: Devices are on
-    type: entities
-  - entities:
-    - entity: sensor.mi_flora_northern_light_moisture
-    - entity: sensor.mi_flora_northern_light_temperature
-    - entity: sensor.mi_flora_northern_light_battery
-    - entity: sensor.mi_flora_northern_light_conductivity
-    - entity: sensor.mi_flora_northern_light_light_intensity
-    - type: divider
-    - entity: sensor.mi_flora_royal_haze_moisture
-    - entity: sensor.mi_flora_royal_haze_temperature
-    - entity: sensor.mi_flora_royal_haze_battery
-    - entity: sensor.mi_flora_royal_haze_conductivity
-    - entity: sensor.mi_flora_royal_haze_light_intensity
-    - type: divider
-    - entity: sensor.mi_flora_kentia_palm_moisture
-    - entity: sensor.mi_flora_kentia_palm_temperature
-    - entity: sensor.mi_flora_kentia_palm_battery
-    - entity: sensor.mi_flora_kentia_palm_conductivity
-    - entity: sensor.mi_flora_kentia_palm_light_intensity
-    show_header_toggle: false
-    title: Plant sensors
     type: entities
   - columns: 4
     entities:
@@ -1597,25 +1419,6 @@ views:
       state: '{{ states("sensor.hours_kitchen_lights_have_been_on_last_7_days") }}
         h'
       type: custom:template-entity-row
-    - entity: sensor.hours_hall_lights_have_been_on_last_7_days
-      icon: mdi:clock
-      name: Hall lights
-      secondary: 'Been on {{ (states(''sensor.hours_hall_lights_have_been_on_last_7_days'')|float
-        / (7*24) * 100) | round(2) }}% during last 7 days.
-
-        '
-      state: '{{ states("sensor.hours_hall_lights_have_been_on_last_7_days") }} h'
-      type: custom:template-entity-row
-    - entity: sensor.hours_bathroom_light_has_been_on_last_7_days
-      icon: mdi:clock
-      name: Hall lights
-      secondary: 'Been on {{ (states(''sensor.hours_bathroom_light_has_been_on_last_7_days'')|float
-        / (7*24) * 100) | round(2) }}% during last 7 days.
-
-        '
-      state: '{{ states("sensor.hours_bathroom_light_has_been_on_last_7_days") }}
-        h'
-      type: custom:template-entity-row
     - type: divider
     - entity: sensor.hours_bathroom_light_has_been_on_last_7_days
       icon: mdi:clock
@@ -1636,12 +1439,6 @@ views:
 - badges: []
   cards:
   - entities:
-    - entity: input_boolean.start_kef_ls50
-    - entity: input_boolean.start_kef_lsx
-    - type: divider
-    - entity: input_boolean.start_spotify_on_kef_ls50
-    - entity: input_boolean.start_spotify_on_kef_lsx
-    - type: divider
     - entity: input_boolean.wake_up_light
     - entity: input_boolean.demo_wake_up_light
     - type: divider
@@ -1651,20 +1448,10 @@ views:
     title: Test apps
     type: entities
   - entities:
-    - entity: input_select.cube_mode
     - entity: input_select.last_script_bedroom
     - entity: input_select.last_script_living_room
     show_header_toggle: false
     title: Inputs (automatically switched)
-    type: entities
-  - entities:
-    - entity: sensor.kef_ls50_volume
-    - entity: sensor.tv_volume
-    - type: divider
-    - entity: sensor.kef_lsx_volume
-    - entity: input_select.lsx_volume
-    show_header_toggle: false
-    title: Volume sync
     type: entities
   - entities:
     - entity: input_datetime.dishwasher_on
@@ -1840,17 +1627,6 @@ views:
       type: custom:bar-card
     show_header_toggle: false
     title: Work time
-    type: entities
-  - entities:
-    - icon: mdi:information
-      name: This is to control the volume using HA-menu on my iMac
-      type: custom:template-entity-row
-    - entity: switch.kef_lsx
-    - type: divider
-    - entity: input_select.lsx_volume
-    - entity: input_select.lsx_source
-    show_header_toggle: false
-    title: LSX control (for HA-Menu)
     type: entities
   - entities:
     - entity: sensor.times_dishwasher_has_been_on_last_7_days
@@ -2068,8 +1844,6 @@ views:
     - entity: person.tanja
     hours_to_show: 240
     type: map
-  - entity: media_player.xboxone
-    type: media-control
   - entities:
     - entity: sensor.temperature_living_room
       name: Living room
@@ -2098,62 +1872,8 @@ views:
 
         '
       type: custom:template-entity-row
-    - active: '{{ is_state("binary_sensor.motion_sensor_hall", "on") }}'
-      entity: binary_sensor.motion_sensor_hall
-      name: Hall
-      secondary: 'Light level {{ states("sensor.motion_sensor_hall_light_level") }}
-        lx, battery {{ states("sensor.motion_sensor_hall_battery_level") }}%
-
-        '
-      type: custom:template-entity-row
-    - active: '{{ is_state("binary_sensor.motion_sensor_bathroom", "on") }}'
-      entity: binary_sensor.motion_sensor_bathroom
-      name: Bathroom
-      secondary: 'Light level {{ states("sensor.motion_sensor_bathroom_light_level")
-        }} lx, battery {{ states("sensor.motion_sensor_bathroom_battery_level") }}%
-
-        '
-      type: custom:template-entity-row
-    - active: '{{ is_state("binary_sensor.motion_sensor_bedroom_door", "on") }}'
-      entity: binary_sensor.motion_sensor_bedroom_door
-      name: Bedroom door
-      secondary: 'Light level {{ states("sensor.motion_sensor_bedroom_door_light_level")
-        }} lx, battery {{ states("sensor.motion_sensor_bedroom_door_battery_level")
-        }}%
-
-        '
-      type: custom:template-entity-row
-    - active: '{{ is_state("binary_sensor.motion_sensor_bedroom_kabinet", "on") }}'
-      entity: binary_sensor.motion_sensor_bedroom_kabinet
-      name: Bedroom kabinet
-      secondary: 'Light level {{ states("sensor.motion_sensor_bedroom_kabinet_light_level")
-        }} lx, battery {{ states("sensor.motion_sensor_bedroom_kabinet_battery_level")
-        }}%
-
-        '
-      type: custom:template-entity-row
-    - active: '{{ is_state("binary_sensor.motion_sensor_bedroom_desk", "on") }}'
-      entity: binary_sensor.motion_sensor_bedroom_desk
-      name: Bedroom desk
-      secondary: 'Light level {{ states("sensor.motion_sensor_bedroom_desk_light_level")
-        }} lx, battery {{ states("sensor.motion_sensor_bedroom_desk_battery_level")
-        }}%
-
-        '
-      type: custom:template-entity-row
-    - active: '{{ is_state("binary_sensor.motion_sensor_living_room_klok", "on") }}'
-      entity: binary_sensor.motion_sensor_living_room_klok
-      name: Living room klok
-      secondary: 'Light level {{ states("sensor.motion_sensor_living_room_klok_light_level")
-        }} lx, battery {{ states("sensor.motion_sensor_living_room_klok_battery_level")
-        }}%
-
-        '
-      type: custom:template-entity-row
     title: Motion sensors
     type: entities
-  - entity: camera.camera1
-    type: picture-entity
   icon: mdi:test-tube
   path: tests
   title: Tests
