@@ -30,16 +30,27 @@
     - light.keuken_3
 
 - platform: group
-  name: Living room lights
+  name: Living room dining table lights
   entities:
     - light.living_eettafel_1
     - light.living_eettafel_2
     - light.living_eettafel_3
     - light.living_eettafel_4
+
+- platform: group
+  name: Living room middle lights
+  entities:
     - light.living_midden_1
     - light.living_midden_2
     - light.living_midden_3
     - light.living_midden_4
+
+
+- platform: group
+  name: Living room lights
+  entities:
+    - light.living_room_dining_table_lights
+    - light.living_room_middle_lights
     - light.living_tv_backdrop
     - light.de_kerstboom
 
