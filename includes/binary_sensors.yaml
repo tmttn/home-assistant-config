@@ -154,7 +154,7 @@
             and not is_state("person.tanja", "home") }}
 
 - platform: workday
-  country: NL
+  country: BE
 
 - platform: trend
   sensors:

@@ -63,7 +63,7 @@
   action:
     service: light.turn_{{ trigger.to_state.state }}
     data:
-      entity_id: light.ceiling_kitchen
+      entity_id: light.kitchen_lights
       transition: 1
 
 - alias: "Light: turn on kitchen counter if sleep mode is off"
@@ -101,11 +101,11 @@
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_bathroom
-  condition: "{{ not is_state('light.ceiling_bathroom', trigger.to_state.state) }}"
+  condition: "{{ not is_state('light.bathroom_lights', trigger.to_state.state) }}"
   action:
     service: light.turn_{{ trigger.to_state.state }}
     data:
-      entity_id: light.ceiling_bathroom
+      entity_id: light.bathroom_lights
       transition: 1
 
 #  _____     _ _      _
@@ -129,49 +129,49 @@
   # |  _  | (_| | | | | (_| | | | | (_| | \__ \ || (_| | | |  \__ \
   # |_| |_|\__,_|_|_|  \__,_|_| |_|\__,_| |___/\__\__,_|_|_|  |___/
 
-- alias: "Light: turn on hall"
-  mode: parallel
-  trigger:
-    - platform: state
-      entity_id: binary_sensor.activity_in_hall
-      from: "off"
-      to: "on"
-    - platform: state
-      entity_id: binary_sensor.openclose_front_door
-      from: "off"
-      to: "on"
-  variables:
-    off_lights: >
-      {% set hall_lights = ["light.hall_2"]
-                           if is_state('input_select.sleep_mode', 'total')
-                           else ["light.hall_1", "light.hall_2", "light.hall_3"] %}
-      {{ expand(state_attr("light.stairs_lights", "entity_id") + hall_lights)
-          | selectattr("state", "eq", "off")
-          | map(attribute="entity_id")
-          | list }}
-  condition: "{{ (off_lights | length) > 0 }}"
-  action:
-    alias: Turn on lights that are off
-    repeat:
-      count: "{{ off_lights | length }}"
-      sequence:
-        service: script.turn_on_lights
-        data:
-          entity_id: "{{ off_lights[repeat.index - 1] }}"
+# - alias: "Light: turn on hall"
+#   mode: parallel
+#   trigger:
+#     - platform: state
+#       entity_id: binary_sensor.activity_in_hall
+#       from: "off"
+#       to: "on"
+#     - platform: state
+#       entity_id: binary_sensor.openclose_front_door
+#       from: "off"
+#       to: "on"
+#   variables:
+#     off_lights: >
+#       {% set hall_lights = ["light.hall_2"]
+#                            if is_state('input_select.sleep_mode', 'total')
+#                            else ["light.hall_1", "light.hall_2", "light.hall_3"] %}
+#       {{ expand(state_attr("light.stairs_lights", "entity_id") + hall_lights)
+#           | selectattr("state", "eq", "off")
+#           | map(attribute="entity_id")
+#           | list }}
+#   condition: "{{ (off_lights | length) > 0 }}"
+#   action:
+#     alias: Turn on lights that are off
+#     repeat:
+#       count: "{{ off_lights | length }}"
+#       sequence:
+#         service: script.turn_on_lights
+#         data:
+#           entity_id: "{{ off_lights[repeat.index - 1] }}"
 
-- alias: "Light: turn off hall"
-  trigger:
-    platform: state
-    entity_id: binary_sensor.activity_in_hall
-    from: "on"
-    to: "off"
-  action:
-    service: light.turn_off
-    data:
-      entity_id:
-        - light.stairs_lights
-        - light.hall_lights
-      transition: 1
+# - alias: "Light: turn off hall"
+#   trigger:
+#     platform: state
+#     entity_id: binary_sensor.activity_in_hall
+#     from: "on"
+#     to: "off"
+#   action:
+#     service: light.turn_off
+#     data:
+#       entity_id:
+#         - light.stairs_lights
+#         - light.hall_lights
+#       transition: 1
 
   #  ____           _
   # | __ )  ___  __| |_ __ ___   ___  _ __ ___
@@ -311,11 +311,11 @@
       entity_id: binary_sensor.activity_in_bathroom
       state: "off"
     - condition: state
-      entity_id: light.ceiling_bathroom
+      entity_id: light.bathroom_lights
       state: "on"
   action:
     service: light.turn_off
-    entity_id: light.ceiling_bathroom
+    entity_id: light.bathroom_lights
 
 - alias: "Light: turn off kitchen (extra check)"
   description: In case the other automation failed
@@ -333,28 +333,28 @@
     service: light.turn_off
     entity_id: light.kitchen_lights
 
-- alias: "Light: turn off hall (extra check)"
-  description: In case the other automation failed
-  trigger:
-    platform: time_pattern
-    minutes: "/10"
-  condition:
-    - condition: state
-      entity_id: binary_sensor.activity_in_hall
-      state: "off"
-    - condition: or
-      conditions:
-        - condition: state
-          entity_id: light.stairs_lights
-          state: "on"
-        - condition: state
-          entity_id: light.hall_lights
-          state: "on"
-  action:
-    service: light.turn_off
-    entity_id:
-      - light.hall_lights
-      - light.stairs_lights
+# - alias: "Light: turn off hall (extra check)"
+#   description: In case the other automation failed
+#   trigger:
+#     platform: time_pattern
+#     minutes: "/10"
+#   condition:
+#     - condition: state
+#       entity_id: binary_sensor.activity_in_hall
+#       state: "off"
+#     - condition: or
+#       conditions:
+#         - condition: state
+#           entity_id: light.stairs_lights
+#           state: "on"
+#         - condition: state
+#           entity_id: light.hall_lights
+#           state: "on"
+#   action:
+#     service: light.turn_off
+#     entity_id:
+#       - light.hall_lights
+#       - light.stairs_lights
 
 - alias: "Light: turn off bedroom (extra check)"
   description: In case the other automation failed

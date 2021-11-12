@@ -91,17 +91,17 @@ views:
             name: Bed
             type: custom:fold-entity-row
           - entities:
-              - light.ceiling_office
-              - light.ceiling_kitchen
-              - light.ceiling_bathroom
+              # - light.ceiling_office
+              - light.kitchen_lights
+              - light.bathroom_lights
               - light.toilet
-              - light.kitchen_counter
-              - entities:
-                  - light.hall_1
-                  - light.hall_2
-                  - light.hall_3
-                head:
-                  entity: light.hall_lights
+              # - light.kitchen_counter
+              # - entities:
+              #     - light.hall_1
+              #     - light.hall_2
+              #     - light.hall_3
+              #   head:
+              #     entity: light.hall_lights
                 type: custom:fold-entity-row
               - entities:
                   - light.stairs_up
