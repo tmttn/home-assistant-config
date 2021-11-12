@@ -3,7 +3,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
-[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2021.10.6%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2021.10.6)
+[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2021.11.3%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2021.11.3)
 [![HA Community](https://img.shields.io/badge/HA%20community-forum-orange)](https://community.home-assistant.io/u/tmttn/summary)
 [![Yaml Lint](https://github.com/tmttn/home-assistant-config/workflows/Yaml%20Lint/badge.svg)](https://github.com/tmttn/home-assistant-config/actions?query=workflow%3A%22Yaml+Lint%22)
 
@@ -484,9 +484,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 <!-- end-addons -->
 
 <!-- start-automations -->
-
 # Automations - Table of Content
-
 1. [Adaptive lighting 🌄🌇](#adaptive-lighting-) (3 automations)
 1. [Alarm clock ⏰](#alarm-clock-) (1 automations)
 1. [Apple Watch ⌚](#apple-watch-) (12 automations)
@@ -498,7 +496,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Frontend 👨‍💻](#frontend-) (3 automations)
 1. [KEF DSP 🔈🎛](#kef-dsp-) (12 automations)
 1. [Leaving 👞](#leaving-) (4 automations)
-1. [Light 💡](#light-) (19 automations)
+1. [Light 💡](#light-) (16 automations)
 1. [Lovelace 👨‍💻](#lovelace-) (1 automations)
 1. [LSX 🔈](#lsx-) (2 automations)
 1. [Media player 🔈📺](#media-player-) (6 automations)
@@ -514,817 +512,744 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Vacuum 🧹](#vacuum-) (6 automations)
 1. [Work 💼](#work-) (3 automations)
 
-⚠️ Total number of automations: **120** ⚠️
 
-## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/84ddde022abad6d2901921952f4620f50f0c195d/automations/adaptive_lighting.yaml)
+⚠️ Total number of automations: **117** ⚠️
 
-### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/84ddde022abad6d2901921952f4620f50f0c195d/automations/adaptive_lighting.yaml#L11)
+## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/adaptive_lighting.yaml)
+### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/adaptive_lighting.yaml#L11)
 
-_which uses:_
+  *which uses:*
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
 
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
+### [Reset manual_control after 1 hour](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/adaptive_lighting.yaml#L69)
 
-### [Reset manual_control after 1 hour](https://github.com/tmttn/home-assistant-config/blob/84ddde022abad6d2901921952f4620f50f0c195d/automations/adaptive_lighting.yaml#L69)
 
-### [Notify manual_control](https://github.com/tmttn/home-assistant-config/blob/84ddde022abad6d2901921952f4620f50f0c195d/automations/adaptive_lighting.yaml#L93)
+### [Notify manual_control](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/adaptive_lighting.yaml#L93)
 
-[^ toc](#automations---table-of-content)
-
-## [Alarm clock ⏰](https://github.com/tmttn/home-assistant-config/blob/6ed0cd6c2c3675e9c4a3d9d8771348c148545a3d/automations/alarm_clock.yaml)
-
-### [Wake up with Spotify and light](https://github.com/tmttn/home-assistant-config/blob/6ed0cd6c2c3675e9c4a3d9d8771348c148545a3d/automations/alarm_clock.yaml#L11)
-
-_which uses:_
-
-- [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L46)
-- [input_boolean.wake_up_light](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L63)
-- [input_boolean.wake_up_with_spotify](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L87)
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-- [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/includes/sensors.yaml#L246)
 
 [^ toc](#automations---table-of-content)
 
-## [Apple Watch ⌚](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml)
 
-### [Play or Pause the TV](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L11)
+## [Alarm clock ⏰](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/alarm_clock.yaml)
+### [Wake up with Spotify and light](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/alarm_clock.yaml#L11)
 
-### [Minimal lights bedroom](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L25)
-
-### [Fix TV sound](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L40)
-
-_which uses:_
-
-- [script.fix_sound](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L332)
-
-### [Set sleep mode](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L49)
-
-_which uses:_
-
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-
-### [Set lights](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L79)
-
-_which uses:_
-
-- [script.cozy_lights_bedroom](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L133)
-- [script.cozy_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L94)
-- [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L578)
-- [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L184)
-
-### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L170)
-
-### [Portfolio value](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L190)
-
-### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L206)
-
-_which uses:_
-
-- [script.vacuum_command](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L518)
-
-### [Movie time](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L235)
-
-### [Reset adaptive lighting](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L254)
-
-_which uses:_
-
-- [script.reset_adaptive_lighting](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L592)
-
-### [Set temperature](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L263)
-
-### [Where is other person?](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/automations/apple_watch.yaml#L293)
+  *which uses:*
+  - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L46)
+  - [input_boolean.wake_up_light](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L63)
+  - [input_boolean.wake_up_with_spotify](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L87)
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
+  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/f09de290eb8b3fe58835abca15e36c8829cc321e/includes/sensors.yaml#L240)
 
 [^ toc](#automations---table-of-content)
 
-## [Arriving 👞](https://github.com/tmttn/home-assistant-config/blob/b7890ef2b9fb512af2df0b213f0c39cc0391b244/automations/arriving.yaml)
 
-### [Switch music from iPhone to speakers if no one is home](https://github.com/tmttn/home-assistant-config/blob/b7890ef2b9fb512af2df0b213f0c39cc0391b244/automations/arriving.yaml#L13)
+## [Apple Watch ⌚](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml)
+### [Play or Pause the TV](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L11)
 
-_which uses:_
 
-- [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L22)
+### [Minimal lights bedroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L25)
 
-[^ toc](#automations---table-of-content)
 
-## [Climate 🔥🥶](https://github.com/tmttn/home-assistant-config/blob/2d558286971b3ecf92b9d4166fbaace2861c3c35/automations/climate.yaml)
+### [Fix TV sound](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L40)
 
-### [Turn on the heating 30 min before waking up](https://github.com/tmttn/home-assistant-config/blob/2d558286971b3ecf92b9d4166fbaace2861c3c35/automations/climate.yaml#L12)
+  *which uses:*
+  - [script.fix_sound](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L332)
 
-_which uses:_
+### [Set sleep mode](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L49)
 
-- [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L46)
-- [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L40)
-- [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L302)
-- [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/includes/sensors.yaml#L238)
+  *which uses:*
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
 
-### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/2d558286971b3ecf92b9d4166fbaace2861c3c35/automations/climate.yaml#L26)
+### [Set lights](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L79)
 
-_which uses:_
+  *which uses:*
+  - [script.cozy_lights_bedroom](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L133)
+  - [script.cozy_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L94)
+  - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L578)
+  - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L184)
 
-- [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L40)
-- [input_number.temperature_high](https://github.com/tmttn/home-assistant-config/blob/b8c88b2b0cbb45093573d24cce5c8d3b07e7683e/includes/input_numbers.yaml#L20)
-- [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L302)
-- [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L150)
+### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L169)
 
-### [Turn off the heating at 22:00](https://github.com/tmttn/home-assistant-config/blob/2d558286971b3ecf92b9d4166fbaace2861c3c35/automations/climate.yaml#L51)
 
-_which uses:_
+### [Portfolio value](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L189)
 
-- [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L40)
-- [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b8c88b2b0cbb45093573d24cce5c8d3b07e7683e/includes/input_numbers.yaml#L12)
-- [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L293)
-- [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L150)
 
-### [Turn on heating again after notification](https://github.com/tmttn/home-assistant-config/blob/2d558286971b3ecf92b9d4166fbaace2861c3c35/automations/climate.yaml#L72)
+### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L205)
 
-_which uses:_
+  *which uses:*
+  - [script.vacuum_command](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L518)
 
-- [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L302)
+### [Movie time](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L234)
 
-### [Set outside temperature every hour](https://github.com/tmttn/home-assistant-config/blob/2d558286971b3ecf92b9d4166fbaace2861c3c35/automations/climate.yaml#L81)
 
-### [Warning when heating on and living room door open](https://github.com/tmttn/home-assistant-config/blob/2d558286971b3ecf92b9d4166fbaace2861c3c35/automations/climate.yaml#L92)
+### [Reset adaptive lighting](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L253)
 
-_which uses:_
+  *which uses:*
+  - [script.reset_adaptive_lighting](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L592)
 
-- [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b8c88b2b0cbb45093573d24cce5c8d3b07e7683e/includes/input_numbers.yaml#L12)
+### [Set temperature](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L262)
 
-### [Set temperature setpoint to 50 °C](https://github.com/tmttn/home-assistant-config/blob/2d558286971b3ecf92b9d4166fbaace2861c3c35/automations/climate.yaml#L126)
+
+### [Where is other person?](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L292)
+
 
 [^ toc](#automations---table-of-content)
 
-## [Control switches 🎛](https://github.com/tmttn/home-assistant-config/blob/b133cb5d69be8eb916f63d91ecf034d9708ebe07/automations/control_switches.yaml)
 
-### [Living room Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/b133cb5d69be8eb916f63d91ecf034d9708ebe07/automations/control_switches.yaml#L12)
+## [Arriving 👞](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/arriving.yaml)
+### [Switch music from iPhone to speakers if no one is home](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/arriving.yaml#L13)
 
-_which uses:_
-
-- [input_select.last_script_living_room](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L25)
-- [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L212)
-- [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L270)
-- [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L184)
-
-### [Bedroom Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/b133cb5d69be8eb916f63d91ecf034d9708ebe07/automations/control_switches.yaml#L48)
-
-_which uses:_
-
-- [input_select.last_script_bedroom](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L31)
-- [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L212)
-- [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L270)
-- [script.white_lights_bedroom](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L198)
-
-### [Living room Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/b133cb5d69be8eb916f63d91ecf034d9708ebe07/automations/control_switches.yaml#L84)
-
-_which uses:_
-
-- [input_select.last_script_living_room](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L25)
-- [script.fix_sound](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L332)
-- [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L212)
-- [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L270)
-
-### [Bedroom Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/b133cb5d69be8eb916f63d91ecf034d9708ebe07/automations/control_switches.yaml#L134)
-
-_which uses:_
-
-- [input_select.last_script_bedroom](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L31)
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-- [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L212)
-- [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L270)
-- [script.turn_off_everything](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L252)
-- [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/includes/sensors.yaml#L246)
-
-### [Bathroom Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/b133cb5d69be8eb916f63d91ecf034d9708ebe07/automations/control_switches.yaml#L220)
-
-_which uses:_
-
-- [input_select.bathroom_color](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L37)
-- [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L212)
-
-### [Downstairs Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/b133cb5d69be8eb916f63d91ecf034d9708ebe07/automations/control_switches.yaml#L257)
-
-_which uses:_
-
-- [script.arriving](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L317)
-- [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L293)
-- [script.start_spotify](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L39)
-- [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L235)
-- [sensor.favorite_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/b815be9edc303f19dbd8d776b4564a2433bbbd8e/includes/sensors.yaml#L75)
+  *which uses:*
+  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L22)
 
 [^ toc](#automations---table-of-content)
 
-## [Cube ∛](https://github.com/tmttn/home-assistant-config/blob/b3c1aba4024a184d9d93ca69382a090fc38a34bd/automations/cube.yaml)
 
-### [Perform operation](https://github.com/tmttn/home-assistant-config/blob/b3c1aba4024a184d9d93ca69382a090fc38a34bd/automations/cube.yaml#L12)
+## [Climate 🔥🥶](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml)
+### [Turn on the heating 30 min before waking up](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L12)
 
-_which uses:_
+  *which uses:*
+  - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L46)
+  - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L40)
+  - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L302)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/f09de290eb8b3fe58835abca15e36c8829cc321e/includes/sensors.yaml#L232)
 
-- [input_select.cube_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L18)
-- [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L71)
+### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L26)
 
-### [Rotate the cube](https://github.com/tmttn/home-assistant-config/blob/b3c1aba4024a184d9d93ca69382a090fc38a34bd/automations/cube.yaml#L74)
+  *which uses:*
+  - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L40)
+  - [input_number.temperature_high](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L20)
+  - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L302)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L150)
 
-_which uses:_
+### [Turn off the heating at 22:00](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L51)
 
-- [input_select.cube_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L18)
+  *which uses:*
+  - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L40)
+  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L12)
+  - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L293)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L150)
 
-[^ toc](#automations---table-of-content)
+### [Turn on heating again after notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L72)
 
-## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/7fed19ad132833e0ab1b4405356a9f084e1f0004/automations/doorbell.yaml)
+  *which uses:*
+  - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L302)
 
-### [Click the button](https://github.com/tmttn/home-assistant-config/blob/7fed19ad132833e0ab1b4405356a9f084e1f0004/automations/doorbell.yaml#L11)
+### [Set outside temperature every hour](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L81)
 
-[^ toc](#automations---table-of-content)
 
-## [Frontend 👨‍💻](https://github.com/tmttn/home-assistant-config/blob/87197a46e9db3a7fd566278fbdfc6f076a767a44/automations/frontend.yaml)
+### [Warning when heating on and living room door open](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L92)
 
-### [Turn on dark mode](https://github.com/tmttn/home-assistant-config/blob/87197a46e9db3a7fd566278fbdfc6f076a767a44/automations/frontend.yaml#L11)
+  *which uses:*
+  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L12)
 
-_which uses:_
+### [Set temperature setpoint to 50 °C](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L126)
 
-- [input_boolean.dark_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L32)
-
-### [Turn on light mode](https://github.com/tmttn/home-assistant-config/blob/87197a46e9db3a7fd566278fbdfc6f076a767a44/automations/frontend.yaml#L22)
-
-_which uses:_
-
-- [input_boolean.dark_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L32)
-
-### [Change theme](https://github.com/tmttn/home-assistant-config/blob/87197a46e9db3a7fd566278fbdfc6f076a767a44/automations/frontend.yaml#L33)
-
-_which uses:_
-
-- [input_boolean.dark_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L32)
-- [input_boolean.theme_alternative](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L35)
-- [input_select.theme](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L46)
 
 [^ toc](#automations---table-of-content)
 
-## [KEF DSP 🔈🎛](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml)
 
-### [Sync desk_db](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L19)
+## [Control switches 🎛](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/control_switches.yaml)
+### [Living room Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/control_switches.yaml#L12)
 
-_which uses:_
+  *which uses:*
+  - [input_select.last_script_living_room](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L25)
+  - [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L212)
+  - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L270)
+  - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L184)
 
-- [input_number.kef_ls50_desk_db](https://github.com/tmttn/home-assistant-config/blob/b8c88b2b0cbb45093573d24cce5c8d3b07e7683e/includes/input_numbers.yaml#L28)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
+### [Bedroom Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/control_switches.yaml#L48)
 
-### [Sync wall_db](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L34)
+  *which uses:*
+  - [input_select.last_script_bedroom](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L31)
+  - [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L212)
+  - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L270)
+  - [script.white_lights_bedroom](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L198)
 
-_which uses:_
+### [Living room Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/control_switches.yaml#L84)
 
-- [input_number.kef_ls50_wall_db](https://github.com/tmttn/home-assistant-config/blob/b8c88b2b0cbb45093573d24cce5c8d3b07e7683e/includes/input_numbers.yaml#L35)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
+  *which uses:*
+  - [input_select.last_script_living_room](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L25)
+  - [script.fix_sound](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L332)
+  - [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L212)
+  - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L270)
 
-### [Sync treble_db](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L49)
+### [Bedroom Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/control_switches.yaml#L134)
 
-_which uses:_
+  *which uses:*
+  - [input_select.last_script_bedroom](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L31)
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
+  - [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L212)
+  - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L270)
+  - [script.turn_off_everything](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L252)
+  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/f09de290eb8b3fe58835abca15e36c8829cc321e/includes/sensors.yaml#L240)
 
-- [input_number.kef_ls50_treble_db](https://github.com/tmttn/home-assistant-config/blob/b8c88b2b0cbb45093573d24cce5c8d3b07e7683e/includes/input_numbers.yaml#L42)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
+### [Bathroom Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/control_switches.yaml#L220)
 
-### [Sync high_hz](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L64)
+  *which uses:*
+  - [input_select.bathroom_color](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L37)
+  - [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L212)
 
-_which uses:_
+### [Downstairs Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/control_switches.yaml#L257)
 
-- [input_number.kef_ls50_high_hz](https://github.com/tmttn/home-assistant-config/blob/b8c88b2b0cbb45093573d24cce5c8d3b07e7683e/includes/input_numbers.yaml#L49)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
-
-### [Sync low_hz](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L79)
-
-_which uses:_
-
-- [input_number.kef_ls50_low_hz](https://github.com/tmttn/home-assistant-config/blob/b8c88b2b0cbb45093573d24cce5c8d3b07e7683e/includes/input_numbers.yaml#L56)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
-
-### [Sync sub_db](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L94)
-
-_which uses:_
-
-- [input_number.kef_ls50_sub_db](https://github.com/tmttn/home-assistant-config/blob/b8c88b2b0cbb45093573d24cce5c8d3b07e7683e/includes/input_numbers.yaml#L63)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
-
-### [Sync sub_polarity](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L116)
-
-_which uses:_
-
-- [input_select.kef_ls50_sub_polarity](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L90)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
-
-### [Sync bass_extension](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L131)
-
-_which uses:_
-
-- [input_select.kef_ls50_bass_extension](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L97)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
-
-### [Sync desk_mode](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L153)
-
-_which uses:_
-
-- [input_boolean.kef_ls50_desk_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L49)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
-
-### [Sync wall_mode](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L168)
-
-_which uses:_
-
-- [input_boolean.kef_ls50_wall_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L52)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
-
-### [Sync phase_correction](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L183)
-
-_which uses:_
-
-- [input_boolean.kef_ls50_phase_correction](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L55)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
-
-### [Sync high_pass](https://github.com/tmttn/home-assistant-config/blob/3403a5a3107d54c2a71b64d1fcf9d04b54498a93/automations/kef_dsp.yaml#L198)
-
-_which uses:_
-
-- [input_boolean.kef_ls50_high_pass](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L58)
-- [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L406)
+  *which uses:*
+  - [script.arriving](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L317)
+  - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L293)
+  - [script.start_spotify](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L39)
+  - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L235)
+  - [sensor.favorite_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/f09de290eb8b3fe58835abca15e36c8829cc321e/includes/sensors.yaml#L69)
 
 [^ toc](#automations---table-of-content)
 
-## [Leaving 👞](https://github.com/tmttn/home-assistant-config/blob/7fed19ad132833e0ab1b4405356a9f084e1f0004/automations/leaving.yaml)
 
-### [Automatically turn off everything](https://github.com/tmttn/home-assistant-config/blob/7fed19ad132833e0ab1b4405356a9f084e1f0004/automations/leaving.yaml#L12)
+## [Cube ∛](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/cube.yaml)
+### [Perform operation](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/cube.yaml#L12)
 
-_which uses:_
+  *which uses:*
+  - [input_select.cube_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L18)
+  - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L71)
 
-- [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L22)
-- [script.leaving](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L311)
-- [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L135)
-- [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L150)
-- [binary_sensor.someone_in_the_house_in_last_hour](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L38)
+### [Rotate the cube](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/cube.yaml#L74)
 
-### [Ask to turn off everything](https://github.com/tmttn/home-assistant-config/blob/7fed19ad132833e0ab1b4405356a9f084e1f0004/automations/leaving.yaml#L40)
-
-_which uses:_
-
-- [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L22)
-- [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L135)
-- [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L150)
-
-### [Turn off everything after notification](https://github.com/tmttn/home-assistant-config/blob/7fed19ad132833e0ab1b4405356a9f084e1f0004/automations/leaving.yaml#L70)
-
-_which uses:_
-
-- [script.leaving](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L311)
-
-### [Downstairs Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/7fed19ad132833e0ab1b4405356a9f084e1f0004/automations/leaving.yaml#L80)
-
-_which uses:_
-
-- [script.turn_off_everything](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L252)
+  *which uses:*
+  - [input_select.cube_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L18)
 
 [^ toc](#automations---table-of-content)
 
-## [Light 💡](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml)
 
-### [Turn on living room](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L35)
+## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/doorbell.yaml)
+### [Click the button](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/doorbell.yaml#L11)
 
-_which uses:_
-
-- [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L51)
-
-### [Turn off living room](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L44)
-
-_which uses:_
-
-- [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L51)
-
-### [Toggle kitchen ceiling](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L59)
-
-_which uses:_
-
-- [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L65)
-
-### [Turn on kitchen counter if sleep mode is off](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L69)
-
-_which uses:_
-
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-- [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L65)
-
-### [Turn off kitchen counter](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L84)
-
-_which uses:_
-
-- [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L65)
-
-### [Toggle bathroom](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L100)
-
-_which uses:_
-
-- [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L44)
-
-### [Toggle toilet](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L117)
-
-_which uses:_
-
-- [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L59)
-
-### [Turn on hall](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L133)
-
-_which uses:_
-
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-- [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L578)
-- [binary_sensor.activity_in_hall](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L71)
-
-### [Turn off hall](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L163)
-
-_which uses:_
-
-- [binary_sensor.activity_in_hall](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L71)
-
-### [Automatically turn on the bedroom](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L183)
-
-_which uses:_
-
-- [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L37)
-- [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L28)
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-- [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L578)
-- [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L78)
-
-### [Automatically turn off the bedroom](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L213)
-
-_which uses:_
-
-- [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L37)
-- [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L28)
-- [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L78)
-
-### [Turn off bedroom lights auto switch](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L236)
-
-_which uses:_
-
-- [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L28)
-
-### [Turn on automatic_bedroom_lights switch](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L262)
-
-_which uses:_
-
-- [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L37)
-
-### [Turn off bedroom after 2 hours of inactivity](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L270)
-
-_which uses:_
-
-- [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L78)
-
-### [Turn off toilet (extra check)](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L289)
-
-In case the other automation failed
-
-_which uses:_
-
-- [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L59)
-
-### [Turn off bathroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L305)
-
-In case the other automation failed
-
-_which uses:_
-
-- [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L44)
-
-### [Turn off kitchen (extra check)](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L321)
-
-In case the other automation failed
-
-_which uses:_
-
-- [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L65)
-
-### [Turn off hall (extra check)](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L337)
-
-In case the other automation failed
-
-_which uses:_
-
-- [binary_sensor.activity_in_hall](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L71)
-
-### [Turn off bedroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/864acad1b80ef40eafc78bcfd1ab5482f73a8716/automations/light.yaml#L360)
-
-In case the other automation failed
-
-_which uses:_
-
-- [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L37)
-- [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L28)
-- [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L78)
 
 [^ toc](#automations---table-of-content)
 
-## [Lovelace 👨‍💻](https://github.com/tmttn/home-assistant-config/blob/dc715e0185302b39caf58117fcfeb03d71d99de4/automations/lovelace.yaml)
 
-### [Convert lovelace.json to lovelace-ui.yaml](https://github.com/tmttn/home-assistant-config/blob/dc715e0185302b39caf58117fcfeb03d71d99de4/automations/lovelace.yaml#L11)
+## [Frontend 👨‍💻](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/frontend.yaml)
+### [Turn on dark mode](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/frontend.yaml#L11)
 
-_which uses:_
+  *which uses:*
+  - [input_boolean.dark_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L32)
 
-- [shell_command.chores](https://github.com/tmttn/home-assistant-config/blob/160ad08e4015f9a698a27dcadbd43ba630a82662/includes/shell_commands.yaml#L13)
-- [shell_command.convert_lovelace](https://github.com/tmttn/home-assistant-config/blob/160ad08e4015f9a698a27dcadbd43ba630a82662/includes/shell_commands.yaml#L11)
+### [Turn on light mode](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/frontend.yaml#L22)
 
-[^ toc](#automations---table-of-content)
+  *which uses:*
+  - [input_boolean.dark_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L32)
 
-## [LSX 🔈](https://github.com/tmttn/home-assistant-config/blob/ae2ef498666f0558e3e8fcccd2813dde5237c770/automations/lsx-control.yaml)
+### [Change theme](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/frontend.yaml#L33)
 
-### [Sync volume](https://github.com/tmttn/home-assistant-config/blob/ae2ef498666f0558e3e8fcccd2813dde5237c770/automations/lsx-control.yaml#L12)
-
-_which uses:_
-
-- [input_select.lsx_volume](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L58)
-
-### [Sync source](https://github.com/tmttn/home-assistant-config/blob/ae2ef498666f0558e3e8fcccd2813dde5237c770/automations/lsx-control.yaml#L43)
-
-_which uses:_
-
-- [input_select.lsx_source](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L82)
+  *which uses:*
+  - [input_boolean.dark_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L32)
+  - [input_boolean.theme_alternative](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L35)
+  - [input_select.theme](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L46)
 
 [^ toc](#automations---table-of-content)
 
-## [Media player 🔈📺](https://github.com/tmttn/home-assistant-config/blob/0504597d07b22023e42b51eca48dbb31fecea73b/automations/media_player.yaml)
 
-### [Turn on Opt when TV is on and Spotify is not playing and not Usb](https://github.com/tmttn/home-assistant-config/blob/0504597d07b22023e42b51eca48dbb31fecea73b/automations/media_player.yaml#L12)
+## [KEF DSP 🔈🎛](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml)
+### [Sync desk_db](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L19)
 
-The speaker is connected via an optical cable to the TV. Whenever the speakers
+  *which uses:*
+  - [input_number.kef_ls50_desk_db](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L28)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync wall_db](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L34)
+
+  *which uses:*
+  - [input_number.kef_ls50_wall_db](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L35)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync treble_db](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L49)
+
+  *which uses:*
+  - [input_number.kef_ls50_treble_db](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L42)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync high_hz](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L64)
+
+  *which uses:*
+  - [input_number.kef_ls50_high_hz](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L49)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync low_hz](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L79)
+
+  *which uses:*
+  - [input_number.kef_ls50_low_hz](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L56)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync sub_db](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L94)
+
+  *which uses:*
+  - [input_number.kef_ls50_sub_db](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L63)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync sub_polarity](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L116)
+
+  *which uses:*
+  - [input_select.kef_ls50_sub_polarity](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L90)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync bass_extension](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L131)
+
+  *which uses:*
+  - [input_select.kef_ls50_bass_extension](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L97)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync desk_mode](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L153)
+
+  *which uses:*
+  - [input_boolean.kef_ls50_desk_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L49)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync wall_mode](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L168)
+
+  *which uses:*
+  - [input_boolean.kef_ls50_wall_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L52)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync phase_correction](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L183)
+
+  *which uses:*
+  - [input_boolean.kef_ls50_phase_correction](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L55)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+### [Sync high_pass](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/kef_dsp.yaml#L198)
+
+  *which uses:*
+  - [input_boolean.kef_ls50_high_pass](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L58)
+  - [script.sync_kef_dsp](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L406)
+
+[^ toc](#automations---table-of-content)
+
+
+## [Leaving 👞](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml)
+### [Automatically turn off everything](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml#L12)
+
+  *which uses:*
+  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L22)
+  - [script.leaving](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L311)
+  - [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L135)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L150)
+  - [binary_sensor.someone_in_the_house_in_last_hour](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L38)
+
+### [Ask to turn off everything](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml#L40)
+
+  *which uses:*
+  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L22)
+  - [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L135)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L150)
+
+### [Turn off everything after notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml#L70)
+
+  *which uses:*
+  - [script.leaving](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L311)
+
+### [Downstairs Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml#L79)
+
+  *which uses:*
+  - [script.turn_off_everything](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L252)
+
+[^ toc](#automations---table-of-content)
+
+
+## [Light 💡](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml)
+### [Turn on living room](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L35)
+
+  *which uses:*
+  - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L51)
+
+### [Turn off living room](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L44)
+
+  *which uses:*
+  - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L51)
+
+### [Toggle kitchen ceiling](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L59)
+
+  *which uses:*
+  - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L65)
+
+### [Turn on kitchen counter if sleep mode is off](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L69)
+
+  *which uses:*
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
+  - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L65)
+
+### [Turn off kitchen counter](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L84)
+
+  *which uses:*
+  - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L65)
+
+### [Toggle bathroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L100)
+
+  *which uses:*
+  - [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L44)
+
+### [Toggle toilet](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L116)
+
+  *which uses:*
+  - [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L59)
+
+### [Automatically turn on the bedroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L182)
+
+  *which uses:*
+  - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L37)
+  - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L28)
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
+  - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L578)
+  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L78)
+
+### [Automatically turn off the bedroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L212)
+
+  *which uses:*
+  - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L37)
+  - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L28)
+  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L78)
+
+### [Turn off bedroom lights auto switch](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L235)
+
+  *which uses:*
+  - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L28)
+
+### [Turn on automatic_bedroom_lights switch](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L261)
+
+  *which uses:*
+  - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L37)
+
+### [Turn off bedroom after 2 hours of inactivity](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L269)
+
+  *which uses:*
+  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L78)
+
+### [Turn off toilet (extra check)](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L288)
+
+  In case the other automation failed
+
+  *which uses:*
+  - [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L59)
+
+### [Turn off bathroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L304)
+
+  In case the other automation failed
+
+  *which uses:*
+  - [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L44)
+
+### [Turn off kitchen (extra check)](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L320)
+
+  In case the other automation failed
+
+  *which uses:*
+  - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L65)
+
+### [Turn off bedroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/light.yaml#L359)
+
+  In case the other automation failed
+
+  *which uses:*
+  - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L37)
+  - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L28)
+  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L78)
+
+[^ toc](#automations---table-of-content)
+
+
+## [Lovelace 👨‍💻](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/lovelace.yaml)
+### [Convert lovelace.json to lovelace-ui.yaml](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/lovelace.yaml#L11)
+
+  *which uses:*
+  - [shell_command.chores](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/includes/shell_commands.yaml#L13)
+  - [shell_command.convert_lovelace](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/includes/shell_commands.yaml#L11)
+
+[^ toc](#automations---table-of-content)
+
+
+## [LSX 🔈](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/lsx-control.yaml)
+### [Sync volume](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/lsx-control.yaml#L12)
+
+  *which uses:*
+  - [input_select.lsx_volume](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L58)
+
+### [Sync source](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/lsx-control.yaml#L43)
+
+  *which uses:*
+  - [input_select.lsx_source](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L82)
+
+[^ toc](#automations---table-of-content)
+
+
+## [Media player 🔈📺](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/media_player.yaml)
+### [Turn on Opt when TV is on and Spotify is not playing and not Usb](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/media_player.yaml#L12)
+
+  The speaker is connected via an optical cable to the TV. Whenever the speakers
 aren't playing Spotify (via WiFi) directly, switch the source of the speakers
 to "Opt".
 
-### [Turn off speakers when turning off TV](https://github.com/tmttn/home-assistant-config/blob/0504597d07b22023e42b51eca48dbb31fecea73b/automations/media_player.yaml#L44)
 
-### [If speakers off and TV on, turn on the speaker on TV state change](https://github.com/tmttn/home-assistant-config/blob/0504597d07b22023e42b51eca48dbb31fecea73b/automations/media_player.yaml#L62)
 
-### [Update Spotify entity when TV is on every 5 seconds](https://github.com/tmttn/home-assistant-config/blob/0504597d07b22023e42b51eca48dbb31fecea73b/automations/media_player.yaml#L86)
+### [Turn off speakers when turning off TV](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/media_player.yaml#L44)
 
-### [Sync KEF LS50 and TV volume](https://github.com/tmttn/home-assistant-config/blob/0504597d07b22023e42b51eca48dbb31fecea73b/automations/media_player.yaml#L101)
 
-### [Automatically turn off TV and speakers after two hours of inactivity](https://github.com/tmttn/home-assistant-config/blob/0504597d07b22023e42b51eca48dbb31fecea73b/automations/media_player.yaml#L130)
+### [If speakers off and TV on, turn on the speaker on TV state change](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/media_player.yaml#L62)
 
-[^ toc](#automations---table-of-content)
 
-## [Music 🎵](https://github.com/tmttn/home-assistant-config/blob/01d3b597b5a83ac6d50de985c57fb8f892399ecf/automations/music.yaml)
+### [Update Spotify entity when TV is on every 5 seconds](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/media_player.yaml#L86)
 
-### [Start playlist](https://github.com/tmttn/home-assistant-config/blob/01d3b597b5a83ac6d50de985c57fb8f892399ecf/automations/music.yaml#L11)
 
-_which uses:_
+### [Sync KEF LS50 and TV volume](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/media_player.yaml#L101)
 
-- [input_boolean.start_the_music](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L12)
-- [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L71)
 
-### [Switch music from iPhone to speakers if coming home](https://github.com/tmttn/home-assistant-config/blob/01d3b597b5a83ac6d50de985c57fb8f892399ecf/automations/music.yaml#L26)
+### [Automatically turn off TV and speakers after two hours of inactivity](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/media_player.yaml#L130)
 
-_which uses:_
-
-- [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L22)
 
 [^ toc](#automations---table-of-content)
 
-## [Notifications 🔔](https://github.com/tmttn/home-assistant-config/blob/8e4bf81c051696c7ef4e4b7a146461a3e86524ea/automations/notifications.yaml)
 
-### [tanja arrived at Rotterdam Centraal](https://github.com/tmttn/home-assistant-config/blob/8e4bf81c051696c7ef4e4b7a146461a3e86524ea/automations/notifications.yaml#L12)
+## [Music 🎵](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/music.yaml)
+### [Start playlist](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/music.yaml#L11)
 
-[^ toc](#automations---table-of-content)
+  *which uses:*
+  - [input_boolean.start_the_music](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L12)
+  - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L71)
 
-## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/plant.yaml)
+### [Switch music from iPhone to speakers if coming home](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/music.yaml#L26)
 
-### [Problem with Ficus microcarpa Ginseng](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/plant.yaml#L11)
-
-_which uses:_
-
-- [plant.ficus_microcarpa_ginseng](https://github.com/tmttn/home-assistant-config/blob/48d69dcca0180bde84b32553225cd38e2bf10a99/includes/plant.yaml#L35)
-
-### [Problem with Kentia Palm](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/plant.yaml#L29)
-
-_which uses:_
-
-- [plant.kentia_palm](https://github.com/tmttn/home-assistant-config/blob/48d69dcca0180bde84b32553225cd38e2bf10a99/includes/plant.yaml#L67)
-
-### [Problem with Yucca Elephantipes](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/plant.yaml#L47)
-
-_which uses:_
-
-- [plant.yucca_elephantipes](https://github.com/tmttn/home-assistant-config/blob/48d69dcca0180bde84b32553225cd38e2bf10a99/includes/plant.yaml#L51)
+  *which uses:*
+  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L22)
 
 [^ toc](#automations---table-of-content)
 
-## [Security 👮🚨](https://github.com/tmttn/home-assistant-config/blob/a332e6388c9bf0275b282fd9dfd3f388a073f807/automations/security.yaml)
 
-### [Motion detected but we are not home](https://github.com/tmttn/home-assistant-config/blob/a332e6388c9bf0275b282fd9dfd3f388a073f807/automations/security.yaml#L11)
+## [Notifications 🔔](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/notifications.yaml)
+### [Tanja arrived at Rotterdam Centraal](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/notifications.yaml#L12)
 
-_which uses:_
-
-- [binary_sensor.motion_detected](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L22)
-- [group.persons](https://github.com/tmttn/home-assistant-config/blob/16952d475c87bd853445afbc5531d5e6571fbd5e/includes/groups.yaml#L11)
-
-### [Door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/a332e6388c9bf0275b282fd9dfd3f388a073f807/automations/security.yaml#L44)
-
-_which uses:_
-
-- [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L22)
-
-### [No one is home but high power usage](https://github.com/tmttn/home-assistant-config/blob/a332e6388c9bf0275b282fd9dfd3f388a073f807/automations/security.yaml#L61)
-
-_which uses:_
-
-- [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L150)
-
-### [Office door has opened](https://github.com/tmttn/home-assistant-config/blob/a332e6388c9bf0275b282fd9dfd3f388a073f807/automations/security.yaml#L83)
-
-_which uses:_
-
-- [input_boolean.office_door_open_warning](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L25)
 
 [^ toc](#automations---table-of-content)
 
-## [Night mode 🌕🌑](https://github.com/tmttn/home-assistant-config/blob/cf3257e2b00c55b3c5adfd1c5a922296a06d04d7/automations/sleep_mode.yaml)
 
-### [Automatically turn off when alarm turns off or at 7AM](https://github.com/tmttn/home-assistant-config/blob/cf3257e2b00c55b3c5adfd1c5a922296a06d04d7/automations/sleep_mode.yaml#L12)
+## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/plant.yaml)
+### [Problem with Ficus microcarpa Ginseng](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/plant.yaml#L11)
 
-_which uses:_
+  *which uses:*
+  - [plant.ficus_microcarpa_ginseng](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/includes/plant.yaml#L35)
 
-- [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L46)
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
+### [Problem with Kentia Palm](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/plant.yaml#L29)
 
-### [Turn off automatic bedroom lights](https://github.com/tmttn/home-assistant-config/blob/cf3257e2b00c55b3c5adfd1c5a922296a06d04d7/automations/sleep_mode.yaml#L30)
+  *which uses:*
+  - [plant.kentia_palm](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/includes/plant.yaml#L67)
 
-_which uses:_
+### [Problem with Yucca Elephantipes](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/plant.yaml#L47)
 
-- [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L37)
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-
-### [Set low temperature when sleep mode turns on](https://github.com/tmttn/home-assistant-config/blob/cf3257e2b00c55b3c5adfd1c5a922296a06d04d7/automations/sleep_mode.yaml#L39)
-
-_which uses:_
-
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-- [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L293)
-
-### [Go from half to total sleeping mode](https://github.com/tmttn/home-assistant-config/blob/cf3257e2b00c55b3c5adfd1c5a922296a06d04d7/automations/sleep_mode.yaml#L47)
-
-When it is half sleeping mode and there is no activity in the house for more than an hour go to total sleeping mode.
-
-_which uses:_
-
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-- [binary_sensor.activity_outside_bedroom](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L87)
-
-### [Set sleeping mode in the living room](https://github.com/tmttn/home-assistant-config/blob/cf3257e2b00c55b3c5adfd1c5a922296a06d04d7/automations/sleep_mode.yaml#L70)
-
-Set the living room lights to sleep mode only when no-one is there anymore.
-
-_which uses:_
-
-- [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/c24d6e6c9aded06456477a0c3874d014884d37a6/includes/input_selects.yaml#L11)
-- [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L51)
+  *which uses:*
+  - [plant.yucca_elephantipes](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/includes/plant.yaml#L51)
 
 [^ toc](#automations---table-of-content)
 
-## [System 🖥](https://github.com/tmttn/home-assistant-config/blob/2c7fb3087a86e21ab7ca45c43468cb7e82b57466/automations/system.yaml)
 
-### [Warning about high CPU usage](https://github.com/tmttn/home-assistant-config/blob/2c7fb3087a86e21ab7ca45c43468cb7e82b57466/automations/system.yaml#L11)
+## [Security 👮🚨](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/security.yaml)
+### [Motion detected but we are not home](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/security.yaml#L11)
 
-### [Warning about high CPU temperature](https://github.com/tmttn/home-assistant-config/blob/2c7fb3087a86e21ab7ca45c43468cb7e82b57466/automations/system.yaml#L24)
+  *which uses:*
+  - [binary_sensor.motion_detected](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L22)
+  - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b6a4185a0aa26fd620862f75286c602812de29c6/includes/groups.yaml#L11)
 
-### [Warning about high Xbox temperature](https://github.com/tmttn/home-assistant-config/blob/2c7fb3087a86e21ab7ca45c43468cb7e82b57466/automations/system.yaml#L37)
+### [Door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/security.yaml#L44)
 
-### [Update DNS](https://github.com/tmttn/home-assistant-config/blob/2c7fb3087a86e21ab7ca45c43468cb7e82b57466/automations/system.yaml#L56)
+  *which uses:*
+  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L22)
 
-Update the DNS at Gandi to point my domain to my Home Assistant instance.
+### [No one is home but high power usage](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/security.yaml#L61)
 
-_which uses:_
+  *which uses:*
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L150)
 
-- [script.update_dns](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L323)
+### [Office door has opened](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/security.yaml#L83)
 
-### [Run chores](https://github.com/tmttn/home-assistant-config/blob/2c7fb3087a86e21ab7ca45c43468cb7e82b57466/automations/system.yaml#L64)
-
-Run shell and Python scripts in utils folder.
-
-_which uses:_
-
-- [shell_command.chores](https://github.com/tmttn/home-assistant-config/blob/160ad08e4015f9a698a27dcadbd43ba630a82662/includes/shell_commands.yaml#L13)
-
-### [MQTT sensors are not updating](https://github.com/tmttn/home-assistant-config/blob/2c7fb3087a86e21ab7ca45c43468cb7e82b57466/automations/system.yaml#L72)
-
-Check whether we are receiving messages over MQTT from my other HA instance.
-
-### [Battery level low](https://github.com/tmttn/home-assistant-config/blob/2c7fb3087a86e21ab7ca45c43468cb7e82b57466/automations/system.yaml#L85)
+  *which uses:*
+  - [input_boolean.office_door_open_warning](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L25)
 
 [^ toc](#automations---table-of-content)
 
-## [Test 🧪](https://github.com/tmttn/home-assistant-config/blob/a256d899992a29ac212cb13b7a29941bf6751d6f/automations/test.yaml)
 
-### [Listen to Adaptive Lighting events](https://github.com/tmttn/home-assistant-config/blob/a256d899992a29ac212cb13b7a29941bf6751d6f/automations/test.yaml#L11)
+## [Night mode 🌕🌑](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/sleep_mode.yaml)
+### [Automatically turn off when alarm turns off or at 7AM](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/sleep_mode.yaml#L12)
 
-### [Time](https://github.com/tmttn/home-assistant-config/blob/a256d899992a29ac212cb13b7a29941bf6751d6f/automations/test.yaml#L30)
+  *which uses:*
+  - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L46)
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
 
-### [Flash lights](https://github.com/tmttn/home-assistant-config/blob/a256d899992a29ac212cb13b7a29941bf6751d6f/automations/test.yaml#L43)
+### [Turn off automatic bedroom lights](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/sleep_mode.yaml#L30)
 
-### [Call update_entity after light.turn_on/turn_off](https://github.com/tmttn/home-assistant-config/blob/a256d899992a29ac212cb13b7a29941bf6751d6f/automations/test.yaml#L64)
+  *which uses:*
+  - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L37)
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
 
-[^ toc](#automations---table-of-content)
+### [Set low temperature when sleep mode turns on](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/sleep_mode.yaml#L39)
 
-## [Utilities 🧺👚🍽](https://github.com/tmttn/home-assistant-config/blob/66d951dc84a6d10ecb21cd9fb02ba20852afedeb/automations/utilities.yaml)
+  *which uses:*
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
+  - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L293)
 
-### [Washing machine or dishwasher started or finished](https://github.com/tmttn/home-assistant-config/blob/66d951dc84a6d10ecb21cd9fb02ba20852afedeb/automations/utilities.yaml#L12)
+### [Go from half to total sleeping mode](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/sleep_mode.yaml#L47)
 
-_which uses:_
+  When it is half sleeping mode and there is no activity in the house for more than an hour go to total sleeping mode.
 
-- [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L109)
-- [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L97)
 
-### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/66d951dc84a6d10ecb21cd9fb02ba20852afedeb/automations/utilities.yaml#L29)
+  *which uses:*
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
+  - [binary_sensor.activity_outside_bedroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L87)
 
-_which uses:_
+### [Set sleeping mode in the living room](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/sleep_mode.yaml#L70)
 
-- [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L479)
-- [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L97)
+  Set the living room lights to sleep mode only when no-one is there anymore.
 
-### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/66d951dc84a6d10ecb21cd9fb02ba20852afedeb/automations/utilities.yaml#L41)
 
-_which uses:_
-
-- [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/ed2596a6bd0eddf3c46a2f508c04c4f717856273/scripts.yaml#L479)
-- [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L109)
-
-[^ toc](#automations---table-of-content)
-
-## [Vacation mode 🏝](https://github.com/tmttn/home-assistant-config/blob/585f51eecf4aef718381047225b29f960fd2751b/automations/vacation_mode.yaml)
-
-### [Auto turn on](https://github.com/tmttn/home-assistant-config/blob/585f51eecf4aef718381047225b29f960fd2751b/automations/vacation_mode.yaml#L11)
-
-_which uses:_
-
-- [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L22)
-- [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L19)
-- [group.persons](https://github.com/tmttn/home-assistant-config/blob/16952d475c87bd853445afbc5531d5e6571fbd5e/includes/groups.yaml#L11)
-
-### [Auto turn off](https://github.com/tmttn/home-assistant-config/blob/585f51eecf4aef718381047225b29f960fd2751b/automations/vacation_mode.yaml#L31)
-
-_which uses:_
-
-- [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L22)
-- [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L19)
-- [group.persons](https://github.com/tmttn/home-assistant-config/blob/16952d475c87bd853445afbc5531d5e6571fbd5e/includes/groups.yaml#L11)
+  *which uses:*
+  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
+  - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L51)
 
 [^ toc](#automations---table-of-content)
 
-## [Vacuum 🧹](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/vacuum.yaml)
 
-### [Started cleaning](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/vacuum.yaml#L11)
+## [System 🖥](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/system.yaml)
+### [Warning about high CPU usage](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/system.yaml#L11)
 
-### [Stopped cleaning](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/vacuum.yaml#L23)
 
-_which uses:_
+### [Warning about high CPU temperature](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/system.yaml#L24)
 
-- [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L16)
 
-### [Reminder notification](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/vacuum.yaml#L37)
+### [Warning about high Xbox temperature](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/system.yaml#L37)
 
-_which uses:_
 
-- [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L144)
+### [Update DNS](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/system.yaml#L56)
 
-### [Cleanup if nobody is home](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/vacuum.yaml#L51)
+  Update the DNS at Gandi to point my domain to my Home Assistant instance.
 
-_which uses:_
+  *which uses:*
+  - [script.update_dns](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L323)
 
-- [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L16)
-- [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L22)
-- [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L19)
-- [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L144)
-- [group.persons](https://github.com/tmttn/home-assistant-config/blob/16952d475c87bd853445afbc5531d5e6571fbd5e/includes/groups.yaml#L11)
+### [Run chores](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/system.yaml#L64)
 
-### [Reset cleaned today](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/vacuum.yaml#L89)
+  Run shell and Python scripts in utils folder.
 
-_which uses:_
+  *which uses:*
+  - [shell_command.chores](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/includes/shell_commands.yaml#L13)
 
-- [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L16)
+### [MQTT sensors are not updating](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/system.yaml#L72)
 
-### [Reset to standard mode](https://github.com/tmttn/home-assistant-config/blob/734719c63de4b8f99a849719702e042913ec7832/automations/vacuum.yaml#L98)
+  Check whether we are receiving messages over MQTT from my other HA instance.
+
+
+### [Battery level low](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/system.yaml#L85)
+
+
+[^ toc](#automations---table-of-content)
+
+
+## [Test 🧪](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/test.yaml)
+### [Listen to Adaptive Lighting events](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/test.yaml#L11)
+
+
+### [Time](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/test.yaml#L30)
+
+
+### [Flash lights](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/test.yaml#L43)
+
+
+### [Call update_entity after light.turn_on/turn_off](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/test.yaml#L64)
+
 
 [^ toc](#automations---table-of-content)
 
-## [Work 💼](https://github.com/tmttn/home-assistant-config/blob/33f7f51622d8542228e98201ec6cd6e04eeebd03/automations/work.yaml)
 
-### [Go home notification](https://github.com/tmttn/home-assistant-config/blob/33f7f51622d8542228e98201ec6cd6e04eeebd03/automations/work.yaml#L11)
+## [Utilities 🧺👚🍽](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/utilities.yaml)
+### [Washing machine or dishwasher started or finished](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/utilities.yaml#L12)
 
-_which uses:_
+  *which uses:*
+  - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L109)
+  - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L97)
 
-- [input_boolean.work_hour_notification_sent](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L43)
-- [binary_sensor.worked_enough_today](https://github.com/tmttn/home-assistant-config/blob/3dde6241c54c3b5391b3e11282fecf865149c336/includes/binary_sensors.yaml#L121)
+### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/utilities.yaml#L29)
 
-### [Reset input_boolean at midnight](https://github.com/tmttn/home-assistant-config/blob/33f7f51622d8542228e98201ec6cd6e04eeebd03/automations/work.yaml#L32)
+  *which uses:*
+  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L479)
+  - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L97)
 
-_which uses:_
+### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/utilities.yaml#L41)
 
-- [input_boolean.work_hour_notification_sent](https://github.com/tmttn/home-assistant-config/blob/052f3d9f773716db137482cc28aab5300cb02095/includes/input_booleans.yaml#L43)
-
-### [Tom left work notification for Tanja](https://github.com/tmttn/home-assistant-config/blob/33f7f51622d8542228e98201ec6cd6e04eeebd03/automations/work.yaml#L44)
+  *which uses:*
+  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/scripts.yaml#L479)
+  - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L109)
 
 [^ toc](#automations---table-of-content)
+
+
+## [Vacation mode 🏝](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacation_mode.yaml)
+### [Auto turn on](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacation_mode.yaml#L11)
+
+  *which uses:*
+  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L22)
+  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L19)
+  - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b6a4185a0aa26fd620862f75286c602812de29c6/includes/groups.yaml#L11)
+
+### [Auto turn off](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacation_mode.yaml#L31)
+
+  *which uses:*
+  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L22)
+  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L19)
+  - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b6a4185a0aa26fd620862f75286c602812de29c6/includes/groups.yaml#L11)
+
+[^ toc](#automations---table-of-content)
+
+
+## [Vacuum 🧹](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacuum.yaml)
+### [Started cleaning](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacuum.yaml#L11)
+
+
+### [Stopped cleaning](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacuum.yaml#L23)
+
+  *which uses:*
+  - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L16)
+
+### [Reminder notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacuum.yaml#L37)
+
+  *which uses:*
+  - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L144)
+
+### [Cleanup if nobody is home](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacuum.yaml#L51)
+
+  *which uses:*
+  - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L16)
+  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L22)
+  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L19)
+  - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L144)
+  - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b6a4185a0aa26fd620862f75286c602812de29c6/includes/groups.yaml#L11)
+
+### [Reset cleaned today](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacuum.yaml#L89)
+
+  *which uses:*
+  - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L16)
+
+### [Reset to standard mode](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/vacuum.yaml#L98)
+
+
+[^ toc](#automations---table-of-content)
+
+
+## [Work 💼](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/work.yaml)
+### [Go home notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/work.yaml#L11)
+
+  *which uses:*
+  - [input_boolean.work_hour_notification_sent](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L43)
+  - [binary_sensor.worked_enough_today](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/includes/binary_sensors.yaml#L121)
+
+### [Reset input_boolean at midnight](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/work.yaml#L32)
+
+  *which uses:*
+  - [input_boolean.work_hour_notification_sent](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L43)
+
+### [Tom left work notification for Tanja](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/work.yaml#L44)
+
+
+[^ toc](#automations---table-of-content)
+
 
 <!-- end-automations -->
