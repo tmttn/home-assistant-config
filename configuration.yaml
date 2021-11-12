@@ -63,7 +63,7 @@ light: !include includes/lights.yaml
 wake_on_lan:
 proximity: !include includes/proximity.yaml
 timer: !include includes/timers.yaml
-# ios: !include includes/ios.yaml
+ios: !include includes/ios.yaml
 tplink: !include includes/tplink.yaml # causing https://github.com/home-assistant/core/issues/40743
 # webostv: !include includes/webostv.yaml
 vacuum: !include includes/vacuum.yaml
@@ -77,12 +77,12 @@ spotify: !include includes/spotify.yaml
 climate: !include includes/climate.yaml
 influxdb: !include includes/influxdb.yaml
 camera: !include includes/camera.yaml
-# intent:
-# intent_script: !include includes/intent_script.yaml
+intent:
+intent_script: !include includes/intent_script.yaml
 # image_processing: !include includes/image_processing.yaml
 # proxmoxve: !include includes/proxmoxve.yaml
 # panel_iframe: !include includes/panel_iframe.yaml
 
 # Custom components
-# pyscript: !include includes/pyscript.yaml
+pyscript: !include includes/pyscript.yaml
 adaptive_lighting: !include includes/adaptive_lighting.yaml
