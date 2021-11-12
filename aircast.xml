@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<aircast>
+<common>
+<enabled>1</enabled>
+<stop_receiver>0</stop_receiver>
+<media_volume>1.0000</media_volume>
+<latency></latency>
+<codec>flac</codec>
+<artwork></artwork>
+<drift>0</drift>
+<metadata>1</metadata>
+<flush>1</flush>
+</common>
+<main_log>info</main_log>
+<cast_log>info</cast_log>
+<util_log>warn</util_log>
+<log_limit>-1</log_limit>
+<max_players>32</max_players>
+<ports>0:0</ports>
+<binding>?</binding>
+<device>
+<udn>f019db20981d52c7887dc62a598439b3</udn>
+<name>Badkamer Wifi+</name>
+<mac>cc:cc:26:ac:c0:4e</mac>
+<enabled>1</enabled>
+</device>
+<device>
+<udn>1a3235b35969287c8a2fe941f8aa9e91</udn>
+<name>Keuken Display+</name>
+<mac>cc:cc:56:8c:0e:98</mac>
+<enabled>1</enabled>
+</device>
+<device>
+<udn>bd38550db015dfeef1eb52d8c181464a</udn>
+<name>SHIELD+</name>
+<mac>cc:cc:bd:8b:71:93</mac>
+<enabled>1</enabled>
+</device>
+<device>
+<udn>c7be149b614d28a8e7dd66f59e8d0e02</udn>
+<name>Google Home+</name>
+<mac>cc:cc:04:1e:f4:43</mac>
+<enabled>1</enabled>
+</device>
+<device>
+<udn>FC906BC2-FFD4-494A-B684-5C8CBDB730F8</udn>
+<name>Speakers onder+</name>
+<mac>cc:cc:75:d7:c7:c3</mac>
+<enabled>1</enabled>
+</device>
+<device>
+<udn>328140f2714b54fcb7339443ac2dfe59</udn>
+<name>Google Home Mini+</name>
+<mac>cc:cc:05:f4:4d:59</mac>
+<enabled>1</enabled>
+</device>
+<device>
+<udn>7C170B58-0A31-4DCD-B3B8-A11DD6BAFF73</udn>
+<name>Speakers boven+</name>
+<mac>cc:cc:57:e3:dc:8a</mac>
+<enabled>1</enabled>
+</device>
+</aircast>

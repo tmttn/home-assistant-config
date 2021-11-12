@@ -10,14 +10,14 @@
 #- from github.com/tmttn/home-assistant-config
 - name: Tom
   id: tom
-  user_id: 20cd19234fc24a3b9cd28570ee787a43
+  user_id: 5ee38b35098341c497a6c7a830742fbe
 # picture: !secret profile_photo_tom
   device_trackers:
     - device_tracker.tom_iphone # from iOS app
     - device_tracker.tom_iphone_ping
 - name: Tanja
   id: tanja
-  user_id:  ee8e7976decf431bab31484bf0af4403
+  user_id: 3647a3cda1b843dfa9fa724038fdd82b
 # picture: !secret profile_photo_tanja
   device_trackers:
     - device_tracker.tanja_iphone # from iOS app
