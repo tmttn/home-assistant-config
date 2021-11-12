@@ -10,10 +10,15 @@
 #- from github.com/tmttn/home-assistant-config
 
 - platform: group
-  name: Bedroom lights
+  name: Bedroom ceiling lights
   entities:
     - light.grote_slaapkamer_1
     - light.grote_slaapkamer_2
+
+- platform: group
+  name: Bedroom lights
+  entities:
+    - light.bedroom_ceiling_lights
     - light.grote_slaapkamer_nachtkastje_tom
 
 - platform: group
@@ -21,6 +26,7 @@
   entities:
     - light.kitchen_lights
     - light.toilet
+    - light.terrace_lights
 
 - platform: group
   name: Kitchen lights
