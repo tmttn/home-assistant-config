@@ -538,7 +538,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.wake_up_light](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L63)
   - [input_boolean.wake_up_with_spotify](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L87)
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
-  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/306172810042d39c16cabb24a1b967ed6972b044/includes/sensors.yaml#L240)
+  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/3f786459da777d55b2e37186749a084a10cdda24/includes/sensors.yaml#L240)
 
 [^ toc](#automations---table-of-content)
 
@@ -570,6 +570,9 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
 ### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L169)
 
+  *which uses:*
+  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/3f786459da777d55b2e37186749a084a10cdda24/includes/sensors.yaml#L318)
+  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/3f786459da777d55b2e37186749a084a10cdda24/includes/sensors.yaml#L314)
 
 ### [Portfolio value](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L189)
 
@@ -612,7 +615,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L46)
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L40)
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/93b184829baecabb3f596fcd5a4c034556435c90/scripts.yaml#L255)
-  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/306172810042d39c16cabb24a1b967ed6972b044/includes/sensors.yaml#L232)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/3f786459da777d55b2e37186749a084a10cdda24/includes/sensors.yaml#L232)
 
 ### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L26)
 
@@ -682,7 +685,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/93b184829baecabb3f596fcd5a4c034556435c90/scripts.yaml#L164)
   - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/93b184829baecabb3f596fcd5a4c034556435c90/scripts.yaml#L223)
   - [script.turn_off_everything](https://github.com/tmttn/home-assistant-config/blob/93b184829baecabb3f596fcd5a4c034556435c90/scripts.yaml#L205)
-  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/306172810042d39c16cabb24a1b967ed6972b044/includes/sensors.yaml#L240)
+  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/3f786459da777d55b2e37186749a084a10cdda24/includes/sensors.yaml#L240)
 
 ### [Bathroom Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/control_switches.yaml#L220)
 
@@ -697,7 +700,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/93b184829baecabb3f596fcd5a4c034556435c90/scripts.yaml#L246)
   - [script.start_spotify](https://github.com/tmttn/home-assistant-config/blob/93b184829baecabb3f596fcd5a4c034556435c90/scripts.yaml#L39)
   - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/93b184829baecabb3f596fcd5a4c034556435c90/scripts.yaml#L187)
-  - [sensor.favorite_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/306172810042d39c16cabb24a1b967ed6972b044/includes/sensors.yaml#L69)
+  - [sensor.favorite_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/3f786459da777d55b2e37186749a084a10cdda24/includes/sensors.yaml#L69)
 
 [^ toc](#automations---table-of-content)
 
