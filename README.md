@@ -543,24 +543,24 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Apple Watch ⌚](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml)
-### [Play or Pause the TV](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L11)
+## [Apple Watch ⌚](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml)
+### [Play or Pause the TV](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L11)
 
 
-### [Minimal lights bedroom](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L25)
+### [Minimal lights bedroom](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L25)
 
 
-### [Fix TV sound](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L40)
+### [Fix TV sound](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L40)
 
   *which uses:*
   - [script.fix_sound](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L299)
 
-### [Set sleep mode](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L49)
+### [Set sleep mode](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L49)
 
   *which uses:*
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
 
-### [Set lights](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L79)
+### [Set lights](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L79)
 
   *which uses:*
   - [script.cozy_lights_bedroom](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L115)
@@ -568,32 +568,32 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L537)
   - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L136)
 
-### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L169)
+### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L169)
 
   *which uses:*
   - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/3f786459da777d55b2e37186749a084a10cdda24/includes/sensors.yaml#L318)
   - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/3f786459da777d55b2e37186749a084a10cdda24/includes/sensors.yaml#L314)
 
-### [Portfolio value](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L189)
+### [Portfolio value](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L189)
 
 
-### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L205)
+### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L205)
 
   *which uses:*
   - [script.vacuum_command](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L485)
 
-### [Movie time](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L234)
+### [Movie time](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L234)
 
 
-### [Reset adaptive lighting](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L253)
+### [Reset adaptive lighting](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L253)
 
   *which uses:*
   - [script.reset_adaptive_lighting](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L551)
 
-### [Set temperature](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L262)
+### [Set temperature](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L262)
 
 
-### [Where is other person?](https://github.com/tmttn/home-assistant-config/blob/218a52cc82e9dc68e1d051f26a932fa7c83a7f3a/automations/apple_watch.yaml#L292)
+### [Where is other person?](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/apple_watch.yaml#L292)
 
 
 [^ toc](#automations---table-of-content)
@@ -608,8 +608,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Climate 🔥🥶](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml)
-### [Turn on the heating 30 min before waking up](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L12)
+## [Climate 🔥🥶](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/climate.yaml)
+### [Turn on the heating 30 min before waking up](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/climate.yaml#L12)
 
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L46)
@@ -617,7 +617,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L262)
   - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/3f786459da777d55b2e37186749a084a10cdda24/includes/sensors.yaml#L232)
 
-### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L26)
+### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/climate.yaml#L26)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L40)
@@ -625,7 +625,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L262)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/00e4297914d1c11ced0c339eb2c8c7f63fb88c0f/includes/binary_sensors.yaml#L150)
 
-### [Turn off the heating at 22:00](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L51)
+### [Turn off the heating at 22:00](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/climate.yaml#L51)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_booleans.yaml#L40)
@@ -633,20 +633,20 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L246)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/00e4297914d1c11ced0c339eb2c8c7f63fb88c0f/includes/binary_sensors.yaml#L150)
 
-### [Turn on heating again after notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L72)
+### [Turn on heating again after notification](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/climate.yaml#L72)
 
   *which uses:*
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/85b7d95a530617973b838c8f00e5679f1882201d/scripts.yaml#L262)
 
-### [Set outside temperature every hour](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L81)
+### [Set outside temperature every hour](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/climate.yaml#L81)
 
 
-### [Warning when heating on and living room door open](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L92)
+### [Warning when heating on and living room door open](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/climate.yaml#L92)
 
   *which uses:*
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/fa616ef09d4bdd744d1f144b867c0b9baa8c4b0e/includes/input_numbers.yaml#L12)
 
-### [Set temperature setpoint to 50 °C](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/climate.yaml#L126)
+### [Set temperature setpoint to 50 °C](https://github.com/tmttn/home-assistant-config/blob/ebeefb03a379ee23eb2515ae282215b484b04aee/automations/climate.yaml#L126)
 
 
 [^ toc](#automations---table-of-content)
