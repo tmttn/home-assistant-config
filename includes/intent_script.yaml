@@ -52,32 +52,32 @@ PlayPauseMediaPlayer:
       entity_id: "{{ name }}"
     service: "media_player.media_{{ state }}"
 
-IncreaseDecreaseVolume:
-  action:
-    service: media_player.volume_set
-    data:
-      entity_id: media_player.kef_ls50
-      volume_level: >
-        {{ state_attr("media_player.kef_ls50", "volume_level") + delta|float }}
+# IncreaseDecreaseVolume:
+#   action:
+#     service: media_player.volume_set
+#     data:
+#       entity_id: media_player.kef_ls50
+#       volume_level: >
+#         {{ state_attr("media_player.kef_ls50", "volume_level") + delta|float }}
 
-SetVolume:
-  action:
-    service: media_player.volume_set
-    data:
-      entity_id: media_player.kef_ls50
-      volume_level: >
-        {{ (volume|float / 100)|round(2) }}
+# SetVolume:
+#   action:
+#     service: media_player.volume_set
+#     data:
+#       entity_id: media_player.kef_ls50
+#       volume_level: >
+#         {{ (volume|float / 100)|round(2) }}
 
 SetWhiteCozyLights:
   action:
     service: "script.{{ state }}_lights_living_room"
 
-StartTheMusic:
-  action:
-    service: script.start_spotify_playlist_of_nearest_person
-    data:
-      source: LS50 Wireless
-      entity_id: media_player.kef_ls50
+# StartTheMusic:
+#   action:
+#     service: script.start_spotify_playlist_of_nearest_person
+#     data:
+#       source: LS50 Wireless
+#       entity_id: media_player.kef_ls50
 
 SleepMode:
   action:
