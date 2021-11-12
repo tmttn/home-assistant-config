@@ -40,7 +40,7 @@ input_number: !include includes/input_numbers.yaml
 
 # Logging and history
 logger: !include includes/logger.yaml
-# recorder: !include includes/recorder.yaml
+recorder: !include includes/recorder.yaml
 device_tracker: !include includes/device_trackers.yaml
 
 # Managed via UI
@@ -60,7 +60,7 @@ weather: !include includes/weather.yaml
 # shell_command: !include includes/shell_commands.yaml
 notify: !include includes/notify.yaml
 light: !include includes/lights.yaml
-# wake_on_lan:
+wake_on_lan:
 proximity: !include includes/proximity.yaml
 timer: !include includes/timers.yaml
 # ios: !include includes/ios.yaml
@@ -75,7 +75,7 @@ discovery: !include includes/discovery.yaml
 # plant: !include includes/plant.yaml
 spotify: !include includes/spotify.yaml
 climate: !include includes/climate.yaml
-# influxdb: !include includes/influxdb.yaml
+influxdb: !include includes/influxdb.yaml
 camera: !include includes/camera.yaml
 # intent:
 # intent_script: !include includes/intent_script.yaml
