@@ -246,20 +246,34 @@ start_netflix:
 set_low_temperature:
   alias: Set low temperature
   sequence:
-    - service: climate.set_temperature
-      entity_id: climate.thermostat
+    - service: evohome.set_zone_override
+      target:
+        entity_id: climate.woonkamer
       data:
-        temperature: >
-          {{ states("input_number.temperature_low") }}
+        setpoint: >
+           {{ states("input_number.temperature_low") }}
+    - service: evohome.set_zone_override
+      target:
+        entity_id: climate.keuken
+      data:
+        setpoint: >
+           {{ states("input_number.temperature_low") }}
 
 set_high_temperature:
   alias: Set high temperature
   sequence:
-    - service: climate.set_temperature
-      entity_id: climate.thermostat
+    - service: evohome.set_zone_override
+      target:
+        entity_id: climate.woonkamer
       data:
-        temperature: >
-          {{ states("input_number.temperature_high") }}
+        setpoint: >
+           {{ states("input_number.temperature_high") }}
+    - service: evohome.set_zone_override
+      target:
+        entity_id: climate.keuken
+      data:
+        setpoint: >
+           {{ states("input_number.temperature_high") }}
 
 leaving:
   alias: Leaving the house
@@ -493,14 +507,6 @@ vacuum_command:
             entity_id: vacuum.xiaomi_vacuum_cleaner
             command: app_zoned_clean
             params: [[22799, 27340, 27649, 31240, 1]]
-      # office
-      - conditions: "{{ option == 'office' }}"
-        sequence:
-          service: vacuum.send_command
-          data:
-            entity_id: vacuum.xiaomi_vacuum_cleaner
-            command: app_zoned_clean
-            params: [[22803, 25150, 26353, 27250, 1]]
       # hall
       - conditions: "{{ option == 'hall' }}"
         sequence:
