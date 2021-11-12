@@ -211,20 +211,20 @@ views:
             type: custom:mini-media-player
           - entities:
               - entities:
-                  - entity: input_number.kef_ls50_desk_db
-                  - entity: input_number.kef_ls50_wall_db
-                  - entity: input_number.kef_ls50_treble_db
-                  - entity: input_number.kef_ls50_high_hz
-                  - entity: input_number.kef_ls50_low_hz
-                  - entity: input_number.kef_ls50_sub_db
-                  - type: divider
-                  - entity: input_select.kef_ls50_bass_extension
-                  - entity: input_select.kef_ls50_sub_polarity
-                  - type: divider
-                  - entity: input_boolean.kef_ls50_desk_mode
-                  - entity: input_boolean.kef_ls50_wall_mode
-                  - entity: input_boolean.kef_ls50_phase_correction
-                  - entity: input_boolean.kef_ls50_high_pass
+                  # - entity: input_number.kef_ls50_desk_db
+                  # - entity: input_number.kef_ls50_wall_db
+                  # - entity: input_number.kef_ls50_treble_db
+                  # - entity: input_number.kef_ls50_high_hz
+                  # - entity: input_number.kef_ls50_low_hz
+                  # - entity: input_number.kef_ls50_sub_db
+                  # - type: divider
+                  # - entity: input_select.kef_ls50_bass_extension
+                  # - entity: input_select.kef_ls50_sub_polarity
+                  # - type: divider
+                  # - entity: input_boolean.kef_ls50_desk_mode
+                  # - entity: input_boolean.kef_ls50_wall_mode
+                  # - entity: input_boolean.kef_ls50_phase_correction
+                  # - entity: input_boolean.kef_ls50_high_pass
                 head:
                   icon: mdi:equalizer
                   name: "KEF LS50 Equalizer
