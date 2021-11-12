@@ -105,8 +105,7 @@
             {'ALL': 'all',
              'BEDROOM': 'light.bedroom_lights',
              'LIVING_ROOM': 'light.living_room_lights',
-             'BATHROOM': 'light.ceiling_bathroom',
-             'HALL_AND_STAIRS': 'light.hall_lights,light.stairs_lights',
+             'BATHROOM': 'light.bathroom_lights',
              'TOILET': 'light.toilet',
              'KITCHEN': 'light.kitchen_lights',
             }[wait.trigger.event.data.actionName] }}
