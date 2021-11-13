@@ -222,6 +222,10 @@
       unit_of_measurement: '°C'
       value_template: '{{state_attr("climate.badkamer", "current_temperature")}}'
 
+    temperature_kitchen:
+      unit_of_measurement: '°C'
+      value_template: '{{state_attr("climate.keuken", "current_temperature")}}'
+
 #   ___  _   _
 #  / _ \| |_| |__   ___ _ __ ___
 # | | | | __| '_ \ / _ \ '__/ __|

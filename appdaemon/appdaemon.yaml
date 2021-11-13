@@ -19,7 +19,7 @@ appdaemon:
   latitude: !secret latitude_home
   longitude: !secret longitude_home
   elevation: 0
-  time_zone: Europe/Amsterdam
+  time_zone: Europe/Brussels
   plugins:
     HASS:
       type: hass
