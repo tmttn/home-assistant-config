@@ -27,12 +27,10 @@
               - switch.adaptive_lighting_half_and_full
               # sleep_modes
               - switch.adaptive_lighting_sleep_mode_default
-              - switch.adaptive_lighting_sleep_mode_default_bed
               - switch.adaptive_lighting_sleep_mode_living_room
           - service: switch.turn_on
             entity_id:
               - switch.adaptive_lighting_default
-              - switch.adaptive_lighting_default_bed
 
       - conditions: "{{ sleep_mode == 'half' }}"
         sequence:
