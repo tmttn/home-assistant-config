@@ -189,7 +189,7 @@
             + states('sensor.hours_living_room_lights_have_been_on_last_7_days')|float * 10
             + states('sensor.hours_toilet_light_has_been_on_last_7_days')|float * 1
             + states('sensor.hours_bathroom_lights_have_been_on_last_7_days')|float * 4
-            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float * 3
+            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float * 3 }}
 
     lights_on_total_kwh:
       unit_of_measurement: h
