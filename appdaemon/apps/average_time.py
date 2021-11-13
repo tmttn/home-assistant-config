@@ -8,7 +8,7 @@ average_bed_time:
   module: average_time
   class: AverageTime
   to_watch: input_boolean.sleep_mode
-  result_senor: sensor.average_sleep_time
+  result_sensor: sensor.average_sleep_time
   from: "13:00"
   to: "02:00"
 ```
