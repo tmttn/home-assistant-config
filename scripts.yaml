@@ -161,7 +161,7 @@ set_low_temperature:
            {{ states("input_number.temperature_low") }}
 
 set_low_temperature_bathroom:
-  alias: Set low temperature
+  alias: Set low temperature bathroom
   sequence:
     - service: evohome.set_zone_override
       data:
