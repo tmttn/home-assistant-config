@@ -9,12 +9,6 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
-# - platform: mjpeg
-#   name: Living room camera
-#   mjpeg_url: http://192.168.1.4:8081
-#   username: user
-#   password: !secret motioneye_pw
-
 - platform: xiaomi_cloud_map_extractor
   host: 192.168.87.42
   token: !secret xiaomi_cloud_token
