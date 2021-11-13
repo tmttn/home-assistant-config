@@ -17,6 +17,14 @@ temperature_low:
   step: 0.5
   icon: mdi:temperature-celsius
 
+temperature_moderate:
+  name: Temperature low
+  min: 10
+  max: 25
+  initial: 20
+  step: 0.5
+  icon: mdi:temperature-celsius
+
 temperature_high:
   name: Temperature high
   min: 10
