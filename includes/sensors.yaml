@@ -145,6 +145,9 @@
       value_template: >
         {% set value = state_attr("sensor.quarantine_meter_tanja", "value") %}
         {% if value != None %}
+        {% if value.split()|length < 3 %}
+        {% set value = "0d " + value %}
+        {% endif %}
         {% set d, h, m = value.split() %}
         {% set d, h, m = d[:-1] | int, h[:-1] | int, m[:-1] | int %}
         {% set hours_outside = ((14 - d) * 86400 - h * 3600 - m * 60) / 3600 %}
@@ -156,6 +159,9 @@
       value_template: >
         {% set value = state_attr("sensor.quarantine_meter_tom", "value") %}
         {% if value != None %}
+        {% if value.split()|length < 3 %}
+        {% set value = "0d " + value %}
+        {% endif %}
         {% set d, h, m = value.split() %}
         {% set d, h, m = d[:-1] | int, h[:-1] | int, m[:-1] | int %}
         {% set hours_outside = ((14 - d) * 86400 - h * 3600 - m * 60) / 3600 %}
