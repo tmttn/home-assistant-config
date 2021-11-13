@@ -87,8 +87,8 @@
     time_at_work_prognosis:
       value_template: >
         {% set day = [now().weekday(), 4] | min %}
-        {% set t_total = states("sensor.time_at_work_this_week")|float %}
-        {% set t_today = states("sensor.time_at_work_today")|float %}
+        {% set t_total = states("sensor.time_at_work_this_week")|float(default=0) %}
+        {% set t_today = states("sensor.time_at_work_today")|float(default=0) %}
         {% set hours_per_day_including_today = t_total / (day + 1) %}
         {% set hours_per_day_excluding_today = (t_total - t_today ) / (day + 10**-16) %}
         {% set seven_oclock = as_timestamp(now().replace(hour=19).replace(minute=0).replace(second=0)) %}
@@ -140,8 +140,8 @@
         {% set before_alarm = t_alarm + t_start - 60 * 10 %}
         {{ before_alarm | timestamp_custom("%H:%M", True) }}
 
-    hours_outside_per_day_tanja: # XXX: fails when returns "0m"
-      friendly_name: Ten minutes before alarm
+    hours_outside_per_day_tanja:
+      friendly_name: Hours outside per day Tanja
       value_template: >
         {% set value = state_attr("sensor.quarantine_meter_tanja", "value") %}
         {% if value != None %}
@@ -154,8 +154,8 @@
         {{ (hours_outside / 14) | round(1) }}
         {% endif %}
 
-    hours_outside_per_day_tom: # XXX: fails when returns "0m"
-      friendly_name: Ten minutes before alarm
+    hours_outside_per_day_tom:
+      friendly_name: Hours outside per day Tom
       value_template: >
         {% set value = state_attr("sensor.quarantine_meter_tom", "value") %}
         {% if value != None %}
@@ -191,16 +191,16 @@
     lights_on_total_hours:
       unit_of_measurement: h
       value_template: >
-        {{ states('sensor.hours_bedroom_lights_have_been_on_last_7_days')|float * 3
-            + states('sensor.hours_living_room_lights_have_been_on_last_7_days')|float * 10
-            + states('sensor.hours_toilet_light_has_been_on_last_7_days')|float * 1
-            + states('sensor.hours_bathroom_lights_have_been_on_last_7_days')|float * 4
-            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float * 3 }}
+        {{ states('sensor.hours_bedroom_lights_have_been_on_last_7_days')|float(default=0) * 3
+            + states('sensor.hours_living_room_lights_have_been_on_last_7_days')|float(default=0) * 10
+            + states('sensor.hours_toilet_light_has_been_on_last_7_days')|float(default=0) * 1
+            + states('sensor.hours_bathroom_lights_have_been_on_last_7_days')|float(default=0) * 4
+            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float(default=0) * 3 }}
 
     lights_on_total_kwh:
       unit_of_measurement: h
       value_template: >
-        {{ states('sensor.lights_on_total_hours')|float * 5.4 / 1000 }}
+        {{ states('sensor.lights_on_total_hours')|float(default=0) * 5.4 / 1000 }}
 
     motion_sensor_toilet_battery_level:
       unit_of_measurement: '%'
@@ -443,7 +443,7 @@
   state: Work
   type: time
   start: >
-    {{ states("sensor.timestamp_start_of_today")|float - now().weekday() * 86400 }}
+    {{ states("sensor.timestamp_start_of_today")|float(default=0) - now().weekday() * 86400 }}
   end: "{{ now() }}"
 
 - platform: history_stats
@@ -452,7 +452,7 @@
   state: Work
   type: time
   start: >
-    {{ states("sensor.timestamp_start_of_today")|float - 0 * 86400 }}
+    {{ states("sensor.timestamp_start_of_today")|float(default=0) - 0 * 86400 }}
   duration:
     hours: 24
 
@@ -466,7 +466,7 @@
   start: >
     {% set day = now().weekday() - 0 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(default=0) - day * 86400}}
 
 - platform: history_stats
   name: Time at work on Tuesday
@@ -478,7 +478,7 @@
   start: >
     {% set day = now().weekday() - 1 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(default=0) - day * 86400}}
 
 - platform: history_stats
   name: Time at work on Wednessday
@@ -490,7 +490,7 @@
   start: >
     {% set day = now().weekday() - 2 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(default=0) - day * 86400}}
 
 - platform: history_stats
   name: Time at work on Thursday
@@ -502,7 +502,7 @@
   start: >
     {% set day = now().weekday() - 3 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(default=0) - day * 86400}}
 
 - platform: history_stats
   name: Time at work on Friday
@@ -514,7 +514,7 @@
   start: >
     {% set day = now().weekday() - 4 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
-    {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
+    {{ states("sensor.timestamp_start_of_today")|float(default=0) - day * 86400}}
 
 - platform: afvalbeheer
   wastecollector: Limburg.NET
