@@ -11,14 +11,14 @@
 - name: Tom
   id: tom
   user_id: 5ee38b35098341c497a6c7a830742fbe
-# picture: !secret profile_photo_tom
+  picture: !secret profile_photo_tom
   device_trackers:
     - device_tracker.tom_iphone # from iOS app
     - device_tracker.tom_iphone_ping
 - name: Tanja
   id: tanja
   user_id: 3647a3cda1b843dfa9fa724038fdd82b
-# picture: !secret profile_photo_tanja
+  picture: !secret profile_photo_tanja
   device_trackers:
     - device_tracker.tanja_iphone # from iOS app
     - device_tracker.tanja_iphone_ping
