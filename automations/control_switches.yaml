@@ -284,8 +284,3 @@
             data:
               entity_id: light.living_room_lights
           - service: script.arriving
-          - service: script.start_spotify
-            data:
-              source: LS50 Wireless
-              playlist: '{{ states("sensor.favorite_playlist_of_nearest_person") }}'
-              volume: 0.25
