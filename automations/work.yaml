@@ -22,7 +22,7 @@
       entity_id: input_boolean.work_hour_notification_sent
       state: "off"
   action:
-    - service: notify.mobile_app_tom_iphone
+    - service: notify.mobile_app_bizzyphone
       data:
         title: "Work"
         message: "You have worked 8 hours today, very good! Go home 🎉"
@@ -51,7 +51,7 @@
     after: "15:00:00"
     before: "22:00:00"
   action:
-    # service: notify.mobile_app_tanja_iphone
+    # service: notify.mobile_app_t-phone
     service: notify.all_iphones
     data:
       title: "Work"
