@@ -62,7 +62,7 @@
       entity_id: input_select.sleep_mode
       data:
         option: "total"
-    - service: notify.mobile_app_tom_iphone
+    - service: notify.mobile_app_bizzyphone
       data:
         title: "Night mode"
         message: "Automatically switched from 'half' to 'total' sleeping mode! 💤🛌"

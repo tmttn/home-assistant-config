@@ -16,7 +16,7 @@
     for:
       hours: 4
   action:
-    service: notify.mobile_app_tom_iphone
+    service: notify.mobile_app_bizzyphone
     data:
       title: "System"
       message: "CPU usage has been above 70% for 4 hours! ⚠️🖥"
@@ -43,7 +43,7 @@
     at: "14:30:00"
   variables:
     min_battery_level: 50
-    notify_service: notify.mobile_app_tom_iphone
+    notify_service: notify.mobile_app_bizzyphone
     battery_ids: ""
     current: ""
   action:
