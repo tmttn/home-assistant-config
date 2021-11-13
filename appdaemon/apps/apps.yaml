@@ -1,11 +1,4 @@
 ---
-start_speakers:
-  module: start_speakers
-  class: StartSpeakers
-  speaker: media_player.kef_ls50
-  source: Wifi
-  volume: 0.3
-  input_boolean: input_boolean.start_kef_ls50
 
 start_spotify:
   module: start_spotify
@@ -15,23 +8,6 @@ start_spotify:
   spotify_source: LS50 Wireless
   playlist: "spotify:playlist:6rPTm9dYftKcFAfwyRqmDZ"
   input_boolean: input_boolean.start_spotify_on_kef_ls50
-
-start_kef_lsx:
-  module: start_speakers
-  class: StartSpeakers
-  speaker: media_player.kef_lsx
-  source: Wifi
-  volume: 0.4
-  input_boolean: input_boolean.start_kef_lsx
-
-start_spotify_on_kef_lsx:
-  module: start_spotify
-  class: StartSpotify
-  volume: 0.4
-  speaker: media_player.kef_lsx
-  spotify_source: LSX
-  playlist: "spotify:playlist:6rPTm9dYftKcFAfwyRqmDZ"
-  input_boolean: input_boolean.start_spotify_on_kef_lsx
 
 wake_up_with_spotify:
   module: wake_up_with_spotify
@@ -69,10 +45,6 @@ demo_wake_up_light:
     - light.bedroom_lights
   input_boolean: input_boolean.demo_wake_up_light
 
-cube:
-  module: xiaomi_aqara_cube_action
-  class: CubeControl
-
 battery_monitor:
   module: battery_monitor
   class: BatteryMonitor
@@ -84,6 +56,6 @@ average_bed_time:
   class: AverageTime
   to_watch: input_select.sleep_mode
   to_watch_state: total
-  result_senor: sensor.average_sleep_time
+  result_sensor: sensor.average_sleep_time
   from_time: "21:30"
   to_time: "02:00"
