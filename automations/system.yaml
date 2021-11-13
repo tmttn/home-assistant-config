@@ -21,38 +21,6 @@
       title: "System"
       message: "CPU usage has been above 70% for 4 hours! ⚠️🖥"
 
-- alias: "System: warning about high CPU temperature"
-  trigger:
-    platform: numeric_state
-    entity_id: sensor.cpu_temperature
-    above: 70
-    for:
-      hours: 4
-  action:
-    service: notify.mobile_app_tom_iphone
-    data:
-      title: "System"
-      message: "CPU temperature has been above 70 °C for 4 hours! ⚠️"
-
-- alias: "System: warning about high Xbox temperature"
-  trigger:
-    platform: numeric_state
-    entity_id: sensor.temperature_xbox
-    above: 50
-  action:
-    - service: notify.mobile_app_tom_iphone
-      data:
-        title: "System"
-        message: >
-          Temperature in the Xbox cabinet is {{ states("sensor.temperature_xbox") }} °C! ⚠️
-    - condition: state
-      entity_id: media_player.tv
-      state: "on"
-    - service: notify.tv
-      data:
-        message: >
-          Temperature in the Xbox cabinet is {{ states("sensor.temperature_xbox") }} °C! ⚠️
-
 - alias: "System: update DNS"
   description: Update the DNS at Gandi to point my domain to my Home Assistant instance.
   trigger:
@@ -68,19 +36,6 @@
     minutes: "/15"
   action:
     service: shell_command.chores
-
-- alias: "System: MQTT sensors are not updating"
-  description: Check whether we are receiving messages over MQTT from my other HA instance.
-  trigger:
-    platform: time_pattern
-    minutes: "/5"
-  condition: "{{ (as_timestamp(now()) - as_timestamp(states.sensor.power_consumption.last_changed)) > 20 * 60 }}"
-  action:
-    - service: notify.mobile_app_tom_iphone
-      data:
-        title: "System"
-        message: "Not receiving MQTT updates, maybe reboot the other HA instance! ⚠️"
-    - delay: "03:00:00" # don't tell me again for three hours
 
 - alias: "System: battery level low"
   trigger:
