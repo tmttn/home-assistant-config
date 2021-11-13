@@ -150,15 +150,13 @@ set_low_temperature:
   alias: Set low temperature
   sequence:
     - service: evohome.set_zone_override
-      target:
-        entity_id: climate.woonkamer
       data:
+        entity_id: climate.woonkamer
         setpoint: >
            {{ states("input_number.temperature_low") }}
     - service: evohome.set_zone_override
-      target:
-        entity_id: climate.keuken
       data:
+        entity_id: climate.keuken
         setpoint: >
            {{ states("input_number.temperature_low") }}
 
@@ -166,9 +164,8 @@ set_low_temperature_bathroom:
   alias: Set low temperature
   sequence:
     - service: evohome.set_zone_override
-      target:
-        entity_id: climate.badkamer
       data:
+        entity_id: climate.badkamer
         setpoint: >
            {{ states("input_number.temperature_low") }}
 
@@ -177,9 +174,9 @@ set_moderate_temperature_bathroom:
   alias: Set moderate temperature bathroom
   sequence:
     - service: evohome.set_zone_override
-      target:
-        entity_id: climate.badkamer
+        
       data:
+        entity_id: climate.badkamer
         setpoint: >
            {{ states("input_number.temperature_moderate") }}
 
@@ -187,15 +184,13 @@ set_high_temperature:
   alias: Set high temperature
   sequence:
     - service: evohome.set_zone_override
-      target:
-        entity_id: climate.woonkamer
       data:
+        entity_id: climate.woonkamer
         setpoint: >
            {{ states("input_number.temperature_high") }}
     - service: evohome.set_zone_override
-      target:
-        entity_id: climate.keuken
       data:
+        entity_id: climate.keuken
         setpoint: >
            {{ states("input_number.temperature_high") }}
 
