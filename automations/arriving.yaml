@@ -23,8 +23,6 @@
     - condition: state
       entity_id: input_boolean.guest_mode
       state: "off"
-    - "{{ is_state_attr('media_player.spotify', 'source', 'tom-iphone') }}"
-    - "{{ is_state('media_player.spotify', 'playing') }}"
   action:
     - service: notify.mobile_app_bizzyphone
       data:
