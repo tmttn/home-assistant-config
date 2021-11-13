@@ -9,6 +9,43 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
+- alias: "Climate: turn on the bathroom heating in the early morning"
+  trigger:
+    platform: time
+    at: "05:30"
+  condition:
+    - condition: state
+      entity_id: input_boolean.automatic_temperature
+      state: "on"
+    - condition: state
+      entity_id: binary_sensor.no_one_home
+      state: "off"
+    - "{{ not is_state_attr('climate.badkamer', 'temperature', states('input_number.temperature_moderate')|float) }}"
+  action:
+    - service: script.set_moderate_temperature_bathroom
+    - service: notify.all_iphones
+      data:
+        title: "Climate"
+        message: "Automatically turned on the bathroom heating 🛁🥵℃"
+
+- alias: "Climate: turn off the bathroom heating in the morning"
+  trigger:
+    platform: time
+    at: "11:00"
+  condition:
+    - condition: state
+      entity_id: input_boolean.automatic_temperature
+      state: "on"
+    - condition: state
+      entity_id: binary_sensor.no_one_home
+      state: "off"
+    - "{{ not is_state_attr('climate.badkamer', 'temperature', states('input_number.temperature_low')|float) }}"
+  action:
+    - service: script.set_low_temperature_bathroom
+    - service: notify.all_iphones
+      data:
+        message: "Turned off the bathroom heating 🛁🥶"
+
 - alias: "Climate: turn on the heating 30 min before waking up"
   trigger:
     platform: template
@@ -37,7 +74,7 @@
       after: "16:00:00"
       before: "22:00:00"
     - "{{ is_state_attr('proximity.home', 'dir_of_travel', 'towards') }}"
-    - "{{ not is_state_attr('climate.thermostat', 'temperature', states('input_number.temperature_high')) }}"
+    - "{{ not is_state_attr('climate.woonkamer', 'temperature', states('input_number.temperature_high')) }}"
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "on"
@@ -59,7 +96,7 @@
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "off"
-    - "{{ not is_state_attr('climate.thermostat', 'temperature', states('input_number.temperature_low')|float) }}"
+    - "{{ not is_state_attr('climate.woonkamer', 'temperature', states('input_number.temperature_low')|float) }}"
   action:
     - service: script.set_low_temperature
     - service: notify.all_iphones
@@ -77,58 +114,3 @@
       actionName: TURN_ON_HEATING
   action:
     service: script.set_high_temperature
-
-- alias: "Climate: set outside temperature every hour"
-  trigger:
-    platform: time_pattern
-    hours: "/1"
-  action:
-    service: mqtt.publish
-    data:
-      topic: actions/otmonitor/outside
-      payload_template: >
-        {{ state_attr("weather.buienradar", "temperature") }}
-
-- alias: "Climate: warning when heating on and living room door open"
-  trigger:
-    platform: state
-    entity_id: binary_sensor.openclose_living_room
-    to: "on"
-    for: "00:05:00"
-  condition: "{{ state_attr('climate.thermostat', 'temperature') >= 18 }}"
-  action:
-    - repeat:
-        while:
-          - condition: state
-            entity_id: binary_sensor.openclose_living_room
-            state: "on"
-          - condition: template
-            value_template: "{{ repeat.index <= 6 }}"
-        sequence:
-          - service: notify.all
-            data:
-              title: "Climate"
-              message: "The living room door is open and the heating is on! ⚠️ Warning #{{ repeat.index }}!"
-          - delay: "00:05:00"
-    - condition: state
-      entity_id: binary_sensor.openclose_living_room
-      state: "on"
-    - service: notify.all
-      data:
-        title: "Climate"
-        message: "Turning off the heating!"
-    - service: climate.set_temperature
-      entity_id: climate.thermostat
-      data:
-        temperature: >
-          {{ states("input_number.temperature_low") }}
-
-- alias: "Climate: set temperature setpoint to 50 °C"
-  trigger:
-    platform: time_pattern
-    hours: "/2"
-  action:
-    service: mqtt.publish
-    data:
-      topic: actions/otmonitor/maxdhwsetpt
-      payload: "50"
