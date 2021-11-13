@@ -79,16 +79,6 @@
         {{ state_attr("media_player.tv", "volume_level") }}
       unit_of_measurement: "%"
 
-    # kef_ls50_volume:
-    #   value_template: >
-    #     {{ state_attr("media_player.kef_ls50", "volume_level") }}
-    #   unit_of_measurement: "%"
-
-    # kef_lsx_volume:
-    #   value_template: >
-    #     {{ state_attr("media_player.kef_lsx", "volume_level") }}
-    #   unit_of_measurement: "%"
-
     timestamp_start_of_today:
       value_template: >
         {{ as_timestamp(now().replace(hour=0).replace(minute=0).replace(second=0)) }}
@@ -290,13 +280,11 @@
     lights_on_total_hours:
       unit_of_measurement: h
       value_template: >
-        {{ states('sensor.hours_bedroom_lights_have_been_on_last_7_days')|float * 7
-            + states('sensor.hours_living_room_lights_have_been_on_last_7_days')|float * 5
+        {{ states('sensor.hours_bedroom_lights_have_been_on_last_7_days')|float * 3
+            + states('sensor.hours_living_room_lights_have_been_on_last_7_days')|float * 10
             + states('sensor.hours_toilet_light_has_been_on_last_7_days')|float * 1
-            + states('sensor.hours_bathroom_light_has_been_on_last_7_days')|float * 1
-            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float * 2
-            + states('sensor.hours_hall_lights_have_been_on_last_7_days')|float * 5
-            + states('sensor.hours_bathroom_light_has_been_on_last_7_days')|float * 1 }}
+            + states('sensor.hours_bathroom_lights_have_been_on_last_7_days')|float * 4
+            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float * 3
 
     lights_on_total_kwh:
       unit_of_measurement: h
@@ -330,19 +318,6 @@
 #  \___/ \__|_| |_|\___|_|  |___/
 #
 
-# - platform: statistics
-#   name: Humidity bathroom stats
-#   entity_id: sensor.humidity_bathroom
-#   sampling_size: 86400 # make sure all data points of the last 24hrs are included
-#   max_age: "24:00:00"
-
-# - platform: derivative
-#   source: sensor.humidity_bathroom
-#   name: Humidity bathroom derivative
-#   unit_time: min
-#   time_window: "00:10:00"
-
-# XXX: not used
 - platform: min_max
   name: Temperature mean
   type: mean
@@ -350,19 +325,11 @@
     - sensor.temperature_living_room
     - sensor.temperature_bedroom
     - sensor.temperature_bathroom
-    - sensor.temperature_hall
 
 - platform: time_date
   display_options:
     - date
     - time
-
-# Set up on Proxmox https://community.home-assistant.io/t/intel-nuc-proxmox-cpu-temperature-monitor-with-python-mqtt/194236/8
-# - platform: mqtt
-#   name: CPU Temperature
-#   state_topic: "pve/cpu_temp"
-#   unit_of_measurement: "°C"
-#   value_template: "{{ value | multiply(0.001) | round(1) }}"
 
 - platform: systemmonitor
   resources:
@@ -405,24 +372,6 @@
         GROUP BY table_schema;
       column: value
       unit_of_measurement: MB
-
-# - platform: dutch_public_transport_api
-#   name: Bus from Rotterdam to Delft
-#   station: !secret bus_stop_to_delft
-#   destination: Station Delft
-#   show_future_departures: 1
-
-# - platform: dutch_public_transport_api
-#   name: Bus from Delft to Rotterdam
-#   station: delft/bushalte-tu-mekelpark
-#   destination: Rotterdam Centraal
-#   show_future_departures: 1
-
-# - platform: dutch_public_transport_api
-#   name: Bus home to Rotterdam Centraal
-#   station: !secret bus_stop_in_front
-#   destination: Rotterdam Centraal
-#   show_future_departures: 1
 
 #  _____ _                  _                  _
 # |_   _(_)_ __ ___   ___  | |_ _ __ __ _  ___| | _____ _ __ ___
@@ -557,17 +506,8 @@
     days: 7
   end: "{{ now() }}"
 
-# - platform: history_stats
-#   name: Hours hall lights have been on last 7 days
-#   entity_id: light.hall_lights
-#   state: "on"
-#   type: time
-#   duration:
-#     days: 7
-#   end: "{{ now() }}"
-
 - platform: history_stats
-  name: Hours bathroom light has been on last 7 days
+  name: Hours bathroom lights have been on last 7 days
   entity_id: light.bathroom_lights
   state: "on"
   type: time
@@ -660,222 +600,6 @@
     {% set day = now().weekday() - 4 %}
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
     {{ states("sensor.timestamp_start_of_today")|float - day * 86400}}
-
-#  ____                                          _    ____
-# |  _ \ _____      _____ _ __    __ _ _ __   __| |  / ___| __ _ ___
-# | |_) / _ \ \ /\ / / _ \ '__|  / _` | '_ \ / _` | | |  _ / _` / __|
-# |  __/ (_) \ V  V /  __/ |    | (_| | | | | (_| | | |_| | (_| \__ \
-# |_|   \___/ \_/\_/ \___|_|     \__,_|_| |_|\__,_|  \____|\__,_|___/
-
-# From the "Meterkast" Home Assistant
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/gas_consumption/state
-#   unit_of_measurement: m³
-#   name: Gas Consumption
-#   icon: mdi:fire
-#   device_class: gas
-#   state_class: total_increasing
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/hourly_gas_consumption/state
-#   unit_of_measurement: m³/h
-#   name: Hourly Gas Consumption
-#   icon: mdi:fire
-#   device_class: gas
-#   state_class: total_increasing
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/power_consumption/state
-#   unit_of_measurement: kW
-#   name: Power Consumption
-#   icon: mdi:flash
-#   device_class: power
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/energy_consumption_tarif_1/state
-#   unit_of_measurement: kWh
-#   name: Energy Consumption (tarif 1)
-#   icon: mdi:flash
-#   device_class: energy
-#   state_class: total_increasing
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/energy_consumption_tarif_2/state
-#   unit_of_measurement: kWh
-#   name: Energy Consumption (tarif 2)
-#   icon: mdi:flash
-#   device_class: energy
-#   state_class: total_increasing
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/power_tariff/state
-#   name: Power Tariff
-#   icon: mdi:flash
-
-# - platform: filter
-#   name: "Gas consumption filtered"
-#   entity_id: sensor.gas_consumption
-#   filters:
-#     - filter: time_simple_moving_average
-#       window_size: 00:30:00
-#       precision: 2
-
-# - platform: derivative
-#   source: sensor.gas_consumption
-#   name: Gas per hour
-#   unit: m³/h
-#   unit_time: h
-#   time_window: "00:30:00"
-
-# - platform: derivative
-#   source: sensor.gas_consumption_filtered
-#   name: Gas per hour (filtered)
-#   unit: m³/h
-#   unit_time: h
-
-#  ____  _             _
-# |  _ \| | __ _ _ __ | |_ ___
-# | |_) | |/ _` | '_ \| __/ __|
-# |  __/| | (_| | | | | |_\__ \
-# |_|   |_|\__,_|_| |_|\__|___/
-#
-
-# - platform: miflora
-#   mac: "80:EA:CA:89:1A:4E"
-#   name: "Mi Flora: Yucca Elephantipes"
-
-# # https://www.growabonsaitree.com/species/ficus-bonsai/
-# - platform: miflora
-#   mac: "80:EA:CA:89:20:24"
-#   name: "Mi Flora: Ficus microcarpa Ginseng"
-
-# Kentia Palm
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_kentia_palm_battery/state
-#   unit_of_measurement: "%"
-#   name: "Mi Flora: Kentia Palm Battery"
-#   icon: mdi:battery-charging
-#   device_class: battery
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_kentia_palm_conductivity/state
-#   unit_of_measurement: µS/cm
-#   name: "Mi Flora: Kentia Palm Conductivity"
-#   icon: mdi:flash-circle
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_kentia_palm_light_intensity/state
-#   unit_of_measurement: lx
-#   name: "Mi Flora: Kentia Palm Light intensity"
-#   icon: mdi:white-balance-sunny
-#   device_class: illuminance
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_kentia_palm_moisture/state
-#   unit_of_measurement: "%"
-#   name: "Mi Flora: Kentia Palm Moisture"
-#   icon: mdi:water-percent
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_kentia_palm_temperature/state
-#   unit_of_measurement: °C
-#   name: "Mi Flora: Kentia Palm Temperature"
-#   icon: mdi:thermometer
-#   device_class: temperature
-#   state_class: measurement
-
-# # Royal Haze
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_royal_haze_battery/state
-#   unit_of_measurement: "%"
-#   name: "Mi Flora: Royal Haze Battery"
-#   icon: mdi:battery-charging
-#   device_class: battery
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_royal_haze_conductivity/state
-#   unit_of_measurement: µS/cm
-#   name: "Mi Flora: Royal Haze Conductivity"
-#   icon: mdi:flash-circle
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_royal_haze_light_intensity/state
-#   unit_of_measurement: lx
-#   name: "Mi Flora: Royal Haze Light intensity"
-#   icon: mdi:white-balance-sunny
-#   device_class: illuminance
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_royal_haze_moisture/state
-#   unit_of_measurement: "%"
-#   name: "Mi Flora: Royal Haze Moisture"
-#   icon: mdi:water-percent
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_royal_haze_temperature/state
-#   unit_of_measurement: °C
-#   name: "Mi Flora: Royal Haze Temperature"
-#   icon: mdi:thermometer
-#   device_class: temperature
-#   state_class: measurement
-
-# # Northern Light
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_northern_light_battery/state
-#   unit_of_measurement: "%"
-#   name: "Mi Flora: Northern Light Battery"
-#   icon: mdi:battery-charging
-#   device_class: battery
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_northern_light_conductivity/state
-#   unit_of_measurement: µS/cm
-#   name: "Mi Flora: Northern Light Conductivity"
-#   icon: mdi:flash-circle
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_northern_light_light_intensity/state
-#   unit_of_measurement: lx
-#   name: "Mi Flora: Northern Light Light intensity"
-#   icon: mdi:white-balance-sunny
-#   device_class: illuminance
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_northern_light_moisture/state
-#   unit_of_measurement: "%"
-#   name: "Mi Flora: Northern Light Moisture"
-#   icon: mdi:water-percent
-#   state_class: measurement
-
-# - platform: mqtt
-#   state_topic: homeassistant/sensor/mi_flora_northern_light_temperature/state
-#   unit_of_measurement: °C
-#   name: "Mi Flora: Northern Light Temperature"
-#   icon: mdi:thermometer
-#   device_class: temperature
-#   state_class: measurement
-
-# - platform: command_line
-#   command: !secret portfolio_value
-#   name: portfolio_value
-#   unit_of_measurement: "€"
-#   scan_interval: 20
 
 - platform: afvalbeheer
   wastecollector: Limburg.NET
