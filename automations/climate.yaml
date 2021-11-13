@@ -20,7 +20,7 @@
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "off"
-    - "{{ not is_state_attr('climate.badkamer', 'temperature', states('input_number.temperature_moderate')|float) }}"
+    - "{{ not is_state_attr('climate.badkamer', 'temperature', states('input_number.temperature_moderate')|float(default=0)) }}"
   action:
     - service: script.set_moderate_temperature_bathroom
     - service: notify.all_iphones
@@ -39,7 +39,7 @@
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "off"
-    - "{{ not is_state_attr('climate.badkamer', 'temperature', states('input_number.temperature_low')|float) }}"
+    - "{{ not is_state_attr('climate.badkamer', 'temperature', states('input_number.temperature_low')|float(default=0)) }}"
   action:
     - service: script.set_low_temperature_bathroom
     - service: notify.all_iphones
@@ -96,7 +96,7 @@
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "off"
-    - "{{ not is_state_attr('climate.woonkamer', 'temperature', states('input_number.temperature_low')|float) }}"
+    - "{{ not is_state_attr('climate.woonkamer', 'temperature', states('input_number.temperature_low')|float(default=0)) }}"
   action:
     - service: script.set_low_temperature
     - service: notify.all_iphones
