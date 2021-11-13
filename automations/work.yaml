@@ -51,7 +51,7 @@
     after: "15:00:00"
     before: "22:00:00"
   action:
-    # service: notify.mobile_app_t-phone
+    # service: notify.mobile_app_t_phone
     service: notify.all_iphones
     data:
       title: "Work"

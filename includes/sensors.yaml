@@ -121,7 +121,7 @@
         {% elif is_state_attr("proximity.home", "nearest", "tom-iphone") %}
           notify.mobile_app_bizzyphone
         {% else %}
-          notify.mobile_app_t-phone
+          notify.mobile_app_t_phone
         {% endif %}
 
     half_hour_before_alarm:
