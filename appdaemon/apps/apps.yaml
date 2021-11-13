@@ -2,7 +2,7 @@
 battery_monitor:
   module: battery_monitor
   class: BatteryMonitor
-  service: mobile_app_tom_iphone
+  service: mobile_app_bizzyphone
   low_level: 20
 
 average_bed_time:

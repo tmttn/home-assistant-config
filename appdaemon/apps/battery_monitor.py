@@ -5,7 +5,7 @@
 battery_monitor:
   module: battery_monitor
   class: BatteryMonitor
-  service: mobile_app_tom_iphone
+  service: mobile_app_bizzyphone
   low_level: 20
   hour: 14
   minute: 0
@@ -18,7 +18,7 @@ from functools import partial
 import hassapi as hass
 
 DEFAULT_LOW_LEVEL = 15
-DEFAULT_SERVICE = "mobile_app_tom_iphone"
+DEFAULT_SERVICE = "mobile_app_bizzyphone"
 DEFAULT_HOUR = 14
 DEFAULT_MINUTE = 0
 

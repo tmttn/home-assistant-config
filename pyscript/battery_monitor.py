@@ -1,7 +1,7 @@
 """Notifies when a battery_level has gone below a threshold value."""
 
 LOW_LEVEL = 15
-NOTIFY_NAME = "mobile_app_tom_iphone"
+NOTIFY_NAME = "mobile_app_bizzyphone"
 HOUR = 14
 MINUTE = 0
 
