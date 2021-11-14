@@ -19,7 +19,7 @@
     trim:
       left: 20
       top: 15
-      right: 30
-      bottom: 30
+      right: 25
+      bottom: 25
   attributes:
     - calibration_points 
