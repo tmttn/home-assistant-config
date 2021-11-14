@@ -493,7 +493,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Control switches 🎛](#control-switches-) (6 automations)
 1. [Doorbell 🚪🔔](#doorbell-) (1 automations)
 1. [Frontend 👨‍💻](#frontend-) (3 automations)
-1. [Leaving 👞](#leaving-) (4 automations)
+1. [Leaving 👞](#leaving-) (3 automations)
 1. [Light 💡](#light-) (14 automations)
 1. [Lovelace 👨‍💻](#lovelace-) (1 automations)
 1. [Security 👮🚨](#security-) (3 automations)
@@ -505,7 +505,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **75** ⚠️
+⚠️ Total number of automations: **74** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml#L11)
@@ -714,8 +714,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Leaving 👞](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml)
-### [Automatically turn off everything](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml#L12)
+## [Leaving 👞](https://github.com/tmttn/home-assistant-config/blob/968319fa18169c998fb9c939323ff2110f48d3dd/automations/leaving.yaml)
+### [Automatically turn off everything](https://github.com/tmttn/home-assistant-config/blob/968319fa18169c998fb9c939323ff2110f48d3dd/automations/leaving.yaml#L12)
 
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/57488882bdac1ceb95374b7d4aba2316311f1a79/includes/input_booleans.yaml#L22)
@@ -724,22 +724,17 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/846fe2e5a751501ff750204133f4db2cd88cf981/includes/binary_sensors.yaml#L150)
   - [binary_sensor.someone_in_the_house_in_last_hour](https://github.com/tmttn/home-assistant-config/blob/846fe2e5a751501ff750204133f4db2cd88cf981/includes/binary_sensors.yaml#L38)
 
-### [Ask to turn off everything](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml#L40)
+### [Ask to turn off everything](https://github.com/tmttn/home-assistant-config/blob/968319fa18169c998fb9c939323ff2110f48d3dd/automations/leaving.yaml#L40)
 
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/57488882bdac1ceb95374b7d4aba2316311f1a79/includes/input_booleans.yaml#L22)
   - [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/846fe2e5a751501ff750204133f4db2cd88cf981/includes/binary_sensors.yaml#L135)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/846fe2e5a751501ff750204133f4db2cd88cf981/includes/binary_sensors.yaml#L150)
 
-### [Turn off everything after notification](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml#L70)
+### [Turn off everything after notification](https://github.com/tmttn/home-assistant-config/blob/968319fa18169c998fb9c939323ff2110f48d3dd/automations/leaving.yaml#L70)
 
   *which uses:*
   - [script.leaving](https://github.com/tmttn/home-assistant-config/blob/7b2dc88f625342be3d859782d5b584b1fee957fc/scripts.yaml#L197)
-
-### [Downstairs Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/e00247ae9b598514c26927401e439f3af4c4cf1a/automations/leaving.yaml#L79)
-
-  *which uses:*
-  - [script.turn_off_everything](https://github.com/tmttn/home-assistant-config/blob/7b2dc88f625342be3d859782d5b584b1fee957fc/scripts.yaml#L118)
 
 [^ toc](#automations---table-of-content)
 
