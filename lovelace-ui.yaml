@@ -146,7 +146,7 @@ views:
     show_header_toggle: false
     title: Lights
     type: entities
-  - entity: weather.huis
+  - entity: weather.buienradar
     name: Weather
     type: custom:simple-weather-card
   - entities:
