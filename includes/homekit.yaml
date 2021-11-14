@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
   - name: Home Assistant Bridge
+    port: 21063
     filter:
       exclude_domains:
         - automation
@@ -37,22 +38,27 @@
         - input_select.sleep_mode
         - input_boolean.start_the_music
   - name: HA Front Door Accessory
+    port: 21064
     mode: accessory
     filter:
       include_entities: camera.voordeur
   - name: HA Tesla Door Lock
+    port: 21065
     mode: accessory
     filter:
       include_entities: lock.bizzylectric_door_lock
   - name: HA Tesla Chargeport Lock
+    port: 21066
     mode: accessory
     filter:
       include_entities: lock.bizzylectric_charger_door_lock
-  - name: HA Tesla Trunk Lock
+  - name: HA Tesla Trunk Loc
+    port: 21067
     mode: accessory
     filter:
       include_entities: lock.bizzylectric_trunk_lock
   - name: HA Tesla Frunk Lock
+    port: 21068
     mode: accessory
     filter:
       include_entities: lock.bizzylectric_frunk_lock
