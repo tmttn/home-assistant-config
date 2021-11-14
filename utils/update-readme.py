@@ -114,8 +114,6 @@ def get_dependencies(automation):
         ("switch", "includes/switches.yaml"),
         ("shell_command", "includes/shell_commands.yaml"),
         ("group", "includes/groups.yaml"),
-        ("plant", "includes/plant.yaml"),
-        ("sensor", "includes/utility_meter.yaml"),
     ]:
         entities = find_entities(str(automation), domain)
         for entity in sorted(entities):
