@@ -58,8 +58,6 @@ push:
           title: Living room
         - identifier: BATHROOM
           title: Bathroom
-        # - identifier: HALL_AND_STAIRS
-        #   title: Hall and stairs
         - identifier: TOILET
           title: Toilet
         - identifier: KITCHEN
@@ -118,33 +116,6 @@ push:
           title: Stop and return
 
 actions:
-  - name: Play TV
-    background_color: "#000000"
-    label:
-      text: Play/pause TV
-      color: "#ff0000"
-    icon:
-      icon: play-pause
-      color: "#ffffff"
-
-  - name: Fix TV sound
-    background_color: "#000000"
-    label:
-      text: Fix TV sound
-      color: "#ff0000"
-    icon:
-      icon: volume-high
-      color: "#ffffff"
-
-  - name: Portfolio value
-    background_color: "#000000"
-    label:
-      text: Portfolio value
-      color: "#ff0000"
-    icon:
-      icon: bitcoin
-      color: "#ffffff"
-
   - name: Set sleep mode
     background_color: "#000000"
     label:

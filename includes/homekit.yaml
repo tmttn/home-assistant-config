@@ -8,28 +8,50 @@
 #
 #
 #- from github.com/tmttn/home-assistant-config
-filter:
-  exclude_domains:
-    - automation
-    - binary_sensor
-    - device_tracker
-    - input_boolean
-    - light
-    - media_player
-    - persistent_notification
-    - person
-    - script
-    - sensor
-    - sun
-    - switch
-    - zone
-  include_entities:
-    - light.living_room_lights
-    - light.bedroom_lights
-    - light.automatic_lights
-    - light.kitchen_lights
-    - light.toilet
-    - light.bathroom_lights
-    - light.terrace_lights
-    - input_select.sleep_mode
-    - input_boolean.start_the_music
+  - name: Home Assistant Bridge
+    filter:
+      exclude_domains:
+        - automation
+        - binary_sensor
+        - device_tracker
+        - input_boolean
+        - light
+        - media_player
+        - persistent_notification
+        - person
+        - script
+        - sensor
+        - sun
+        - switch
+        - zone
+      include_entities:
+        - light.living_room_lights
+        - light.bedroom_lights
+        - light.automatic_lights
+        - light.kitchen_lights
+        - light.toilet
+        - light.bathroom_lights
+        - light.terrace_lights
+        - input_select.sleep_mode
+        - input_boolean.start_the_music
+      exclude_entities:
+        - camera.voordeur
+        - lock.bizzylectric_door_lock
+        - lock.bizzylectric_charger_door_lock
+        - lock.bizzylectric_trunk_lock
+        - lock.bizzylectric_frunk_lock
+  - name: Home Assistant Front Door Accessory
+    mode: accessory
+    include_entities: camera.voordeur
+  - name: Home Assistant Bizzylectric Door Lock Accessory
+    mode: accessory
+    include_entities: lock.bizzylectric_door_lock
+  - name: Home Assistant Bizzylectric Charger Door Lock Accessory
+    mode: accessory
+    include_entities: lock.bizzylectric_charger_door_lock
+  - name: Home Assistant Bizzylectric Trunk Lock Accessory
+    mode: accessory
+    include_entities: lock.bizzylectric_trunk_lock
+  - name: Home Assistant Bizzylectric Frunk Lock Accessory
+    mode: accessory
+    include_entities: lock.bizzylectric_frunk_lock
