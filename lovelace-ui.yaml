@@ -91,7 +91,6 @@ views:
         - icon: mdi:human-edit
           name: "{% set manual_control = (\n    (state_attr('switch.adaptive_lighting_default',\
             \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_living_room',\
-            \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_default_bed',\
             \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_half_and_full',\
             \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_half_and_dim',\
             \ 'manual_control') or [])\n) %} {% if manual_control %}\n  {{ manual_control\
@@ -116,15 +115,6 @@ views:
         - entity: switch.adaptive_lighting_adapt_brightness_living_room
           name: Adapt brightness
         - entity: switch.adaptive_lighting_adapt_color_living_room
-          name: Adapt color
-        - type: divider
-        - entity: switch.adaptive_lighting_default_bed
-          name: default_bed
-        - entity: switch.adaptive_lighting_sleep_mode_default_bed
-          name: Sleep mode
-        - entity: switch.adaptive_lighting_adapt_brightness_default_bed
-          name: Adapt brightness
-        - entity: switch.adaptive_lighting_adapt_color_default_bed
           name: Adapt color
         - type: divider
         - entity: switch.adaptive_lighting_half_and_full
@@ -156,20 +146,9 @@ views:
     show_header_toggle: false
     title: Lights
     type: entities
-  - entity: weather.buienradar
+  - entity: weather.huis
     name: Weather
     type: custom:simple-weather-card
-  - entities:
-    - entity: sensor.adaptive
-      type: custom:github-entity-row
-    - entity: sensor.lovelace_ios_dark_mode_theme
-      type: custom:github-entity-row
-    - entity: sensor.lovelace_ios_themes
-      type: custom:github-entity-row
-    - entity: sensor.home_assistant_config
-      type: custom:github-entity-row
-    show_header_toggle: false
-    type: entities
   - entities:
     - entity: input_boolean.alarm_clock
     - entity: input_datetime.alarm_clock
@@ -254,9 +233,9 @@ views:
   - entities:
     - entities:
       - icon: mdi:currency-eur
-        name: '{% set kwh = state_attr("switch.dishwasher", "today_energy_kwh") |
-          float %} {% set cost_today = 0.1979 * kwh %} Today used {{ kwh }} kWh and
-          cost €{{ cost_today | round(2) }}.
+        name: '{% set kwh = states("sensor.dishwasher_today_s_consumption") | float(default=0)
+          %} {% set cost_today = 0.1979 * kwh %} Today used {{ kwh }} kWh and cost
+          €{{ cost_today | round(2) }}.
 
           '
         type: custom:template-entity-row
@@ -269,12 +248,13 @@ views:
           \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
           \ for {{ (off_for / 3600)|round(1) }} hours.\n{% endif %}\n"
         state: "{% if is_state(\"binary_sensor.dishwasher\", \"on\") %}\n  {{ states(\"\
-          sensor.dishwasher_watts\") }} Watt\n{% else %}\n  Off\n{% endif %}\n"
+          sensor.dishwasher_current_consumption\") }} Watt\n{% else %}\n  Off\n{%\
+          \ endif %}\n"
         type: custom:template-entity-row
       type: custom:fold-entity-row
     - entities:
       - icon: mdi:currency-eur
-        name: '{% set kwh = states("sensor.washing_machine_daily_energy") | float
+        name: '{% set kwh = states("sensor.washing_machine_daily_energy") | float(default=0)
           %} {% set cost_today = 0.1979 * kwh %} Today used {{ kwh }} kWh and cost
           €{{ cost_today | round(2) }}.
 
@@ -289,101 +269,8 @@ views:
           \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
           \ off for {{ (off_for / 3600)|round(1) }} hours.\n{% endif %}\n"
         state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
-          \ states(\"sensor.washing_machine_power\") }} Watt\n{% else %}\n  Off\n\
+          \ states(\"sensor.washing_machine_energy\") }} Watt\n{% else %}\n  Off\n\
           {% endif %}\n"
-        type: custom:template-entity-row
-      type: custom:fold-entity-row
-    - entities:
-      - icon: mdi:currency-eur
-        name: 'Today''s usage statistics
-
-          '
-        type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.daily_power")|round(2) }} kWh power → €{{ states("sensor.daily_power_cost")|float|round(2)
-          }}.
-
-          '
-        type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.daily_gas")|round(2) }} m³ gas → €{{ states("sensor.daily_gas_cost")|float|round(2)
-          }}.
-
-          '
-        type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '€{{ states("sensor.daily_energy_fixed_cost")|float|round(2) }} (fixed)
-          + €{{ (states("sensor.daily_gas_cost")|float + states("sensor.daily_power_cost")|float)|round(2)}}
-          = €{{ (states("sensor.daily_gas_cost")|float + states("sensor.daily_power_cost")|float
-          + states("sensor.daily_energy_fixed_cost")|float)|round(2) }}.
-
-          '
-        type: custom:template-entity-row
-      - type: divider
-      - icon: mdi:currency-eur
-        name: '{{ as_timestamp(now()) | timestamp_custom("%B") }}''s usage statistics
-
-          '
-        type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.monthly_power")|round(2) }} kWh power → €{{ states("sensor.monthly_power_cost")|float|round(2)
-          }}.
-
-          '
-        type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.monthly_gas")|round(2) }} m³ gas → €{{ states("sensor.monthly_gas_cost")|float|round(2)
-          }}.
-
-          '
-        type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '€{{ states("sensor.monthly_energy_fixed_cost")|float|round(2) }} (fixed)
-          + €{{ (states("sensor.monthly_gas_cost")|float + states("sensor.monthly_power_cost")|float)|round(2)}}
-          = €{{ (states("sensor.monthly_gas_cost")|float + states("sensor.monthly_power_cost")|float
-          + states("sensor.monthly_energy_fixed_cost")|float)|round(2) }}.
-
-          '
-        type: custom:template-entity-row
-      - type: divider
-      - icon: mdi:currency-eur
-        name: 'Last month''s usage statistics
-
-          '
-        type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.monthly_power_last_period")|round(2) }} kWh power
-          → €{{ states("sensor.monthly_power_cost_last_period")|float|round(2) }}.
-
-          '
-        type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ state_attr("sensor.monthly_gas", "last_period")|round(2) }} m³ gas
-          → €{{ states("sensor.monthly_gas_cost_last_period")|float|round(2) }}.
-
-          '
-        type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float|round(2)
-          }} (fixed) + €{{ (states("sensor.monthly_gas_cost_last_period")|float +
-          states("sensor.monthly_power_cost_last_period")|float)|round(2)}} = €{{
-          (states("sensor.monthly_gas_cost_last_period")|float + states("sensor.monthly_power_cost_last_period")|float
-          + states("sensor.monthly_energy_fixed_cost_last_period")|float)|round(2)
-          }}.
-
-          '
-        type: custom:template-entity-row
-      head:
-        entity: sensor.daily_gas
-        name: Energy usage
-        secondary: 'Today {{ states("sensor.daily_power")|round(2) }} kWh and {{ states("sensor.daily_gas")|round(2)
-          }} m³ gas.
-
-          '
-        state: '€{{ (states("sensor.daily_gas_cost")|float + states("sensor.daily_power_cost")|float
-          + states("sensor.daily_energy_fixed_cost")|float)|round(2) }}
-
-          '
         type: custom:template-entity-row
       type: custom:fold-entity-row
     show_header_toggle: false
@@ -444,8 +331,8 @@ views:
           type: custom:mini-graph-card
         - color_thresholds_transition: smooth
           entities:
-          - entity: sensor.temperature_hall
-            name: Hall
+          - entity: sensor.temperature_kitchen
+            name: Kitchen
           font_size: 100
           group: false
           hour24: true
@@ -603,82 +490,6 @@ views:
     type: custom:swipe-card
   - cards:
     - cards:
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.power_consumption
-          name: Power consumption
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.daily_gas
-          name: Gas consumption
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      name: Speedtest
-      type: horizontal-stack
-    - cards:
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.daily_power_cost
-          name: Power cost
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.daily_gas_cost
-          name: Gas cost
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      name: Speedtest
-      type: horizontal-stack
-    parameters:
-      autoplay:
-        delay: 5000
-      speed: 2000
-    type: custom:swipe-card
-  - cards:
-    - cards:
       - color: auto
         icon: mdi:weather-sunset-up
         name: Wake up
@@ -740,30 +551,59 @@ views:
         type: custom:button-card
       type: horizontal-stack
     type: vertical-stack
-  - control: false
-    entity: climate.thermostat
-    icon: false
-    name: false
-    step_layout: row
-    step_size: 0.5
-    style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
-    type: custom:simple-thermostat
   - cards:
-    - entity: plant.royal_haze
-      type: plant-status
-    - entity: plant.northern_light
-      type: plant-status
-    - entity: plant.kentia_palm
-      type: plant-status
-    parameters:
-      autoplay:
-        delay: 5000
-      speed: 2000
-    type: custom:swipe-card
+    - cards:
+      - control: false
+        entity: climate.woonkamer
+        hide:
+          state: true
+          temperature: true
+        icon: true
+        name: false
+        step_layout: row
+        step_size: '0.5'
+        style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
+        type: custom:simple-thermostat
+      - control: false
+        entity: climate.keuken
+        hide:
+          state: true
+          temperature: true
+        icon: false
+        name: false
+        step_layout: row
+        step_size: '0.5'
+        style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
+        type: custom:simple-thermostat
+      type: horizontal-stack
+    - cards:
+      - control: false
+        entity: climate.berging
+        hide:
+          state: true
+          temperature: true
+        icon: false
+        name: false
+        step_layout: row
+        step_size: '0.5'
+        style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
+        type: custom:simple-thermostat
+      - control: false
+        entity: climate.slaapkamer
+        hide:
+          state: true
+          temperature: true
+        icon: false
+        name: false
+        step_layout: row
+        step_size: '0.5'
+        style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
+        type: custom:simple-thermostat
+      type: horizontal-stack
+    style: "hui-vertical-stack-card {\n  scale: 50%;\n}\n"
+    type: vertical-stack
   - entities:
     - entities:
-      - entity: input_boolean.office_door_open_warning
-      - type: divider
       - align: center
         color: '#0279ff'
         entity: sensor.time_at_work_this_week
@@ -971,9 +811,9 @@ views:
 
 
         The gauge meters display the amount of time spent at home in the last 14 days.
-        Where Tom left the house (on average) {{ (states("sensor.quarantine_meter_tom_times_left")|int
+        Where Tom left the house (on average) {{ (states("sensor.quarantine_meter_tom_times_left")|int(default=0)
         / 14) | round(1) }} times per day and is outside {{ states("sensor.hours_outside_per_day_tom")
-        }} h/d and Tanja {{ (states("sensor.quarantine_meter_tanja_times_left")|int
+        }} h/d and Tanja {{ (states("sensor.quarantine_meter_tanja_times_left")|int(default=0)
         / 14) | round(1) }} times per day and is outside for {{ states("sensor.hours_outside_per_day_tanja")
         }} h/d.
 
@@ -1017,7 +857,6 @@ views:
       - entity: sensor.hacs
         icon: mdi:update
         name: Community Store
-      - entity: binary_sensor.snapshots_stale
       - type: divider
       - entity: sensor.last_boot
         icon: mdi:calendar
@@ -1039,24 +878,6 @@ views:
           to: 85
         - color: red
           from: 85
-          to: 100
-        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-          \ 0, 0)';\n}\n"
-        type: custom:bar-card
-      - animation: 'off'
-        entity: sensor.cpu_temperature
-        entity_row: true
-        height: 30px
-        indicator: 'off'
-        severity:
-        - color: green
-          from: 0
-          to: 60
-        - color: orange
-          from: 60
-          to: 70
-        - color: red
-          from: 70
           to: 100
         style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
           \ 0, 0)';\n}\n"
@@ -1100,6 +921,7 @@ views:
       - type: divider
       - entity: sensor.myip
         icon: mdi:ip-network
+        name: IP address
       show_header_toggle: false
       title: System
       type: entities
@@ -1235,17 +1057,6 @@ views:
   title: System Information
 - badges: []
   cards:
-  - columns: 5
-    entities:
-    - entity: sensor.smart_switch_bedroom_tom_battery_level
-    - entity: sensor.smart_switch_bedroom_tanja_battery_level
-    - entity: sensor.smart_switch_doorbell_battery_level
-    - entity: sensor.smart_switch_downstairs_battery_level
-    - entity: sensor.smart_switch_living_room_battery_level
-    show_icon: true
-    show_name: false
-    title: Buttons
-    type: glance
   - entities:
     - entity: binary_sensor.activity_in_bathroom
     - entity: binary_sensor.activity_in_hall
@@ -1254,10 +1065,6 @@ views:
     - entity: binary_sensor.activity_in_bedroom
     - entity: binary_sensor.activity_in_living_room
     - type: divider
-    - entity: binary_sensor.openclose_front_door
-    - entity: binary_sensor.openclose_guest_room
-    - entity: binary_sensor.openclose_living_room
-    - type: divider
     - entity: binary_sensor.motion_detected
     - entity: binary_sensor.motion_detected_in_last_hour
     - entity: binary_sensor.someone_showering
@@ -1265,11 +1072,6 @@ views:
     show_header_toggle: false
     title: Activity in the house
     type: entities
-  - entities:
-    - entity: binary_sensor.vibration
-    - entity: sensor.vibration_battery_level
-    title: Vibration sensors
-    type: glance
   - columns: 3
     entities:
     - entity: binary_sensor.motion_sensor_kitchen
@@ -1288,24 +1090,6 @@ views:
     show_name: true
     state_color: true
     title: Motion sensor
-    type: glance
-  - columns: 2
-    entities:
-    - entity: binary_sensor.openclose_front_door
-      name: Front door
-    - entity: sensor.openclose_front_door_battery_level
-      name: ''
-    - entity: binary_sensor.openclose_guest_room
-      name: Guest room
-    - entity: sensor.openclose_guest_room_battery_level
-      name: ''
-    - entity: binary_sensor.openclose_living_room
-      name: Living room
-    - entity: sensor.openclose_living_room_battery_level
-      name: ''
-    show_icon: true
-    show_name: true
-    title: Open/close sensor
     type: glance
   - entities:
     - entity: binary_sensor.anything_on
@@ -1362,19 +1146,11 @@ views:
     title: Temperature sensors
     type: glance
   - entities:
-    - entity: sensor.humidity_bathroom
-    - entity: binary_sensor.humidity_bathroom_trend
-    - entity: sensor.humidity_bathroom_derivative
-    - entity: sensor.humidity_bathroom_stats
-    - entity: binary_sensor.someone_showering
-    title: Shower occupied
-    type: entities
-  - entities:
     - entity: sensor.hours_bedroom_lights_have_been_on_last_7_days
       icon: mdi:clock
       name: Bedroom lights
-      secondary: 'Been on {{ (states(''sensor.hours_bedroom_lights_have_been_on_last_7_days'')|float
-        / (7*24) * 100) | round(2) }}% during last 7 days.
+      secondary: 'Been on {{ (states(''sensor.hours_bedroom_lights_have_been_on_last_7_days'')|float(default=7
+        * 24) / (7*24) * 100) | round(2) }}% during last 7 days.
 
         '
       state: '{{ states("sensor.hours_bedroom_lights_have_been_on_last_7_days") }}
@@ -1383,8 +1159,8 @@ views:
     - entity: sensor.hours_living_room_lights_have_been_on_last_7_days
       icon: mdi:clock
       name: Living room lights
-      secondary: 'Been on {{ (states(''sensor.hours_living_room_lights_have_been_on_last_7_days'')|float
-        / (7*24) * 100) | round(2) }}% during last 7 days.
+      secondary: 'Been on {{ (states(''sensor.hours_living_room_lights_have_been_on_last_7_days'')|float(default=7
+        * 24) / (7*24) * 100) | round(2) }}% during last 7 days.
 
         '
       state: '{{ states("sensor.hours_living_room_lights_have_been_on_last_7_days")
@@ -1393,43 +1169,43 @@ views:
     - entity: sensor.hours_toilet_light_has_been_on_last_7_days
       icon: mdi:clock
       name: Toilet
-      secondary: 'Been on {{ (states(''sensor.hours_toilet_light_has_been_on_last_7_days'')|float
-        / (7*24) * 100) | round(2) }}% during last 7 days.
+      secondary: 'Been on {{ (states(''sensor.hours_toilet_light_has_been_on_last_7_days'')|float(default=7
+        * 24) / (7*24) * 100) | round(2) }}% during last 7 days.
 
         '
       state: '{{ states("sensor.hours_toilet_light_has_been_on_last_7_days") }} h'
       type: custom:template-entity-row
-    - entity: sensor.hours_bathroom_light_has_been_on_last_7_days
+    - entity: sensor.hours_bathroom_lights_have_been_on_last_7_days
       icon: mdi:clock
-      name: Bathroom
-      secondary: 'Been on {{ (states(''sensor.hours_bathroom_light_has_been_on_last_7_days'')|float
-        / (7*24) * 100) | round(2) }}% during last 7 days.
+      name: Bathroom lights
+      secondary: 'Been on {{ (states(''sensor.hours_bathroom_lights_have_been_on_last_7_days'')|float(default=7
+        * 24) / (7*24) * 100) | round(2) }}% during last 7 days.
 
         '
-      state: '{{ states("sensor.hours_bathroom_light_has_been_on_last_7_days") }}
+      state: '{{ states("sensor.hours_bathroom_lights_have_been_on_last_7_days") }}
         h'
       type: custom:template-entity-row
     - entity: sensor.hours_kitchen_lights_have_been_on_last_7_days
       icon: mdi:clock
       name: Kitchen lights
-      secondary: 'Been on {{ (states(''sensor.hours_kitchen_lights_have_been_on_last_7_days'')|float
-        / (7*24) * 100) | round(2) }}% during last 7 days.
+      secondary: 'Been on {{ (states(''sensor.hours_kitchen_lights_have_been_on_last_7_days'')|float(default=7
+        * 24) / (7*24) * 100) | round(2) }}% during last 7 days.
 
         '
       state: '{{ states("sensor.hours_kitchen_lights_have_been_on_last_7_days") }}
         h'
       type: custom:template-entity-row
     - type: divider
-    - entity: sensor.hours_bathroom_light_has_been_on_last_7_days
+    - entity: sensor.lights_on_total_hours
       icon: mdi:clock
       name: Total cost estimate for last 7 days
       secondary: 'Total is {{ states(''sensor.lights_on_total_hours'') | round(1)
         }} hours, {{ states(''sensor.lights_on_total_kwh'') | round(1) }} kWh, €{{
-        (states(''sensor.lights_on_total_kwh'')|float * 0.21) | round(2) }}.
+        (states(''sensor.lights_on_total_kwh'')|float(default=0) * 0.21) | round(2)
+        }}.
 
         '
-      state: '{{ states("sensor.hours_bathroom_light_has_been_on_last_7_days") }}
-        h'
+      state: '{{ states("sensor.lights_on_total_hours") }} h'
       type: custom:template-entity-row
     title: Lights on last 7 days
     type: entities
@@ -1636,10 +1412,6 @@ views:
     - entity: sensor.times_tv_has_been_on_last_7_days
     - entity: sensor.hours_tv_has_been_on_last_7_days
     title: Stats
-    type: entities
-  - entities:
-    - entity: sensor.gas_per_hour
-    - entity: sensor.gas_per_hour_filtered
     type: entities
   - entities:
     - entity: input_boolean.test
@@ -1952,16 +1724,6 @@ views:
   - template: automation_template
     type: custom:decluttering-card
     variables:
-    - name: KEF DSP
-    - slug: kef_dsp_
-  - template: automation_template
-    type: custom:decluttering-card
-    variables:
-    - name: LSX
-    - slug: lsx_
-  - template: automation_template
-    type: custom:decluttering-card
-    variables:
     - name: Leaving
     - slug: leaving
   - template: automation_template
@@ -1977,28 +1739,8 @@ views:
   - template: automation_template
     type: custom:decluttering-card
     variables:
-    - name: Media player
-    - slug: media_player_
-  - template: automation_template
-    type: custom:decluttering-card
-    variables:
-    - name: Music
-    - slug: music
-  - template: automation_template
-    type: custom:decluttering-card
-    variables:
     - name: Night mode
     - slug: night_mode_
-  - template: automation_template
-    type: custom:decluttering-card
-    variables:
-    - name: Plant
-    - slug: plant
-  - template: automation_template
-    type: custom:decluttering-card
-    variables:
-    - name: Rhasspy
-    - slug: rhasspy_
   - template: automation_template
     type: custom:decluttering-card
     variables:
