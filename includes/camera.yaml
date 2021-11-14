@@ -17,9 +17,9 @@
   draw: ['all']
   map_transformation:
     trim:
-      left: 15
+      left: 20
       top: 15
-      right: 15
-      bottom: 15
+      right: 30
+      bottom: 30
   attributes:
     - calibration_points 
