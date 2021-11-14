@@ -299,14 +299,14 @@
   variables:
     phone: >
       {% if trigger.event.data.sourceDeviceName == 'tom-iphone' %}
-        tom
+        bizzyphone
       {% else %}
-        tanja
+        t_phone
       {% endif %}
-    other_person: "{% if phone == 'tom' %}Tanja{% else %}Tom{% endif %}"
+    other_person: "{% if phone == 'bizzyphone' %}Tanja{% else %}Tom{% endif %}"
     device_tracker: "device_tracker.{{ other_person }}_iphone"
   action:
-    service: "notify.mobile_app_{{ phone }}_iphone"
+    service: "notify.mobile_app_{{ phone }}"
     data:
       message: "{{ other_person }} is {{ distance('device_tracker.tom_iphone', 'device_tracker.tanja_iphone') | round(2) }} km away"
       data:
