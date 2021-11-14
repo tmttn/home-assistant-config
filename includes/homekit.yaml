@@ -40,18 +40,18 @@
         - lock.bizzylectric_charger_door_lock
         - lock.bizzylectric_trunk_lock
         - lock.bizzylectric_frunk_lock
-  - name: Home Assistant Front Door Accessory
+  - name: HA Front Door Accessory
     mode: accessory
     include_entities: camera.voordeur
-  - name: Home Assistant Bizzylectric Door Lock Accessory
+  - name: HA Tesla Door Lock
     mode: accessory
     include_entities: lock.bizzylectric_door_lock
-  - name: Home Assistant Bizzylectric Charger Door Lock Accessory
+  - name: HA Tesla Chargeport Lock
     mode: accessory
     include_entities: lock.bizzylectric_charger_door_lock
-  - name: Home Assistant Bizzylectric Trunk Lock Accessory
+  - name: HA Tesla Trunk Lock
     mode: accessory
     include_entities: lock.bizzylectric_trunk_lock
-  - name: Home Assistant Bizzylectric Frunk Lock Accessory
+  - name: HA Tesla Frunk Lock
     mode: accessory
     include_entities: lock.bizzylectric_frunk_lock
