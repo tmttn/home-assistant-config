@@ -24,6 +24,8 @@
         - sun
         - switch
         - zone
+        - lock
+        - camera
       include_entities:
         - light.living_room_lights
         - light.bedroom_lights
@@ -34,12 +36,6 @@
         - light.terrace_lights
         - input_select.sleep_mode
         - input_boolean.start_the_music
-      exclude_entities:
-        - camera.voordeur
-        - lock.bizzylectric_door_lock
-        - lock.bizzylectric_charger_door_lock
-        - lock.bizzylectric_trunk_lock
-        - lock.bizzylectric_frunk_lock
   - name: HA Front Door Accessory
     mode: accessory
     filter:
