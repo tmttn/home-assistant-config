@@ -42,16 +42,21 @@
         - lock.bizzylectric_frunk_lock
   - name: HA Front Door Accessory
     mode: accessory
-    include_entities: camera.voordeur
+    filter:
+      include_entities: camera.voordeur
   - name: HA Tesla Door Lock
     mode: accessory
-    include_entities: lock.bizzylectric_door_lock
+    filter:
+      include_entities: lock.bizzylectric_door_lock
   - name: HA Tesla Chargeport Lock
     mode: accessory
-    include_entities: lock.bizzylectric_charger_door_lock
+    filter:
+      include_entities: lock.bizzylectric_charger_door_lock
   - name: HA Tesla Trunk Lock
     mode: accessory
-    include_entities: lock.bizzylectric_trunk_lock
+    filter:
+      include_entities: lock.bizzylectric_trunk_lock
   - name: HA Tesla Frunk Lock
     mode: accessory
-    include_entities: lock.bizzylectric_frunk_lock
+    filter:
+      include_entities: lock.bizzylectric_frunk_lock
