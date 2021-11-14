@@ -8,19 +8,6 @@
 #       |_|   |_|         |_____|
 #
 #- from github.com/tmttn/home-assistant-config
-- alias: "Apple Watch: Play or Pause the TV"
-  trigger:
-    platform: event
-    event_type: ios.action_fired
-    event_data:
-      actionName: Play TV
-  condition:
-    condition: state
-    entity_id: media_player.tv
-    state: "on"
-  action:
-    service: media_player.media_play_pause
-    entity_id: media_player.tv
 
 - alias: "Apple Watch: minimal lights bedroom"
   trigger:
@@ -32,19 +19,9 @@
     service: light.turn_on
     data:
       entity_id:
-        - light.philips_go
         - light.bed_led
       brightness: 1
       color_name: red
-
-- alias: "Apple Watch: fix TV sound"
-  trigger:
-    platform: event
-    event_type: ios.action_fired
-    event_data:
-      actionName: Fix TV sound
-  action:
-    service: script.fix_sound
 
 - alias: "Apple Watch: set sleep mode"
   mode: parallel
@@ -182,25 +159,8 @@
         message: >
           Bedroom: {{ states('sensor.temperature_bedroom') }}°C
           Living room: {{ states('sensor.temperature_living_room') }}°C
-          Hall: {{ states('sensor.temperature_hall') }}°C
-          Thermostat: {{ state_attr('climate.thermostat', 'temperature') }}°C
+          Thermostat: {{ state_attr('climate.bunderhome', 'temperature') }}°C
           Outside: {{ state_attr('weather.buienradar', 'temperature') }}°C and it's {{ states('weather.buienradar') }}
-
-- alias: "Apple Watch: portfolio value"
-  mode: parallel
-  trigger:
-    platform: event
-    event_type: ios.action_fired
-    event_data:
-      actionName: Portfolio value
-  action:
-    - variables:
-        iphone: "notify.mobile_app_bizzyphone"
-    - service: "{{ iphone }}"
-      data:
-        title: Portfolio value
-        message: >
-          €{{ states('sensor.portfolio_value') }}
 
 - alias: "Apple Watch: send vacuum cleaner"
   mode: parallel
@@ -241,14 +201,14 @@
     - service: light.turn_on
       data:
         entity_id:
-          - light.living_room_lights
+          - light.tv_led
         brightness: 5
         color_name: red
     - service: light.turn_on
       data:
         entity_id:
-          - light.tv_led
-        brightness: 20
+          - light.de_kerstboom
+        brightness: 5
 
 - alias: "Apple Watch: reset adaptive lighting"
   trigger:
