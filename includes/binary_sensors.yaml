@@ -118,6 +118,18 @@
           mdi:dishwasher-off
         {% endif %}
 
+    espresso_machine:
+      friendly_name: Tumble dryer
+      value_template: >
+        {{ states("sensor.espresso_machine_current_consumption") | float(0) > 3 }}
+      delay_off: "00:03:00"
+      icon_template: >
+        {% if is_state("binary_sensor.espresso_machine", "on") %}
+          mdi:coffee-maker
+        {% else %}
+          mdi:coffee-maker
+        {% endif %}
+
     tumble_dryer:
       friendly_name: Tumble dryer
       value_template: >
