@@ -119,7 +119,7 @@
         {% endif %}
 
     espresso_machine:
-      friendly_name: Tumble dryer
+      friendly_name: Espresso machine
       value_template: >
         {{ states("sensor.espresso_machine_current_consumption") | float(0) > 3 }}
       delay_off: "00:03:00"
