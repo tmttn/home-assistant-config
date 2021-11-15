@@ -61,11 +61,8 @@
       from: "off"
       to: "on"
   condition:
-    - condition: state
-      entity_id: binary_sensor.openclose_guest_room
-      state: "on"
     - condition: time
-      after: "13:00:00"
+      after: "07:00:00"
       before: "22:00:00"
     - condition: state
       entity_id: binary_sensor.vacuum_day
