@@ -1134,12 +1134,12 @@ views:
       type: custom:template-entity-row
     - entity: sensor.hours_kitchen_lights_have_been_on_last_7_days
       icon: mdi:clock
-      name: Kitchen lights
-      secondary: 'Been on {{ (states(''sensor.hours_kitchen_lights_have_been_on_last_7_days'')|float(default=7
+      name: Terrace lights
+      secondary: 'Been on {{ (states(''sensor.hours_terrace_lights_have_been_on_last_7_days'')|float(default=7
         * 24) / (7*24) * 100) | round(2) }}% during last 7 days.
 
         '
-      state: '{{ states("sensor.hours_kitchen_lights_have_been_on_last_7_days") }}
+      state: '{{ states("sensor.hours_terrace_lights_have_been_on_last_7_days") }}
         h'
       type: custom:template-entity-row
     title: Lights on last 7 days
