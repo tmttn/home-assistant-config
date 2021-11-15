@@ -14,7 +14,7 @@
     - platform: state
       entity_id: binary_sensor.dishwasher
     - platform: state
-      entity_id: miele.washing_machine
+      entity_id: binary_sensor.washing_machine
     - platform: state
       entity_id: binary_sensor.tumble_dryer
     - platform: state
