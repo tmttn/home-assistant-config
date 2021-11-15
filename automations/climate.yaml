@@ -58,11 +58,26 @@
       - input_boolean.automatic_temperature
     state: "on"
   action:
-    - service: script.set_high_temperature
+    - service: script.set_moderate_temperature
     - service: notify.all_iphones
       data:
         title: "Climate"
         message: "Automatically turned on the heating 🥵℃"
+
+- alias: "Climate: increase the heating for the afternoon"
+  trigger:
+    platform: time
+    at: "11:00"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.no_one_home
+      state: "off"
+    - condition: state
+      entity_id:
+        - input_boolean.automatic_temperature
+      state: "on"
+  action:
+    - service: script.set_high_temperature
 
 - alias: "Climate: turn on the heating when going home"
   trigger:
