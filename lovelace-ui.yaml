@@ -1249,9 +1249,6 @@ views:
   - entities:
     - entity: input_boolean.wake_up_light
     - entity: input_boolean.demo_wake_up_light
-    - type: divider
-    - entity: input_boolean.wake_up_with_spotify
-    - entity: input_boolean.demo_wake_up_with_spotify
     show_header_toggle: false
     title: Test apps
     type: entities
