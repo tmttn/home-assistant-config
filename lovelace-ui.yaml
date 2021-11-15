@@ -246,7 +246,7 @@ views:
           )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.dishwasher_off\"\
           )) %} {% if states(\"binary_sensor.dishwasher\") == \"on\" %}\n  Has been\
           \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
-          \ for {{ (off_for / 3600)|round(1) }} hours.\n{% endif %}\n"
+          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
         state: "{% if is_state(\"binary_sensor.dishwasher\", \"on\") %}\n  {{ states(\"\
           sensor.dishwasher_current_consumption\") }} Watt\n{% else %}\n  Off\n{%\
           \ endif %}\n"
@@ -267,10 +267,53 @@ views:
           )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_off\"\
           )) %} {% if states(\"binary_sensor.washing_machine\") == \"on\" %}\n  Has\
           \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
-          \ off for {{ (off_for / 3600)|round(1) }} hours.\n{% endif %}\n"
+          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
         state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
           \ states(\"sensor.washing_machine_energy\") }} Watt\n{% else %}\n  Off\n\
           {% endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.tumble_dryer_today_s_consumption") | float(default=0)
+          %} {% set cost_today = 0.1979 * kwh %} Today used {{ kwh }} kWh and cost
+          €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      head:
+        entity: binary_sensor.tumble_dryer
+        name: Tumble dryer
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_off\"\
+          )) %} {% if states(\"binary_sensor.tumble_dryer\") == \"on\" %}\n  Has been\
+          \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
+          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.tumble_dryer\", \"on\") %}\n  {{ states(\"\
+          sensor.tumble_dryer_current_consumption\") }} Watt\n{% else %}\n  Off\n\
+          {% endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.espresso_machine_today_s_consumption")
+          | float(default=0) %} {% set cost_today = 0.1979 * kwh %} Today used {{
+          kwh }} kWh and cost €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      entity: null
+      head:
+        entity: binary_sensor.espresso_machine
+        name: Espresso machine
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_off\"\
+          )) %} {% if states(\"binary_sensor.espresso_machine\") == \"on\" %}\n  Has\
+          \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
+          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.espresso_machine\", \"on\") %}\n  {{\
+          \ states(\"sensor.espresso_machine_current_consumption\") }} Watt\n{% else\
+          \ %}\n  Off\n{% endif %}\n"
         type: custom:template-entity-row
       type: custom:fold-entity-row
     show_header_toggle: false
@@ -812,9 +855,9 @@ views:
 
         The gauge meters display the amount of time spent at home in the last 14 days.
         Where Tom left the house (on average) {{ (states("sensor.quarantine_meter_tom_times_left")|int(default=0)
-        / 14) | round(1) }} times per day and is outside {{ states("sensor.hours_outside_per_day_tom")
+        / 14) | round(1, default=0) }} times per day and is outside {{ states("sensor.hours_outside_per_day_tom")
         }} h/d and Tanja {{ (states("sensor.quarantine_meter_tanja_times_left")|int(default=0)
-        / 14) | round(1) }} times per day and is outside for {{ states("sensor.hours_outside_per_day_tanja")
+        / 14) | round(1, default=0) }} times per day and is outside for {{ states("sensor.hours_outside_per_day_tanja")
         }} h/d.
 
         '
@@ -1199,10 +1242,10 @@ views:
     - entity: sensor.lights_on_total_hours
       icon: mdi:clock
       name: Total cost estimate for last 7 days
-      secondary: 'Total is {{ states(''sensor.lights_on_total_hours'') | round(1)
-        }} hours, {{ states(''sensor.lights_on_total_kwh'') | round(1) }} kWh, €{{
-        (states(''sensor.lights_on_total_kwh'')|float(default=0) * 0.21) | round(2)
-        }}.
+      secondary: 'Total is {{ states(''sensor.lights_on_total_hours'') | round(1,
+        default=0) }} hours, {{ states(''sensor.lights_on_total_kwh'') | round(1,
+        default=0) }} kWh, €{{ (states(''sensor.lights_on_total_kwh'')|float(default=0)
+        * 0.21) | round(2) }}.
 
         '
       state: '{{ states("sensor.lights_on_total_hours") }} h'
@@ -1230,10 +1273,14 @@ views:
     title: Inputs (automatically switched)
     type: entities
   - entities:
+    - entity: input_datetime.espresso_machine_on
+    - entity: input_datetime.espresso_machine_off
     - entity: input_datetime.dishwasher_on
     - entity: input_datetime.dishwasher_off
     - entity: input_datetime.washing_machine_on
     - entity: input_datetime.washing_machine_off
+    - entity: input_datetime.tumble_dryer_on
+    - entity: input_datetime.tumble_dryer_off
     show_header_toggle: false
     title: Datetimes
     type: entities
@@ -1405,10 +1452,14 @@ views:
     title: Work time
     type: entities
   - entities:
+    - entity: sensor.times_espresso_machine_has_been_on_last_7_days
+    - entity: sensor.hours_espresso_machine_has_been_on_last_7_days
     - entity: sensor.times_dishwasher_has_been_on_last_7_days
     - entity: sensor.hours_dishwasher_has_been_on_last_7_days
     - entity: sensor.times_washing_machine_has_been_on_last_7_days
     - entity: sensor.hours_washing_machine_has_been_on_last_7_days
+    - entity: sensor.times_tumble_dryer_has_been_on_last_7_days
+    - entity: sensor.hours_tumble_dryer_has_been_on_last_7_days
     - entity: sensor.times_tv_has_been_on_last_7_days
     - entity: sensor.hours_tv_has_been_on_last_7_days
     title: Stats
