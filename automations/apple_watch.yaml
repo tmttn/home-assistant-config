@@ -207,7 +207,7 @@
     - service: light.turn_on
       data:
         entity_id:
-          - light.de_kerstboom
+          - light.hue_plug
         brightness: 5
 
 - alias: "Apple Watch: reset adaptive lighting"
