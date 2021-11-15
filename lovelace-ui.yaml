@@ -599,7 +599,7 @@ views:
         style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
         type: custom:simple-thermostat
       - control: false
-        entity: climate.keuken
+        entity: climate.badkamer
         hide:
           state: true
           temperature: true
