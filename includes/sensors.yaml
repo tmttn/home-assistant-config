@@ -212,19 +212,19 @@
 
     temperature_living_room:
       unit_of_measurement: '°C'
-      value_template: '{{state_attr("climate.woonkamer", "current_temperature")}}'
+      value_template: '{{state_attr("climate.living_room", "current_temperature")}}'
 
     temperature_bedroom:
       unit_of_measurement: '°C'
-      value_template: '{{state_attr("climate.slaapkamer", "current_temperature")}}'
+      value_template: '{{state_attr("climate.bedroom", "current_temperature")}}'
 
     temperature_bathroom:
       unit_of_measurement: '°C'
-      value_template: '{{state_attr("climate.badkamer", "current_temperature")}}'
+      value_template: '{{state_attr("climate.bathroom", "current_temperature")}}'
 
     temperature_kitchen:
       unit_of_measurement: '°C'
-      value_template: '{{state_attr("climate.keuken", "current_temperature")}}'
+      value_template: '{{state_attr("climate.kitchen", "current_temperature")}}'
 
 #   ___  _   _
 #  / _ \| |_| |__   ___ _ __ ___
