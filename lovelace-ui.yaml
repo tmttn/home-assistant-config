@@ -147,9 +147,17 @@ views:
     show_header_toggle: false
     title: Lights
     type: entities
-  - entity: weather.buienradar
-    name: Weather
-    type: custom:simple-weather-card
+  - cards:
+    - entity: weather.buienradar
+      name: Weather
+      type: custom:simple-weather-card
+    - entities:
+      - entity: sensor.limburg_net_morgen
+        icon: mdi:calendar-arrow-right
+        name: Afval buiten zetten
+      state_color: false
+      type: entities
+    type: vertical-stack
   - entities:
     - entity: input_boolean.alarm_clock
     - entity: input_datetime.alarm_clock
@@ -806,12 +814,6 @@ views:
         type: gauge
       type: horizontal-stack
     type: vertical-stack
-  - entities:
-    - entity: sensor.limburg_net_morgen
-      icon: mdi:calendar-arrow-right
-      name: Afval buiten zetten
-    state_color: false
-    type: entities
   icon: mdi:home
   path: default_view
   title: Home
