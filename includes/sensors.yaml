@@ -332,6 +332,24 @@
   end: "{{ now() }}"
 
 - platform: history_stats
+  name: Hours tumble dryer has been on last 7 days
+  entity_id: binary_sensor.tumble_dryer
+  state: "on"
+  type: time
+  duration:
+    days: 7
+  end: "{{ now() }}"
+
+- platform: history_stats
+  name: Times tumble dryer has been on last 7 days
+  entity_id: binary_sensor.tumble_dryer
+  state: "on"
+  type: count
+  duration:
+    days: 7
+  end: "{{ now() }}"
+
+- platform: history_stats
   name: Hours washing machine has been on last 7 days
   entity_id: binary_sensor.washing_machine
   state: "on"
