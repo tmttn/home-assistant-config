@@ -6,5 +6,7 @@
 #   \___\___/|_| |_| |_|_| |_| |_|_|\__|    |_|  \___|\__,_|\__,_|_| |_| |_|\___|
 #
 #- from github.com/tmttn/home-assistant-config
-git commit -m "update automatically generated part of README.md ✏️" README.md
-git push
+if ! git diff --quiet
+  git commit -m "update automatically generated part of README.md ✏️" README.md
+  git push
+fi
