@@ -20,7 +20,7 @@
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "off"
-    - "{{ not is_state_attr('climate.badkamer', 'temperature', states('input_number.temperature_moderate')|float(default=0)) }}"
+    - "{{ not is_state_attr('climate.bathroom', 'temperature', states('input_number.temperature_moderate')|float(default=0)) }}"
   action:
     - service: script.set_moderate_temperature_bathroom
     - service: notify.all_iphones
@@ -39,7 +39,7 @@
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "off"
-    - "{{ not is_state_attr('climate.badkamer', 'temperature', states('input_number.temperature_low')|float(default=0)) }}"
+    - "{{ not is_state_attr('climate.bathroom', 'temperature', states('input_number.temperature_low')|float(default=0)) }}"
   action:
     - service: script.set_low_temperature_bathroom
     - service: notify.all_iphones
@@ -93,7 +93,7 @@
       after: "16:00:00"
       before: "22:00:00"
     - "{{ is_state_attr('proximity.home', 'dir_of_travel', 'towards') }}"
-    - "{{ not is_state_attr('climate.woonkamer', 'temperature', states('input_number.temperature_high')) }}"
+    - "{{ not is_state_attr('climate.living_room', 'temperature', states('input_number.temperature_high')) }}"
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "on"
@@ -115,7 +115,7 @@
     - condition: state
       entity_id: binary_sensor.no_one_home
       state: "off"
-    - "{{ not is_state_attr('climate.woonkamer', 'temperature', states('input_number.temperature_low')|float(default=0)) }}"
+    - "{{ not is_state_attr('climate.living_room', 'temperature', states('input_number.temperature_low')|float(default=0)) }}"
   action:
     - service: script.set_low_temperature
     - service: notify.all_iphones
