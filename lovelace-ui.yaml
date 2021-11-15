@@ -380,13 +380,11 @@ views:
             state: true
           type: custom:mini-graph-card
         type: horizontal-stack
-      type: vertical-stack
-    - cards:
       - cards:
         - color_thresholds_transition: smooth
           entities:
-          - entity: sensor.humidity_living_room
-            name: Living room
+          - entity: sensor.temperature_storage
+            name: Storage
           font_size: 100
           group: false
           hour24: true
@@ -401,112 +399,8 @@ views:
           type: custom:mini-graph-card
         - color_thresholds_transition: smooth
           entities:
-          - entity: sensor.humidity_bathroom
-            name: Bathroom
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        type: horizontal-stack
-      - cards:
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.humidity_bedroom
-            name: Bedroom
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.humidity_hall
-            name: Hall
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        type: horizontal-stack
-      type: vertical-stack
-    - cards:
-      - cards:
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.pressure_living_room
-            name: Living room
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.pressure_bathroom
-            name: Bathroom
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        type: horizontal-stack
-      - cards:
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.pressure_bedroom
-            name: Bedroom
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.pressure_hall
-            name: Hall
+          - entity: sensor.temperature_bedroom_marthe
+            name: Bedroom Marthe
           font_size: 100
           group: false
           hour24: true
@@ -612,6 +506,30 @@ views:
       type: horizontal-stack
     - cards:
       - control: false
+        entity: climate.slaapkamer
+        hide:
+          state: true
+          temperature: true
+        icon: false
+        name: false
+        step_layout: row
+        step_size: '0.5'
+        style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
+        type: custom:simple-thermostat
+      - control: false
+        entity: climate.keuken
+        hide:
+          state: true
+          temperature: true
+        icon: false
+        name: false
+        step_layout: row
+        step_size: '0.5'
+        style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
+        type: custom:simple-thermostat
+      type: horizontal-stack
+    - cards:
+      - control: false
         entity: climate.berging
         hide:
           state: true
@@ -623,7 +541,7 @@ views:
         style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
         type: custom:simple-thermostat
       - control: false
-        entity: climate.slaapkamer
+        entity: climate.kinderkamer
         hide:
           state: true
           temperature: true
