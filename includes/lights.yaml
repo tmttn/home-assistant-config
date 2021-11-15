@@ -31,9 +31,9 @@
 - platform: group
   name: Kitchen lights
   entities:
-    - light.keuken_1
-    - light.keuken_2
-    - light.keuken_3
+    - light.kitchen_1
+    - light.kitchen_2
+    - light.kitchen_3
 
 - platform: group
   name: Living room dining table lights
