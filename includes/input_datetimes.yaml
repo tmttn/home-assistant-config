@@ -53,7 +53,7 @@ tumble_dryer_off:
   has_date: true
   has_time: true
 
-espress_machine_on:
+espresso_machine_on:
   name: Espresso machine last started
   has_date: true
   has_time: true
