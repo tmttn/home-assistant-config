@@ -65,3 +65,15 @@
     data:
       name: "tumble dryer"
       emojis: "🧺💦"
+
+- alias: "Utilities: espresso machine notification"
+  trigger:
+    platform: state
+    entity_id: binary_sensor.tumble_dryer
+    from: "off"
+    to: "on"
+  action:
+    service: script.utility_notification
+    data:
+      name: "espresso machine"
+      emojis: "☕️🥤"
