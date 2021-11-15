@@ -195,7 +195,8 @@
             + states('sensor.hours_living_room_lights_have_been_on_last_7_days')|float(default=0) * 10
             + states('sensor.hours_toilet_light_has_been_on_last_7_days')|float(default=0) * 1
             + states('sensor.hours_bathroom_lights_have_been_on_last_7_days')|float(default=0) * 4
-            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float(default=0) * 3 }}
+            + states('sensor.hours_kitchen_lights_have_been_on_last_7_days')|float(default=0) * 3
+            + states('sensor.hours_terrace_lights_have_been_on_last_7_days')|float(default=0) * 3 }}
 
     lights_on_total_kwh:
       unit_of_measurement: h
@@ -471,6 +472,15 @@
 - platform: history_stats
   name: Hours bathroom lights have been on last 7 days
   entity_id: light.bathroom_lights
+  state: "on"
+  type: time
+  duration:
+    days: 7
+  end: "{{ now() }}"
+
+- platform: history_stats
+  name: Hours terrace lights have been on last 7 days
+  entity_id: light.terrace_lights
   state: "on"
   type: time
   duration:
