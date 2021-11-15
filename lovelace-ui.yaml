@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -134,6 +125,15 @@ views:
         - entity: switch.adaptive_lighting_adapt_brightness_half_and_dim
           name: Adapt brightness
         - entity: switch.adaptive_lighting_adapt_color_half_and_dim
+          name: Adapt color
+        - type: divider
+        - entity: switch.adaptive_lighting_outside
+          name: outside
+        - entity: switch.adaptive_lighting_sleep_mode_outside
+          name: Sleep mode
+        - entity: switch.adaptive_lighting_adapt_brightness_outside
+          name: Adapt brightness
+        - entity: switch.adaptive_lighting_adapt_color_outside
           name: Adapt color
         head:
           entity: switch.adaptive_lighting_default
@@ -806,6 +806,12 @@ views:
         type: gauge
       type: horizontal-stack
     type: vertical-stack
+  - entities:
+    - entity: sensor.limburg_net_morgen
+      icon: mdi:calendar-arrow-right
+      name: Afval buiten zetten
+    state_color: false
+    type: entities
   icon: mdi:home
   path: default_view
   title: Home
