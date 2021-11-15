@@ -8,20 +8,21 @@
 #                   |_|                  |_____|   |___/                   |___/
 #
 #- from github.com/tmttn/home-assistant-config
-- name: living room
-  lights:
-    - light.living_room_lights
-  min_brightness: 70
-  prefer_rgb_color: true
-  detect_non_ha_changes: true
-  interval: 30
-
 - name: default
   lights:
     - light.bedroom_lights
     - light.bathroom_lights
     - light.toilet
     - light.kitchen_lights
+    - light.terrace_lights
+  min_brightness: 70
+  prefer_rgb_color: true
+  detect_non_ha_changes: true
+  interval: 30
+
+- name: living room
+  lights:
+    - light.living_room_lights
   min_brightness: 70
   prefer_rgb_color: true
   detect_non_ha_changes: true
@@ -31,7 +32,6 @@
   lights:
     - light.bedroom_lights
     - light.bathroom_lights
-    - light.terrace_lights
   min_brightness: 70
   prefer_rgb_color: true
   detect_non_ha_changes: true
@@ -43,5 +43,13 @@
     - light.kitchen_lights
   min_brightness: 70
   prefer_rgb_color: true
+  detect_non_ha_changes: true
+  interval: 30
+
+- name: outside
+  lights:
+    - light.terrace_lights
+  min_brightness: 1
+  prefer_rgb_color: false
   detect_non_ha_changes: true
   interval: 30
