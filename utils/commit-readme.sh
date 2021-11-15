@@ -7,3 +7,4 @@
 #
 #- from github.com/tmttn/home-assistant-config
 git commit -m "update automatically generated part of README.md ✏️" README.md
+git push
