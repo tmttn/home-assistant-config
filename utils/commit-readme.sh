@@ -7,6 +7,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 if ! git diff --quiet
+then
   git commit -m "update automatically generated part of README.md ✏️" README.md
   git push
 fi
