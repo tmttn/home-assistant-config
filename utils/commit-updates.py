@@ -57,7 +57,5 @@ if ha_update:
     subprocess.run(["git", "commit", "-m", f"update Home Assistant to {version}"])
 
 if lovelace_update:
-    with open(lovelace_ui) as f:
-        version = f.read()
-    subprocess.run(f"git add lovelace-ui.yaml")
+    subprocess.run(f"git add lovelace-ui.yaml".split())
     subprocess.run(["git", "commit", "-m", f"update lovelace-ui via UI"])
