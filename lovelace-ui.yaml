@@ -31,7 +31,7 @@ views:
     - entities:
       - light.living_room_dining_table_lights
       - light.living_room_middle_lights
-      - light.de_kerstboom
+      - light.hue_plug
       - light.tv_led
       - entity: script.cozy_lights_living_room
         icon_height: 20px
@@ -58,7 +58,7 @@ views:
       type: custom:fold-entity-row
     - entities:
       - light.bedroom_ceiling_lights
-      - light.bed_reading
+      - light.bedroom_bedside_tom
       - input_boolean.automatic_bedroom_lights
       - input_boolean.bedroom_lights_automatically_turned_on
       - entity: script.cozy_lights_bedroom
@@ -261,15 +261,16 @@ views:
           '
         type: custom:template-entity-row
       head:
-        entity: miele.washing_machine
+        entity: binary_sensor.washing_machine
         name: Washing machine
         secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_on\"\
           )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_off\"\
-          )) %} {% if states(\"miele.washing_machine\") == \"In use\" %}\n  Has been\
-          \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
-          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-        state: "{% if is_state(\"miele.washing_machine\", \"In use\") %}\n  {{ states(\"\
-          sensor.washing_machine_energy\") }} Watt\n{% else %}\n  Off\n{% endif %}\n"
+          )) %} {% if states(\"binary_sensor.washing_machine\") == \"on\" %}\n  Has\
+          \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
+          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
+          \ states(\"sensor.washing_machine_energy\") }} Watt\n{% else %}\n  Off\n\
+          {% endif %}\n"
         type: custom:template-entity-row
       type: custom:fold-entity-row
     - entities:
@@ -491,7 +492,7 @@ views:
   - cards:
     - cards:
       - control: false
-        entity: climate.woonkamer
+        entity: climate.living_room
         hide:
           state: true
           temperature: true
@@ -502,7 +503,7 @@ views:
         style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
         type: custom:simple-thermostat
       - control: false
-        entity: climate.badkamer
+        entity: climate.bathroom
         hide:
           state: true
           temperature: true
@@ -515,7 +516,7 @@ views:
       type: horizontal-stack
     - cards:
       - control: false
-        entity: climate.slaapkamer
+        entity: climate.bedroom
         hide:
           state: true
           temperature: true
@@ -526,7 +527,7 @@ views:
         style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
         type: custom:simple-thermostat
       - control: false
-        entity: climate.keuken
+        entity: climate.kitchen
         hide:
           state: true
           temperature: true
@@ -539,7 +540,7 @@ views:
       type: horizontal-stack
     - cards:
       - control: false
-        entity: climate.berging
+        entity: climate.storage
         hide:
           state: true
           temperature: true
@@ -550,7 +551,7 @@ views:
         style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
         type: custom:simple-thermostat
       - control: false
-        entity: climate.kinderkamer
+        entity: climate.bedroom_marthe
         hide:
           state: true
           temperature: true
@@ -1060,44 +1061,16 @@ views:
     entities:
     - entity: sensor.temperature_living_room
       name: Living room
-    - entity: sensor.humidity_living_room
-      name: ''
-    - entity: sensor.pressure_living_room
-      name: ''
-    - entity: sensor.temperature_sensor_living_room_battery_level
-      name: ''
-    - entity: sensor.temperature_bedroom
-      name: Bedroom
-    - entity: sensor.humidity_bedroom
-      name: ''
-    - entity: sensor.pressure_bedroom
-      name: ''
-    - entity: sensor.temperature_sensor_bedroom_battery_level
-      name: ''
-    - entity: sensor.temperature_hall
-      name: Hall
-    - entity: sensor.humidity_hall
-      name: ''
-    - entity: sensor.pressure_hall
-      name: ''
-    - entity: sensor.temperature_sensor_hall_battery_level
-      name: ''
     - entity: sensor.temperature_bathroom
       name: Bathroom
-    - entity: sensor.humidity_bathroom
-      name: ''
-    - entity: sensor.pressure_bathroom
-      name: ''
-    - entity: sensor.temperature_sensor_bathroom_battery_level
-      name: ''
-    - entity: sensor.temperature_xbox
-      name: Xbox
-    - entity: sensor.humidity_xbox
-      name: ''
-    - entity: sensor.pressure_xbox
-      name: ''
-    - entity: sensor.temperature_sensor_xbox_battery_level
-      name: ''
+    - entity: sensor.temperature_kitchen
+      name: Kitchen
+    - entity: sensor.temperature_bedroom
+      name: Bedroom
+    - entity: sensor.temperature_bedroom_marthe
+      name: Bedroom Marthe
+    - entity: sensor.temperature_storage
+      name: Storage
     show_icon: true
     show_name: true
     show_state: true
