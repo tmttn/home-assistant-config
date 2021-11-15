@@ -369,7 +369,7 @@
 
 - platform: history_stats
   name: Hours washing machine has been on last 7 days
-  entity_id: miele.washing_machine
+  entity_id: binary_sensor.washing_machine
   state: "In use"
   type: time
   duration:
@@ -378,7 +378,7 @@
 
 - platform: history_stats
   name: Times washing machine has been on last 7 days
-  entity_id: miele.washing_machine
+  entity_id: binary_sensor.washing_machine
   state: "In use"
   type: count
   duration:
