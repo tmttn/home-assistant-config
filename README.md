@@ -526,7 +526,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/57488882bdac1ceb95374b7d4aba2316311f1a79/includes/input_booleans.yaml#L46)
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/6ff88a0bfdb743ffe33f49b051cd50470ae4cad7/includes/input_selects.yaml#L11)
-  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/9a49542e5608865134ebc5fc93e8141898c8bfe7/includes/sensors.yaml#L135)
+  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/includes/sensors.yaml#L135)
 
 [^ toc](#automations---table-of-content)
 
@@ -551,8 +551,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/d1f86df5050474174cb92b4a267a16d384d269fc/automations/apple_watch.yaml#L146)
 
   *which uses:*
-  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/9a49542e5608865134ebc5fc93e8141898c8bfe7/includes/sensors.yaml#L218)
-  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/9a49542e5608865134ebc5fc93e8141898c8bfe7/includes/sensors.yaml#L214)
+  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/includes/sensors.yaml#L218)
+  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/includes/sensors.yaml#L214)
 
 ### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/d1f86df5050474174cb92b4a267a16d384d269fc/automations/apple_watch.yaml#L165)
 
@@ -608,7 +608,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/57488882bdac1ceb95374b7d4aba2316311f1a79/includes/input_booleans.yaml#L46)
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/57488882bdac1ceb95374b7d4aba2316311f1a79/includes/input_booleans.yaml#L40)
   - [script.set_moderate_temperature](https://github.com/tmttn/home-assistant-config/blob/f9c2ddd137593d9a34f2fbf16797414a126a8dda/scripts.yaml#L183)
-  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/9a49542e5608865134ebc5fc93e8141898c8bfe7/includes/sensors.yaml#L127)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/includes/sensors.yaml#L127)
 
 ### [Increase the heating for the afternoon](https://github.com/tmttn/home-assistant-config/blob/7e113622f8fc4f1f0f09ec17e47cc4e7b9ee7221/automations/climate.yaml#L67)
 
@@ -861,8 +861,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Utilities 🧺👚🍽](https://github.com/tmttn/home-assistant-config/blob/79c36afaae28ae475a7185367e58b4ad12f8df89/automations/utilities.yaml)
-### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/79c36afaae28ae475a7185367e58b4ad12f8df89/automations/utilities.yaml#L12)
+## [Utilities 🧺👚🍽](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml)
+### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L12)
 
   *which uses:*
   - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L109)
@@ -870,24 +870,25 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L133)
   - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L97)
 
-### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/79c36afaae28ae475a7185367e58b4ad12f8df89/automations/utilities.yaml#L33)
+### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L33)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/f9c2ddd137593d9a34f2fbf16797414a126a8dda/scripts.yaml#L232)
+  - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L97)
 
-### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/79c36afaae28ae475a7185367e58b4ad12f8df89/automations/utilities.yaml#L45)
+### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L45)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/f9c2ddd137593d9a34f2fbf16797414a126a8dda/scripts.yaml#L232)
   - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L109)
 
-### [Tumble dryer notification](https://github.com/tmttn/home-assistant-config/blob/79c36afaae28ae475a7185367e58b4ad12f8df89/automations/utilities.yaml#L57)
+### [Tumble dryer notification](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L57)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/f9c2ddd137593d9a34f2fbf16797414a126a8dda/scripts.yaml#L232)
   - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L133)
 
-### [Espresso machine notification](https://github.com/tmttn/home-assistant-config/blob/79c36afaae28ae475a7185367e58b4ad12f8df89/automations/utilities.yaml#L69)
+### [Espresso machine notification](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L69)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/f9c2ddd137593d9a34f2fbf16797414a126a8dda/scripts.yaml#L232)
