@@ -33,9 +33,9 @@
 - alias: "Utilities: washing machine notification"
   trigger:
     platform: state
-    entity_id: miele.washing_machine
-    from: "Off"
-    to: "In use"
+    entity_id: binary_sensor.washing_machine
+    from: "off"
+    to: "on"
   action:
     service: script.utility_notification
     data:
