@@ -927,21 +927,21 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Vacuum 🧹](https://github.com/tmttn/home-assistant-config/blob/7e113622f8fc4f1f0f09ec17e47cc4e7b9ee7221/automations/vacuum.yaml)
-### [Started cleaning](https://github.com/tmttn/home-assistant-config/blob/7e113622f8fc4f1f0f09ec17e47cc4e7b9ee7221/automations/vacuum.yaml#L11)
+## [Vacuum 🧹](https://github.com/tmttn/home-assistant-config/blob/4f5a46d3b4ff49b5cafbf00c090e5d63a0686b74/automations/vacuum.yaml)
+### [Started cleaning](https://github.com/tmttn/home-assistant-config/blob/4f5a46d3b4ff49b5cafbf00c090e5d63a0686b74/automations/vacuum.yaml#L11)
 
 
-### [Stopped cleaning](https://github.com/tmttn/home-assistant-config/blob/7e113622f8fc4f1f0f09ec17e47cc4e7b9ee7221/automations/vacuum.yaml#L23)
+### [Stopped cleaning](https://github.com/tmttn/home-assistant-config/blob/4f5a46d3b4ff49b5cafbf00c090e5d63a0686b74/automations/vacuum.yaml#L23)
 
   *which uses:*
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/57488882bdac1ceb95374b7d4aba2316311f1a79/includes/input_booleans.yaml#L16)
 
-### [Reminder notification](https://github.com/tmttn/home-assistant-config/blob/7e113622f8fc4f1f0f09ec17e47cc4e7b9ee7221/automations/vacuum.yaml#L37)
+### [Reminder notification](https://github.com/tmttn/home-assistant-config/blob/4f5a46d3b4ff49b5cafbf00c090e5d63a0686b74/automations/vacuum.yaml#L37)
 
   *which uses:*
   - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L168)
 
-### [Cleanup if nobody is home](https://github.com/tmttn/home-assistant-config/blob/7e113622f8fc4f1f0f09ec17e47cc4e7b9ee7221/automations/vacuum.yaml#L51)
+### [Cleanup if nobody is home](https://github.com/tmttn/home-assistant-config/blob/4f5a46d3b4ff49b5cafbf00c090e5d63a0686b74/automations/vacuum.yaml#L51)
 
   *which uses:*
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/57488882bdac1ceb95374b7d4aba2316311f1a79/includes/input_booleans.yaml#L16)
@@ -950,12 +950,12 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L168)
   - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b6a4185a0aa26fd620862f75286c602812de29c6/includes/groups.yaml#L11)
 
-### [Reset cleaned today](https://github.com/tmttn/home-assistant-config/blob/7e113622f8fc4f1f0f09ec17e47cc4e7b9ee7221/automations/vacuum.yaml#L86)
+### [Reset cleaned today](https://github.com/tmttn/home-assistant-config/blob/4f5a46d3b4ff49b5cafbf00c090e5d63a0686b74/automations/vacuum.yaml#L86)
 
   *which uses:*
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/57488882bdac1ceb95374b7d4aba2316311f1a79/includes/input_booleans.yaml#L16)
 
-### [Reset to standard mode](https://github.com/tmttn/home-assistant-config/blob/7e113622f8fc4f1f0f09ec17e47cc4e7b9ee7221/automations/vacuum.yaml#L95)
+### [Reset to standard mode](https://github.com/tmttn/home-assistant-config/blob/4f5a46d3b4ff49b5cafbf00c090e5d63a0686b74/automations/vacuum.yaml#L95)
 
 
 [^ toc](#automations---table-of-content)
