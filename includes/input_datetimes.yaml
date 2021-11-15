@@ -23,13 +23,13 @@ washing_machine_off:
   has_date: true
   has_time: true
 
-dryer_on:
-  name: Washing machine last started
+tumble_dryer_on:
+  name: Tumble dryer last started
   has_date: true
   has_time: true
 
-dryer_off:
-  name: Washing machine last done
+tumble_dryer_off:
+  name: Tumble dryer last done
   has_date: true
   has_time: true
 
@@ -40,16 +40,6 @@ dishwasher_on:
 
 dishwasher_off:
   name: Dishwasher last done
-  has_date: true
-  has_time: true
-
-tumble_dryer_on:
-  name: Tumble dryer last started
-  has_date: true
-  has_time: true
-
-tumble_dryer_off:
-  name: Tumble dryer last done
   has_date: true
   has_time: true
 

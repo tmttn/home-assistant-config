@@ -13,7 +13,7 @@ cozy_lights_living_room:
   mode: parallel
   sequence:
     - data:
-        entity_id: light.de_kerstboom
+        entity_id: light.hue_plug
         hs_color:
           - 26.667
           - 88.235

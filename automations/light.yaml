@@ -41,6 +41,18 @@
     service: light.turn_on
     entity_id: light.living_room_lights
 
+- alias: "Light: turn on cozy lights at sunset"
+  trigger:
+  - platform: sun
+    event: sunset
+  condition:
+  - condition: state
+    entity_id: group.persons
+    state: home
+  action:
+  - service: script.cozy_lights_living_room
+
+
 - alias: "Light: turn off living room"
   trigger:
     platform: state
