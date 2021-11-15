@@ -550,7 +550,8 @@ views:
         name: false
         step_layout: row
         step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-xl: 30px;\n}\n"
+        style: "ha-card {\n  --st-font-size-xl: 30px;\n}\nha-card .header__title {\n\
+          \  font-size: 20px;\n}\n"
         type: custom:simple-thermostat
       type: horizontal-stack
     style: "hui-vertical-stack-card {\n  scale: 50%;\n}\n"
