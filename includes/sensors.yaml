@@ -226,6 +226,14 @@
       unit_of_measurement: '°C'
       value_template: '{{state_attr("climate.kitchen", "current_temperature")}}'
 
+    temperature_bedroom_marthe:
+      unit_of_measurement: '°C'
+      value_template: '{{state_attr("climate.bedroom_marthe", "current_temperature")}}'
+
+    temperature_storage:
+      unit_of_measurement: '°C'
+      value_template: '{{state_attr("climate.storage", "current_temperature")}}'
+
 #   ___  _   _
 #  / _ \| |_| |__   ___ _ __ ___
 # | | | | __| '_ \ / _ \ '__/ __|
@@ -240,6 +248,9 @@
     - sensor.temperature_living_room
     - sensor.temperature_bedroom
     - sensor.temperature_bathroom
+    - sensor.temperature_kitchen
+    - sensor.temperature_storage
+    - sensor.temperature_bedroom_marthe
 
 - platform: time_date
   display_options:
