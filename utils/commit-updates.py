@@ -41,7 +41,8 @@ for line in p.split("\n"):
         if path == ha_version:
             ha_update = True
         
-        if path.startswith(lovelace):
+        
+        if path.startswith(lovelace_ui):
             lovelace_update = True
 
 for folder in folders_to_add:
