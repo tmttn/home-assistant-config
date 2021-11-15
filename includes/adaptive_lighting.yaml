@@ -31,6 +31,7 @@
   lights:
     - light.bedroom_lights
     - light.bathroom_lights
+    - light.terrace_lights
   min_brightness: 70
   prefer_rgb_color: true
   detect_non_ha_changes: true
