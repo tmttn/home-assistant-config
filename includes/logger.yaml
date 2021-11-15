@@ -11,7 +11,7 @@
 default: warning
 logs:
   # homeassistant.core: debug
-  homeassistant.components.tplink: debug
+  # homeassistant.components.tplink: debug
   # pyotgw: warning
   # custom_components.derivative_custom: debug
   # custom_components.pyscript: debug
