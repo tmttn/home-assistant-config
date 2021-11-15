@@ -23,7 +23,7 @@
     from_state: "{{ trigger.from_state.state }}"
     to_state: "{{ trigger.to_state.state }}"
     name: "{{ trigger.entity_id.split('.', 1)[1] }}"
-  condition: "{{ (to_state == 'on' and from_state == 'off') or (to_state == 'off' and from_state == 'on') or (to_state == 'In use' and from_state == 'Off') or (to_state == 'Off' and from_state == 'In use')}}"
+  condition: "{{ (to_state == 'on' and from_state == 'off') or (to_state == 'off' and from_state == 'on') }}"
   action:
     service: input_datetime.set_datetime
     data:
