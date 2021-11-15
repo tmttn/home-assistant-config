@@ -37,7 +37,7 @@
 - alias: "Vacuum: reminder notification"
   trigger:
     platform: time
-    at: "08:00"
+    at: "07:00"
   condition:
     condition: state
     entity_id: binary_sensor.vacuum_day
@@ -51,7 +51,7 @@
 - alias: "Vacuum: cleanup if nobody is home"
   trigger:
     - platform: time
-      at: "13:00"
+      at: "08:30"
     - platform: state
       entity_id: group.persons
       from: home
