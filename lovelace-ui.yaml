@@ -252,16 +252,15 @@ views:
           '
         type: custom:template-entity-row
       head:
-        entity: binary_sensor.washing_machine
+        entity: miele.washing_machine
         name: Washing machine
         secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_on\"\
           )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_off\"\
-          )) %} {% if states(\"binary_sensor.washing_machine\") == \"on\" %}\n  Has\
-          \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
-          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-        state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
-          \ states(\"sensor.washing_machine_energy\") }} Watt\n{% else %}\n  Off\n\
-          {% endif %}\n"
+          )) %} {% if states(\"miele.washing_machine\") == \"In use\" %}\n  Has been\
+          \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
+          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"miele.washing_machine\", \"In use\") %}\n  {{ states(\"\
+          sensor.washing_machine_energy\") }} Watt\n{% else %}\n  Off\n{% endif %}\n"
         type: custom:template-entity-row
       type: custom:fold-entity-row
     - entities:
