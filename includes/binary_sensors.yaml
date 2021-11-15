@@ -100,7 +100,7 @@
         {{ states("sensor.washing_machine_energy") | float(0) > 3 }}
       delay_off: "00:05:00"
       icon_template: >
-        {% if is_state("binary_sensor.washing_machine", "on") %}
+        {% if is_state("miele.washing_machine", "In use") %}
           mdi:washing-machine
         {% else %}
           mdi:washing-machine-off
