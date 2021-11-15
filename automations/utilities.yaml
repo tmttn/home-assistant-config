@@ -9,7 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
-- alias: "Utilities: washing machine, dishwasher or tumble dryer started or finished"
+- alias: "Utilities: washing machine, dishwasher,tumble dryer or espresso machine started or finished"
   trigger:
     - platform: state
       entity_id: binary_sensor.dishwasher
@@ -17,6 +17,8 @@
       entity_id: binary_sensor.washing_machine
     - platform: state
       entity_id: binary_sensor.tumble_dryer
+    - platform: state
+      entity_id: binary_sensor.espresso_machine
   variables:
     from_state: "{{ trigger.from_state.state }}"
     to_state: "{{ trigger.to_state.state }}"
