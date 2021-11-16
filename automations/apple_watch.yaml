@@ -266,7 +266,7 @@
       {% else %}
         t_phone
       {% endif %}
-    other_person: "{% if phone == 'bizzyphone' %}tanja{% else %}tom{% endif %}"
+    other_person: "{% if phone == 'bizzyphone' %}Tanja{% else %}Tom{% endif %}"
     device_tracker: "device_tracker.{{ other_person }}_iphone"
   action:
     service: "notify.mobile_app_{{ phone }}"
