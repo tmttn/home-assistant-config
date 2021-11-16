@@ -258,7 +258,7 @@
       actionName: Where is
   variables:
     phone: >
-      {% if trigger.event.data.sourceDeviceName == 'tom-iphone' %}
+      {% if trigger.event.data.sourceDeviceName == 'Tom iPhone' %}
         bizzyphone
       {% else %}
         t_phone
