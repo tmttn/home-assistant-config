@@ -63,7 +63,7 @@
   action:
     service: script.utility_notification
     data:
-      name: "tumble dryer"
+      name: "tumble_dryer"
       emojis: "🧺💦"
 
 - alias: "Utilities: espresso machine notification"
@@ -75,5 +75,5 @@
   action:
     service: script.utility_notification
     data:
-      name: "espresso machine"
+      name: "espresso_machine"
       emojis: "☕️🥤"
