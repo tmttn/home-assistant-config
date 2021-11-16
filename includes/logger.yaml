@@ -18,4 +18,4 @@ logs:
   # custom_components.circadian_lighting: debug
   # custom_components.adaptive_lighting: debug
   homeassistant.components.camera: critical
-  homeassistant.components.shell_command: debug
+  # homeassistant.components.shell_command: debug
