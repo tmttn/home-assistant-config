@@ -3,7 +3,7 @@
 
 [![GitHub stars](https://img.shields.io/github/stars/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
-[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2021.11.3%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2021.11.3)
+[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2021.11.4%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2021.11.4)
 [![HA Community](https://img.shields.io/badge/HA%20community-forum-orange)](https://community.home-assistant.io/u/tmttn/summary)
 [![Yaml Lint](https://github.com/tmttn/home-assistant-config/workflows/Yaml%20Lint/badge.svg)](https://github.com/tmttn/home-assistant-config/actions?query=workflow%3A%22Yaml+Lint%22)
 
@@ -873,8 +873,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Utilities 🧺👚🍽](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml)
-### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L12)
+## [Utilities 🧺👚🍽](https://github.com/tmttn/home-assistant-config/blob/e05ca6f2acbf9c7d629a1fa81af155f0a4b3fe8d/automations/utilities.yaml)
+### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/e05ca6f2acbf9c7d629a1fa81af155f0a4b3fe8d/automations/utilities.yaml#L12)
 
   *which uses:*
   - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L109)
@@ -882,25 +882,25 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L133)
   - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L97)
 
-### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L33)
+### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/e05ca6f2acbf9c7d629a1fa81af155f0a4b3fe8d/automations/utilities.yaml#L33)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/c5d35a377a1816f1d7c3d66705d15f9527d8fb12/scripts.yaml#L232)
   - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L97)
 
-### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L45)
+### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/e05ca6f2acbf9c7d629a1fa81af155f0a4b3fe8d/automations/utilities.yaml#L45)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/c5d35a377a1816f1d7c3d66705d15f9527d8fb12/scripts.yaml#L232)
   - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L109)
 
-### [Tumble dryer notification](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L57)
+### [Tumble dryer notification](https://github.com/tmttn/home-assistant-config/blob/e05ca6f2acbf9c7d629a1fa81af155f0a4b3fe8d/automations/utilities.yaml#L57)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/c5d35a377a1816f1d7c3d66705d15f9527d8fb12/scripts.yaml#L232)
   - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/965ac2a7d72e6364dd45381724176e2816c4bfc8/includes/binary_sensors.yaml#L133)
 
-### [Espresso machine notification](https://github.com/tmttn/home-assistant-config/blob/397353e079d847f02d3079ec94159d3ae90fb713/automations/utilities.yaml#L69)
+### [Espresso machine notification](https://github.com/tmttn/home-assistant-config/blob/e05ca6f2acbf9c7d629a1fa81af155f0a4b3fe8d/automations/utilities.yaml#L69)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/c5d35a377a1816f1d7c3d66705d15f9527d8fb12/scripts.yaml#L232)
