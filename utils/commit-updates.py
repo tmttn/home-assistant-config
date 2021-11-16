@@ -18,6 +18,7 @@ p = subprocess.run(cmd, capture_output=True).stdout.decode()
 ha_version = ".HA_VERSION"
 lovelace_ui = "lovelace-ui.yaml"
 ha_update = False
+lovelace_update = False
 
 folders_to_add = set()
 for line in p.split("\n"):
