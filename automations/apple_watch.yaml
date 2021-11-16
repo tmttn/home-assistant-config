@@ -157,9 +157,12 @@
       data:
         title: "Temperature"
         message: >
-          Bedroom: {{ states('sensor.temperature_bedroom') }}°C
           Living room: {{ states('sensor.temperature_living_room') }}°C
-          Thermostat: {{ state_attr('climate.bunderhome', 'temperature') }}°C
+          Bathroom: {{ states('sensor.temperature_bathroom') }}°C
+          Bedroom: {{ states('sensor.temperature_bedroom') }}°C
+          Kitchen: {{ states('sensor.temperature_kitchen') }}°C
+          Storage: {{ states('sensor.temperature_storage') }}°C
+          Bedroom Marthe: {{ states('sensor.temperature_bedroom_marthe') }}°C
           Outside: {{ state_attr('weather.buienradar', 'temperature') }}°C and it's {{ states('weather.buienradar') }}
 
 - alias: "Apple Watch: send vacuum cleaner"
