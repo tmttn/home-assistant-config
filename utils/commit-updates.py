@@ -19,6 +19,7 @@ ha_version = ".HA_VERSION"
 lovelace_ui = "lovelace-ui.yaml"
 ha_update = False
 lovelace_update = False
+folder_update = False
 
 folders_to_add = set()
 for line in p.split("\n"):
@@ -50,6 +51,7 @@ for folder in folders_to_add:
     print(folder)
     subprocess.run(f"git add {folder}".split())
     subprocess.run(["git", "commit", "-m", f"update {folder} via HACS"])
+    folder_update = True
 
 if ha_update:
     with open(ha_version) as f:
@@ -60,3 +62,7 @@ if ha_update:
 if lovelace_update:
     subprocess.run(f"git add lovelace-ui.yaml".split())
     subprocess.run(["git", "commit", "-m", f"update lovelace-ui via UI"])
+    
+
+if folder_update or ha_update or lovelace_update:
+    subprocess.run(["git", "push"])
