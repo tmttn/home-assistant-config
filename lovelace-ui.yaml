@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -197,50 +188,15 @@ views:
       - entity: binary_sensor.vacuum_day
       show_header_toggle: false
       type: entities
-    - calibration_points:
-      - map:
-          x: 711
-          y: 474
-        vacuum:
-          x: 30194
-          y: 26665
-      - map:
-          x: 911
-          y: 269
-        vacuum:
-          x: 32508
-          y: 28968
-      - map:
-          x: 41
-          y: 63
-        vacuum:
-          x: 22813
-          y: 31276
+    - calibration_source:
+        camera: true
       entity: vacuum.xiaomi_vacuum_cleaner
-      map_camera: camera.xiaomi_cloud_map_extractor
-      service: vacuum.send_command
+      map_locked: true
+      map_source:
+        camera: camera.xiaomi_cloud_map_extractor
+      two_finger_pan: false
       type: custom:xiaomi-vacuum-map-card
-      zones:
-      - - - 29706
-          - 27237
-          - 34806
-          - 31137
-      - - - 22799
-          - 27340
-          - 27649
-          - 31240
-      - - - 22803
-          - 25150
-          - 26353
-          - 27250
-      - - - 26379
-          - 26239
-          - 31929
-          - 27189
-      - - - 31941
-          - 25364
-          - 34791
-          - 27164
+      vacuum_platform: KrzysztofHajdamowicz/miio2
     type: vertical-stack
   - entities:
     - entity: input_boolean.vacation_mode
