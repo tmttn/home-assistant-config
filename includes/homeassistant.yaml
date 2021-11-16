@@ -32,3 +32,7 @@ customize:
     icon: mdi:bed-king
   light.toilet:
     icon: mdi:emoticon-poop
+  light.outside:
+    icon: mdi:patio-heater
+  light.bathroom:
+    icon: mdi:shower
