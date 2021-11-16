@@ -14,7 +14,6 @@
     - light.bathroom_lights
     - light.toilet
     - light.kitchen_lights
-    - light.terrace_lights
   min_brightness: 70
   prefer_rgb_color: true
   detect_non_ha_changes: true
