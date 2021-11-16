@@ -38,18 +38,18 @@
 - platform: group
   name: Living room dining table lights
   entities:
-    - light.living_eettafel_1
-    - light.living_eettafel_2
-    - light.living_eettafel_3
-    - light.living_eettafel_4
+    - light.dining_table_1
+    - light.dining_table_2
+    - light.dining_table_3
+    - light.dining_table_4
 
 - platform: group
   name: Living room middle lights
   entities:
-    - light.living_midden_1
-    - light.living_midden_2
-    - light.living_midden_3
-    - light.living_midden_4
+    - light.living_room_middle_1
+    - light.living_room_middle_2
+    - light.living_room_middle_3
+    - light.living_room_middle_4
 
 
 - platform: group
