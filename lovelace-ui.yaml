@@ -153,7 +153,7 @@ views:
       type: custom:simple-weather-card
     - entities:
       - entity: sensor.limburg_net_morgen
-        icon: mdi:calendar-arrow-right
+        icon: mdi:trash-can
         name: Take out the trash
       state_color: false
       type: entities
