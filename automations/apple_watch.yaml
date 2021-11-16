@@ -261,12 +261,12 @@
       actionName: Where is
   variables:
     phone: >
-      {% if trigger.event.data.sourceDeviceName == 'Tom iPhone' %}
+      {% if trigger.event.data.sourceDeviceName == 'Bizzyphone' %}
         bizzyphone
       {% else %}
         t_phone
       {% endif %}
-    other_person: "{% if phone == 'bizzyphone' %}Tanja{% else %}Tom{% endif %}"
+    other_person: "{% if phone == 'bizzyphone' %}tanja{% else %}tom{% endif %}"
     device_tracker: "device_tracker.{{ other_person }}_iphone"
   action:
     service: "notify.mobile_app_{{ phone }}"
