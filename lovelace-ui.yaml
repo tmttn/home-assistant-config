@@ -48,7 +48,7 @@ views:
         type: custom:slider-entity-row
       type: custom:fold-entity-row
     - color_picker: true
-      entity: light.bedroom_lights
+      entity: light.bathroom_lights
       hide_when_off: false
       name: Bathroom
       type: custom:slider-entity-row
