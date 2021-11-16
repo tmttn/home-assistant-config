@@ -135,7 +135,7 @@
             service: script.white_lights_living_room
         - conditions: "{{ option == 'WHITE' and light == 'light.bedroom_lights'}}"
           sequence:
-            service: script.white_lights_living_room
+            service: script.white_lights_bedroom
         - conditions: "{{ option == 'COZY' and light == 'light.living_room_lights'}}"
           sequence:
             service: script.cozy_lights_living_room
