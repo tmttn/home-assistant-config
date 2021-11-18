@@ -1,5 +1,5 @@
 # Thomas Metten's Home Assistant config files
-(Originally Bas Nijholt's config files, leaving quite some information in the readme for future reference)
+Based on Bas Nijholt's config files.
 
 [![GitHub stars](https://img.shields.io/github/stars/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
