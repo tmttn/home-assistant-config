@@ -41,7 +41,7 @@
     port: 21064
     mode: accessory
     filter:
-      include_entities: camera.front_door
+      include_entities: camera.doorbell
   - name: HA Tesla Door Lock
     port: 21065
     mode: accessory
