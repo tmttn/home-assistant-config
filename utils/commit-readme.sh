@@ -8,5 +8,6 @@
 #- from github.com/tmttn/home-assistant-config
 if [[ `git status --porcelain` ]]; then
   git commit -m "update automatically generated part of README.md ✏️" README.md
+  git commit -am "update autmatially generated ascii art 🎨"
   git push
 fi
