@@ -7,7 +7,7 @@
 #  \__,_|\___/ \___/|_|  |_.__/ \___|_|_|
 #
 #
-#- from github.com/basnijholt/home-assistant-config
+#- from github.com/tmttn/home-assistant-config
 - alias: "Doorbell: flash the lighhts when the doorbell rings"
   trigger:
     platform: state
