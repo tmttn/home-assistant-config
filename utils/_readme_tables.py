@@ -16,21 +16,21 @@ from jinja2 import Template
 
 tables = {
     "Switches 🎚": [
-        ["TP-Link HS110", 3, 36.99],
+        ["TP-Link HS110", 3, 36.99 * 3],
         ["Philips Hue plug", 1, 29.95],
     ],
     "Sensors 🌡": [
-        ["Philips Hue Motion Sensor", 2, 41.99],
+        ["Philips Hue Motion Sensor", 2, 41.99 * 2],
     ],
     "Vacuum 🧹": [["Xiaomi Mi Roborock S7", 1, 569.00]],
     "Media player 📺🔈": [
         ["Samsung LED-LCD UE65JU7000", 1, "nan"],
     ],
     "Lights 💡": [
-        ["Philips Hue E27 White and Color Ambiance", 5, 49.99],
-        ["Philips Hue E27 White", 2, 69.77],
-        ["Philips Hue E14 White Ambiance", 2, 20.23],
-        ["Philips Hue GU10 White Ambiance", 12, 24.99],
+        ["Philips Hue E27 White and Color Ambiance", 5, 49.99 * 5],
+        ["Philips Hue E27 White", 2, 69.77 * 2],
+        ["Philips Hue E14 White Ambiance", 2, 20.23 * 2], 
+        ["Philips Hue GU10 White Ambiance", 12, 24.99 * 12],
         ["Philips Hue Lightstrip Plus", 1, 79.99],
     ],
     "Hubs 🌎": [["Hue Bridge", 1, 50.99]],
