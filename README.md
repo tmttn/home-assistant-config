@@ -40,8 +40,8 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
         <tr>
             <td>TP-Link HS110</td>
             <td>3</td>
-            <td>12.33</td>
             <td>36.99</td>
+            <td>110.97</td>
         </tr>
         <tr>
             <td>Philips Hue plug</td>
@@ -53,7 +53,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>66.94</td>
+            <td>140.92</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -74,14 +74,14 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
         <tr>
             <td>Philips Hue Motion Sensor</td>
             <td>2</td>
-            <td>21.0</td>
             <td>41.99</td>
+            <td>83.98</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>41.99</td>
+            <td>83.98</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -152,26 +152,26 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
         <tr>
             <td>Philips Hue E27 White and Color Ambiance</td>
             <td>5</td>
-            <td>10.0</td>
             <td>49.99</td>
+            <td>249.95000000000002</td>
         </tr>
         <tr>
             <td>Philips Hue E27 White</td>
             <td>2</td>
-            <td>34.88</td>
             <td>69.77</td>
+            <td>139.54</td>
         </tr>
         <tr>
             <td>Philips Hue E14 White Ambiance</td>
             <td>2</td>
-            <td>10.12</td>
             <td>20.23</td>
+            <td>40.46</td>
         </tr>
         <tr>
             <td>Philips Hue GU10 White Ambiance</td>
             <td>12</td>
-            <td>2.08</td>
             <td>24.99</td>
+            <td>299.88</td>
         </tr>
         <tr>
             <td>Philips Hue Lightstrip Plus</td>
@@ -183,7 +183,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>244.97</td>
+            <td>809.82</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -275,7 +275,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€973.8900000000001</th>
+            <th>€1654.71</th>
         </tr>
     </thead>
 </table>
