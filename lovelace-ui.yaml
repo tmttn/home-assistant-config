@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -257,8 +248,8 @@ views:
           \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
           \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
         state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
-          \ states(\"sensor.washing_machine_energy\") }} Watt\n{% else %}\n  Off\n\
-          {% endif %}\n"
+          \ states(\"sensor.washing_machine_energy\")|float(3) * 1000 }} Watt\n{%\
+          \ else %}\n  Off\n{% endif %}\n"
         type: custom:template-entity-row
       type: custom:fold-entity-row
     - entities:
