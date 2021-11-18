@@ -18,6 +18,8 @@ tables = {
     "Switches 🎚": [
         ["TP-Link HS110", 3, (36.99 * 3) | round(2)],
         ["Philips Hue plug", 1, 29.95],
+        ["Tuya Smart Curtain Switch Wifi", 1, 49.00],
+        ["Ring video doorbell 2", 1, 149.00],
     ],
     "Sensors 🌡": [
         ["Philips Hue Motion Sensor", 2, (41.99 * 2) | round(2)],
@@ -25,6 +27,7 @@ tables = {
     "Vacuum 🧹": [["Xiaomi Mi Roborock S7", 1, 569.00]],
     "Media player 📺🔈": [
         ["Samsung LED-LCD UE65JU7000", 1, "nan"],
+        ["Nvidia Shield TV Pro", 1, 199.99],
     ],
     "Lights 💡": [
         ["Philips Hue E27 White and Color Ambiance", 5, (49.99 * 5) | round(2)],
@@ -35,12 +38,29 @@ tables = {
     ],
     "Hubs 🌎": [["Hue Bridge", 1, 50.99]],
     "Server 🖥": [
-        ["Micro-ATX PC", 1, "nan"],
+        ["Shuttle Barebone SH67H7", 1, 210.00],
+        ["Intel Core i7 - 3770k (3,50 GHz)", 1, 300.00],
+        ["Intel 530 2,5\" Retail 180GB", 1, 115.00],
+        ["Kingston valueram 8Gb, DDR3, PC12800", 2, 100],
     ],
-    "Device tracker 🔍": [
+    "Device tracker 🔍": [  
         ["iPhone 11 Pro Max with the iOS app", 1, "nan"],
         ["iPhone XR with the iOS app", 1, "nan"],
+        ["Apple Watch First Generation", 1, "nan"],
     ],
+    "Google hardware 🧿": [
+        ["Google Home", 1, 150.00],
+        ["Google Home Mini", 1, 50.00],
+        ["Google Nest Hub Max", 1, 302.00],
+        ["Google Wifi", 3, 299.00],
+        ["Google Nest Wifi", 1, 129.00],
+    ],
+    "HVAC 🌡❄️🎛": [
+        ["Honeywell wireless OpenTherm-module", 1, 92.99],
+        ["Honeywell Round Wireless", 2, (81.99 * 2) | round(2)],
+        ["Honeywell Evohome HR92 Radiator valve", 7, (61.95 * 7) | round(2)],
+        ["Honeywell Evohome starterkit with 4 valves", 1, 449.00],
+    ]
 }
 
 
