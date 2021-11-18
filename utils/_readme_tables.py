@@ -58,7 +58,7 @@ def add_unit_price(lst):
 
 tables = {title: add_unit_price(lst) for title, lst in tables.items()}
 total_per_title = {
-    title: sum(x[-1] for x in lst if isinstance(x[-1], float))
+    title: sum(x[-1] for x in lst if isinstance(x[-1], float)) | round(2)
     for title, lst in tables.items()
 }
 
