@@ -8,57 +8,57 @@
 #
 #
 #- from github.com/tmttn/home-assistant-config
-  - name: Home Assistant Bridge
-    port: 21063
-    filter:
-      exclude_domains:
-        - automation
-        - binary_sensor
-        - device_tracker
-        - input_boolean
-        - light
-        - media_player
-        - persistent_notification
-        - person
-        - script
-        - sensor
-        - sun
-        - switch
-        - zone
-        - lock
-        - camera
-      include_entities:
-        - light.living_room_lights
-        - light.bedroom_lights
-        - light.automatic_lights
-        - light.kitchen_lights
-        - light.toilet
-        - light.bathroom_lights
-        - light.terrace_lights
-        - input_select.sleep_mode
-        - input_boolean.start_the_music
-  - name: HA Front Door Accessory
-    port: 21064
-    mode: accessory
-    filter:
-      include_entities: camera.doorbell
-  - name: HA Tesla Door Lock
-    port: 21065
-    mode: accessory
-    filter:
-      include_entities: lock.bizzylectric_door_lock
-  - name: HA Tesla Chargeport Lock
-    port: 21066
-    mode: accessory
-    filter:
-      include_entities: lock.bizzylectric_charger_door_lock
-  - name: HA Tesla Trunk Loc
-    port: 21067
-    mode: accessory
-    filter:
-      include_entities: lock.bizzylectric_trunk_lock
-  - name: HA Tesla Frunk Lock
-    port: 21068
-    mode: accessory
-    filter:
-      include_entities: lock.bizzylectric_frunk_lock
+- name: Home Assistant Bridge
+  port: 21063
+  filter:
+    exclude_domains:
+      - automation
+      - binary_sensor
+      - device_tracker
+      - input_boolean
+      - light
+      - media_player
+      - persistent_notification
+      - person
+      - script
+      - sensor
+      - sun
+      - switch
+      - zone
+      - lock
+      - camera
+    include_entities:
+      - light.living_room_lights
+      - light.bedroom_lights
+      - light.automatic_lights
+      - light.kitchen_lights
+      - light.toilet
+      - light.bathroom_lights
+      - light.terrace_lights
+      - input_select.sleep_mode
+      - input_boolean.start_the_music
+- name: HA Front Door Accessory
+  port: 21064
+  mode: accessory
+  filter:
+    include_entities: camera.doorbell
+- name: HA Tesla Door Lock
+  port: 21065
+  mode: accessory
+  filter:
+    include_entities: lock.bizzylectric_door_lock
+- name: HA Tesla Chargeport Lock
+  port: 21066
+  mode: accessory
+  filter:
+    include_entities: lock.bizzylectric_charger_door_lock
+- name: HA Tesla Trunk Loc
+  port: 21067
+  mode: accessory
+  filter:
+    include_entities: lock.bizzylectric_trunk_lock
+- name: HA Tesla Frunk Lock
+  port: 21068
+  mode: accessory
+  filter:
+    include_entities: lock.bizzylectric_frunk_lock
