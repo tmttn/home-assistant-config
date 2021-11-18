@@ -51,7 +51,6 @@
     - light.living_room_middle_3
     - light.living_room_middle_4
 
-
 - platform: group
   name: Living room lights
   entities:
