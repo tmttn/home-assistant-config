@@ -41,7 +41,7 @@ tables = {
         ["Shuttle Barebone SH67H7", 1, 210.00],
         ["Intel Core i7 - 3770k (3,50 GHz)", 1, 300.00],
         ["Intel 530 2,5\" Retail 180GB", 1, 115.00],
-        ["Kingston valueram 8Gb, DDR3, PC12800", 2, 100],
+        ["Kingston valueram 8Gb, DDR3, PC12800", 2, 100.00],
     ],
     "Device tracker 🔍": [
         ["iPhone 11 Pro Max with the iOS app", 1, "nan"],
