@@ -103,7 +103,7 @@ table_template = """
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€{{ total }}</th>
+            <th>€{{ total | round(2) }}</th>
         </tr>
     </thead>
 </table>"""
