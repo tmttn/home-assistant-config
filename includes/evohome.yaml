@@ -1,0 +1,12 @@
+---
+#-
+#  _____            _                          
+# | ____|_   _____ | |__   ___  _ __ ___   ___ 
+# |  _| \ \ / / _ \| '_ \ / _ \| '_ ` _ \ / _ \
+# | |___ \ V / (_) | | | | (_) | | | | | |  __/
+# |_____| \_/ \___/|_| |_|\___/|_| |_| |_|\___|
+#
+#- from github.com/tmttn/home-assistant-config
+
+username: !secret evohome_username
+password: !secret evohome_password
