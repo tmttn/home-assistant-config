@@ -240,7 +240,6 @@ utility_notification:
       description: emojis
       example: "👚👕"
   variables:
-    switch: "{{ 'switch.{}'.format(name) }}"
     binary_sensor: "{{ 'binary_sensor.{}'.format(name) }}"
     friendly_name: "{{ name.capitalize().replace('_', ' ') }}"
     energy_sensor: "{{ 'sensor.{}_energy'.format(name) }}"
@@ -251,7 +250,7 @@ utility_notification:
     - wait_for_trigger:
         platform: template
         value_template: "{{ is_state(binary_sensor, 'off') }}"
-      timeout: "03:00:00"
+      timeout: "04:00:00"
       continue_on_timeout: false
     - variables:
         end_time: "{{ as_timestamp(now()) }}"
