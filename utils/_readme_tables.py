@@ -28,8 +28,8 @@ tables = {
     ],
     "Lights 💡": [
         ["Philips Hue E27 White and Color Ambiance", 5, (49.99 * 5) | round(2)],
-        ["Philips Hue E27 White", 2, 69.77 * 2],
-        ["Philips Hue E14 White Ambiance", 2, (20.23 * 2) | round(2)], 
+        ["Philips Hue E27 White", 2, (69.77 * 2) | round(2)],
+        ["Philips Hue E14 White Ambiance", 2, (20.23 * 2) | round(2)],
         ["Philips Hue GU10 White Ambiance", 12, (24.99 * 12) | round(2)],
         ["Philips Hue Lightstrip Plus", 1, 79.99],
     ],
