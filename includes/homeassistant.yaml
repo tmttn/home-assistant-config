@@ -17,7 +17,7 @@ unit_system: metric
 legacy_templates: false
 time_zone: Europe/Brussels
 name: Home
-allowlist_external_dirs: 
+allowlist_external_dirs:
   - /config/
 customize:
   switch.vacuum_mode:
