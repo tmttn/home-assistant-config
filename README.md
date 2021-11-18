@@ -50,10 +50,22 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>29.95</td>
         </tr>
         <tr>
+            <td>Tuya Smart Curtain Switch Wifi</td>
+            <td>1</td>
+            <td>49.0</td>
+            <td>49.0</td>
+        </tr>
+        <tr>
+            <td>Ring video doorbell 2</td>
+            <td>1</td>
+            <td>149.0</td>
+            <td>149.0</td>
+        </tr>
+        <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>140.92</td>
+            <td>338.92</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -134,6 +146,18 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>nan</td>
         </tr>
         <tr>
+            <td>Nvidia Shield TV Pro</td>
+            <td>1</td>
+            <td>199.99</td>
+            <td>199.99</td>
+        </tr>
+        <tr>
+            <td><i><b>Total</b></i></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>199.99</td>
+        </tr>
+        <tr>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
@@ -153,7 +177,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>Philips Hue E27 White and Color Ambiance</td>
             <td>5</td>
             <td>49.99</td>
-            <td>249.95000000000002</td>
+            <td>249.95</td>
         </tr>
         <tr>
             <td>Philips Hue E27 White</td>
@@ -230,10 +254,34 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </thead>
     <tbody>
         <tr>
-            <td>Micro-ATX PC</td>
+            <td>Shuttle Barebone SH67H7</td>
             <td>1</td>
+            <td>210.0</td>
+            <td>210.0</td>
+        </tr>
+        <tr>
+            <td>Intel Core i7 - 3770k (3,50 GHz)</td>
+            <td>1</td>
+            <td>300.0</td>
+            <td>300.0</td>
+        </tr>
+        <tr>
+            <td>Intel 530 2,5" Retail 180GB</td>
+            <td>1</td>
+            <td>115.0</td>
+            <td>115.0</td>
+        </tr>
+        <tr>
+            <td>Kingston valueram 8Gb, DDR3, PC12800</td>
+            <td>2</td>
             <td>nan</td>
-            <td>nan</td>
+            <td>100</td>
+        </tr>
+        <tr>
+            <td><i><b>Total</b></i></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>625.0</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -264,6 +312,110 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>nan</td>
         </tr>
         <tr>
+            <td>Apple Watch First Generation</td>
+            <td>1</td>
+            <td>nan</td>
+            <td>nan</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+    </tbody>
+    <thead>
+        <tr>
+            <th>Google hardware 🧿</th>
+            <th>Units (#)</th>
+            <th>Price per unit (€)</th>
+            <th>Price (€)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Google Home</td>
+            <td>1</td>
+            <td>150.0</td>
+            <td>150.0</td>
+        </tr>
+        <tr>
+            <td>Google Home Mini</td>
+            <td>1</td>
+            <td>50.0</td>
+            <td>50.0</td>
+        </tr>
+        <tr>
+            <td>Google Nest Hub Max</td>
+            <td>1</td>
+            <td>302.0</td>
+            <td>302.0</td>
+        </tr>
+        <tr>
+            <td>Google Wifi</td>
+            <td>3</td>
+            <td>99.67</td>
+            <td>299.0</td>
+        </tr>
+        <tr>
+            <td>Google Nest Wifi</td>
+            <td>1</td>
+            <td>129.0</td>
+            <td>129.0</td>
+        </tr>
+        <tr>
+            <td><i><b>Total</b></i></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>930.0</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+    </tbody>
+    <thead>
+        <tr>
+            <th>HVAC 🌡❄️🎛</th>
+            <th>Units (#)</th>
+            <th>Price per unit (€)</th>
+            <th>Price (€)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Honeywell wireless OpenTherm-module</td>
+            <td>1</td>
+            <td>92.99</td>
+            <td>92.99</td>
+        </tr>
+        <tr>
+            <td>Honeywell Round Wireless</td>
+            <td>2</td>
+            <td>81.99</td>
+            <td>163.98</td>
+        </tr>
+        <tr>
+            <td>Honeywell Evohome HR92 Radiator valve</td>
+            <td>7</td>
+            <td>61.95</td>
+            <td>433.65</td>
+        </tr>
+        <tr>
+            <td>Honeywell Evohome starterkit with 4 valves</td>
+            <td>1</td>
+            <td>449.0</td>
+            <td>449.0</td>
+        </tr>
+        <tr>
+            <td><i><b>Total</b></i></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>1139.62</td>
+        </tr>
+        <tr>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
@@ -275,7 +427,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€1654.71</th>
+            <th>€4747.32</th>
         </tr>
     </thead>
 </table>
@@ -306,6 +458,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Apple Watch ⌚](#apple-watch-) (9 automations)
 1. [Arriving 👞](#arriving-) (1 automations)
 1. [Climate 🔥🥶](#climate-) (7 automations)
+1. [Curtains 🪟🪟](#curtains-) (2 automations)
 1. [Doorbell 🚪🔔](#doorbell-) (1 automations)
 1. [Frontend 👨‍💻](#frontend-) (3 automations)
 1. [Leaving 👞](#leaving-) (3 automations)
@@ -320,7 +473,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **72** ⚠️
+⚠️ Total number of automations: **74** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml#L11)
@@ -463,8 +616,18 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/b02741da844efc4b64fd64c1b91da02b60618521/automations/doorbell.yaml)
-### [Flash the lighhts when the doorbell rings](https://github.com/tmttn/home-assistant-config/blob/b02741da844efc4b64fd64c1b91da02b60618521/automations/doorbell.yaml#L11)
+## [Curtains 🪟🪟](https://github.com/tmttn/home-assistant-config/blob/ee81a7db1f858a5df9cb616700efb1f4bea8777c/automations/curtains.yaml)
+### [Open the screens](https://github.com/tmttn/home-assistant-config/blob/ee81a7db1f858a5df9cb616700efb1f4bea8777c/automations/curtains.yaml#L11)
+
+
+### [Close the screens](https://github.com/tmttn/home-assistant-config/blob/ee81a7db1f858a5df9cb616700efb1f4bea8777c/automations/curtains.yaml#L40)
+
+
+[^ toc](#automations---table-of-content)
+
+
+## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/88142a93591f5321ab20013d659a53f5b4656e6f/automations/doorbell.yaml)
+### [Flash the lights when the doorbell rings](https://github.com/tmttn/home-assistant-config/blob/88142a93591f5321ab20013d659a53f5b4656e6f/automations/doorbell.yaml#L11)
 
 
 [^ toc](#automations---table-of-content)
