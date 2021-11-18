@@ -257,8 +257,8 @@ views:
           \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
           \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
         state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
-          \ states(\"sensor.washing_machine_energy\") }} Watt\n{% else %}\n  Off\n\
-          {% endif %}\n"
+          \ states(\"sensor.washing_machine_energy\")|float(3) * 1000 }} Watt\n{%\
+          \ else %}\n  Off\n{% endif %}\n"
         type: custom:template-entity-row
       type: custom:fold-entity-row
     - entities:
