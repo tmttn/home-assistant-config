@@ -63,6 +63,5 @@ if lovelace_update:
     subprocess.run(f"git add lovelace-ui.yaml".split())
     subprocess.run(["git", "commit", "-m", f"update lovelace-ui via UI"])
 
-
 if folder_update or ha_update or lovelace_update:
     subprocess.run(["git", "push"])
