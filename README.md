@@ -5,14 +5,11 @@
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
 [![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2021.11.4%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2021.11.4)
 [![HA Community](https://img.shields.io/badge/HA%20community-forum-orange)](https://community.home-assistant.io/u/tmttn/summary)
-[![Yaml Lint](https://github.com/tmttn/home-assistant-config/workflows/Yaml%20Lint/badge.svg)](https://github.com/tmttn/home-assistant-config/actions?query=workflow%3A%22Yaml+Lint%22)
+[![Yaml Lint](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml/badge.svg)](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml)
 
-![Lovelace UI](http://files.nijho.lt/ha-ui.gif)
-<img src="https://github.com/tmttn/home-assistant-macbook-touch-bar/raw/master/example-real-life.jpg?s=400" width="700" alt="MacBook touchbar">
+Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-ios-themes).
 
-Using my [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-ios-themes).
-
-See also [my guide for my girlfriend ❤️](guide.md).
+[Girlfriend guide ❤️](guide.md).
 
 ## Table of content
 
@@ -20,52 +17,11 @@ See also [my guide for my girlfriend ❤️](guide.md).
 - [Supervisor add-ons](#supervisor-add-ons)
 - [All my automations](#automations---table-of-content)
 
-## Noteworthy (useful) automations
-
-See _all_ my automations and its dependencies [down the page](#automations---table-of-content)!
-
-- [Alarm clock](#alarm-clock-) that uses the AppDaemon volume ramp and sunrise app ⏰
-- [Automatic `lovelace.json` to `lovelace-ui.yaml` converter](#lovelace-) for version control 🤖
-- [Controlling music and lights (hue and brightness) using the Xiaomi Aqara Magic Cube](#cube-) ∛
-- [Controlling the lights using _Phillips Hue Dimmers_ the _Xiaomi Aqara Smart Switches_](#control-switches-) 🎛
-- [Automated lights](#light-) 💡
-- [Presence detection in different rooms based on various binary template sensors](includes/binary_sensors.yaml)
-- [Robot vacuum automations](#vacuum-) 🧹
-- [Arriving](#arriving-) and [leaving](#leaving-) automations
-- [Notifications when the dishwasher or washing machine is done](#utilities-)
-- [Time at work 📈 tracking and notifications to go home](#work-)
-- Using [HA-Menu](https://github.com/codechimp-org/ha-menu) to control [my speakers on my iMac](#lsx-)
-- Using [home-assistant-macbook-touch-bar](https://github.com/tmttn/home-assistant-macbook-touch-bar) to control HA on my MacBook Pro's Touch Bar 💻
-- [Automatically switch Lovelace's theme between backgrounds and light/dark mode](#frontend-)
-- [Sync volume TV ⇄ speakers 🔊](#media-player-)
-- [Security notifications when the front door 🚪 has been open for too long or motion is detected when no one is home](#security-)
-
 ## Cool AppDaemon apps
 
 - [Sunrise emulator app](appdaemon/apps/wake_up_light.py) 🌅
 - [Wake up with Spotify app](appdaemon/apps/wake_up_with_spotify.py) that slowly ramps the volume 📢
 - [Low Battery level notifications 🔋](appdaemon/apps/battery_monitor.py)
-
-## Popular Reddit posts of features in this config
-
-(Sorted from new to old)
-
-- [Advanced control from my Apple Watch using single automations: setting lights, vacuum, temperature, sleep mode, and more!](https://www.reddit.com/r/homeassistant/comments/jdcal1/advanced_control_from_my_apple_watch_using_single/)
-- [HA has it before Apple has even finished it, I present: Adaptive_lighting! flux/circadian_lighting fans (haters?) please try the new UI configurable component that stops automatically adjusting your lights when you make a manual change 🎉 (and many more new useful features!)](https://www.reddit.com/r/homeassistant/comments/jabhso/ha_has_it_before_apple_has_even_finished_it_i/)
-- [Creating useful notifications using the new 'variables' and 'wait_for_trigger' features](https://www.reddit.com/r/homeassistant/comments/ixnr5z/creating_useful_notifications_using_the_new/)
-- [Copying YAML from GitHub is easier than ever: my config's README now automatically lists all automations (and entities it uses) with links to the relevant parts in the YAML](https://www.reddit.com/r/homeassistant/comments/if2n1h/copying_yaml_from_github_is_easier_than_ever_my/)
-- [Beautiful iOS dark and light mode inspired themes with easy background switch (that now also change the top header color!) [OC]](https://www.reddit.com/r/homeassistant/comments/h9ckpt/beautiful_ios_dark_and_light_mode_inspired_themes/)
-- [Finally a good use for the touch bar on my Macbook Pro!](https://www.reddit.com/r/homeassistant/comments/gyd5wd/finally_a_good_use_for_the_touch_bar_on_my/)
-- [100% control over my high fi speakers: a bidirectional synchronized equalizer](https://www.reddit.com/r/homeassistant/comments/gkjbfh/100_control_over_my_high_fi_speakers_a/)
-- [COVID-19 forcing me to stay inside? Check out my "quarantine-o-meter" that displays how much time (in %) we've been inside.](https://www.reddit.com/r/homeassistant/comments/fqudzw/covid19_forcing_me_to_stay_inside_check_out_my/)
-- [After a lot of love, a much-requested feature (+more!) for my iOS Dark Theme [OC]](https://www.reddit.com/r/homeassistant/comments/ex7mve/after_a_lot_of_love_a_muchrequested_feature_more/)
-- [I can now sync the speaker volume using the menu bar of my iMac! [OC]](https://www.reddit.com/r/homeassistant/comments/eri64c/i_can_now_sync_the_speaker_volume_using_the_menu/)
-- [I keep seeing my own theme on Reddit, so now it's my turn! [OC]](https://www.reddit.com/r/homeassistant/comments/enpeik/i_keep_seeing_my_own_theme_on_reddit_so_now_its/)
-
-## Ideas?
-
-- Notify us when the window is open and it is raining.
-- Add budget keeper using the Bunq API
 
 ## My devices
 
@@ -83,33 +39,21 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
     <tbody>
         <tr>
             <td>TP-Link HS110</td>
+            <td>3</td>
+            <td>36.99</td>
+            <td>110.97</td>
+        </tr>
+        <tr>
+            <td>Philips Hue plug</td>
             <td>1</td>
-            <td>35.84</td>
-            <td>35.84</td>
-        </tr>
-        <tr>
-            <td>Xiaomi Aqara Magic Cube</td>
-            <td>1</td>
-            <td>11.08</td>
-            <td>11.08</td>
-        </tr>
-        <tr>
-            <td>Xiaomi Aqara Single Button</td>
-            <td>4</td>
-            <td>14.35</td>
-            <td>57.38</td>
-        </tr>
-        <tr>
-            <td>Philips Hue Dimmer switch</td>
-            <td>2</td>
-            <td>16.61</td>
-            <td>33.22</td>
+            <td>29.95</td>
+            <td>29.95</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>137.52</td>
+            <td>140.92</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -128,40 +72,16 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
     </thead>
     <tbody>
         <tr>
-            <td>Xiaomi Aqara Door Sensor</td>
-            <td>4</td>
-            <td>8.18</td>
-            <td>32.71</td>
-        </tr>
-        <tr>
-            <td>Xiaomi Aqara Temperature Sensor</td>
-            <td>5</td>
-            <td>9.15</td>
-            <td>45.74</td>
-        </tr>
-        <tr>
-            <td>Xiaomi Aqara Motion Sensor</td>
-            <td>10</td>
-            <td>9.79</td>
-            <td>97.85</td>
-        </tr>
-        <tr>
-            <td>Xiaomi Aqara Vibration Sensor</td>
-            <td>1</td>
-            <td>11.59</td>
-            <td>11.59</td>
-        </tr>
-        <tr>
-            <td>Xiaomi Mi Flora</td>
-            <td>3</td>
-            <td>15.54</td>
-            <td>46.63</td>
+            <td>Philips Hue Motion Sensor</td>
+            <td>2</td>
+            <td>41.99</td>
+            <td>83.98</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>234.52</td>
+            <td>83.98</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -180,16 +100,16 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
     </thead>
     <tbody>
         <tr>
-            <td>Xiaomi Mi Roborock S5</td>
+            <td>Xiaomi Mi Roborock S7</td>
             <td>1</td>
-            <td>294.31</td>
-            <td>294.31</td>
+            <td>569.00</td>
+            <td>569.00</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>294.31</td>
+            <td>569.00</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -208,19 +128,7 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
     </thead>
     <tbody>
         <tr>
-            <td>KEF LS50 Wireless speakers</td>
-            <td>1</td>
-            <td>nan</td>
-            <td>nan</td>
-        </tr>
-        <tr>
-            <td>KEF LSX speakers</td>
-            <td>1</td>
-            <td>nan</td>
-            <td>nan</td>
-        </tr>
-        <tr>
-            <td>LG OLED 55 C9</td>
+            <td>Samsung LED-LCD UE65JU7000</td>
             <td>1</td>
             <td>nan</td>
             <td>nan</td>
@@ -242,46 +150,40 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
     </thead>
     <tbody>
         <tr>
-            <td>Philips Hue E27 White and Color</td>
-            <td>12</td>
-            <td>22.22</td>
-            <td>266.7</td>
-        </tr>
-        <tr>
-            <td>Philips Hue E14 White and Color</td>
-            <td>2</td>
-            <td>34.88</td>
-            <td>69.77</td>
-        </tr>
-        <tr>
-            <td>Philips Hue GU10 Ambient White</td>
+            <td>Philips Hue E27 White and Color Ambiance</td>
             <td>5</td>
-            <td>18.54</td>
-            <td>92.7</td>
+            <td>49.99</td>
+            <td>249.95</td>
         </tr>
         <tr>
-            <td>Philips Hue Go</td>
-            <td>1</td>
-            <td>57.05</td>
-            <td>57.05</td>
+            <td>Philips Hue E27 White</td>
+            <td>4</td>
+            <td>31.99</td>
+            <td>127.96</td>
         </tr>
         <tr>
-            <td>Philips Hue LED strip 2m</td>
+            <td>Philips Hue E14 White Ambiance</td>
             <td>2</td>
-            <td>43.2</td>
-            <td>86.39</td>
+            <td>20.23</td>
+            <td>40.45</td>
         </tr>
         <tr>
-            <td>Philips Hue LED strip 1m</td>
+            <td>Philips Hue GU10 White Ambiance</td>
+            <td>12</td>
+            <td>24.99</td>
+            <td>299.88</td>
+        </tr>
+        <tr>
+            <td>Philips Hue Lightstrip Plus</td>
             <td>1</td>
-            <td>13.84</td>
-            <td>13.84</td>
+            <td>79.99</td>
+            <td>79.99</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>586.45</td>
+            <td>798.23</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -300,16 +202,16 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
     </thead>
     <tbody>
         <tr>
-            <td>ConBee II</td>
+            <td>Hue bridge</td>
             <td>1</td>
-            <td>39.95</td>
-            <td>39.95</td>
+            <td>50.99</td>
+            <td>50.99</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>39.95</td>
+            <td>50.99</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -328,46 +230,16 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
     </thead>
     <tbody>
         <tr>
-            <td>Intel NUC Kit NUC8i3BEH</td>
+            <td>Micro-ATX PC</td>
             <td>1</td>
-            <td>278.3</td>
-            <td>278.3</td>
-        </tr>
-        <tr>
-            <td>8 GB Crucial CT8G4SFS824A DDR4</td>
-            <td>2</td>
-            <td>25.52</td>
-            <td>51.04</td>
-        </tr>
-        <tr>
-            <td>Samsung 970 EVO M.2 500GB</td>
-            <td>1</td>
-            <td>94.99</td>
-            <td>94.99</td>
-        </tr>
-        <tr>
-            <td>Raspberry Pi 4, 4GB RAM (connected to power/gas meter and connected over MQTT to main HA instance)</td>
-            <td>1</td>
-            <td>70.9</td>
-            <td>70.9</td>
-        </tr>
-        <tr>
-            <td>Raspberry Pi 4 FLIRC Case</td>
-            <td>1</td>
-            <td>25.85</td>
-            <td>25.85</td>
-        </tr>
-        <tr>
-            <td>SanDisk Ultra microSDHC Memory Card 32GB</td>
-            <td>1</td>
-            <td>6.99</td>
-            <td>6.99</td>
+            <td>nan</td>
+            <td>nan</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>528.07</td>
+            <td>nan</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -386,56 +258,16 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
     </thead>
     <tbody>
         <tr>
-            <td>iPhone X with the iOS app</td>
+            <td>iPhone 11 Pro Max with the iOS app</td>
             <td>1</td>
             <td>nan</td>
             <td>nan</td>
         </tr>
         <tr>
-            <td>iPhone SE2 with the iOS app</td>
+            <td>iPhone XR with the iOS app</td>
             <td>1</td>
             <td>nan</td>
             <td>nan</td>
-        </tr>
-        <tr>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-        </tr>
-    </tbody>
-    <thead>
-        <tr>
-            <th>Other</th>
-            <th>Units (#)</th>
-            <th>Price per unit (€)</th>
-            <th>Price (€)</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td>PlayStation Eye Webcam and Microphone array</td>
-            <td>1</td>
-            <td>14.95</td>
-            <td>14.95</td>
-        </tr>
-        <tr>
-            <td>DSMR - Slimme Meter kabel</td>
-            <td>1</td>
-            <td>19.95</td>
-            <td>19.95</td>
-        </tr>
-        <tr>
-            <td>Nodo-Shop – OpenTherm Gateway (OTGW) with NodeMCU</td>
-            <td>1</td>
-            <td>48.81</td>
-            <td>48.81</td>
-        </tr>
-        <tr>
-            <td><i><b>Total</b></i></td>
-            <td>&nbsp;</td>
-            <td>&nbsp;</td>
-            <td>83.71</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -449,7 +281,7 @@ See _all_ my automations and its dependencies [down the page](#automations---tab
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€1904.53</th>
+            <th>€1643.12</th>
         </tr>
     </thead>
 </table>
