@@ -8,7 +8,7 @@
 #
 #
 #- from github.com/tmttn/home-assistant-config
-- alias: "Doorbell: flash the lighhts when the doorbell rings"
+- alias: "Doorbell: flash the lights when the doorbell rings"
   trigger:
     platform: state
     entity_id: binary_sensor.doorbell_ding
