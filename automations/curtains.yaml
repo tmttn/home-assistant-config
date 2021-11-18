@@ -1,0 +1,59 @@
+---
+- alias: "Curtains: open the screens"
+  trigger:
+    - platform: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      below: 1
+    - platform: state
+      entity_id: weather.buienradar
+      from:
+        - "sunny"
+        - "partlycloudy"
+      to:
+        - "clear-night"
+        - "cloudy"
+        - "fog"
+        - "hail"
+        - "lightning"
+        - "lightning-rainy"
+        - "pouring"
+        - "rainy"
+        - "snowy"
+        - "snowy-rainy"
+        - "windy"
+        - "windy-variant"
+        - "exceptional"
+  action:
+    - service: cover.open_cover
+      entity_id: cover.curtain_controller_curtain
+
+- alias: "Curtains: close the screens"
+  trigger:
+    - platform: state
+      entity_id: weather.buienradar
+      from:
+        - "clear-night"
+        - "cloudy"
+        - "fog"
+        - "hail"
+        - "lightning"
+        - "lightning-rainy"
+        - "pouring"
+        - "rainy"
+        - "snowy"
+        - "snowy-rainy"
+        - "windy"
+        - "windy-variant"
+        - "exceptional"
+      to:
+        - "sunny"
+        - "partlycloudy"
+  condition:
+    - condition: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      above: 10
+  action:
+    - service: cover.close_cover
+      entity_id: cover.curtain_controller_curtain
