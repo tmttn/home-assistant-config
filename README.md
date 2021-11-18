@@ -39,21 +39,33 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     <tbody>
         <tr>
             <td>TP-Link HS110</td>
-            <td>3</td>
-            <td>36.99</td>
-            <td>110.97</td>
+            <td>1</td>
+            <td>35.84</td>
+            <td>35.84</td>
         </tr>
         <tr>
-            <td>Philips Hue plug</td>
+            <td>Xiaomi Aqara Magic Cube</td>
             <td>1</td>
-            <td>29.95</td>
-            <td>29.95</td>
+            <td>11.08</td>
+            <td>11.08</td>
+        </tr>
+        <tr>
+            <td>Xiaomi Aqara Single Button</td>
+            <td>4</td>
+            <td>14.35</td>
+            <td>57.38</td>
+        </tr>
+        <tr>
+            <td>Philips Hue Dimmer switch</td>
+            <td>2</td>
+            <td>16.61</td>
+            <td>33.22</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>140.92</td>
+            <td>137.52</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -72,16 +84,40 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </thead>
     <tbody>
         <tr>
-            <td>Philips Hue Motion Sensor</td>
-            <td>2</td>
-            <td>41.99</td>
-            <td>83.98</td>
+            <td>Xiaomi Aqara Door Sensor</td>
+            <td>4</td>
+            <td>8.18</td>
+            <td>32.71</td>
+        </tr>
+        <tr>
+            <td>Xiaomi Aqara Temperature Sensor</td>
+            <td>5</td>
+            <td>9.15</td>
+            <td>45.74</td>
+        </tr>
+        <tr>
+            <td>Xiaomi Aqara Motion Sensor</td>
+            <td>10</td>
+            <td>9.79</td>
+            <td>97.85</td>
+        </tr>
+        <tr>
+            <td>Xiaomi Aqara Vibration Sensor</td>
+            <td>1</td>
+            <td>11.59</td>
+            <td>11.59</td>
+        </tr>
+        <tr>
+            <td>Xiaomi Mi Flora</td>
+            <td>3</td>
+            <td>15.54</td>
+            <td>46.63</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>83.98</td>
+            <td>234.52</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -100,16 +136,16 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </thead>
     <tbody>
         <tr>
-            <td>Xiaomi Mi Roborock S7</td>
+            <td>Xiaomi Mi Roborock S5</td>
             <td>1</td>
-            <td>569.00</td>
-            <td>569.00</td>
+            <td>294.31</td>
+            <td>294.31</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>569.00</td>
+            <td>294.31</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -128,7 +164,19 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </thead>
     <tbody>
         <tr>
-            <td>Samsung LED-LCD UE65JU7000</td>
+            <td>KEF LS50 Wireless speakers</td>
+            <td>1</td>
+            <td>nan</td>
+            <td>nan</td>
+        </tr>
+        <tr>
+            <td>KEF LSX speakers</td>
+            <td>1</td>
+            <td>nan</td>
+            <td>nan</td>
+        </tr>
+        <tr>
+            <td>LG OLED 55 C9</td>
             <td>1</td>
             <td>nan</td>
             <td>nan</td>
@@ -150,40 +198,46 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </thead>
     <tbody>
         <tr>
-            <td>Philips Hue E27 White and Color Ambiance</td>
-            <td>5</td>
-            <td>49.99</td>
-            <td>249.95</td>
-        </tr>
-        <tr>
-            <td>Philips Hue E27 White</td>
-            <td>4</td>
-            <td>31.99</td>
-            <td>127.96</td>
-        </tr>
-        <tr>
-            <td>Philips Hue E14 White Ambiance</td>
-            <td>2</td>
-            <td>20.23</td>
-            <td>40.45</td>
-        </tr>
-        <tr>
-            <td>Philips Hue GU10 White Ambiance</td>
+            <td>Philips Hue E27 White and Color</td>
             <td>12</td>
-            <td>24.99</td>
-            <td>299.88</td>
+            <td>22.22</td>
+            <td>266.7</td>
         </tr>
         <tr>
-            <td>Philips Hue Lightstrip Plus</td>
+            <td>Philips Hue E14 White and Color</td>
+            <td>2</td>
+            <td>34.88</td>
+            <td>69.77</td>
+        </tr>
+        <tr>
+            <td>Philips Hue GU10 Ambient White</td>
+            <td>5</td>
+            <td>18.54</td>
+            <td>92.7</td>
+        </tr>
+        <tr>
+            <td>Philips Hue Go</td>
             <td>1</td>
-            <td>79.99</td>
-            <td>79.99</td>
+            <td>57.05</td>
+            <td>57.05</td>
+        </tr>
+        <tr>
+            <td>Philips Hue LED strip 2m</td>
+            <td>2</td>
+            <td>43.2</td>
+            <td>86.39</td>
+        </tr>
+        <tr>
+            <td>Philips Hue LED strip 1m</td>
+            <td>1</td>
+            <td>13.84</td>
+            <td>13.84</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>798.23</td>
+            <td>586.45</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -202,16 +256,16 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </thead>
     <tbody>
         <tr>
-            <td>Hue bridge</td>
+            <td>ConBee II</td>
             <td>1</td>
-            <td>50.99</td>
-            <td>50.99</td>
+            <td>39.95</td>
+            <td>39.95</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>50.99</td>
+            <td>39.95</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -230,16 +284,46 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </thead>
     <tbody>
         <tr>
-            <td>Micro-ATX PC</td>
+            <td>Intel NUC Kit NUC8i3BEH</td>
             <td>1</td>
-            <td>nan</td>
-            <td>nan</td>
+            <td>278.3</td>
+            <td>278.3</td>
+        </tr>
+        <tr>
+            <td>8 GB Crucial CT8G4SFS824A DDR4</td>
+            <td>2</td>
+            <td>25.52</td>
+            <td>51.04</td>
+        </tr>
+        <tr>
+            <td>Samsung 970 EVO M.2 500GB</td>
+            <td>1</td>
+            <td>94.99</td>
+            <td>94.99</td>
+        </tr>
+        <tr>
+            <td>Raspberry Pi 4, 4GB RAM (connected to power/gas meter and connected over MQTT to main HA instance)</td>
+            <td>1</td>
+            <td>70.9</td>
+            <td>70.9</td>
+        </tr>
+        <tr>
+            <td>Raspberry Pi 4 FLIRC Case</td>
+            <td>1</td>
+            <td>25.85</td>
+            <td>25.85</td>
+        </tr>
+        <tr>
+            <td>SanDisk Ultra microSDHC Memory Card 32GB</td>
+            <td>1</td>
+            <td>6.99</td>
+            <td>6.99</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>nan</td>
+            <td>528.07</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -258,13 +342,13 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </thead>
     <tbody>
         <tr>
-            <td>iPhone 11 Pro Max with the iOS app</td>
+            <td>iPhone X with the iOS app</td>
             <td>1</td>
             <td>nan</td>
             <td>nan</td>
         </tr>
         <tr>
-            <td>iPhone XR with the iOS app</td>
+            <td>iPhone SE2 with the iOS app</td>
             <td>1</td>
             <td>nan</td>
             <td>nan</td>
@@ -278,10 +362,50 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </tbody>
     <thead>
         <tr>
+            <th>Other</th>
+            <th>Units (#)</th>
+            <th>Price per unit (€)</th>
+            <th>Price (€)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>PlayStation Eye Webcam and Microphone array</td>
+            <td>1</td>
+            <td>14.95</td>
+            <td>14.95</td>
+        </tr>
+        <tr>
+            <td>DSMR - Slimme Meter kabel</td>
+            <td>1</td>
+            <td>19.95</td>
+            <td>19.95</td>
+        </tr>
+        <tr>
+            <td>Nodo-Shop – OpenTherm Gateway (OTGW) with NodeMCU</td>
+            <td>1</td>
+            <td>48.81</td>
+            <td>48.81</td>
+        </tr>
+        <tr>
+            <td><i><b>Total</b></i></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>83.71</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+    </tbody>
+    <thead>
+        <tr>
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€1643.12</th>
+            <th>€1904.53</th>
         </tr>
     </thead>
 </table>
@@ -322,6 +446,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Apple Watch ⌚](#apple-watch-) (9 automations)
 1. [Arriving 👞](#arriving-) (1 automations)
 1. [Climate 🔥🥶](#climate-) (7 automations)
+1. [Doorbell 🚪🔔](#doorbell-) (1 automations)
 1. [Frontend 👨‍💻](#frontend-) (3 automations)
 1. [Leaving 👞](#leaving-) (3 automations)
 1. [Light 💡](#light-) (17 automations)
@@ -335,7 +460,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **71** ⚠️
+⚠️ Total number of automations: **72** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml#L11)
@@ -474,6 +599,13 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/b633d67d8466fd6c25f333b3503cc9fafb068892/scripts.yaml#L197)
+
+[^ toc](#automations---table-of-content)
+
+
+## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/b02741da844efc4b64fd64c1b91da02b60618521/automations/doorbell.yaml)
+### [Flash the lighhts when the doorbell rings](https://github.com/tmttn/home-assistant-config/blob/b02741da844efc4b64fd64c1b91da02b60618521/automations/doorbell.yaml#L11)
+
 
 [^ toc](#automations---table-of-content)
 
