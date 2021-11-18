@@ -9,27 +9,12 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
-# Configure a default setup of Home Assistant (frontend, api, etc)
-
-evohome:
-  username: !secret evohome_username
-  password: !secret evohome_password
-
-miele:
-  client_id: !secret miele_clientid
-  client_secret: !secret miele_clientsecret
-  lang: en
-
-# Example configuration.yaml entry
-withings:
-  client_id: !secret withings_clientid
-  client_secret: !secret withings_clientsecret
-
 # Core Configuration
 homeassistant: !include includes/homeassistant.yaml
 default_config:
 frontend:
   themes: !include_dir_merge_named themes
+http: !include includes/http.yaml
 
 # Inputs
 input_boolean: !include includes/input_booleans.yaml
@@ -68,6 +53,9 @@ influxdb: !include includes/influxdb.yaml
 camera: !include includes/camera.yaml
 intent:
 intent_script: !include includes/intent_script.yaml
+evohome: !include includes/evohome.yaml
+miele: !include includes/miele.yaml
+withings: !include includes/withings.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
