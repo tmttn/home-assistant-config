@@ -1,0 +1,13 @@
+---
+#-
+#  __  __ _      _      
+# |  \/  (_) ___| | ___ 
+# | |\/| | |/ _ \ |/ _ \
+# | |  | | |  __/ |  __/
+# |_|  |_|_|\___|_|\___|
+#
+#- from github.com/tmttn/home-assistant-config
+
+client_id: !secret miele_clientid
+client_secret: !secret miele_clientsecret
+lang: en
