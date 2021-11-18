@@ -43,7 +43,7 @@ tables = {
         ["Intel 530 2,5\" Retail 180GB", 1, 115.00],
         ["Kingston valueram 8Gb, DDR3, PC12800", 2, 100],
     ],
-    "Device tracker 🔍": [  
+    "Device tracker 🔍": [
         ["iPhone 11 Pro Max with the iOS app", 1, "nan"],
         ["iPhone XR with the iOS app", 1, "nan"],
         ["Apple Watch First Generation", 1, "nan"],
@@ -78,7 +78,7 @@ def add_unit_price(lst):
 
 tables = {title: add_unit_price(lst) for title, lst in tables.items()}
 total_per_title = {
-    title: sum(x[-1] for x in lst if isinstance(x[-1], float)) | round(2)
+    title: sum(x[-1] for x in lst if isinstance(x[-1], float))
     for title, lst in tables.items()
 }
 
