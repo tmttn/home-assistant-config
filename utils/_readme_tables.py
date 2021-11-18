@@ -16,13 +16,13 @@ from jinja2 import Template
 
 tables = {
     "Switches 🎚": [
-        ["TP-Link HS110", 3, (36.99 * 3) | round(2)],
+        ["TP-Link HS110", 3, 110.97],
         ["Philips Hue plug", 1, 29.95],
         ["Tuya Smart Curtain Switch Wifi", 1, 49.00],
         ["Ring video doorbell 2", 1, 149.00],
     ],
     "Sensors 🌡": [
-        ["Philips Hue Motion Sensor", 2, (41.99 * 2) | round(2)],
+        ["Philips Hue Motion Sensor", 2, 83.98],
     ],
     "Vacuum 🧹": [["Xiaomi Mi Roborock S7", 1, 569.00]],
     "Media player 📺🔈": [
@@ -30,10 +30,10 @@ tables = {
         ["Nvidia Shield TV Pro", 1, 199.99],
     ],
     "Lights 💡": [
-        ["Philips Hue E27 White and Color Ambiance", 5, (49.99 * 5) | round(2)],
-        ["Philips Hue E27 White", 2, (69.77 * 2) | round(2)],
-        ["Philips Hue E14 White Ambiance", 2, (20.23 * 2) | round(2)],
-        ["Philips Hue GU10 White Ambiance", 12, (24.99 * 12) | round(2)],
+        ["Philips Hue E27 White and Color Ambiance", 5, 249.95],
+        ["Philips Hue E27 White", 2, 139.54],
+        ["Philips Hue E14 White Ambiance", 2, 40.46],
+        ["Philips Hue GU10 White Ambiance", 12, 299.88],
         ["Philips Hue Lightstrip Plus", 1, 79.99],
     ],
     "Hubs 🌎": [["Hue Bridge", 1, 50.99]],
@@ -57,8 +57,8 @@ tables = {
     ],
     "HVAC 🌡❄️🎛": [
         ["Honeywell wireless OpenTherm-module", 1, 92.99],
-        ["Honeywell Round Wireless", 2, (81.99 * 2) | round(2)],
-        ["Honeywell Evohome HR92 Radiator valve", 7, (61.95 * 7) | round(2)],
+        ["Honeywell Round Wireless", 2, 163.98],
+        ["Honeywell Evohome HR92 Radiator valve", 7, 433.65],
         ["Honeywell Evohome starterkit with 4 valves", 1, 449.00],
     ]
 }
