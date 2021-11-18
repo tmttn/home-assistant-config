@@ -16,53 +16,30 @@ from jinja2 import Template
 
 tables = {
     "Switches 🎚": [
-        ["TP-Link HS110", 1, 35.84],
-        ["Xiaomi Aqara Magic Cube", 1, 11.08],
-        ["Xiaomi Aqara Single Button", 4, 57.38],
-        ["Philips Hue Dimmer switch", 2, 33.22],
+        ["TP-Link HS110", 3, 36.99],
+        ["Philips Hue plug", 1, 29.95],
     ],
     "Sensors 🌡": [
-        ["Xiaomi Aqara Door Sensor", 4, 32.71],
-        ["Xiaomi Aqara Temperature Sensor", 5, 45.74],
-        ["Xiaomi Aqara Motion Sensor", 6 + 4, 61.13 + 36.72],
-        ["Xiaomi Aqara Vibration Sensor", 1, 11.59],
-        ["Xiaomi Mi Flora", 3, 46.63],
+        ["Philips Hue Motion Sensor", 2, 41.99],
     ],
-    "Vacuum 🧹": [["Xiaomi Mi Roborock S5", 1, 294.31]],
+    "Vacuum 🧹": [["Xiaomi Mi Roborock S7", 1, 569.00]],
     "Media player 📺🔈": [
-        ["KEF LS50 Wireless speakers", 1, "nan"],
-        ["KEF LSX speakers", 1, "nan"],
-        ["LG OLED 55 C9", 1, "nan"],
+        ["Samsung LED-LCD UE65JU7000", 1, "nan"],
     ],
     "Lights 💡": [
-        ["Philips Hue E27 White and Color", 12, 266.70],
-        ["Philips Hue E14 White and Color", 2, 69.77],
-        ["Philips Hue GU10 Ambient White", 5, 92.70],
-        ["Philips Hue Go", 1, 57.05],
-        ["Philips Hue LED strip 2m", 2, 86.39],
-        ["Philips Hue LED strip 1m", 1, 13.84],
+        ["Philips Hue E27 White and Color Ambiance", 5, 49.99],
+        ["Philips Hue E27 White", 2, 69.77],
+        ["Philips Hue E14 White Ambiance", 2, 20.23],
+        ["Philips Hue GU10 White Ambiance", 12, 24.99],
+        ["Philips Hue Lightstrip Plus", 1, 79.99],
     ],
-    "Hubs 🌎": [["ConBee II", 1, 39.95]],
+    "Hubs 🌎": [["Hue Bridge", 1, 50.99]],
     "Server 🖥": [
-        ["Intel NUC Kit NUC8i3BEH", 1, 278.30],
-        ["8 GB Crucial CT8G4SFS824A DDR4", 2, 51.04],
-        ["Samsung 970 EVO M.2 500GB", 1, 94.99],
-        [
-            "Raspberry Pi 4, 4GB RAM (connected to power/gas meter and connected over MQTT to main HA instance)",
-            1,
-            70.90,
-        ],
-        ["Raspberry Pi 4 FLIRC Case", 1, 25.85],
-        ["SanDisk Ultra microSDHC Memory Card 32GB", 1, 6.99],
+        ["Micro-ATX PC", 1, "nan"],
     ],
     "Device tracker 🔍": [
-        ["iPhone X with the iOS app", 1, "nan"],
-        ["iPhone SE2 with the iOS app", 1, "nan"],
-    ],
-    "Other": [
-        ["PlayStation Eye Webcam and Microphone array", 1, 14.95],
-        ["DSMR - Slimme Meter kabel", 1, 19.95],
-        ["Nodo-Shop – OpenTherm Gateway (OTGW) with NodeMCU", 1, 48.81],
+        ["iPhone 11 Pro Max with the iOS app", 1, "nan"],
+        ["iPhone XR with the iOS app", 1, "nan"],
     ],
 }
 
