@@ -1,3 +1,4 @@
+---
 #-
 #                _       _
 #  ___  ___ _ __(_)_ __ | |_ ___
@@ -153,18 +154,17 @@ set_low_temperature_bathroom:
       data:
         entity_id: climate.bathroom
         setpoint: >
-           {{ states("input_number.temperature_low") }}
-
+          {{ states("input_number.temperature_low") }}
 
 set_moderate_temperature_bathroom:
   alias: Set moderate temperature bathroom
   sequence:
     - service: evohome.set_zone_override
-        
+
       data:
         entity_id: climate.bathroom
         setpoint: >
-           {{ states("input_number.temperature_moderate") }}
+          {{ states("input_number.temperature_moderate") }}
 
 set_low_temperature:
   alias: Set low temperature
@@ -173,12 +173,12 @@ set_low_temperature:
       data:
         entity_id: climate.living_room
         setpoint: >
-           {{ states("input_number.temperature_low") }}
+          {{ states("input_number.temperature_low") }}
     - service: evohome.set_zone_override
       data:
         entity_id: climate.kitchen
         setpoint: >
-           {{ states("input_number.temperature_low") }}
+          {{ states("input_number.temperature_low") }}
 
 set_moderate_temperature:
   alias: Set high temperature
@@ -187,12 +187,12 @@ set_moderate_temperature:
       data:
         entity_id: climate.living_room
         setpoint: >
-           {{ states("input_number.temperature_moderate") }}
+          {{ states("input_number.temperature_moderate") }}
     - service: evohome.set_zone_override
       data:
         entity_id: climate.kitchen
         setpoint: >
-           {{ states("input_number.temperature_moderate") }}
+          {{ states("input_number.temperature_moderate") }}
 
 set_high_temperature:
   alias: Set high temperature
@@ -201,12 +201,12 @@ set_high_temperature:
       data:
         entity_id: climate.living_room
         setpoint: >
-           {{ states("input_number.temperature_high") }}
+          {{ states("input_number.temperature_high") }}
     - service: evohome.set_zone_override
       data:
         entity_id: climate.kitchen
         setpoint: >
-           {{ states("input_number.temperature_high") }}
+          {{ states("input_number.temperature_high") }}
 
 leaving:
   alias: Leaving the house
