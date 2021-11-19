@@ -274,14 +274,14 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
         <tr>
             <td>Kingston valueram 8Gb, DDR3, PC12800</td>
             <td>2</td>
-            <td>nan</td>
-            <td>100</td>
+            <td>50.0</td>
+            <td>100.0</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>625.0</td>
+            <td>725.0</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -427,7 +427,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€4747.32</th>
+            <th>€4847.32</th>
         </tr>
     </thead>
 </table>
