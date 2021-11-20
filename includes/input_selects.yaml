@@ -9,41 +9,29 @@
 #
 #- from github.com/tmttn/home-assistant-config
 sleep_mode:
+  name: Sleep mode options
   options:
     - total # everyone is sleeping
     - half # one person is awake and one person is sleeping
     - "off" # everyone is awake
   icon: mdi:bed-king
 
-# cube_mode:
-#   options:
-#     - Volume
-#     - Brightness
-#     - Hue
-#   icon: mdi:cube-outline
-
 last_script_living_room:
+  name: Last script living room
   options:
     - script.cozy_lights_living_room
     - script.white_lights_living_room
   icon: mdi:lightbulb-on
 
 last_script_bedroom:
+  name: Last script bedroom
   options:
     - script.cozy_lights_bedroom
     - script.white_lights_bedroom
   icon: mdi:lightbulb-on
 
-# bathroom_color:
-#   options:
-#     - red
-#     - blue
-#     - purple
-#     - pink
-#     - white
-#   icon: mdi:lightbulb-on
-
 theme:
+  name: Theme options
   options:
     - blue-red
     - dark-blue
