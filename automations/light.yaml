@@ -75,10 +75,10 @@
     alias: "Light is already on, or the light is off and light level is daylight"
     condition: or
     conditions:
-      - "{{ is_state('light.kitchen_ceiling', 'on') }}"
+      - "{{ is_state('light.kitchen_lights', 'on') }}"
       - condition: and
         conditions:
-          - "{{ is_state('light.kitchen_ceiling', 'off') }}"
+          - "{{ is_state('light.kitchen_lights', 'off') }}"
           - "{{ state_attr('sensor.motion_sensor_kitchen_light_level', 'dark') }}"
   action:
     service: light.turn_{{ trigger.to_state.state }}
