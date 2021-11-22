@@ -72,7 +72,7 @@
     platform: state
     entity_id: binary_sensor.activity_in_kitchen
   condition:
-    alias: "Light is already on, or the light is off and light level is daylight"
+    alias: "Light is already on, or the light is off and light level is below dark"
     condition: or
     conditions:
       - "{{ is_state('light.kitchen_lights', 'on') }}"
@@ -113,6 +113,15 @@
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_toilet
+  condition:
+    alias: "Light is already on, or the light is off and light level is below dark"
+    condition: or
+    conditions:
+      - "{{ is_state('light.toilet', 'on') }}"
+      - condition: and
+        conditions:
+          - "{{ is_state('light.toilet', 'off') }}"
+          - "{{ state_attr('sensor.motion_sensor_toilet_light_level', 'dark') }}"
   action:
     service: light.turn_{{ trigger.to_state.state }}
     data:
