@@ -496,7 +496,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L43)
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_selects.yaml#L11)
-  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/4059f3fd57c4a677d22a1f62f8b0ec9bae712539/includes/sensors.yaml#L135)
+  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/5f18e3a9980dd2030eb711a367371e872458fe6e/includes/sensors.yaml#L229)
 
 [^ toc](#automations---table-of-content)
 
@@ -522,12 +522,12 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/5cba5bda4e1fa87688ce21f72ed3704a3bfdc93f/automations/apple_watch.yaml#L146)
 
   *which uses:*
-  - [sensor.temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/4059f3fd57c4a677d22a1f62f8b0ec9bae712539/includes/sensors.yaml#L222)
-  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/4059f3fd57c4a677d22a1f62f8b0ec9bae712539/includes/sensors.yaml#L218)
-  - [sensor.temperature_bedroom_marthe](https://github.com/tmttn/home-assistant-config/blob/4059f3fd57c4a677d22a1f62f8b0ec9bae712539/includes/sensors.yaml#L230)
-  - [sensor.temperature_kitchen](https://github.com/tmttn/home-assistant-config/blob/4059f3fd57c4a677d22a1f62f8b0ec9bae712539/includes/sensors.yaml#L226)
-  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/4059f3fd57c4a677d22a1f62f8b0ec9bae712539/includes/sensors.yaml#L214)
-  - [sensor.temperature_storage](https://github.com/tmttn/home-assistant-config/blob/4059f3fd57c4a677d22a1f62f8b0ec9bae712539/includes/sensors.yaml#L234)
+  - [sensor.temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/5f18e3a9980dd2030eb711a367371e872458fe6e/includes/sensors.yaml#L316)
+  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/5f18e3a9980dd2030eb711a367371e872458fe6e/includes/sensors.yaml#L312)
+  - [sensor.temperature_bedroom_marthe](https://github.com/tmttn/home-assistant-config/blob/5f18e3a9980dd2030eb711a367371e872458fe6e/includes/sensors.yaml#L324)
+  - [sensor.temperature_kitchen](https://github.com/tmttn/home-assistant-config/blob/5f18e3a9980dd2030eb711a367371e872458fe6e/includes/sensors.yaml#L320)
+  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/5f18e3a9980dd2030eb711a367371e872458fe6e/includes/sensors.yaml#L308)
+  - [sensor.temperature_storage](https://github.com/tmttn/home-assistant-config/blob/5f18e3a9980dd2030eb711a367371e872458fe6e/includes/sensors.yaml#L328)
 
 ### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/5cba5bda4e1fa87688ce21f72ed3704a3bfdc93f/automations/apple_watch.yaml#L168)
 
@@ -583,7 +583,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L43)
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
   - [script.set_moderate_temperature](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L183)
-  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/4059f3fd57c4a677d22a1f62f8b0ec9bae712539/includes/sensors.yaml#L127)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/5f18e3a9980dd2030eb711a367371e872458fe6e/includes/sensors.yaml#L221)
 
 ### [Increase the heating for the afternoon](https://github.com/tmttn/home-assistant-config/blob/7e113622f8fc4f1f0f09ec17e47cc4e7b9ee7221/automations/climate.yaml#L67)
 
