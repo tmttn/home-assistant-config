@@ -133,8 +133,8 @@
     tumble_dryer:
       friendly_name: Tumble dryer
       value_template: >
-        {{ states("sensor.tumble_dryer_current_consumption") | float(0) > 250 }}
-      delay_off: "00:06:00"
+        {{ states("sensor.tumble_dryer_current_consumption") | float(0) > 350 }}
+      delay_off: "00:03:00"
       icon_template: >
         {% if is_state("binary_sensor.tumble_dryer", "on") %}
           mdi:tumble-dryer
