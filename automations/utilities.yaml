@@ -69,7 +69,7 @@
 - alias: "Utilities: espresso machine notification"
   trigger:
     platform: state
-    entity_id: binary_sensor.tumble_dryer
+    entity_id: binary_sensor.espresso_machine
     from: "off"
     to: "on"
   action:
