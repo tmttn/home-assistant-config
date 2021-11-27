@@ -62,10 +62,16 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>149.0</td>
         </tr>
         <tr>
+            <td>Xiaomi Aqara Magic Cube</td>
+            <td>1</td>
+            <td>16.95</td>
+            <td>16.95</td>
+        </tr>
+        <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>338.92</td>
+            <td>355.87</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -90,10 +96,28 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>83.98</td>
         </tr>
         <tr>
+            <td>Xiaomi Aqara Temperature Sensor</td>
+            <td>3</td>
+            <td>13.5</td>
+            <td>40.5</td>
+        </tr>
+        <tr>
+            <td>Xiaomi Aqara Motion Sensor</td>
+            <td>4</td>
+            <td>13.5</td>
+            <td>54.0</td>
+        </tr>
+        <tr>
+            <td>Xiaomi Mi Flora</td>
+            <td>1</td>
+            <td>15.96</td>
+            <td>15.96</td>
+        </tr>
+        <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>83.98</td>
+            <td>194.44</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -226,6 +250,12 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </thead>
     <tbody>
         <tr>
+            <td>ConBee II</td>
+            <td>1</td>
+            <td>41.9</td>
+            <td>41.9</td>
+        </tr>
+        <tr>
             <td>Hue Bridge</td>
             <td>1</td>
             <td>50.99</td>
@@ -235,7 +265,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>50.99</td>
+            <td>92.89</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -427,7 +457,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€4847.32</th>
+            <th>€5016.63</th>
         </tr>
     </thead>
 </table>
