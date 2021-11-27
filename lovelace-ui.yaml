@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1606,6 +1597,14 @@ views:
       name: Toilet
       secondary: 'Light level {{ states("sensor.motion_sensor_toilet_light_level")
         }} lx, battery {{ states("sensor.motion_sensor_toilet_battery_level") }}%
+
+        '
+      type: custom:template-entity-row
+    - active: '{{ is_state("binary_sensor.motion_sensor_lower_hall", "on") }}'
+      entity: binary_sensor.motion_sensor_toilet
+      name: Lower hall
+      secondary: 'Tamper {{ states("binary_sensor.motion_sensor_lower_hall_tamper")
+        }}, battery {{ states("sensor.motion_sensor_lower_hall_battery") }}%
 
         '
       type: custom:template-entity-row
