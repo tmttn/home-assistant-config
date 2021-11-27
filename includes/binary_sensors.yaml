@@ -52,8 +52,7 @@
       friendly_name: Activity in the living room
       value_template: >
         {{ is_state("binary_sensor.motion_sensor_living_room_klok", "on")
-            or is_state("media_player.tv", "on")
-            or is_state("media_player.kef_ls50", "on") }}
+            or is_state("media_player.tv", "on") }}
       delay_off: "00:20:00"
 
     activity_in_toilet:
@@ -90,8 +89,7 @@
         {{ is_state("binary_sensor.activity_in_hall", "on")
             or is_state("binary_sensor.activity_in_living_room", "on")
             or is_state("binary_sensor.activity_in_toilet", "on")
-            or is_state("binary_sensor.activity_in_kitchen", "on")
-            or is_state("media_player.kef_ls50", "on") }}
+            or is_state("binary_sensor.activity_in_kitchen", "on") }}
       delay_off: "00:01:00"
 
     washing_machine:
@@ -134,7 +132,7 @@
       friendly_name: Tumble dryer
       value_template: >
         {{ states("sensor.tumble_dryer_current_consumption") | float(0) > 350 }}
-      delay_off: "00:03:00"
+      delay_off: "00:10:00"
       icon_template: >
         {% if is_state("binary_sensor.tumble_dryer", "on") %}
           mdi:tumble-dryer
@@ -161,9 +159,7 @@
       value_template: >
         {% set light_on = is_state("binary_sensor.any_light_on", "on") %}
         {% set tv_on = is_state("media_player.tv", "on") %}
-        {% set kef_on = is_state("media_player.kef_ls50", "on") %}
-        {% set kef_lsx_on = is_state("media_player.kef_lsx", "on") %}
-        {{ light_on or tv_on or kef_on or kef_lsx_on }}
+        {{ light_on or tv_on }}
 
     vacuum_day:
       # XXX: was '("Mon", "Wed", "Sun")'  pre-corona because now we're mostly at home
