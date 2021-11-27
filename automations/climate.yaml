@@ -133,3 +133,37 @@
       actionName: TURN_ON_HEATING
   action:
     service: script.set_high_temperature
+
+- alias: "Climate: warning when heating on and back door open"
+  trigger:
+    platform: state
+    entity_id: binary_sensor.openclose_back_door
+    to: "on"
+    for: "00:05:00"
+  condition: "{{ state_attr('climate.living_room', 'temperature') >= 18 }}"
+  action:
+    - repeat:
+        while:
+          - condition: state
+            entity_id: binary_sensor.openclose_back_door
+            state: "on"
+          - condition: template
+            value_template: "{{ repeat.index <= 6 }}"
+        sequence:
+          - service: notify.all
+            data:
+              title: "Climate"
+              message: "The back door is open and the heating is on! ⚠️ Warning #{{ repeat.index }}!"
+          - delay: "00:05:00"
+    - condition: state
+      entity_id: binary_sensor.openclose_back_door
+      state: "on"
+    - service: notify.all
+      data:
+        title: "Climate"
+        message: "Turning off the heating!"
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.living_room
+        setpoint: >
+          {{ states("input_number.temperature_low") }}
