@@ -36,7 +36,7 @@ tables = {
         ["Philips Hue GU10 White Ambiance", 12, 299.88],
         ["Philips Hue Lightstrip Plus", 1, 79.99],
     ],
-    "Hubs 🌎": [["Hue Bridge", 1, 50.99]],
+    "Hubs 🌎": [["ConBee II", 1, 41.90], ["Hue Bridge", 1, 50.99]],
     "Server 🖥": [
         ["Shuttle Barebone SH67H7", 1, 210.00],
         ["Intel Core i7 - 3770k (3,50 GHz)", 1, 300.00],
