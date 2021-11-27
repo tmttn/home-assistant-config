@@ -64,6 +64,10 @@ tables = {
         ["Honeywell Round Wireless", 2, 163.98],
         ["Honeywell Evohome HR92 Radiator valve", 7, 433.65],
         ["Honeywell Evohome starterkit with 4 valves", 1, 449.00],
+    ],
+    "Security 🚨🔐": [
+        ["Ring Alarm security set", 1, 329.00],
+        ["Ring Spotlight Cam Solar", 2, 439.00],
     ]
 }
 
