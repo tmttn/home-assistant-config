@@ -20,9 +20,13 @@ tables = {
         ["Philips Hue plug", 1, 29.95],
         ["Tuya Smart Curtain Switch Wifi", 1, 49.00],
         ["Ring video doorbell 2", 1, 149.00],
+        ["Xiaomi Aqara Magic Cube", 1, 16.95],
     ],
     "Sensors 🌡": [
         ["Philips Hue Motion Sensor", 2, 83.98],
+        ["Xiaomi Aqara Temperature Sensor", 3, 40.50],
+        ["Xiaomi Aqara Motion Sensor", 4, 54.00],
+        ["Xiaomi Mi Flora", 1, 15.96],
     ],
     "Vacuum 🧹": [["Xiaomi Mi Roborock S7", 1, 569.00]],
     "Media player 📺🔈": [
