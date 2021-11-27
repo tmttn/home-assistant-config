@@ -52,7 +52,8 @@
       friendly_name: Activity in the living room
       value_template: >
         {{ is_state("binary_sensor.motion_sensor_living_room_klok", "on")
-            or is_state("media_player.tv", "on") }}
+            or is_state("media_player.tv", "on")
+            or is_state("binary_sensor.openclose_back_door", "on") }}
       delay_off: "00:20:00"
 
     activity_in_toilet:
@@ -70,7 +71,7 @@
     activity_in_hall:
       friendly_name: Activity in the hall
       value_template: >
-        {{ is_state("binary_sensor.motion_sensor_hall", "on")
+        {{ is_state("binary_sensor.motion_sensor_lower_hall", "on")
             or is_state("binary_sensor.openclose_front_door", "on") }}
       delay_off: "00:01:00"
 
