@@ -1014,6 +1014,10 @@ views:
     - entity: binary_sensor.activity_in_toilet
     - entity: binary_sensor.activity_in_bedroom
     - entity: binary_sensor.activity_in_living_room
+    - entity: binary_sensor.activity_in_hall
+    - type: divider
+    - entity: binary_sensor.openclose_front_door
+    - entity: binary_sensor.openclose_back_door
     - type: divider
     - entity: binary_sensor.motion_detected
     - entity: binary_sensor.motion_detected_in_last_hour
@@ -1023,6 +1027,12 @@ views:
     type: entities
   - columns: 3
     entities:
+    - entity: binary_sensor.motion_sensor_living_room
+      name: Living room
+    - entity: sensor.motion_sensor_living_room_battery
+      name: ''
+    - entity: binary_sensor.motion_sensor_living_room_tamper
+      name: ''
     - entity: binary_sensor.motion_sensor_kitchen
       name: Kitchen
     - entity: sensor.motion_sensor_kitchen_light_level
@@ -1035,10 +1045,40 @@ views:
       name: ''
     - entity: sensor.motion_sensor_toilet_battery_level
       name: ''
+    - entity: binary_sensor.motion_sensor_lower_hall
+      name: Lower Hall
+    - entity: sensor.motion_sensor_lower_hall_battery
+      name: ''
+    - entity: binary_sensor.motion_sensor_lower_hall_tamper
+      name: ''
+    - entity: binary_sensor.motion_sensor_upper_hall
+      name: Upper Hall
+    - entity: sensor.motion_sensor_upper_hall_battery
+      name: ''
+    - entity: binary_sensor.motion_sensor_upper_hall_tamper
+      name: ''
     show_icon: true
     show_name: true
     state_color: true
     title: Motion sensor
+    type: glance
+  - columns: 3
+    entities:
+    - entity: binary_sensor.openclose_front_door
+      name: Front door
+    - entity: sensor.openclose_front_door_battery
+      name: ''
+    - entity: binary_sensor.openclose_front_door_tamper
+      name: ''
+    - entity: binary_sensor.openclose_back_door
+      name: Living room
+    - entity: sensor.openclose_back_door_battery
+      name: ''
+    - entity: binary_sensor.openclose_back_door_tamper
+      name: ''
+    show_icon: true
+    show_name: true
+    title: Open/close sensor
     type: glance
   - entities:
     - entity: binary_sensor.anything_on
@@ -1556,16 +1596,38 @@ views:
     type: map
   - entities:
     - entity: sensor.temperature_living_room
-      name: Living room
-      secondary: '💦 {{ states(''sensor.humidity_living_room'') }}%, ⚖️ {{ states(''sensor.pressure_living_room'')
-        }} hPa, 🔋 {{ states(''sensor.temperature_living_room_battery_level'') }}%
-
-        '
+      name: Living room climate
       state: '{{ states("sensor.temperature_living_room") }} °C'
+      type: custom:template-entity-row
+    - entity: sensor.temperature_living_room
+      name: Kitchen climate
+      state: '{{ states("sensor.temperature_kitchen") }} °C'
+      type: custom:template-entity-row
+    - entity: sensor.temperature_living_room
+      name: Bathroom climate
+      state: '{{ states("sensor.temperature_bathroom") }} °C'
+      type: custom:template-entity-row
+    - entity: sensor.temperature_living_room
+      name: Storage climate
+      state: '{{ states("sensor.temperature_storage") }} °C'
+    - entity: sensor.temperature_living_room
+      name: Bedroom climate
+      state: '{{ states("sensor.temperature_bedroom") }} °C'
+    - entity: sensor.temperature_living_room
+      name: Bedroom Marthe climate
+      state: '{{ states("sensor.temperature_bedroom_marthe") }} °C'
       type: custom:template-entity-row
     title: Temperature sensors
     type: entities
   - entities:
+    - active: '{{ is_state("binary_sensor.motion_sensor_living_room", "on") }}'
+      entity: binary_sensor.motion_sensor_living_room
+      name: Living room
+      secondary: 'Tamper {{ states("binary_sensor.motion_sensor_living_room_tamper")
+        }}, battery {{ states("sensor.motion_sensor_living_room_battery") }}%
+
+        '
+      type: custom:template-entity-row
     - active: '{{ is_state("binary_sensor.motion_sensor_kitchen", "on") }}'
       entity: binary_sensor.motion_sensor_kitchen
       name: Kitchen
@@ -1579,6 +1641,22 @@ views:
       name: Toilet
       secondary: 'Light level {{ states("sensor.motion_sensor_toilet_light_level")
         }} lx, battery {{ states("sensor.motion_sensor_toilet_battery_level") }}%
+
+        '
+      type: custom:template-entity-row
+    - active: '{{ is_state("binary_sensor.motion_sensor_lower_hall", "on") }}'
+      entity: binary_sensor.motion_sensor_lower_hall
+      name: Lower hall
+      secondary: 'Tamper {{ states("binary_sensor.motion_sensor_lower_hall_tamper")
+        }}, battery {{ states("sensor.motion_sensor_lower_hall_battery") }}%
+
+        '
+      type: custom:template-entity-row
+    - active: '{{ is_state("binary_sensor.motion_sensor_upper_hall", "on") }}'
+      entity: binary_sensor.motion_sensor_upper_hall
+      name: Upper hall
+      secondary: 'Tamper {{ states("binary_sensor.motion_sensor_upper_hall_tamper")
+        }}, battery {{ states("sensor.motion_sensor_upper_hall_battery") }}%
 
         '
       type: custom:template-entity-row
