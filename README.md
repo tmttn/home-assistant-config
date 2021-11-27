@@ -454,10 +454,44 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </tbody>
     <thead>
         <tr>
+            <th>Security 🚨🔐</th>
+            <th>Units (#)</th>
+            <th>Price per unit (€)</th>
+            <th>Price (€)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Ring Alarm security set</td>
+            <td>1</td>
+            <td>329.0</td>
+            <td>329.0</td>
+        </tr>
+        <tr>
+            <td>Ring Spotlight Cam Solar</td>
+            <td>2</td>
+            <td>219.5</td>
+            <td>439.0</td>
+        </tr>
+        <tr>
+            <td><i><b>Total</b></i></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>768.0</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+    </tbody>
+    <thead>
+        <tr>
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€5016.63</th>
+            <th>€5784.63</th>
         </tr>
     </thead>
 </table>
