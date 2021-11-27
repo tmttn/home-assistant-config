@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1620,6 +1611,14 @@ views:
     title: Temperature sensors
     type: entities
   - entities:
+    - active: '{{ is_state("binary_sensor.motion_sensor_living_room", "on") }}'
+      entity: binary_sensor.motion_sensor_living_room
+      name: Living room
+      secondary: 'Tamper {{ states("binary_sensor.motion_sensor_living_room_tamper")
+        }}, battery {{ states("sensor.motion_sensor_living_room_battery") }}%
+
+        '
+      type: custom:template-entity-row
     - active: '{{ is_state("binary_sensor.motion_sensor_kitchen", "on") }}'
       entity: binary_sensor.motion_sensor_kitchen
       name: Kitchen
@@ -1637,10 +1636,18 @@ views:
         '
       type: custom:template-entity-row
     - active: '{{ is_state("binary_sensor.motion_sensor_lower_hall", "on") }}'
-      entity: binary_sensor.motion_sensor_toilet
+      entity: binary_sensor.motion_sensor_lower_hall
       name: Lower hall
       secondary: 'Tamper {{ states("binary_sensor.motion_sensor_lower_hall_tamper")
         }}, battery {{ states("sensor.motion_sensor_lower_hall_battery") }}%
+
+        '
+      type: custom:template-entity-row
+    - active: '{{ is_state("binary_sensor.motion_sensor_upper_hall", "on") }}'
+      entity: binary_sensor.motion_sensor_upper_hall
+      name: Upper hall
+      secondary: 'Tamper {{ states("binary_sensor.motion_sensor_upper_hall_tamper")
+        }}, battery {{ states("sensor.motion_sensor_upper_hall_battery") }}%
 
         '
       type: custom:template-entity-row
