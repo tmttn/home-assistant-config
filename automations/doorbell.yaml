@@ -8,13 +8,18 @@
 #
 #
 #- from github.com/tmttn/home-assistant-config
-- alias: "Doorbell: flash the lights when the doorbell rings"
+- alias: "Doorbell: the doorbell has been pressed"
   trigger:
     platform: state
     entity_id: binary_sensor.doorbell_ding
     from: "off"
     to: "on"
   action:
+    - service: camera.play_stream
+      data:
+        media_player: media_player.shield
+      target:
+        entity_id: camera.front_door_video
     - service: light.turn_on
       data:
         flash: "short"
