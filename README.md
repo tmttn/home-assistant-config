@@ -522,7 +522,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Apple Watch ⌚](#apple-watch-) (9 automations)
 1. [Climate 🔥🥶](#climate-) (8 automations)
 1. [Curtains 🪟🪟](#curtains-) (2 automations)
-1. [Doorbell 🚪🔔](#doorbell-) (1 automations)
+1. [Doorbell 🚪🔔](#doorbell-) (2 automations)
 1. [Frontend 👨‍💻](#frontend-) (3 automations)
 1. [Leaving 👞](#leaving-) (3 automations)
 1. [Light 💡](#light-) (17 automations)
@@ -536,7 +536,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **76** ⚠️
+⚠️ Total number of automations: **77** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml#L11)
@@ -685,8 +685,11 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/2f6f97f2d9c7016b3d8d5082bcfae6936a99e15f/automations/doorbell.yaml)
-### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/2f6f97f2d9c7016b3d8d5082bcfae6936a99e15f/automations/doorbell.yaml#L11)
+## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/b54b6c663041707211f9db7804748ba19cd4b7c8/automations/doorbell.yaml)
+### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/b54b6c663041707211f9db7804748ba19cd4b7c8/automations/doorbell.yaml#L11)
+
+
+### [Stream doorbell to the TV](https://github.com/tmttn/home-assistant-config/blob/b54b6c663041707211f9db7804748ba19cd4b7c8/automations/doorbell.yaml#L32)
 
 
 [^ toc](#automations---table-of-content)
