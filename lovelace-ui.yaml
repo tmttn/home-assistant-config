@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1616,6 +1607,10 @@ views:
     - entity: sensor.temperature_living_room
       name: Bedroom Marthe climate
       state: '{{ states("sensor.temperature_bedroom_marthe") }} °C'
+      type: custom:template-entity-row
+    - entity: sensor.motion_sensor_toilet_temperature
+      name: Toilet
+      state: '{{ states("sensor.motion_sensor_toilet_temperature") }} °C'
       type: custom:template-entity-row
     title: Temperature sensors
     type: entities
