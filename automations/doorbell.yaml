@@ -15,11 +15,6 @@
     from: "off"
     to: "on"
   action:
-    - service: camera.play_stream
-      data:
-        media_player: media_player.shield
-      target:
-        entity_id: camera.front_door_video
     - service: light.turn_on
       data:
         flash: "short"
@@ -33,3 +28,17 @@
         entity_id: media_player.google_home
         message: "Someone in front of the door!"
         language: "en-UK"
+
+- alias: "Doorbell: stream doorbell to the TV"
+  trigger:
+    platform: state
+    entity_id: binary_sensor.doorbell_ding
+    from: "off"
+    to: "on"
+  condition: "{{ is_state('media_player.tv', 'on') }}"
+  action:
+    - service: camera.play_stream
+      data:
+        media_player: media_player.shield
+      target:
+        entity_id: camera.front_door_video
