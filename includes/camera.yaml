@@ -23,3 +23,18 @@
       bottom: 25
   attributes:
     - calibration_points
+
+- platform: generic
+  name: Front Door Video
+  still_image_url: https://zwart-paard.local:8123{{ states.camera.front_door_snapshot.attributes.entity_picture }}
+  stream_source: rtsp://03cabcc9-ring-mqtt:8554/74e182314675_live
+
+- platform: generic
+  name: Porch Video
+  still_image_url: https://zwart-paard.local:8123{{ states.camera.porch_snapshot.attributes.entity_picture }}
+  stream_source: rtsp://03cabcc9-ring-mqtt:8554/184516a7ad19_live
+
+- platform: generic
+  name: Front Garden Video
+  still_image_url: https://zwart-paard.local:8123{{ states.camera.front_garden_snapshot.attributes.entity_picture }}
+  stream_source: rtsp://03cabcc9-ring-mqtt:8554/184516a77655_live
