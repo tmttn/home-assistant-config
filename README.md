@@ -685,8 +685,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/88142a93591f5321ab20013d659a53f5b4656e6f/automations/doorbell.yaml)
-### [Flash the lights when the doorbell rings](https://github.com/tmttn/home-assistant-config/blob/88142a93591f5321ab20013d659a53f5b4656e6f/automations/doorbell.yaml#L11)
+## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/2f6f97f2d9c7016b3d8d5082bcfae6936a99e15f/automations/doorbell.yaml)
+### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/2f6f97f2d9c7016b3d8d5082bcfae6936a99e15f/automations/doorbell.yaml#L11)
 
 
 [^ toc](#automations---table-of-content)
