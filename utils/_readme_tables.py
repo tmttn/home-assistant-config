@@ -18,6 +18,7 @@ tables = {
     "Switches 🎚": [
         ["TP-Link HS110", 3, 110.97],
         ["Philips Hue plug", 1, 29.95],
+        ["Hombli smart plug outside", 3, 69.60],
         ["Tuya Smart Curtain Switch Wifi", 1, 49.00],
         ["Ring video doorbell 2", 1, 149.00],
         ["Xiaomi Aqara Magic Cube", 1, 16.95],
