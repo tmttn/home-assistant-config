@@ -494,10 +494,38 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
     </tbody>
     <thead>
         <tr>
+            <th>Other</th>
+            <th>Units (#)</th>
+            <th>Price per unit (€)</th>
+            <th>Price (€)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>DEBO JT ESP32 module</td>
+            <td>1</td>
+            <td>18.69</td>
+            <td>18.69</td>
+        </tr>
+        <tr>
+            <td><i><b>Total</b></i></td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>18.69</td>
+        </tr>
+        <tr>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+        </tr>
+    </tbody>
+    <thead>
+        <tr>
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€5854.23</th>
+            <th>€5872.92</th>
         </tr>
     </thead>
 </table>
