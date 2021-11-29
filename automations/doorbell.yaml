@@ -23,11 +23,11 @@
       data:
         title: "Doorbell"
         message: "Someone in front of the door!"
-    - service: tts.cloud_say
+    - service: tts.google_translate_say
       data:
         entity_id: media_player.google_home
-        message: "Someone in front of the door!"
-        language: "en-UK"
+        language: nl
+        message: Er is iemand aan de voordeur.
 
 - alias: "Doorbell: stream doorbell to the TV"
   trigger:
