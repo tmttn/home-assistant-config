@@ -69,6 +69,9 @@ tables = {
     "Security 🚨🔐": [
         ["Ring Alarm security set", 1, 329.00],
         ["Ring Spotlight Cam Solar", 2, 439.00],
+    ],
+    "Other": [
+        ["DEBO JT ESP32 module", 1, 18.69],
     ]
 }
 
