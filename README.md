@@ -685,11 +685,11 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/b54b6c663041707211f9db7804748ba19cd4b7c8/automations/doorbell.yaml)
-### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/b54b6c663041707211f9db7804748ba19cd4b7c8/automations/doorbell.yaml#L11)
+## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/393dd51a8cf9d7565a8c5db304e3fd7bf99dc297/automations/doorbell.yaml)
+### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/393dd51a8cf9d7565a8c5db304e3fd7bf99dc297/automations/doorbell.yaml#L11)
 
 
-### [Stream doorbell to the TV](https://github.com/tmttn/home-assistant-config/blob/b54b6c663041707211f9db7804748ba19cd4b7c8/automations/doorbell.yaml#L32)
+### [Stream doorbell to the TV](https://github.com/tmttn/home-assistant-config/blob/393dd51a8cf9d7565a8c5db304e3fd7bf99dc297/automations/doorbell.yaml#L32)
 
 
 [^ toc](#automations---table-of-content)
