@@ -50,6 +50,12 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>29.95</td>
         </tr>
         <tr>
+            <td>Hombli smart plug outside</td>
+            <td>3</td>
+            <td>23.2</td>
+            <td>69.6</td>
+        </tr>
+        <tr>
             <td>Tuya Smart Curtain Switch Wifi</td>
             <td>1</td>
             <td>49.0</td>
@@ -71,7 +77,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>355.87</td>
+            <td>425.47</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -491,7 +497,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€5784.63</th>
+            <th>€5854.23</th>
         </tr>
     </thead>
 </table>
@@ -685,11 +691,11 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/393dd51a8cf9d7565a8c5db304e3fd7bf99dc297/automations/doorbell.yaml)
-### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/393dd51a8cf9d7565a8c5db304e3fd7bf99dc297/automations/doorbell.yaml#L11)
+## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/828604889004f3377b36b983edb618beecca0df1/automations/doorbell.yaml)
+### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/828604889004f3377b36b983edb618beecca0df1/automations/doorbell.yaml#L11)
 
 
-### [Stream doorbell to the TV](https://github.com/tmttn/home-assistant-config/blob/393dd51a8cf9d7565a8c5db304e3fd7bf99dc297/automations/doorbell.yaml#L32)
+### [Stream doorbell to the TV](https://github.com/tmttn/home-assistant-config/blob/828604889004f3377b36b983edb618beecca0df1/automations/doorbell.yaml#L32)
 
 
 [^ toc](#automations---table-of-content)
