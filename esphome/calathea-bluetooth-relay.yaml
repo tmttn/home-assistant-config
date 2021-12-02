@@ -1,0 +1,38 @@
+esphome:
+  name: calathea-bluetooth-relay
+  platform: ESP32
+  board: esp32dev
+  
+esp32_ble_tracker:
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+
+ota:
+  password: "dca84d6343c26d845c20091340c744fe"
+
+wifi:
+  ssid: "MetGen Net"
+  password: "mua2bwccdp4Z"
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Calathea-Bluetooth-Relay"
+    password: "LEbeHod3hOVm"
+
+captive_portal:
+
+sensor:
+  - platform: xiaomi_hhccjcy01
+    mac_address: 'C4:7C:8D:6D:B2:34'
+    temperature:
+      name: "Mi Flora: Calathea Medaillon Temperature"
+    moisture:
+      name: "Mi Flora: Calathea Medaillon Moisture"
+    illuminance:
+      name: "Mi Flora: Calathea Medaillon Light Intensity"
+    conductivity:
+      name: "Mi Flora: Calathea Medaillon Conductivity"
