@@ -1617,6 +1617,10 @@ views:
       name: Bedroom Marthe climate
       state: '{{ states("sensor.temperature_bedroom_marthe") }} °C'
       type: custom:template-entity-row
+    - entity: sensor.motion_sensor_toilet_temperature
+      name: Toilet
+      state: '{{ states("sensor.motion_sensor_toilet_temperature") }} °C'
+      type: custom:template-entity-row
     title: Temperature sensors
     type: entities
   - entities:
