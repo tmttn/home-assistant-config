@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1769,6 +1760,11 @@ views:
     variables:
     - name: Adaptive Lighting
     - slug: adaptive_lighting_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Curtains
+    - slug: curtains_
   icon: mdi:robot
   path: automations
   title: Automations
