@@ -114,6 +114,7 @@ venv.bak/
 .storage
 .cloud
 .google.token
+esphome
 
 ## Ignore logs.
 home-assistant.log*
