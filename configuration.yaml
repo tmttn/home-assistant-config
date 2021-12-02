@@ -59,6 +59,7 @@ evohome: !include includes/evohome.yaml
 miele: !include includes/miele.yaml
 withings: !include includes/withings.yaml
 tts: !include includes/tts.yaml
+plant: !include includes/plant.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml

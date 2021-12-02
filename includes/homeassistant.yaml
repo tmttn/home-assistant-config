@@ -36,3 +36,5 @@ customize:
     icon: mdi:patio-heater
   light.bathroom:
     icon: mdi:shower
+  plant.calathea_medaillon:
+    friendly_name: Calathea Medaillon
