@@ -254,7 +254,7 @@
   action:
     - service: light.turn_on
       data:
-        entity_id: light.terrace_lights
+        entity_id: light.outside_lights
         transition: 1
 
 - alias: "Light: turn off outside lights"
@@ -268,7 +268,29 @@
   action:
     - service: light.turn_off
       data:
-        entity_id: light.terrace_lights
+        entity_id: light.outside_lights
+        transition: 1
+
+- alias: "Light: turn on the outside lights when arriving"
+  trigger:
+    platform: numeric_state
+    entity_id: proximity.home
+    below: 6
+    above: 1
+  condition:
+    - condition: template
+      value_template: "{{ state_attr('sun.sun', 'elevation') < 1 }}"
+    - condition: sun
+      before: sunrise
+      before_offset: "-2:00:00"
+    - "{{ is_state_attr('proximity.home', 'dir_of_travel', 'towards') }}"
+    - condition: state
+      entity_id: binary_sensor.no_one_home
+      state: "on"
+  action:
+    - service: light.turn_on
+      data:
+        entity_id: light.outside_lights
         transition: 1
 
 #  _____      _                    _               _

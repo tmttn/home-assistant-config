@@ -4,3 +4,4 @@
 (toilet):light.toilet_lights
 (kitchen):light.kitchen_lights
 (terrace):light.terrace_lights
+(outside):light.outside_lights
