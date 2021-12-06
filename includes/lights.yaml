@@ -76,9 +76,9 @@
   name: Outside lights
   entities:
     - light.terrace_lights
-    - switch.hombli_smart_outdoor_socket_1_socket_1
-    - switch.hombli_smart_outdoor_socket_2_socket_1
-    - switch.hombli_smart_outdoor_socket_3_socket_1
+    - switch.outside_switch_1
+    - switch.outside_switch_2
+    - switch.outside_switch_3
 
 - platform: group
   name: Terrace lights
@@ -86,3 +86,15 @@
     - light.terrace_corner
     - light.terrace_wall
     - light.terrace_backdoor
+
+- platform: switch
+  name: Outside switch 1
+  entity_id: switch.hombli_smart_outdoor_socket_1_socket_1
+
+- platform: switch
+  name: Outside switch 2
+  entity_id: switch.hombli_smart_outdoor_socket_2_socket_1
+
+- platform: switch
+  name: Outside switch 3
+  entity_id: switch.hombli_smart_outdoor_socket_3_socket_1
