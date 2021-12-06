@@ -26,7 +26,7 @@
   entities:
     - light.kitchen_lights
     - light.toilet
-    - light.terrace_lights
+    - light.outside_lights
 
 - platform: group
   name: Kitchen lights
@@ -71,6 +71,14 @@
   name: Bed reading
   entities:
     - light.bedroom_bedside_tom
+
+- platform: group
+  name: Outside lights
+  entities:
+    - light.terrace_lights
+    - switch.hombli_smart_outdoor_socket_1_socket_1
+    - switch.hombli_smart_outdoor_socket_2_socket_1
+    - switch.hombli_smart_outdoor_socket_3_socket_1
 
 - platform: group
   name: Terrace lights

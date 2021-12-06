@@ -34,7 +34,7 @@
       - light.kitchen_lights
       - light.toilet
       - light.bathroom_lights
-      - light.terrace_lights
+      - light.outside_lights
       - input_select.sleep_mode
       - input_boolean.start_the_music
 - name: HA Front Door Accessory
