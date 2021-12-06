@@ -1697,8 +1697,8 @@ views:
   - template: automation_template
     type: custom:decluttering-card
     variables:
-    - name: Arriving
-    - slug: arriving_
+    - name: Plant
+    - slug: plant_
   - template: automation_template
     type: custom:decluttering-card
     variables:
@@ -1769,6 +1769,21 @@ views:
     variables:
     - name: Adaptive Lighting
     - slug: adaptive_lighting_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Curtains
+    - slug: curtains_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Doorbell
+    - slug: doorbell_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Security
+    - slug: security_
   icon: mdi:robot
   path: automations
   title: Automations
