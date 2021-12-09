@@ -53,7 +53,8 @@
       value_template: >
         {{ is_state("binary_sensor.motion_sensor_living_room", "on")
             or is_state("media_player.tv", "on")
-            or is_state("binary_sensor.openclose_back_door", "on") }}
+            or is_state("binary_sensor.openclose_back_door", "on")
+            or is_state("binary_sensor.openclose_living_room_door", "on") }}
       delay_off: "00:20:00"
 
     activity_in_toilet:
@@ -65,7 +66,14 @@
     activity_in_kitchen:
       friendly_name: Activity in the kitchen
       value_template: >
-        {{ is_state("binary_sensor.motion_sensor_kitchen", "on") }}
+        {{ is_state("binary_sensor.motion_sensor_kitchen", "on")
+            or is_state("binary_sensor.openclose_storage_door", "on") }}
+      delay_off: "00:05:00"
+
+    activity_in_storage:
+      friendly_name: Activity in the kitchen
+      value_template: >
+        {{ is_state("binary_sensor.openclose_storage_door", "on") }}
       delay_off: "00:05:00"
 
     activity_in_hall:
@@ -73,7 +81,8 @@
       value_template: >
         {{ is_state("binary_sensor.motion_sensor_lower_hall", "on")
             or is_state("binary_sensor.motion_sensor_upper_hall", "on")
-            or is_state("binary_sensor.openclose_front_door", "on") }}
+            or is_state("binary_sensor.openclose_front_door", "on")
+            or is_state("binary_sensor.openclose_living_room_door", "on") }}
       delay_off: "00:01:00"
 
     activity_in_bedroom:
@@ -91,7 +100,9 @@
         {{ is_state("binary_sensor.activity_in_hall", "on")
             or is_state("binary_sensor.activity_in_living_room", "on")
             or is_state("binary_sensor.activity_in_toilet", "on")
-            or is_state("binary_sensor.activity_in_kitchen", "on") }}
+            or is_state("binary_sensor.activity_in_kitchen", "on")
+            or is_state("binary_sensor.activity_in_bathroom", "on")
+            or is_state("binary_sensor.activity_in_storage", "on") }}
       delay_off: "00:01:00"
 
     washing_machine:
