@@ -180,7 +180,7 @@
 
 - alias: "Climate: warning when heating on and living room door open"
   trigger:
-  - platform: state
+    platform: state
     entity_id: binary_sensor.openclose_living_room_door
     to: "on"
     for: "00:05:00"
@@ -224,7 +224,7 @@
 
 - alias: "Climate: warning when heating on and storage door open"
   trigger:
-  - platform: state
+    platform: state
     entity_id: binary_sensor.openclose_storage_door
     to: "on"
     for: "00:05:00"
