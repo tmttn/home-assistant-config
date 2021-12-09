@@ -649,8 +649,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Climate 🔥🥶](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml)
-### [Turn on the bathroom heating in the early morning](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L12)
+## [Climate 🔥🥶](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml)
+### [Turn on the bathroom heating in the early morning](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L12)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
@@ -658,7 +658,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.set_moderate_temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L159)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
 
-### [Turn off the bathroom heating in the morning](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L31)
+### [Turn off the bathroom heating in the morning](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L31)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
@@ -666,7 +666,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.set_low_temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L150)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
 
-### [Turn on the heating 30 min before waking up](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L49)
+### [Turn on the heating 30 min before waking up](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L49)
 
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L43)
@@ -674,14 +674,14 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.set_moderate_temperature](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L183)
   - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/includes/sensors.yaml#L221)
 
-### [Increase the heating for the afternoon](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L67)
+### [Increase the heating for the afternoon](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L67)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L197)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
 
-### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L82)
+### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L82)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
@@ -689,7 +689,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L197)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
 
-### [Turn off the heating at 23:00](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L107)
+### [Turn off the heating at 23:00](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L107)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
@@ -697,22 +697,22 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L169)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
 
-### [Turn on heating again after notification](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L128)
+### [Turn on heating again after notification](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L128)
 
   *which uses:*
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L197)
 
-### [Warning when heating on and back door open](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L137)
+### [Warning when heating on and back door open](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L137)
 
   *which uses:*
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/7190cafed4d9b9568773e21fdc9752116da85fb6/includes/input_numbers.yaml#L12)
 
-### [Warning when heating on and living room door open](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L181)
+### [Warning when heating on and living room door open](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L181)
 
   *which uses:*
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/7190cafed4d9b9568773e21fdc9752116da85fb6/includes/input_numbers.yaml#L12)
 
-### [Warning when heating on and storage door open](https://github.com/tmttn/home-assistant-config/blob/380d32533b517a1ba813a8a02e2a0c5c24cf7299/automations/climate.yaml#L225)
+### [Warning when heating on and storage door open](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L225)
 
   *which uses:*
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/7190cafed4d9b9568773e21fdc9752116da85fb6/includes/input_numbers.yaml#L12)
