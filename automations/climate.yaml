@@ -140,7 +140,12 @@
     entity_id: binary_sensor.openclose_back_door
     to: "on"
     for: "00:05:00"
-  condition: "{{ state_attr('climate.living_room', 'temperature') >= 18 }}"
+  condition:
+    alias: Living room or kitchen above 18°C
+    condition: or
+    conditions:
+      - "{{ state_attr('climate.living_room', 'temperature') >= 18 }}"
+      - "{{ state_attr('climate.kitchen', 'temperature') >= 18 }}"
   action:
     - repeat:
         while:
@@ -165,5 +170,98 @@
     - service: evohome.set_zone_override
       data:
         entity_id: climate.living_room
+        setpoint: >
+          {{ states("input_number.temperature_low") }}
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.kitchen
+        setpoint: >
+          {{ states("input_number.temperature_low") }}
+
+- alias: "Climate: warning when heating on and living room door open"
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.openclose_living_room_door
+    to: "on"
+    for: "00:05:00"
+  condition:
+    alias: Living room or kitchen above 18°C
+    condition: or
+    conditions:
+      - "{{ state_attr('climate.living_room', 'temperature') >= 18 }}"
+      - "{{ state_attr('climate.kitchen', 'temperature') >= 18 }}"
+  action:
+    - repeat:
+        while:
+          - condition: state
+            entity_id: binary_sensor.openclose_living_room_door
+            state: "on"
+          - condition: template
+            value_template: "{{ repeat.index <= 6 }}"
+        sequence:
+          - service: notify.all
+            data:
+              title: "Climate"
+              message: "The living room door is open and the heating is on! ⚠️ Warning #{{ repeat.index }}!"
+          - delay: "00:05:00"
+    - condition: state
+      entity_id: binary_sensor.openclose_living_room_door
+      state: "on"
+    - service: notify.all
+      data:
+        title: "Climate"
+        message: "Turning off the heating!"
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.living_room
+        setpoint: >
+          {{ states("input_number.temperature_low") }}
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.kitchen
+        setpoint: >
+          {{ states("input_number.temperature_low") }}
+
+- alias: "Climate: warning when heating on and storage door open"
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.openclose_storage_door
+    to: "on"
+    for: "00:05:00"
+  condition:
+    alias: Living room or kitchen above 18°C
+    condition: or
+    conditions:
+      - "{{ state_attr('climate.living_room', 'temperature') >= 18 }}"
+      - "{{ state_attr('climate.kitchen', 'temperature') >= 18 }}"
+  action:
+    - repeat:
+        while:
+          - condition: state
+            entity_id: binary_sensor.openclose_storage_door
+            state: "on"
+          - condition: template
+            value_template: "{{ repeat.index <= 6 }}"
+        sequence:
+          - service: notify.all
+            data:
+              title: "Climate"
+              message: "The storage door is open and the heating is on! ⚠️ Warning #{{ repeat.index }}!"
+          - delay: "00:05:00"
+    - condition: state
+      entity_id: binary_sensor.openclose_storage_door
+      state: "on"
+    - service: notify.all
+      data:
+        title: "Climate"
+        message: "Turning off the heating!"
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.living_room
+        setpoint: >
+          {{ states("input_number.temperature_low") }}
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.kitchen
         setpoint: >
           {{ states("input_number.temperature_low") }}
