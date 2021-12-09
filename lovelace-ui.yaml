@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1038,6 +1029,8 @@ views:
     - type: divider
     - entity: binary_sensor.openclose_front_door
     - entity: binary_sensor.openclose_back_door
+    - entity: binary_sensor.openclose_living_room_door
+    - entity: binary_sensor.openclose_storage_door
     - type: divider
     - entity: binary_sensor.motion_detected
     - entity: binary_sensor.motion_detected_in_last_hour
@@ -1095,6 +1088,18 @@ views:
     - entity: sensor.openclose_back_door_battery
       name: ''
     - entity: binary_sensor.openclose_back_door_tamper
+      name: ''
+    - entity: binary_sensor.openclose_living_room_door
+      name: Living room
+    - entity: sensor.openclose_living_room_door_battery
+      name: ''
+    - entity: binary_sensor.openclose_living_room_door_tamper
+      name: ''
+    - entity: binary_sensor.openclose_storage_door
+      name: Living room
+    - entity: sensor.openclose_storage_door_battery
+      name: ''
+    - entity: binary_sensor.openclose_storage_door_tamper
       name: ''
     show_icon: true
     show_name: true
