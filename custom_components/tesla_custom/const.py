@@ -1,5 +1,5 @@
 """Const file for Tesla cars."""
-VERSION = "1.3.2"
+VERSION = "1.4.0"
 CONF_WAKE_ON_START = "enable_wake_on_start"
 CONF_EXPIRATION = "expiration"
 DOMAIN = "tesla_custom"
@@ -16,6 +16,7 @@ PLATFORMS = [
     "binary_sensor",
     "device_tracker",
     "switch",
+    "button",
 ]
 
 ICONS = {
@@ -31,6 +32,8 @@ ICONS = {
     "location tracker": "mdi:crosshairs-gps",
     "charging rate sensor": "mdi:speedometer",
     "sentry mode switch": "mdi:shield-car",
+    "horn": "mdi:bullhorn",
+    "flash lights": "mdi:car-light-high",
     "solar panel": "mdi:solar-panel",
 }
 AUTH_CALLBACK_PATH = "/auth/tesla/callback"
