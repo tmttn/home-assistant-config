@@ -9,6 +9,20 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
+
+- alias: "Utilities: turn on espresso machine 10 minutes before waking up"
+  trigger:
+    platform: template
+    value_template: >
+      {{ states("sensor.time")[0:5] == states("sensor.half_hour_before_alarm") }}
+  condition:
+    condition: state
+    entity_id: input_boolean.alarm_clock
+    state: "on"
+  action:
+    service: switch.turn_on
+    entity_id: switch.espresso_machine
+
 - alias: "Utilities: washing machine, dishwasher,tumble dryer or espresso machine started or finished"
   trigger:
     - platform: state
