@@ -1094,19 +1094,19 @@ views:
     - entity: binary_sensor.openclose_front_door_tamper
       name: ''
     - entity: binary_sensor.openclose_back_door
-      name: Living room
+      name: Back door
     - entity: sensor.openclose_back_door_battery
       name: ''
     - entity: binary_sensor.openclose_back_door_tamper
       name: ''
     - entity: binary_sensor.openclose_living_room_door
-      name: Living room
+      name: Living room door
     - entity: sensor.openclose_living_room_door_battery
       name: ''
     - entity: binary_sensor.openclose_living_room_door_tamper
       name: ''
     - entity: binary_sensor.openclose_storage_door
-      name: Living room
+      name: Storage door
     - entity: sensor.openclose_storage_door_battery
       name: ''
     - entity: binary_sensor.openclose_storage_door_tamper
