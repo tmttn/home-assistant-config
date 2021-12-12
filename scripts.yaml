@@ -9,6 +9,29 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
+start_spotify_playlist_of_nearest_person:
+  alias: Start Spotify
+  description: Start a Spotify playlist on Google Home speakers
+  fields:
+    source:
+      description: The name of the speaker as it appears in Spotify
+      example: Google Home
+    entity_id:
+      description: entity_id of the speaker
+      example: media_player.google_home
+  sequence:
+    - service: script.start_speakers
+      data:
+        source: Wifi
+        volume: 0.25
+        entity_id: "{{ entity_id }}"
+    - service: script.start_spotify
+      data:
+        source: "{{ source }}"
+        playlist: >
+          {{ states("sensor.favorite_playlist_of_nearest_person") }}
+        volume: 0.25
+
 cozy_lights_living_room:
   alias: Set cozy lights in the living room
   mode: parallel
