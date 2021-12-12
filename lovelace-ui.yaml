@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -236,17 +227,6 @@ views:
       \ red;\n}\n"
     type: vertical-stack
   - entities:
-    - entity: sensor.adaptive
-      type: custom:github-entity-row
-    - entity: sensor.lovelace_ios_dark_mode_theme
-      type: custom:github-entity-row
-    - entity: sensor.lovelace_ios_themes
-      type: custom:github-entity-row
-    - entity: sensor.home_assistant_config
-      type: custom:github-entity-row
-    show_header_toggle: false
-    type: entities
-  - entities:
     - entity: input_boolean.alarm_clock
     - entity: input_datetime.alarm_clock
     - entity: input_select.sleep_mode
@@ -286,12 +266,6 @@ views:
       type: custom:xiaomi-vacuum-map-card
       vacuum_platform: KrzysztofHajdamowicz/miio2
     type: vertical-stack
-  - entities:
-    - entity: input_boolean.vacation_mode
-    - entity: input_boolean.guest_mode
-    - entity: input_boolean.automatic_temperature
-    show_header_toggle: false
-    type: entities
   - entities:
     - entities:
       - icon: mdi:currency-eur
