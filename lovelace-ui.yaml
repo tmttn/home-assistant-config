@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1854,11 +1845,17 @@ views:
     hours_to_show: 240
     type: map
   - entities:
-    - entity: sensor.temperature_living_room
+    - entity: sensor.xiaomi_temperature_bathroom
       name: Bathroom
       secondary: '💦 {{ states(''sensor.humidity_bathroom'') }}%, ⚖️ {{ states(''sensor.pressure_bathroom'')
         }} hPa, 🔋 {{ states(''sensor.multi_sensor_bathroom_battery_level'') }}% '
       state: '{{ states("sensor.xiaomi_temperature_bathroom") }} °C'
+      type: custom:template-entity-row
+    - entity: sensor.xiaomi_temperature_storage
+      name: Storage
+      secondary: '💦 {{ states(''sensor.humidity_storage'') }}%, ⚖️ {{ states(''sensor.pressure_storage'')
+        }} hPa, 🔋 {{ states(''sensor.multi_sensor_storage_battery_level'') }}% '
+      state: '{{ states("sensor.xiaomi_temperature_storage") }} °C'
       type: custom:template-entity-row
     title: Multi sensors
     type: entities
