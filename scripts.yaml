@@ -25,7 +25,7 @@ start_spotify_playlist_of_nearest_person:
         random_song: true
         shuffle: true
         start_volume: 50
-        entity_id: {{ entity_id }}
+        entity_id: "{{ entity_id }}"
       service: spotcast.start
 
 cozy_lights_living_room:
