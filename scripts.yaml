@@ -20,11 +20,6 @@ start_spotify_playlist_of_nearest_person:
       description: entity_id of the speaker
       example: media_player.google_home
   sequence:
-    - service: script.start_speakers
-      data:
-        source: Wifi
-        volume: 0.25
-        entity_id: "{{ entity_id }}"
     - service: script.start_spotify
       data:
         source: "{{ source }}"
