@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1318,6 +1309,22 @@ views:
     theme: Backend-selected
     title: Temperature sensors
     type: glance
+  - entities:
+    - entity: sensor.humidity_bathroom
+    - entity: binary_sensor.humidity_bathroom_trend
+    - entity: sensor.humidity_bathroom_derivative
+    - entity: sensor.humidity_bathroom_stats
+    - entity: binary_sensor.someone_showering
+    title: Bathroom occupied
+    type: entities
+  - entities:
+    - entity: sensor.humidity_storage
+    - entity: binary_sensor.humidity_storage_trend
+    - entity: sensor.humidity_storage_derivative
+    - entity: sensor.humidity_storage_stats
+    - entity: binary_sensor.someone_showering_storage
+    title: Shower occupied
+    type: entities
   - entities:
     - entity: sensor.hours_bedroom_lights_have_been_on_last_7_days
       icon: mdi:clock
