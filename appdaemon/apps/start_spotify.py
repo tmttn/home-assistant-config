@@ -7,7 +7,7 @@ start_spotify:
   class: StartSpotify
   speaker: media_player.google_home
   spotify_source: "Google Home"
-  playlist: "spotify:playlist:6rPTm9dYftKcFAfwyRqmDZ"
+  playlist: "spotify:playlist:2GPRgfioefDRYgV17cDlsr"
   volume: 0.3
   input_boolean: input_boolean.start_spotify
 ```
