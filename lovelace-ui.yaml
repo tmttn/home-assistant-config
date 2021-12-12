@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -201,6 +192,51 @@ views:
       volume: true
     icon: mdi:spotify
     type: custom:mini-media-player
+  - cards:
+    - icon: mdi:sofa
+      name: Play music in living room
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        service: script.start_spotify_playlist_of_nearest_person
+        service_data:
+          entity_id: media_player.google_home
+          source: Google Home
+      type: custom:button-card
+    - icon: mdi:bed-king
+      name: Play music in bedroom
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        service: script.start_spotify_playlist_of_nearest_person
+        service_data:
+          entity_id: media_player.google_home_mini
+          source: Google Home Mini
+        type: custom:button-card
+      type: horizontal-stack
+    style: "ha-card {\n  --mini-media-player-base-color: red;\n  --mini-media-player-icon-color:\
+      \ red;\n  --mini-media-player-background-opacity: 0.1;\n  --mini-media-player-overlay-color:\
+      \ red;\n}\n"
+    type: vertical-stack
+  - entities:
+    - entity: sensor.adaptive
+      type: custom:github-entity-row
+    - entity: sensor.lovelace_ios_dark_mode_theme
+      type: custom:github-entity-row
+    - entity: sensor.lovelace_ios_themes
+      type: custom:github-entity-row
+    - entity: sensor.home_assistant_config
+      type: custom:github-entity-row
+    show_header_toggle: false
+    type: entities
   - entities:
     - entity: input_boolean.alarm_clock
     - entity: input_datetime.alarm_clock
