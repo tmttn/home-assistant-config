@@ -12,9 +12,6 @@ start_spotify_playlist_of_nearest_person:
   alias: Start Spotify
   description: Start a Spotify playlist on Google Home speakers
   fields:
-    source:
-      description: The name of the speaker as it appears in Spotify
-      example: Google Home
     entity_id:
       description: entity_id of the speaker
       example: media_player.google_home
