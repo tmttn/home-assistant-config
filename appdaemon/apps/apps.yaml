@@ -1,4 +1,8 @@
 ---
+cube:
+  module: xiaomi_aqara_cube_action
+  class: CubeControl
+
 battery_monitor:
   module: battery_monitor
   class: BatteryMonitor

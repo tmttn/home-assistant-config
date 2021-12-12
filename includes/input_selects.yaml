@@ -16,6 +16,13 @@ sleep_mode:
     - "off" # everyone is awake
   icon: mdi:bed-king
 
+cube_mode:
+  options:
+    - Volume
+    - Brightness
+    - Hue
+  icon: mdi:cube-outline
+
 last_script_living_room:
   name: Last script living room
   options:
