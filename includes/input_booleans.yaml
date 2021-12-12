@@ -43,3 +43,23 @@ work_hour_notification_sent:
 alarm_clock:
   name: Alarm clock is on
   icon: mdi:alarm
+
+# Apps
+start_google_home:
+  name: Start Google Home
+  initial: "off"
+  icon: mdi:music
+start_google_home_mini:
+  name: Start Google Home Mini
+  initial: "off"
+  icon: mdi:music
+start_spotify_on_google_home:
+  name: Play Spotify on Google Home
+  initial: "off"
+  icon: mdi:music
+start_spotify_on_google_home_mini:
+  name: Play Spotify on Google Home Mini
+  initial: "off"
+  icon: mdi:music
+test:
+  name: "Test"
