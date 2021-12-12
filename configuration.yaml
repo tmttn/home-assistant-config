@@ -60,6 +60,7 @@ miele: !include includes/miele.yaml
 withings: !include includes/withings.yaml
 tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
+spotify: !include includes/spotify.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
