@@ -9,6 +9,35 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
+start_speakers:
+  alias: Start speakers
+  description: Start a Spotify playlist on Google Home speakers
+  fields:
+    volume:
+      description: Volume at which to play
+      example: "0.3"
+    source:
+      description: Which source to use on the speakers
+      example: Wifi
+    entity_id:
+      description: entity_id of the speaker
+      example: media_player.google_home
+  sequence:
+    - service: media_player.turn_on
+      data:
+        entity_id: "{{ entity_id }}"
+    - service: media_player.select_source
+      data:
+        entity_id: "{{ entity_id }}"
+        source: "{{ source }}"
+    - wait_template: '{{ is_state("media_player.google_home", "on") }}'
+      timeout: 00:01:00
+      continue_on_timeout: false
+    - service: media_player.volume_set
+      data:
+        entity_id: "{{ entity_id }}"
+        volume_level: "{{ volume }}"
+
 start_spotify:
   alias: Start Spotify
   description: Start a Spotify playlist on Google Home speakers
@@ -52,6 +81,11 @@ start_spotify_playlist_of_nearest_person:
       description: entity_id of the speaker
       example: media_player.google_home
   sequence:
+    - service: script.start_speakers
+      data:
+        source: Wifi
+        volume: 0.25
+        entity_id: "{{ entity_id }}"
     - service: script.start_spotify
       data:
         source: "{{ source }}"
