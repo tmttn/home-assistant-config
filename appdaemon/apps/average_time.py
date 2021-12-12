@@ -34,7 +34,7 @@ DEFAULTS = {
     "to_watch_state": DEFAULT_TO_WATCH_STATE,
     "from_time": DEFAULT_FROM_TIME,
     "to_time": DEFAULT_TO_TIME,
-    "result_senor": DEFAULT_RESULT_SENSOR,
+    "result_sensor": DEFAULT_RESULT_SENSOR,
 }
 
 
@@ -71,7 +71,7 @@ class AverageTime(hass.Hass):
         self.from_time = parse(self.args.get("from_time", DEFAULT_TO_WATCH)).time()
         self.to_time = parse(self.args.get("to_time", DEFAULT_TO_WATCH)).time()
         self.result_sensor = self.args.get("result_sensor", DEFAULT_RESULT_SENSOR)
-        self.tz = tz.gettz("Europe/Amsterdam")
+        self.tz = tz.gettz("Europe/Brussels")
 
         # Update every time the sensor is updated
         self.listen_state(self.start_cb, self.to_watch, new=self.to_watch_state)
