@@ -202,12 +202,10 @@
   sensors:
     humidity_bathroom_trend:
       entity_id: sensor.humidity_bathroom
-      state_characteristic: count
       sample_duration: 300
       max_samples: 3
 
     humidity_storage_trend:
       entity_id: sensor.humidity_bathroom_storage
-      state_characteristic: count
       sample_duration: 300
       max_samples: 3
