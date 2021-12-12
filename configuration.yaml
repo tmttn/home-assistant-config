@@ -61,6 +61,7 @@ withings: !include includes/withings.yaml
 tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
 spotify: !include includes/spotify.yaml
+spotcast: !include includes/spotcast.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
