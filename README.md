@@ -3,7 +3,7 @@ Based on Bas Nijholt's config files.
 
 [![GitHub stars](https://img.shields.io/github/stars/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
-[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2021.11.5%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2021.11.5)
+[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2021.12.0%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2021.12.0)
 [![HA Community](https://img.shields.io/badge/HA%20community-forum-orange)](https://community.home-assistant.io/u/tmttn/summary)
 [![Yaml Lint](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml/badge.svg)](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml)
 
@@ -656,7 +656,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
   - [input_number.temperature_moderate](https://github.com/tmttn/home-assistant-config/blob/7190cafed4d9b9568773e21fdc9752116da85fb6/includes/input_numbers.yaml#L20)
   - [script.set_moderate_temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L159)
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L183)
 
 ### [Turn off the bathroom heating in the morning](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L31)
 
@@ -664,7 +664,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/7190cafed4d9b9568773e21fdc9752116da85fb6/includes/input_numbers.yaml#L12)
   - [script.set_low_temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L150)
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L183)
 
 ### [Turn on the heating 30 min before waking up](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L49)
 
@@ -679,7 +679,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L197)
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L183)
 
 ### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L82)
 
@@ -687,7 +687,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
   - [input_number.temperature_high](https://github.com/tmttn/home-assistant-config/blob/7190cafed4d9b9568773e21fdc9752116da85fb6/includes/input_numbers.yaml#L28)
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L197)
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L183)
 
 ### [Turn off the heating at 23:00](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L107)
 
@@ -695,7 +695,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L37)
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/7190cafed4d9b9568773e21fdc9752116da85fb6/includes/input_numbers.yaml#L12)
   - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L169)
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L183)
 
 ### [Turn on heating again after notification](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L128)
 
@@ -764,16 +764,16 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L22)
   - [script.leaving](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L211)
-  - [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L170)
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
-  - [binary_sensor.someone_in_the_house_in_last_hour](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L38)
+  - [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L170)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L183)
+  - [binary_sensor.someone_in_the_house_in_last_hour](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L38)
 
 ### [Ask to turn off everything](https://github.com/tmttn/home-assistant-config/blob/968319fa18169c998fb9c939323ff2110f48d3dd/automations/leaving.yaml#L40)
 
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L22)
-  - [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L170)
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
+  - [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L170)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L183)
 
 ### [Turn off everything after notification](https://github.com/tmttn/home-assistant-config/blob/968319fa18169c998fb9c939323ff2110f48d3dd/automations/leaving.yaml#L70)
 
@@ -787,7 +787,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Turn on living room](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L35)
 
   *which uses:*
-  - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L51)
+  - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L51)
 
 ### [Turn on cozy lights at sunset](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L44)
 
@@ -798,22 +798,22 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Turn off living room](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L57)
 
   *which uses:*
-  - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L51)
+  - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L51)
 
 ### [Toggle kitchen ceiling](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L72)
 
   *which uses:*
-  - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L66)
+  - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L66)
 
 ### [Toggle bathroom](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L98)
 
   *which uses:*
-  - [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L44)
+  - [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L44)
 
 ### [Toggle toilet](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L114)
 
   *which uses:*
-  - [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L60)
+  - [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L60)
 
 ### [Automatically turn on the bedroom](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L139)
 
@@ -822,14 +822,14 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L25)
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_selects.yaml#L11)
   - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L322)
-  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L88)
+  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L88)
 
 ### [Automatically turn off the bedroom](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L169)
 
   *which uses:*
   - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L34)
   - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L25)
-  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L88)
+  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L88)
 
 ### [Turn off bedroom lights auto switch](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L192)
 
@@ -844,7 +844,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Turn off bedroom after 2 hours of inactivity](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L226)
 
   *which uses:*
-  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L88)
+  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L88)
 
 ### [Turn on outside lights](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L245)
 
@@ -855,28 +855,28 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Turn on the outside lights when arriving](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L274)
 
   *which uses:*
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L183)
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L183)
 
 ### [Turn off toilet (extra check)](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L302)
 
   In case the other automation failed
 
   *which uses:*
-  - [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L60)
+  - [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L60)
 
 ### [Turn off bathroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L318)
 
   In case the other automation failed
 
   *which uses:*
-  - [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L44)
+  - [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L44)
 
 ### [Turn off kitchen (extra check)](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L334)
 
   In case the other automation failed
 
   *which uses:*
-  - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L66)
+  - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L66)
 
 ### [Turn off bedroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/79ca59ad6c61d15f6722b8c28fd9dd29ddff8648/automations/light.yaml#L350)
 
@@ -885,7 +885,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   *which uses:*
   - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L34)
   - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L25)
-  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L88)
+  - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L88)
 
 [^ toc](#automations---table-of-content)
 
@@ -911,7 +911,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Motion detected but we are not home](https://github.com/tmttn/home-assistant-config/blob/80042ae3a754ee8f9fa9c34309b3d7068e0f5ed3/automations/security.yaml#L11)
 
   *which uses:*
-  - [binary_sensor.motion_detected](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L22)
+  - [binary_sensor.motion_detected](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L22)
   - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b7f53da6358ab0c08b149ed1918a811a74d644ae/includes/groups.yaml#L11)
 
 ### [Front door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/80042ae3a754ee8f9fa9c34309b3d7068e0f5ed3/automations/security.yaml#L44)
@@ -953,7 +953,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_selects.yaml#L11)
-  - [binary_sensor.activity_outside_bedroom](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L97)
+  - [binary_sensor.activity_outside_bedroom](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L97)
 
 ### [Set sleeping mode in the living room](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/sleep_mode.yaml#L70)
 
@@ -962,7 +962,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_selects.yaml#L11)
-  - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L51)
+  - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L51)
 
 [^ toc](#automations---table-of-content)
 
@@ -1001,34 +1001,34 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L26)
 
   *which uses:*
-  - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L120)
-  - [binary_sensor.espresso_machine](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L132)
-  - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L144)
-  - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L108)
+  - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L120)
+  - [binary_sensor.espresso_machine](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L132)
+  - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L144)
+  - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L108)
 
 ### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L47)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L232)
-  - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L108)
+  - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L108)
 
 ### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L59)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L232)
-  - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L120)
+  - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L120)
 
 ### [Tumble dryer notification](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L71)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L232)
-  - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L144)
+  - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L144)
 
 ### [Espresso machine notification](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L83)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/a93394ec11399af2ab27111afa45f58d2f35a8ee/scripts.yaml#L232)
-  - [binary_sensor.espresso_machine](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L132)
+  - [binary_sensor.espresso_machine](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L132)
 
 [^ toc](#automations---table-of-content)
 
@@ -1063,7 +1063,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Reminder notification](https://github.com/tmttn/home-assistant-config/blob/3b5071aff6730e662e670656f190d804a8e4b1a8/automations/vacuum.yaml#L37)
 
   *which uses:*
-  - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L177)
+  - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L177)
 
 ### [Cleanup if nobody is home](https://github.com/tmttn/home-assistant-config/blob/3b5071aff6730e662e670656f190d804a8e4b1a8/automations/vacuum.yaml#L51)
 
@@ -1071,7 +1071,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L16)
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L22)
   - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L19)
-  - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L177)
+  - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L177)
   - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b7f53da6358ab0c08b149ed1918a811a74d644ae/includes/groups.yaml#L11)
 
 ### [Reset cleaned today](https://github.com/tmttn/home-assistant-config/blob/3b5071aff6730e662e670656f190d804a8e4b1a8/automations/vacuum.yaml#L86)
@@ -1090,7 +1090,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.work_hour_notification_sent](https://github.com/tmttn/home-assistant-config/blob/e3d7b6c5d8039ad51431b724a9c3e229ff53c4ee/includes/input_booleans.yaml#L40)
-  - [binary_sensor.worked_enough_today](https://github.com/tmttn/home-assistant-config/blob/72f7f7fb1acb60d55b113d7636f70ec954ec0c21/includes/binary_sensors.yaml#L156)
+  - [binary_sensor.worked_enough_today](https://github.com/tmttn/home-assistant-config/blob/f1c6c21d7d406156579602d400bb584e665b2f8d/includes/binary_sensors.yaml#L156)
 
 ### [Reset input_boolean at midnight](https://github.com/tmttn/home-assistant-config/blob/a2dd2ab7acd889c8a0d251b9b111eca40da482b1/automations/work.yaml#L32)
 
