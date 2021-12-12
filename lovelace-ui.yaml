@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -201,6 +192,29 @@ views:
         volume: true
       icon: mdi:spotify
       type: custom:mini-media-player
+    - entities:
+      - entities:
+        - entity: input_number.kef_ls50_desk_db
+        - entity: input_number.kef_ls50_wall_db
+        - entity: input_number.kef_ls50_treble_db
+        - entity: input_number.kef_ls50_high_hz
+        - entity: input_number.kef_ls50_low_hz
+        - entity: input_number.kef_ls50_sub_db
+        - type: divider
+        - entity: input_select.kef_ls50_bass_extension
+        - entity: input_select.kef_ls50_sub_polarity
+        - type: divider
+        - entity: input_boolean.kef_ls50_desk_mode
+        - entity: input_boolean.kef_ls50_wall_mode
+        - entity: input_boolean.kef_ls50_phase_correction
+        - entity: input_boolean.kef_ls50_high_pass
+        head:
+          icon: mdi:equalizer
+          name: 'KEF LS50 Equalizer '
+          type: custom:template-entity-row
+        type: custom:fold-entity-row
+      show_header_toggle: false
+      type: entities
   - cards:
     - icon: mdi:sofa
       name: Play music in living room
