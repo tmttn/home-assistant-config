@@ -139,3 +139,4 @@ notebooks/
 airsonos.xml
 themes/ios-*
 *.code-workspace
+zigbee.db
