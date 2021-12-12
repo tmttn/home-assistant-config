@@ -43,11 +43,6 @@
       entity_id: proximity.home
       below: 2
   action:
-    - service: media_player.select_source
-      entity_id: media_player.google_home
-      data:
-        source: Wifi
-    - service: media_player.select_source
-      entity_id: media_player.spotify
-      data:
-        source: Google Home
+    - data:
+        entity_id: media_player.google_homme
+      service: spotcast.start
