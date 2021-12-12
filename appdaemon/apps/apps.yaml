@@ -1,37 +1,4 @@
 ---
-start_speakers:
-  module: start_speakers
-  class: StartSpeakers
-  speaker: media_player.google_home
-  source: Wifi
-  volume: 0.3
-  input_boolean: input_boolean.start_google_home
-start_spotify:
-  module: start_spotify
-  class: StartSpotify
-  volume: 0.3
-  speaker: media_player.google_home
-  spotify_source: Google Home
-  playlist: "spotify:playlist:2GPRgfioefDRYgV17cDlsr"
-  input_boolean: input_boolean.start_spotify_on_google_home
-
-start_google_home_mini:
-  module: start_speakers
-  class: StartSpeakers
-  speaker: media_player.google_home_mini
-  source: Wifi
-  volume: 0.3
-  input_boolean: input_boolean.start_google_home_mini
-
-start_spotify_on_google_home_mini:
-  module: start_spotify
-  class: StartSpotify
-  volume: 0.4
-  speaker: media_player.google_home_mini
-  spotify_source: Google Home Mini
-  playlist: "spotify:playlist:2GPRgfioefDRYgV17cDlsr"
-  input_boolean: input_boolean.start_spotify_on_google_home_mini
-
 cube:
   module: xiaomi_aqara_cube_action
   class: CubeControl
