@@ -12,11 +12,19 @@
 - platform: template
   sensors:
     someone_showering:
-      friendly_name: Someone is showering
+      friendly_name: Someone is showering or taking a bath
       value_template: >
         {% set humidity = states("sensor.humidity_bathroom") | float(0) %}
         {% set treshold = 1.05 * state_attr("sensor.humidity_bathroom_stats", "median") | float(0) %}
         {% set derivative = states("sensor.humidity_bathroom_derivative") | float(0) %}
+        {{ humidity > treshold and derivative > 0.25 }}
+
+    someone_showering_storage:
+      friendly_name: Someone is showering in the storage
+      value_template: >
+        {% set humidity = states("sensor.humidity_storage") | float(0) %}
+        {% set treshold = 1.05 * state_attr("sensor.humidity_storage_stats", "median") | float(0) %}
+        {% set derivative = states("sensor.humidity_storage_derivative") | float(0) %}
         {{ humidity > treshold and derivative > 0.25 }}
 
     motion_detected:
@@ -73,7 +81,8 @@
     activity_in_storage:
       friendly_name: Activity in the storage
       value_template: >
-        {{ is_state("binary_sensor.openclose_storage_door", "on") }}
+        {{ is_state("binary_sensor.openclose_storage_door", "on")
+            or is_state("binary_sensor.someone_showering_storage", "on")}}
       delay_off: "00:05:00"
 
     activity_in_hall:
