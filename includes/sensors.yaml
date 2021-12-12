@@ -714,3 +714,5 @@
   upcomingsensor: 1
   builtinicons: 1
   dutch: 1
+
+- platform: spotcast
