@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1754,6 +1745,7 @@ views:
       - entity_id: automation.vacation_mode_*
       - entity_id: automation.vacuum_*
       - entity_id: automation.work*
+      - entity_id: automation.curtains_*
       include:
       - domain: automation
     sort: entity_id
