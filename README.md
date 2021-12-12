@@ -596,7 +596,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L43)
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/f62f2cbc1ac3d955f0070b211129b03ccff80ed5/includes/input_selects.yaml#L11)
-  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/includes/sensors.yaml#L229)
+  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/bee1d0aad34d7916402e55eecba329a0ce7c904a/includes/sensors.yaml#L229)
 
 [^ toc](#automations---table-of-content)
 
@@ -622,12 +622,12 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/5cba5bda4e1fa87688ce21f72ed3704a3bfdc93f/automations/apple_watch.yaml#L146)
 
   *which uses:*
-  - [sensor.temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/includes/sensors.yaml#L317)
-  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/includes/sensors.yaml#L313)
-  - [sensor.temperature_bedroom_marthe](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/includes/sensors.yaml#L325)
-  - [sensor.temperature_kitchen](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/includes/sensors.yaml#L321)
-  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/includes/sensors.yaml#L309)
-  - [sensor.temperature_storage](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/includes/sensors.yaml#L329)
+  - [sensor.temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/bee1d0aad34d7916402e55eecba329a0ce7c904a/includes/sensors.yaml#L309)
+  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/bee1d0aad34d7916402e55eecba329a0ce7c904a/includes/sensors.yaml#L305)
+  - [sensor.temperature_bedroom_marthe](https://github.com/tmttn/home-assistant-config/blob/bee1d0aad34d7916402e55eecba329a0ce7c904a/includes/sensors.yaml#L317)
+  - [sensor.temperature_kitchen](https://github.com/tmttn/home-assistant-config/blob/bee1d0aad34d7916402e55eecba329a0ce7c904a/includes/sensors.yaml#L313)
+  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/bee1d0aad34d7916402e55eecba329a0ce7c904a/includes/sensors.yaml#L301)
+  - [sensor.temperature_storage](https://github.com/tmttn/home-assistant-config/blob/bee1d0aad34d7916402e55eecba329a0ce7c904a/includes/sensors.yaml#L321)
 
 ### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/5cba5bda4e1fa87688ce21f72ed3704a3bfdc93f/automations/apple_watch.yaml#L168)
 
@@ -674,7 +674,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L43)
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L37)
   - [script.set_moderate_temperature](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/scripts.yaml#L199)
-  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/includes/sensors.yaml#L221)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/bee1d0aad34d7916402e55eecba329a0ce7c904a/includes/sensors.yaml#L221)
 
 ### [Increase the heating for the afternoon](https://github.com/tmttn/home-assistant-config/blob/96f77150a72eb9d36028f1a9abc46f8fdac5e448/automations/climate.yaml#L67)
 
@@ -1028,7 +1028,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L43)
-  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/ccb401fdd91a705083aa16cbe612bb54d6b51b6c/includes/sensors.yaml#L221)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/bee1d0aad34d7916402e55eecba329a0ce7c904a/includes/sensors.yaml#L221)
 
 ### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L26)
 
