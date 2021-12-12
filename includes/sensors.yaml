@@ -331,6 +331,7 @@
 - platform: statistics
   name: Humidity bathroom stats
   entity_id: sensor.humidity_bathroom
+  state_characteristic: mean
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
   max_age: "24:00:00"
 
@@ -343,6 +344,7 @@
 - platform: statistics
   name: Humidity storage stats
   entity_id: sensor.humidity_storage
+  state_characteristic: mean
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
   max_age: "24:00:00"
 
