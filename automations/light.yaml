@@ -81,7 +81,7 @@
       - condition: and
         conditions:
           - "{{ is_state('light.kitchen_lights', 'off') }}"
-          - "{{ state_attr('sensor.motion_sensor_kitchen_light_level', 'dark') }}"
+          - "{{ states('sensor.motion_sensor_kitchen_light_level')|int(default=0) < 50 }}"
   action:
     service: light.turn_{{ trigger.to_state.state }}
     data:
@@ -123,7 +123,7 @@
       - condition: and
         conditions:
           - "{{ is_state('light.toilet', 'off') }}"
-          - "{{ state_attr('sensor.motion_sensor_toilet_light_level', 'dark') }}"
+          - "{{ states('sensor.motion_sensor_toilet_light_level')|int(default=0) < 150 }}"
   action:
     service: light.turn_{{ trigger.to_state.state }}
     data:
