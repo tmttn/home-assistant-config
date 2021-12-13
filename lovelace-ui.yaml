@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -193,49 +184,53 @@ views:
         volume: false
       icon: mdi:television
       type: custom:mini-media-player
+    - cards:
+      - artwork: cover
+        background: /local/google-home.jpg
+        entity: media_player.google_home
+        hide:
+          icon: true
+          mute: true
+          power_state: false
+        info: short
+        type: custom:mini-media-player
+      - artwork: cover
+        background: /local/google-hub-max.jpg
+        entity: media_player.kitchen_display
+        hide:
+          icon: true
+          mute: true
+          power_state: false
+        info: short
+        type: custom:mini-media-player
+      type: horizontal-stack
+    - cards:
+      - artwork: cover
+        background: /local/google-home-mini.png
+        entity: media_player.google_home_mini
+        hide:
+          icon: true
+          mute: true
+          power_state: false
+        info: short
+        type: custom:mini-media-player
+      - artwork: cover
+        background: /local/google-nest-wifi.jpg
+        entity: media_player.bathroom_wifi
+        hide:
+          icon: true
+          mute: true
+          power_state: false
+        info: short
+        type: custom:mini-media-player
+      type: horizontal-stack
     - artwork: cover
       entity: media_player.spotify
       hide:
-        power: true
-        source: false
+        power_state: false
+        source: true
         volume: true
       icon: mdi:spotify
-      type: custom:mini-media-player
-    - artwork: cover
-      background: /local/google-home.jpg
-      entity: media_player.google_home
-      hide:
-        power: true
-        source: false
-        volume: true
-      icon: mdi:google-home
-      type: custom:mini-media-player
-    - artwork: cover
-      background: /local/google-hub-max.jpg
-      entity: media_player.kitchen_display
-      hide:
-        power: true
-        source: false
-        volume: true
-      icon: mdi:tablet-dashboard
-      type: custom:mini-media-player
-    - artwork: cover
-      background: /local/google-home-mini.png
-      entity: media_player.google_home_mini
-      hide:
-        power: true
-        source: false
-        volume: true
-      icon: mdi:google-home
-      type: custom:mini-media-player
-    - artwork: cover
-      background: /local/google-nest-wifi.jpg
-      entity: media_player.bathroom_wifi
-      hide:
-        power: true
-        source: false
-        volume: true
-      icon: mdi:google-home
       type: custom:mini-media-player
     - cards:
       - icon: mdi:sofa
