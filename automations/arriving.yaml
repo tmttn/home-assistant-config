@@ -1,0 +1,40 @@
+---
+#-
+#                  _       _
+#   __ _ _ __ _ __(_)_   _(_)_ __   __ _
+#  / _` | '__| '__| \ \ / / | '_ \ / _` |
+# | (_| | |  | |  | |\ V /| | | | | (_| |
+#  \__,_|_|  |_|  |_| \_/ |_|_| |_|\__, |
+#                                  |___/
+#
+#- from github.com/tmttn/home-assistant-config
+
+# XXX: sometimes triggers when leaving!
+- alias: "Arriving: switch music from iPhone to speakers if no one is home"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.openclose_front_door
+      from: "off"
+      to: "on"
+    - platform: state
+      entity_id: binary_sensor.openclose_back_door
+      from: "off"
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: person.tanja
+      state: not_home
+    - condition: state
+      entity_id: input_boolean.guest_mode
+      state: "off"
+    - "{{ is_state_attr('media_player.spotify', 'source', 'bizzyphone') }}"
+    - "{{ is_state('media_player.spotify', 'playing') }}"
+  action:
+    - service: notify.mobile_app_bizzyphone
+      data:
+        title: "Arriving"
+        message: "Switched music from phone to speakers"
+    - service: spotcast.start
+      data:
+        entity_id: media_player.google_home
+        force_playback: false

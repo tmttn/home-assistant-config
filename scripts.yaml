@@ -21,7 +21,7 @@ start_spotify_playlist_of_nearest_person:
           spotify:playlist:{{ states("sensor.favorite_playlist_of_nearest_person") }}
         random_song: true
         shuffle: true
-        start_volume: 50
+        start_volume: 35
         entity_id: "{{ entity_id }}"
       service: spotcast.start
 
