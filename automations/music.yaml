@@ -43,6 +43,7 @@
       entity_id: proximity.home
       below: 2
   action:
-    - data:
+    - service: spotcast.start
+      data:
         entity_id: media_player.google_home
-      service: spotcast.start
+        force_playback: false
