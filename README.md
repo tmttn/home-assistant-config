@@ -44,13 +44,13 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>110.97</td>
         </tr>
         <tr>
-            <td>Philips Hue plug</td>
+            <td>Philips Hue Plug</td>
             <td>1</td>
             <td>29.95</td>
             <td>29.95</td>
         </tr>
         <tr>
-            <td>Hombli smart plug outside</td>
+            <td>Hombli Smart Plug Outside</td>
             <td>3</td>
             <td>23.2</td>
             <td>69.6</td>
@@ -62,7 +62,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>49.0</td>
         </tr>
         <tr>
-            <td>Ring video doorbell 2</td>
+            <td>Ring Video Doorbell 2</td>
             <td>1</td>
             <td>149.0</td>
             <td>149.0</td>
@@ -74,10 +74,16 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>16.95</td>
         </tr>
         <tr>
+            <td>Xiaomi Aqara Single Button</td>
+            <td>5</td>
+            <td>15.54</td>
+            <td>77.7</td>
+        </tr>
+        <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>425.47</td>
+            <td>503.17</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -115,15 +121,15 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
         </tr>
         <tr>
             <td>Xiaomi Mi Flora</td>
-            <td>1</td>
-            <td>15.96</td>
-            <td>15.96</td>
+            <td>2</td>
+            <td>17.95</td>
+            <td>35.91</td>
         </tr>
         <tr>
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>194.44</td>
+            <td>214.39</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -525,7 +531,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€5872.92</th>
+            <th>€5970.57</th>
         </tr>
     </thead>
 </table>
