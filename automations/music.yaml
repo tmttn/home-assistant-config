@@ -44,5 +44,5 @@
       below: 2
   action:
     - data:
-        entity_id: media_player.google_homme
+        entity_id: media_player.google_home
       service: spotcast.start
