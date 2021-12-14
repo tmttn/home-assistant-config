@@ -37,3 +37,4 @@
     - service: spotcast.start
       data:
         entity_id: media_player.google_home
+        force_playback: false
