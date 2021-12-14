@@ -1,0 +1,51 @@
+---
+#-
+#                  _             _                  _ _       _
+#   ___ ___  _ __ | |_ _ __ ___ | |    _____      _(_) |_ ___| |__   ___  ___
+#  / __/ _ \| '_ \| __| '__/ _ \| |   / __\ \ /\ / / | __/ __| '_ \ / _ \/ __|
+# | (_| (_) | | | | |_| | | (_) | |   \__ \\ V  V /| | || (__| | | |  __/\__ \
+#  \___\___/|_| |_|\__|_|  \___/|_|___|___/ \_/\_/ |_|\__\___|_| |_|\___||___/
+#                                |_____|
+#
+#- from github.com/tmttn/home-assistant-config
+
+- alias: "Control switches: back door Aqara Wireless Mini Switch"
+  mode: parallel
+  trigger:
+    platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_back_door
+  action:
+    choose:
+      # Leaving: turn off everything
+      - conditions: "{{ trigger.event.data.event == 1002 }}" # Single click
+        sequence:
+          - service: light.turn_on
+            data:
+              flash: "short"
+              entity_id: light.kitchen_lights
+          - service: script.turn_off_everything_non_automatic
+          - service: script.set_low_temperature
+
+      # Arriving: turn on cozy lights
+      - conditions: "{{ trigger.event.data.event == 1004 }}" # Double click
+        sequence:
+          - service: light.turn_on
+            data:
+              flash: "short"
+              entity_id: light.kitchen_lights
+          - service: script.arriving
+
+      # Leaving: turn on music and cozy lights
+      - conditions: "{{ trigger.event.data.event == 1001 }}" # Long click
+        sequence:
+          - service: light.turn_on
+            data:
+              flash: "short"
+              entity_id: light.kitchen_lights
+          - service: script.arriving
+          - service: script.start_spotify_playlist_of_nearest_person
+            data:
+              source: Google Home
+              entity_id: media_player.google_home
