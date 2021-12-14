@@ -569,7 +569,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Light 💡](#light-) (18 automations)
 1. [Lovelace 👨‍💻](#lovelace-) (1 automations)
 1. [Music 🎵](#music-) (2 automations)
-1. [Plant 🌱](#plant-) (1 automations)
+1. [Plant 🌱](#plant-) (2 automations)
 1. [Security 👮🚨](#security-) (3 automations)
 1. [Night mode 🌕🌑](#night-mode-) (5 automations)
 1. [System 🖥](#system-) (4 automations)
@@ -579,7 +579,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **85** ⚠️
+⚠️ Total number of automations: **86** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml#L11)
@@ -938,8 +938,11 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/240128e17bd855c1c6772bd171da4806085c2076/automations/plant.yaml)
-### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/240128e17bd855c1c6772bd171da4806085c2076/automations/plant.yaml#L11)
+## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/709126aebfdc60a6b4eae945d3940be2b755c774/automations/plant.yaml)
+### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/709126aebfdc60a6b4eae945d3940be2b755c774/automations/plant.yaml#L11)
+
+
+### [Problem with Euphorbia Pulcherrima](https://github.com/tmttn/home-assistant-config/blob/709126aebfdc60a6b4eae945d3940be2b755c774/automations/plant.yaml#L29)
 
 
 [^ toc](#automations---table-of-content)
