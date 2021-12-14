@@ -306,7 +306,7 @@ views:
     - calibration_source:
         camera: true
       entity: vacuum.xiaomi_vacuum_cleaner
-      map_locked: false
+      map_locked: true
       map_source:
         camera: camera.xiaomi_cloud_map_extractor
       two_finger_pan: false
@@ -715,17 +715,20 @@ views:
             \ hidden;\n  white-space: nowrap;\n}\n"
           type: custom:simple-thermostat
         type: horizontal-stack
-      - cards:
-        - entity: plant.calathea_medaillon
-          type: plant-status
-        parameters:
-          autoplay:
-            delay: 5000
-          speed: 2000
-        type: custom:swipe-card
       type: vertical-stack
-    style: "hui-vertical-stack-card {\n  scale: 50%;\n}\n"
+    style: "hui-vertical-stack-card {\n  scale: 25%;\n}\n"
     type: vertical-stack
+  - cards:
+    - entity: plant.calathea_medaillon
+      type: plant-status
+    - entity: plant.euphorbia_pulcherrima
+      type: plant-status
+    parameters:
+      autoplay:
+        delay: 5000
+        disableOnInteraction: false
+      speed: 2000
+    type: custom:swipe-card
   - entities:
     - entities:
       - align: center
@@ -1281,6 +1284,11 @@ views:
     - entity: sensor.mi_flora_calathea_medaillon_temperature
     - entity: sensor.mi_flora_calathea_medaillon_conductivity
     - entity: sensor.mi_flora_calathea_medaillon_light_intensity
+    - type: divider
+    - entity: sensor.mi_flora_euphorbia_pulcherrima_moisture
+    - entity: sensor.mi_flora_euphorbia_pulcherrima_temperature
+    - entity: sensor.mi_flora_euphorbia_pulcherrima_conductivity
+    - entity: sensor.mi_flora_euphorbia_pulcherrima_light_intensity
     show_header_toggle: false
     title: Plant sensors
     type: entities
