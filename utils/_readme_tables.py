@@ -17,17 +17,18 @@ from jinja2 import Template
 tables = {
     "Switches 🎚": [
         ["TP-Link HS110", 3, 110.97],
-        ["Philips Hue plug", 1, 29.95],
-        ["Hombli smart plug outside", 3, 69.60],
+        ["Philips Hue Plug", 1, 29.95],
+        ["Hombli Smart Plug Outside", 3, 69.60],
         ["Tuya Smart Curtain Switch Wifi", 1, 49.00],
-        ["Ring video doorbell 2", 1, 149.00],
+        ["Ring Video Doorbell 2", 1, 149.00],
         ["Xiaomi Aqara Magic Cube", 1, 16.95],
+        ["Xiaomi Aqara Single Button", 5, 77.7]
     ],
     "Sensors 🌡": [
         ["Philips Hue Motion Sensor", 2, 83.98],
         ["Xiaomi Aqara Temperature Sensor", 3, 40.50],
         ["Xiaomi Aqara Motion Sensor", 4, 54.00],
-        ["Xiaomi Mi Flora", 1, 15.96],
+        ["Xiaomi Mi Flora", 2, (15.96 + 19.95)],
     ],
     "Vacuum 🧹": [["Xiaomi Mi Roborock S7", 1, 569.00]],
     "Media player 📺🔈": [
