@@ -22,3 +22,18 @@ calathea_medaillon:
   max_brightness: 20000
   min_temperature: 12
   max_temperature: 32
+
+euphorbia_pulcherrima:
+  sensors:
+    moisture: sensor.mi_flora_euphorbia_pulcherrima_moisture
+    temperature: sensor.mi_flora_euphorbia_pulcherrima_temperature
+    conductivity: sensor.mi_flora_euphorbia_pulcherrima_conductivity
+    brightness: sensor.mi_flora_euphorbia_pulcherrima_light_intensity
+  min_moisture: 15
+  max_moisture: 60
+  min_conductivity: 350
+  max_conductivity: 2000
+  min_brightness: 0
+  max_brightness: 30000
+  min_temperature: 8
+  max_temperature: 35

@@ -38,3 +38,5 @@ customize:
     icon: mdi:shower
   plant.calathea_medaillon:
     friendly_name: Calathea Medaillon
+  plant.euphorbia_pulcherrima:
+    friendly_name: Euphorbia Pulcherrima
