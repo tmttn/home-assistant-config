@@ -772,14 +772,14 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Cube ∛](https://github.com/tmttn/home-assistant-config/blob/dd4bc0f067c90e9b4124f247ce21a6eadc3a7936/automations/cube.yaml)
-### [Perform operation](https://github.com/tmttn/home-assistant-config/blob/dd4bc0f067c90e9b4124f247ce21a6eadc3a7936/automations/cube.yaml#L12)
+## [Cube ∛](https://github.com/tmttn/home-assistant-config/blob/dfd69dfde87e1da0fb3a58ae6bf7ab8b51fa2850/automations/cube.yaml)
+### [Perform operation](https://github.com/tmttn/home-assistant-config/blob/dfd69dfde87e1da0fb3a58ae6bf7ab8b51fa2850/automations/cube.yaml#L12)
 
   *which uses:*
   - [input_select.cube_mode](https://github.com/tmttn/home-assistant-config/blob/f62f2cbc1ac3d955f0070b211129b03ccff80ed5/includes/input_selects.yaml#L19)
   - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/daa02e693f8941f6fcc9c2c79669153fde5df0e0/scripts.yaml#L11)
 
-### [Rotate the cube](https://github.com/tmttn/home-assistant-config/blob/dd4bc0f067c90e9b4124f247ce21a6eadc3a7936/automations/cube.yaml#L78)
+### [Rotate the cube](https://github.com/tmttn/home-assistant-config/blob/dfd69dfde87e1da0fb3a58ae6bf7ab8b51fa2850/automations/cube.yaml#L77)
 
   *which uses:*
   - [input_select.cube_mode](https://github.com/tmttn/home-assistant-config/blob/f62f2cbc1ac3d955f0070b211129b03ccff80ed5/includes/input_selects.yaml#L19)
