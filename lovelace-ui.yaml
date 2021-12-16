@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1469,12 +1460,6 @@ views:
     type: entities
   - entities:
     - entity: input_select.cube_mode
-    - entity: input_select.last_script_bedroom
-    - entity: input_select.last_script_living_room
-    show_header_toggle: false
-    title: Inputs (automatically switched)
-    type: entities
-  - entities:
     - entity: input_select.last_script_bedroom
     - entity: input_select.last_script_living_room
     show_header_toggle: false
