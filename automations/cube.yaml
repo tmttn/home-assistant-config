@@ -24,10 +24,9 @@
       # Change cube mode by shifting on one side, or rotating from one side to another side
       - conditions: >
           {% set event = event | string %}
-          {% set correct_start = event[:3] in ("100", "200", "300") %}
           {% set first_last_different = event[0] != event[-1] %}
           {% set last_is_zero = event[-1] == 0 %}
-          {{ correct_start and (first_last_different or last_is_zero) }}
+          {{ first_last_different or last_is_zero }}
         sequence:
           - service: input_select.select_option
             entity_id: input_select.cube_mode
@@ -134,4 +133,4 @@
               entity_id: media_player.google_home
               language: en
               message: >
-                Volume set to {{ state_attr("media_player.google_home", "volume_level")|float(default=0) * 100|int }} percent.
+                Volume set to {{ state_attr("media_player.google_home", "volume_level")|float(default=0) * 100|round(0, default=0) }} percent.
