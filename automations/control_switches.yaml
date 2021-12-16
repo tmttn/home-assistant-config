@@ -28,9 +28,6 @@
       # Bright lights
       - conditions:
           - "{{ trigger.event.data.type == 'short_release' and trigger.event.data.sybtype == 1 }}" # Top button
-          - condition: state
-            entity_id: light.living_room_lights
-            state: "on"
         sequence:
           - service: script.white_lights_living_room
           - service: light.turn_on
@@ -40,11 +37,7 @@
       # Turn off all lights
       - conditions:
           - "{{ trigger.event.data.type == 'long_release' and trigger.event.data.sybtype == 1 }}" # Top button
-          - condition: state
-            entity_id: light.living_room_lights
-            state: "on"
         sequence:
-          - service: script.white_lights_living_room
           - service: light.turn_off
             data:
               entity_id: light.living_room_lights
