@@ -30,6 +30,12 @@ cozy_lights_living_room:
   mode: parallel
   sequence:
     - data:
+        entity_id: light.living_room_middle_lights
+      service: light.turn_off
+    - data:
+        entity_id: light.living_room_dining_table_lights
+      service: light.turn_off
+    - data:
         entity_id: light.hue_plug
         hs_color:
           - 26.667
