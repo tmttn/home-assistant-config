@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -641,86 +632,72 @@ views:
       type: horizontal-stack
     type: vertical-stack
   - cards:
-    - cards:
-      - control: false
-        entity: climate.living_room
-        hide:
-          state: true
-          temperature: true
-        icon: true
-        layout:
-          step: row
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-xl: 60px;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.bathroom
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        layout:
-          step: row
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-xl: 60px;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.bedroom
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        layout:
-          step: row
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-xl: 60px;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.kitchen
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        layout:
-          step: row
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-xl: 60px;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.storage
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        layout:
-          step: row
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-xl: 60px;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.bedroom_marthe
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        layout:
-          step: row
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-xl: 60px;\n}\n"
-        type: custom:simple-thermostat
-      parameters:
-        autoplay:
-          delay: 5000
-          disableOnInteraction: true
-        speed: 2000
-      type: custom:swipe-card
-    style: "hui-vertical-stack-card {\n  scale: 25%;\n}\n"
+    - control: false
+      entity: climate.living_room
+      hide:
+        state: true
+        temperature: true
+      icon: true
+      layout:
+        step: row
+      name: false
+      step_size: '0.5'
+      type: custom:simple-thermostat
+    - control: false
+      entity: climate.bathroom
+      hide:
+        state: true
+        temperature: true
+      icon: false
+      layout:
+        step: row
+      name: false
+      step_size: '0.5'
+      type: custom:simple-thermostat
+    - control: false
+      entity: climate.bedroom
+      hide:
+        state: true
+        temperature: true
+      icon: false
+      layout:
+        step: row
+      name: false
+      step_size: '0.5'
+      type: custom:simple-thermostat
+    - control: false
+      entity: climate.kitchen
+      hide:
+        state: true
+        temperature: true
+      icon: false
+      layout:
+        step: row
+      name: false
+      step_size: '0.5'
+      type: custom:simple-thermostat
+    - control: false
+      entity: climate.storage
+      hide:
+        state: true
+        temperature: true
+      icon: false
+      layout:
+        step: row
+      name: false
+      step_size: '0.5'
+      type: custom:simple-thermostat
+    - control: false
+      entity: climate.bedroom_marthe
+      hide:
+        state: true
+        temperature: true
+      icon: false
+      layout:
+        step: row
+      name: false
+      step_size: '0.5'
+      type: custom:simple-thermostat
     type: vertical-stack
   - cards:
     - entity: plant.calathea_medaillon
