@@ -27,7 +27,7 @@
 
       # Bright lights
       - conditions:
-          - "{{ trigger.event.data.type == 'short_release' and trigger.event.data.sybtype == 1 }}" # Top button
+          - "{{ trigger.event.data.type == 'short_release' and trigger.event.data.subtype == 1 }}" # Top button
         sequence:
           - service: script.white_lights_living_room
           - service: light.turn_on
@@ -36,7 +36,7 @@
               brightness: "255"
       # Turn off all lights
       - conditions:
-          - "{{ trigger.event.data.type == 'long_release' and trigger.event.data.sybtype == 1 }}" # Top button
+          - "{{ trigger.event.data.type == 'repeat' and trigger.event.data.subtype == 1 }}" # Top button
         sequence:
           - service: light.turn_off
             data:
