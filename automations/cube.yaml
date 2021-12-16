@@ -134,4 +134,4 @@
               entity_id: media_player.google_home
               language: en
               message: >
-                Volume set to {{ state_attr("media_player.google_home", "volume_level")|float(default=0) * 100|int }} percent.
+                Volume set to {{ state_attr("media_player.google_home", "volume_level")|float(default=0) * 100|round(0, default=0) }} percent.
