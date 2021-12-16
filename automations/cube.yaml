@@ -33,14 +33,19 @@
             entity_id: input_select.cube_mode
             data:
               option: >
-                {% set event = event | string %}
-                {{ {"100": "Volume", "200": "Hue", "300": "Brightness"}[event[:3]] }}
+                {% if is_state('input_select.cube_mode', 'Hue') %}
+                  Brightness
+                {% elif is_state('input_select.cube_mode', 'Brightness') %}
+                  Volume
+                {% elif is_state('input_select.cube_mode', 'Volume') %}
+                  Hue
+                {% endif %}
           - service: tts.google_translate_say
             data:
               entity_id: media_player.google_home
               language: en
               message: >
-                Cube set to {{ states("input_select.cube_mode") }}
+                Cube mode set to {{ states("input_select.cube_mode") }}
 
       # Shuffle Spotify song by shaking cube
       - conditions:
@@ -87,9 +92,9 @@
           state: "Hue"
         sequence:
           - variables:
-              hue_sat: "{{ state_attr('light.living_room_middle_1', 'hs_color') or [30, 56] }}"
+              hue_sat: "{{ state_attr('light.tv_led', 'hs_color') or [30, 56] }}"
           - service: light.turn_on
-            entity_id: light.living_room_lights
+            entity_id: light.tv_led
             data:
               hs_color:
                 - >
@@ -104,10 +109,10 @@
           state: "Brightness"
         sequence:
           service: light.turn_on
-          entity_id: light.living_room_lights
+          entity_id: light.tv_led
           data:
             brightness: >
-              {% set brightness = state_attr('light.living_room_middle_1', 'brightness') %}
+              {% set brightness = state_attr('light.tv_led', 'brightness') %}
               {% set delta = event / 450 %}
               {% set new_brightness = [([0, (brightness + delta)]|max), 255]|min %}
               {{ new_brightness|int }}
@@ -129,4 +134,4 @@
               entity_id: media_player.google_home
               language: en
               message: >
-                Volume set to {{ state_attr("media_player.google_home", "volume_level") }}
+                Volume set to {{ state_attr("media_player.google_home", "volume_level")|float(default=0) * 100|int }} percent.
