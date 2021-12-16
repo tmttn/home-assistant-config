@@ -9,6 +9,49 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
+- alias: "Control switches: living room Philips Hue dimmer switch"
+  mode: parallel
+  trigger:
+    platform: event
+    event_type: hue_event
+    event_data:
+      id: dimmer_switch_living_room
+  action:
+    choose:
+      # Next color
+      - conditions: "{{ trigger.event.data.subtype == 4 }}" # Lowest button
+        sequence:
+          service: script.next_colors
+          data:
+            input_select: input_select.last_script_living_room
+
+      # Bright lights
+      - conditions:
+          - "{{ trigger.event.data.sybtype == 1 }}" # Top button
+          - condition: state
+            entity_id: light.living_room_lights
+            state: "on"
+        sequence:
+          - service: script.white_lights_living_room
+          - service: light.turn_on
+            entity_id: light.living_room_lights
+            data:
+              brightness: "255"
+
+      # Increase brightness
+      - conditions: "{{ trigger.event.data.subtype == 2 }}" # Second button
+        sequence:
+          service: script.increase_brightness
+          data:
+            group: light.living_room_lights
+
+       # Decrease brightness
+      - conditions: "{{ trigger.event.data.subtype == 3 }}" # Third button
+        sequence:
+          service: script.increase_brightness
+          data:
+            group: light.living_room_lights
+
 - alias: "Control switches: back door Aqara Wireless Mini Switch"
   mode: parallel
   trigger:
