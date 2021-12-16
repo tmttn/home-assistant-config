@@ -46,7 +46,8 @@
         sequence:
           - service: script.white_lights_living_room
           - service: light.turn_off
-            entity_id: light.living_room_lights
+            data:
+              entity_id: light.living_room_lights
 
       # Increase brightness
       - conditions: "{{ trigger.event.data.type == 'short_release' and trigger.event.data.subtype == 2 }}" # Second button
