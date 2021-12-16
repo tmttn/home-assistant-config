@@ -28,9 +28,6 @@
       # Bright lights
       - conditions:
           - "{{ trigger.event.data.type == 'short_release' and trigger.event.data.sybtype == 1 }}" # Top button
-          - condition: state
-            entity_id: light.living_room_lights
-            state: "on"
         sequence:
           - service: script.white_lights_living_room
           - service: light.turn_on
@@ -40,11 +37,7 @@
       # Turn off all lights
       - conditions:
           - "{{ trigger.event.data.type == 'long_release' and trigger.event.data.sybtype == 1 }}" # Top button
-          - condition: state
-            entity_id: light.living_room_lights
-            state: "on"
         sequence:
-          - service: script.white_lights_living_room
           - service: light.turn_off
             data:
               entity_id: light.living_room_lights
@@ -75,29 +68,17 @@
       # Leaving: turn off everything
       - conditions: "{{ trigger.event.data.event == 1002 }}" # Single click
         sequence:
-          - service: light.turn_on
-            data:
-              flash: "short"
-              entity_id: light.kitchen_lights
           - service: script.turn_off_everything_non_automatic
           - service: script.set_low_temperature
 
       # Arriving: turn on cozy lights
       - conditions: "{{ trigger.event.data.event == 1004 }}" # Double click
         sequence:
-          - service: light.turn_on
-            data:
-              flash: "short"
-              entity_id: light.kitchen_lights
           - service: script.arriving
 
       # Leaving: turn on music and cozy lights
       - conditions: "{{ trigger.event.data.event == 1001 }}" # Long click
         sequence:
-          - service: light.turn_on
-            data:
-              flash: "short"
-              entity_id: light.kitchen_lights
           - service: script.arriving
           - service: script.start_spotify_playlist_of_nearest_person
             data:
