@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -652,7 +643,8 @@ views:
         step_size: '0.5'
         style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
           \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
-          \ {\n  --ha-icon-display: flex;\n}\n"
+          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
+          \ 0px;\n}\n\nheader .header-title {\n  align-items: center;\n}\n"
         type: custom:simple-thermostat
       - control: false
         entity: climate.bathroom
