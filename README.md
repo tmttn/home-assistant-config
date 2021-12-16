@@ -50,6 +50,18 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>29.95</td>
         </tr>
         <tr>
+            <td>Philips Hue Dimmer switch</td>
+            <td>2</td>
+            <td>19.1</td>
+            <td>38.2</td>
+        </tr>
+        <tr>
+            <td>Philips Hue Wall Switch</td>
+            <td>2</td>
+            <td>38.3</td>
+            <td>76.6</td>
+        </tr>
+        <tr>
             <td>Hombli Smart Plug Outside</td>
             <td>3</td>
             <td>23.2</td>
@@ -83,7 +95,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>503.17</td>
+            <td>617.97</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -531,7 +543,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€5970.57</th>
+            <th>€6085.37</th>
         </tr>
     </thead>
 </table>
