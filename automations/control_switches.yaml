@@ -19,7 +19,7 @@
   action:
     choose:
       # Next color
-      - conditions: "{{ trigger.event.data.subtype == 4 }}" # Lowest button
+      - conditions: "{{ trigger.event.data.type == 'short_release' && trigger.event.data.subtype == 4 }}" # Lowest button
         sequence:
           service: script.next_colors
           data:
@@ -27,7 +27,7 @@
 
       # Bright lights
       - conditions:
-          - "{{ trigger.event.data.sybtype == 1 }}" # Top button
+          - "{{ trigger.event.data.type == 'short_release' && trigger.event.data.sybtype == 1 }}" # Top button
           - condition: state
             entity_id: light.living_room_lights
             state: "on"
@@ -39,14 +39,14 @@
               brightness: "255"
 
       # Increase brightness
-      - conditions: "{{ trigger.event.data.subtype == 2 }}" # Second button
+      - conditions: "{{ trigger.event.data.type == 'short_release' && trigger.event.data.subtype == 2 }}" # Second button
         sequence:
           service: script.increase_brightness
           data:
             group: light.living_room_lights
 
        # Decrease brightness
-      - conditions: "{{ trigger.event.data.subtype == 3 }}" # Third button
+      - conditions: "{{ trigger.event.data.type == 'short_release' && trigger.event.data.subtype == 3 }}" # Third button
         sequence:
           service: script.decrease_brightness
           data:
