@@ -68,29 +68,17 @@
       # Leaving: turn off everything
       - conditions: "{{ trigger.event.data.event == 1002 }}" # Single click
         sequence:
-          - service: light.turn_on
-            data:
-              flash: "short"
-              entity_id: light.kitchen_lights
           - service: script.turn_off_everything_non_automatic
           - service: script.set_low_temperature
 
       # Arriving: turn on cozy lights
       - conditions: "{{ trigger.event.data.event == 1004 }}" # Double click
         sequence:
-          - service: light.turn_on
-            data:
-              flash: "short"
-              entity_id: light.kitchen_lights
           - service: script.arriving
 
       # Leaving: turn on music and cozy lights
       - conditions: "{{ trigger.event.data.event == 1001 }}" # Long click
         sequence:
-          - service: light.turn_on
-            data:
-              flash: "short"
-              entity_id: light.kitchen_lights
           - service: script.arriving
           - service: script.start_spotify_playlist_of_nearest_person
             data:
