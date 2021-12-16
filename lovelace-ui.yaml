@@ -1184,6 +1184,13 @@ views:
   title: System Information
 - badges: []
   cards:
+  - columns: 5
+    entities:
+    - entity: sensor.smart_switch_back_door_battery_level
+    show_icon: true
+    show_name: false
+    title: Buttons
+    type: glance
   - entities:
     - entity: binary_sensor.activity_in_bathroom
     - entity: binary_sensor.activity_in_kitchen
@@ -1354,22 +1361,24 @@ views:
     theme: Backend-selected
     title: Temperature sensors
     type: glance
-  - entities:
-    - entity: sensor.humidity_bathroom
-    - entity: binary_sensor.humidity_bathroom_trend
-    - entity: sensor.humidity_bathroom_derivative
-    - entity: sensor.humidity_bathroom_stats
-    - entity: binary_sensor.someone_showering
-    title: Bathroom occupied
-    type: entities
-  - entities:
-    - entity: sensor.humidity_storage
-    - entity: binary_sensor.humidity_storage_trend
-    - entity: sensor.humidity_storage_derivative
-    - entity: sensor.humidity_storage_stats
-    - entity: binary_sensor.someone_showering_storage
-    title: Shower occupied
-    type: entities
+  - cards:
+    - entities:
+      - entity: sensor.humidity_bathroom
+      - entity: binary_sensor.humidity_bathroom_trend
+      - entity: sensor.humidity_bathroom_derivative
+      - entity: sensor.humidity_bathroom_stats
+      - entity: binary_sensor.someone_showering
+      title: Bathroom occupied
+      type: entities
+    - entities:
+      - entity: sensor.humidity_storage
+      - entity: binary_sensor.humidity_storage_trend
+      - entity: sensor.humidity_storage_derivative
+      - entity: sensor.humidity_storage_stats
+      - entity: binary_sensor.someone_showering_storage
+      title: Shower occupied
+      type: entities
+    type: vertical-stack
   - entities:
     - entity: sensor.hours_bedroom_lights_have_been_on_last_7_days
       icon: mdi:clock
@@ -2098,6 +2107,16 @@ views:
     variables:
     - name: Cube
     - slug: cube_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Arriving
+    - slug: arriving
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Control Switches
+    - slug: control_switches_
   icon: mdi:robot
   path: automations
   title: Automations
