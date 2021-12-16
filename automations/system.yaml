@@ -63,7 +63,7 @@
           - condition: template
             value_template: "{{ 'iphone' not in current and 'ipad' not in current }}"
           - condition: template
-            value_template: "{{ 0 < (states(current) | float) < (min_battery_level | float ) }}"
+            value_template: "{{ 0 < (states(current) | float(default=0)) < (min_battery_level | float(default=50) ) }}"
           - service: "{{ notify_service }}"
             data:
               title: "System"
