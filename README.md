@@ -751,8 +751,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Control switches 🎛](https://github.com/tmttn/home-assistant-config/blob/f38145c80adc39e04b335bfb0f88808e13c94e0e/automations/control_switches.yaml)
-### [Living room Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/f38145c80adc39e04b335bfb0f88808e13c94e0e/automations/control_switches.yaml#L12)
+## [Control switches 🎛](https://github.com/tmttn/home-assistant-config/blob/0149279b68b35b6b36a35d037220328e777a497d/automations/control_switches.yaml)
+### [Living room Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/0149279b68b35b6b36a35d037220328e777a497d/automations/control_switches.yaml#L12)
 
   *which uses:*
   - [input_select.last_script_living_room](https://github.com/tmttn/home-assistant-config/blob/f62f2cbc1ac3d955f0070b211129b03ccff80ed5/includes/input_selects.yaml#L26)
@@ -761,7 +761,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/daa02e693f8941f6fcc9c2c79669153fde5df0e0/scripts.yaml#L180)
   - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/daa02e693f8941f6fcc9c2c79669153fde5df0e0/scripts.yaml#L76)
 
-### [Back door Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/f38145c80adc39e04b335bfb0f88808e13c94e0e/automations/control_switches.yaml#L66)
+### [Back door Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/0149279b68b35b6b36a35d037220328e777a497d/automations/control_switches.yaml#L59)
 
   *which uses:*
   - [script.arriving](https://github.com/tmttn/home-assistant-config/blob/daa02e693f8941f6fcc9c2c79669153fde5df0e0/scripts.yaml#L260)
