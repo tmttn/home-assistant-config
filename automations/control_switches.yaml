@@ -48,7 +48,7 @@
        # Decrease brightness
       - conditions: "{{ trigger.event.data.subtype == 3 }}" # Third button
         sequence:
-          service: script.increase_brightness
+          service: script.decrease_brightness
           data:
             group: light.living_room_lights
 
