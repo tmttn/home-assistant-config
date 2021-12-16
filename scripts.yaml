@@ -114,7 +114,26 @@ increase_brightness:
             128
           {% elif b < 140 %}
             255
-          {% else %}
+          {% endif %}
+
+decrease_brightness:
+  alias: Decrease the brightness of a group of lights
+  mode: parallel
+  fields:
+    group:
+      description: The group to apply the light decrease to.
+      example: light.living_room_lights
+  sequence:
+    - service: light.turn_on
+      data:
+        entity_id: "{{ group }}"
+        brightness: >
+          {% set b = state_attr(group, 'brightness') %}
+          {% if b == None %}
+            255
+          {% elif b > 140 %}
+            128
+          {% elif b > 20 %}
             10
           {% endif %}
 
