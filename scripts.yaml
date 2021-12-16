@@ -114,11 +114,11 @@ increase_brightness:
         entity_id: "{{ group }}"
         brightness: >
           {% set b = state_attr(group, 'brightness') %}
-          {% if b == None %}
+          {% if b == None or b == 0 %}
             10
           {% elif b < 20 %}
             128
-          {% elif b < 140 %}
+          {% else %}
             255
           {% endif %}
 
@@ -136,11 +136,13 @@ decrease_brightness:
         brightness: >
           {% set b = state_attr(group, 'brightness') %}
           {% if b == None %}
-            255
+            0
           {% elif b > 140 %}
             128
           {% elif b > 20 %}
             10
+          {% else %}
+            0
           {% endif %}
 
 turn_off_everything_non_automatic:
