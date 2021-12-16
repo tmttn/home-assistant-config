@@ -15,7 +15,7 @@
     platform: event
     event_type: hue_event
     event_data:
-      id: dimmer_switch_living_room
+      id: dimmer_switch_living_room_button
   action:
     choose:
       # Next color
