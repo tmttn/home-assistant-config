@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1187,6 +1178,7 @@ views:
   - columns: 5
     entities:
     - entity: sensor.smart_switch_back_door_battery_level
+    - entity: sensor.dimmer_switch_living_room_battery_level
     show_icon: true
     show_name: false
     title: Buttons
