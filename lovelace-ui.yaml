@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1498,6 +1489,14 @@ views:
     - entity: sensor.pressure_bathroom
       name: ''
     - entity: sensor.multi_sensor_bathroom_battery_level
+      name: ''
+    - entity: sensor.xiaomi_temperature_marthe_bedroom
+      name: Marthe Bedroom
+    - entity: sensor.humidity_marthe_bedroom
+      name: ''
+    - entity: sensor.pressure_marthe_bedroom
+      name: ''
+    - entity: sensor.multi_sensor_marthe_bedroom_battery_level
       name: ''
     show_icon: true
     show_name: true
