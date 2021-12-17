@@ -62,6 +62,7 @@ tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
 spotify: !include includes/spotify.yaml
 spotcast: !include includes/spotcast.yaml
+utility_meter: !include includes/utility_meter.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
