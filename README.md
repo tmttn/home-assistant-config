@@ -584,7 +584,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Lovelace 👨‍💻](#lovelace-) (1 automations)
 1. [Music 🎵](#music-) (2 automations)
 1. [Plant 🌱](#plant-) (2 automations)
-1. [Security 👮🚨](#security-) (3 automations)
+1. [Security 👮🚨](#security-) (4 automations)
 1. [Night mode 🌕🌑](#night-mode-) (5 automations)
 1. [System 🖥](#system-) (4 automations)
 1. [Utilities 🧺👚🍽](#utilities-) (6 automations)
@@ -593,7 +593,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **89** ⚠️
+⚠️ Total number of automations: **90** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml#L11)
@@ -992,22 +992,27 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Security 👮🚨](https://github.com/tmttn/home-assistant-config/blob/80042ae3a754ee8f9fa9c34309b3d7068e0f5ed3/automations/security.yaml)
-### [Motion detected but we are not home](https://github.com/tmttn/home-assistant-config/blob/80042ae3a754ee8f9fa9c34309b3d7068e0f5ed3/automations/security.yaml#L11)
+## [Security 👮🚨](https://github.com/tmttn/home-assistant-config/blob/dece1e4f48f47b891bf8017ce1ff31993f125530/automations/security.yaml)
+### [Motion detected but we are not home](https://github.com/tmttn/home-assistant-config/blob/dece1e4f48f47b891bf8017ce1ff31993f125530/automations/security.yaml#L11)
 
   *which uses:*
   - [binary_sensor.motion_detected](https://github.com/tmttn/home-assistant-config/blob/270f0cf6c6fb65f0aea907646edddbc07d3a56c5/includes/binary_sensors.yaml#L30)
   - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b7f53da6358ab0c08b149ed1918a811a74d644ae/includes/groups.yaml#L11)
 
-### [Front door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/80042ae3a754ee8f9fa9c34309b3d7068e0f5ed3/automations/security.yaml#L44)
+### [Front door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/dece1e4f48f47b891bf8017ce1ff31993f125530/automations/security.yaml#L44)
 
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L22)
 
-### [Back door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/80042ae3a754ee8f9fa9c34309b3d7068e0f5ed3/automations/security.yaml#L61)
+### [Back door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/dece1e4f48f47b891bf8017ce1ff31993f125530/automations/security.yaml#L61)
 
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L22)
+
+### [No one is home but high power usage](https://github.com/tmttn/home-assistant-config/blob/dece1e4f48f47b891bf8017ce1ff31993f125530/automations/security.yaml#L78)
+
+  *which uses:*
+  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/270f0cf6c6fb65f0aea907646edddbc07d3a56c5/includes/binary_sensors.yaml#L192)
 
 [^ toc](#automations---table-of-content)
 
