@@ -96,4 +96,3 @@
       message: >
         No one is home and we are using a lot of energy
         ({{ states('sensor.p1_meter_active_power') }} W now)! ⚡️
-
