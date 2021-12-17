@@ -113,30 +113,30 @@
         {% set start_of_last_month = start_of_month.replace(month=now().month-1) %}
         {{ ((start_of_month - start_of_last_month).total_seconds() / 86400) | round }}
 
-    # daily_power:
-    #   friendly_name: Daily Power
-    #   unit_of_measurement: kWh
-    #   value_template: >
-    #     {{ states("sensor.daily_power_offpeak")|float + states("sensor.daily_power_peak")|float }}
+    daily_power:
+      friendly_name: Daily Power
+      unit_of_measurement: kWh
+      value_template: >
+        {{ states("sensor.daily_power_offpeak")|float + states("sensor.daily_power_peak")|float }}
 
-    # monthly_power:
-    #   friendly_name: Monthly Power
-    #   unit_of_measurement: kWh
-    #   value_template: >
-    #     {{ states("sensor.monthly_power_offpeak")|float + states("sensor.monthly_power_peak")|float }}
+    monthly_power:
+      friendly_name: Monthly Power
+      unit_of_measurement: kWh
+      value_template: >
+        {{ states("sensor.monthly_power_offpeak")|float + states("sensor.monthly_power_peak")|float }}
 
-    # monthly_power_last_period:
-    #   friendly_name: Monthly Power (Last period)
-    #   unit_of_measurement: kWh
-    #   value_template: >
-    #     {{ state_attr("sensor.monthly_power_offpeak", "last_period")|float + state_attr("sensor.monthly_power_peak", "last_period")|float }}
+    monthly_power_last_period:
+      friendly_name: Monthly Power (Last period)
+      unit_of_measurement: kWh
+      value_template: >
+        {{ state_attr("sensor.monthly_power_offpeak", "last_period")|float + state_attr("sensor.monthly_power_peak", "last_period")|float }}
 
-    # monthly_power_cost_last_period:
-    #   friendly_name: Monthly Power (Last period)
-    #   unit_of_measurement: €
-    #   value_template: >
-    #     {{ (state_attr("sensor.monthly_power_offpeak", "last_period")|float * states("sensor.electricity_price_offpeak")|float
-    #         + state_attr("sensor.monthly_power_peak", "last_period")|float * states("sensor.electricity_price_peak")|float) | round(2) }}
+    monthly_power_cost_last_period:
+      friendly_name: Monthly Power (Last period)
+      unit_of_measurement: €
+      value_template: >
+        {{ (state_attr("sensor.monthly_power_offpeak", "last_period")|float * states("sensor.electricity_price_offpeak")|float
+            + state_attr("sensor.monthly_power_peak", "last_period")|float * states("sensor.electricity_price_peak")|float) | round(2) }}
 
     gas_price:
       friendly_name: Gas price
@@ -144,23 +144,23 @@
       value_template: >
         {{ 0.940036171 }}
 
-    # daily_gas_cost:
-    #   friendly_name: Daily Power
-    #   unit_of_measurement: €
-    #   value_template: >
-    #     {{ (states("sensor.daily_gas")|float * 0.7884) | round(2) }}
+    daily_gas_cost:
+      friendly_name: Daily Power
+      unit_of_measurement: €
+      value_template: >
+        {{ (states("sensor.daily_gas")|float * 0.7884) | round(2) }}
 
-    # monthly_gas_cost:
-    #   friendly_name: Monthly Power
-    #   unit_of_measurement: €
-    #   value_template: >
-    #     {{ (states("sensor.monthly_gas")|float * 0.7884) | round(2) }}
+    monthly_gas_cost:
+      friendly_name: Monthly Power
+      unit_of_measurement: €
+      value_template: >
+        {{ (states("sensor.monthly_gas")|float * 0.7884) | round(2) }}
 
-    # monthly_gas_cost_last_period:
-    #   friendly_name: Monthly Power (Last period)
-    #   unit_of_measurement: €
-    #   value_template: >
-    #     {{ (state_attr("sensor.monthly_gas", "last_period")|float * 0.7884) | round(2) }}
+    monthly_gas_cost_last_period:
+      friendly_name: Monthly Power (Last period)
+      unit_of_measurement: €
+      value_template: >
+        {{ (state_attr("sensor.monthly_gas", "last_period")|float * 0.7884) | round(2) }}
 
     electricity_price_offpeak:
       friendly_name: Electricity price
@@ -180,19 +180,19 @@
       value_template: >
         {{ 0.0949 }}
 
-    # daily_power_cost:
-    #   friendly_name: Daily Power
-    #   unit_of_measurement: €
-    #   value_template: >
-    #     {{ (states("sensor.daily_power_offpeak")|float * states("sensor.electricity_price_offpeak")|float
-    #         + states("sensor.daily_power_peak")|float * states("sensor.electricity_price_peak")|float) | round(2) }}
+    daily_power_cost:
+      friendly_name: Daily Power
+      unit_of_measurement: €
+      value_template: >
+        {{ (states("sensor.daily_power_offpeak")|float * states("sensor.electricity_price_offpeak")|float
+            + states("sensor.daily_power_peak")|float * states("sensor.electricity_price_peak")|float) | round(2) }}
 
-    # monthly_power_cost:
-    #   friendly_name: Monthly Power
-    #   unit_of_measurement: €
-    #   value_template: >
-    #     {{ (states("sensor.monthly_power_offpeak")|float * states("sensor.electricity_price_offpeak")|float
-    #         + states("sensor.monthly_power_peak")|float * states("sensor.electricity_price_peak")|float) | round(2) }}
+    monthly_power_cost:
+      friendly_name: Monthly Power
+      unit_of_measurement: €
+      value_template: >
+        {{ (states("sensor.monthly_power_offpeak")|float * states("sensor.electricity_price_offpeak")|float
+            + states("sensor.monthly_power_peak")|float * states("sensor.electricity_price_peak")|float) | round(2) }}
 
     daily_energy_fixed_cost:
       friendly_name: Fixed daily energy cost (gas and power)
