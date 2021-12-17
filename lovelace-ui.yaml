@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -610,6 +601,22 @@ views:
           name: true
           state: true
         type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.humidity_marthe_bedroom
+          name: Storage
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
       type: horizontal-stack
     - cards:
       - color_thresholds_transition: smooth
@@ -631,6 +638,22 @@ views:
       - color_thresholds_transition: smooth
         entities:
         - entity: sensor.pressure_storage
+          name: Storage
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.pressure_marthe_bedroom
           name: Storage
         font_size: 100
         group: false
