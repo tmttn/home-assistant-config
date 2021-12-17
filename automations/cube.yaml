@@ -21,12 +21,12 @@
   condition: "{{ (event | string)[1:-1] == '00' }}"
   action:
     choose:
-      # Change cube mode by shifting on one side, or rotating from one side to another side
+      # Change cube mode by rotating from one side to another side
       - conditions: >
           {% set event = event | string %}
+          {% set correct_start = event[:3] in ("100", "200", "300", "400", "500", "600") %}
           {% set first_last_different = event[0] != event[-1] %}
-          {% set last_is_zero = event[-1] == 0 %}
-          {{ first_last_different or last_is_zero }}
+          {{ correct_start and first_last_different }}
         sequence:
           - service: input_select.select_option
             entity_id: input_select.cube_mode
@@ -44,7 +44,7 @@
               entity_id: media_player.google_home
               language: en
               message: >
-                Cube mode set to {{ states("input_select.cube_mode") }}
+                {{ states("input_select.cube_mode") }} mode
 
       # Shuffle Spotify song by shaking cube
       - conditions:
