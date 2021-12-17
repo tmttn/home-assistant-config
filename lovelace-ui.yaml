@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -645,6 +636,82 @@ views:
           state: true
         type: custom:mini-graph-card
       type: horizontal-stack
+    type: custom:swipe-card
+  - cards:
+    - cards:
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.power_consumption
+          name: Power consumption
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.daily_gas
+          name: Gas consumption
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      name: Speedtest
+      type: horizontal-stack
+    - cards:
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.daily_power_cost
+          name: Power cost
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.daily_gas_cost
+          name: Gas cost
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      name: Speedtest
+      type: horizontal-stack
+    parameters:
+      autoplay:
+        delay: 5000
+      speed: 2000
     type: custom:swipe-card
   - cards:
     - cards:
