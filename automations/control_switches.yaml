@@ -13,13 +13,13 @@
   mode: parallel
   trigger:
     platform: event
-    event_type: hue_event
+    event_type: deconz_event
     event_data:
       id: dimmer_switch_living_room_button
   action:
     choose:
       # Next color
-      - conditions: "{{ trigger.event.data.type == 'short_release' and trigger.event.data.subtype == 4 }}" # Lowest button
+      - conditions: "{{ trigger.event.data.event == 4002 }}" # Lowest button short release
         sequence:
           service: script.next_colors
           data:
@@ -27,7 +27,7 @@
 
       # Bright lights
       - conditions:
-          - "{{ trigger.event.data.type == 'short_release' and trigger.event.data.subtype == 1 }}" # Top button
+          - "{{ trigger.event.data.event == 1002 }}" # Top button short release
         sequence:
           - service: script.white_lights_living_room
           - service: light.turn_on
@@ -36,21 +36,21 @@
               brightness: "255"
       # Turn off all lights
       - conditions:
-          - "{{ trigger.event.data.type == 'repeat' and trigger.event.data.subtype == 1 }}" # Top button
+          - "{{ trigger.event.data.event == 1001 }}" # Top button repeat
         sequence:
           - service: light.turn_off
             data:
               entity_id: light.living_room_lights
 
       # Increase brightness
-      - conditions: "{{ trigger.event.data.type == 'short_release' and trigger.event.data.subtype == 2 }}" # Second button
+      - conditions: "{{ trigger.event.data.event == 2002 }}" # Second button short release
         sequence:
           service: script.increase_brightness
           data:
             group: light.living_room_lights
 
        # Decrease brightness
-      - conditions: "{{ trigger.event.data.type == 'short_release' and trigger.event.data.subtype == 3 }}" # Third button
+      - conditions: "{{ trigger.event.data.event == 3002 }}" # Third button short release
         sequence:
           service: script.decrease_brightness
           data:
