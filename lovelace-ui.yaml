@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1434,6 +1425,12 @@ views:
     - entity: binary_sensor.motion_sensor_lower_hall_tamper
       name: ''
     - entity: sensor.motion_sensor_lower_hall_battery_level
+      name: ''
+    - entity: binary_sensor.lower_hall_2_motion
+      name: Lower hall 2
+    - entity: sensor.motion_sensor_lower_hall_2_light_level
+      name: ''
+    - entity: sensor.motion_sensor_lower_hall_2_battery_level
       name: ''
     - entity: binary_sensor.motion_sensor_upper_hall
       name: Upper Hall
