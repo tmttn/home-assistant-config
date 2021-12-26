@@ -31,7 +31,7 @@ views:
     - entities:
       - light.living_room_dining_table_lights
       - light.living_room_middle_lights
-      - light.hue_plug
+      - switch.hue_plug
       - light.tv_led
       - entity: script.cozy_lights_living_room
         icon_height: 20px
@@ -1435,6 +1435,12 @@ views:
       name: ''
     - entity: sensor.motion_sensor_lower_hall_battery_level
       name: ''
+    - entity: binary_sensor.motion_sensor_lower_hall_2
+      name: Lower hall 2
+    - entity: sensor.motion_sensor_lower_hall_2_light_level
+      name: ''
+    - entity: sensor.motion_sensor_lower_hall_2_battery_level
+      name: ''
     - entity: binary_sensor.motion_sensor_upper_hall
       name: Upper Hall
     - entity: binary_sensor.motion_sensor_upper_hall_tamper
@@ -2136,6 +2142,8 @@ views:
       state: '{{ states("sensor.xiaomi_temperature_storage") }} °C'
     - entity: sensor.xiaomi_temperature_marthe_bedroom
       state: '{{ states("sensor.xiaomi_temperature_marthe_bedroom") }} °C'
+    - entity: sensor.motion_sensor_lower_hall_2_temperature
+      state: '{{ states("sensor.motion_sensor_lower_hall_2_temperature") }} °C'
     title: Temperature sensors
     type: entities
   - entities:
