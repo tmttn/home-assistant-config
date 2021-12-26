@@ -98,3 +98,7 @@
 - platform: switch
   name: Outside switch 3
   entity_id: switch.hombli_smart_outdoor_socket_3_socket_1
+
+- platform: switch
+  name: Hue plug
+  entity_id: switch.hue_plug
