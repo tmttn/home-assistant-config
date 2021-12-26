@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -2142,6 +2133,8 @@ views:
       state: '{{ states("sensor.xiaomi_temperature_storage") }} °C'
     - entity: sensor.xiaomi_temperature_marthe_bedroom
       state: '{{ states("sensor.xiaomi_temperature_marthe_bedroom") }} °C'
+    - entity: sensor.motion_sensor_lower_hall_2_temperature
+      state: '{{ states("sensor.motion_sensor_lower_hall_2_temperature") }} °C'
     title: Temperature sensors
     type: entities
   - entities:
