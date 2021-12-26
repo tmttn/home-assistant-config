@@ -195,6 +195,7 @@ views:
         play_stop: true
         volume: false
       icon: mdi:television
+      name: Nvidia Shield
       type: custom:mini-media-player
     - artwork: cover
       entity: media_player.telenettvbox
@@ -204,6 +205,7 @@ views:
         play_stop: true
         volume: false
       icon: mdi:television
+      name: Telenet TV Box
       type: custom:mini-media-player
     - cards:
       - artwork: cover
