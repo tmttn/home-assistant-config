@@ -15,7 +15,7 @@
     platform: event
     event_type: deconz_event
     event_data:
-      id: dimmer_switch_living_room_button
+      id: dimmer_switch_living_room
   action:
     choose:
       # Next color
