@@ -207,6 +207,10 @@
       event_type: deconz_event
       event_data:
         id: smart_switch_bedroom_tanja
+    - platform: event
+      event_type: deconz_event
+      event_data:
+        id: bedroom_wall_switch
   condition:
     condition: state
     entity_id: input_boolean.bedroom_lights_automatically_turned_on
