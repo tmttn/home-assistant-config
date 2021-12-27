@@ -2100,7 +2100,7 @@ views:
       state: '{{ states("sensor.xiaomi_temperature_storage") }} °C'
       type: custom:template-entity-row
     - entity: sensor.xiaomi_temperature_marthe_bedroom
-      name: Storage
+      name: Marthe bedroom
       secondary: '💦 {{ states(''sensor.humidity_marthe_bedroom'') }}%, ⚖️ {{ states(''sensor.pressure_storage'')
         }} hPa, 🔋 {{ states(''sensor.multi_sensor_marthe_bedroom_battery_level'')
         }}% '
