@@ -856,39 +856,39 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Light 💡](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml)
-### [Turn on living room](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L35)
+## [Light 💡](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml)
+### [Turn on living room](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L35)
 
   *which uses:*
   - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L59)
 
-### [Turn on cozy lights at sunset](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L44)
+### [Turn on cozy lights at sunset](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L44)
 
   *which uses:*
   - [script.cozy_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/7259d79c8535edf85c7bcfc8966489b0ec1d2fd3/scripts.yaml#L28)
   - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b7f53da6358ab0c08b149ed1918a811a74d644ae/includes/groups.yaml#L11)
 
-### [Turn off living room](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L57)
+### [Turn off living room](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L57)
 
   *which uses:*
   - [binary_sensor.activity_in_living_room](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L59)
 
-### [Toggle kitchen ceiling](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L72)
+### [Toggle kitchen ceiling](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L72)
 
   *which uses:*
   - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L74)
 
-### [Toggle bathroom](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L98)
+### [Toggle bathroom](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L98)
 
   *which uses:*
   - [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L52)
 
-### [Toggle toilet](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L114)
+### [Toggle toilet](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L114)
 
   *which uses:*
   - [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L68)
 
-### [Automatically turn on the bedroom](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L139)
+### [Automatically turn on the bedroom](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L139)
 
   *which uses:*
   - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L34)
@@ -897,61 +897,61 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/7259d79c8535edf85c7bcfc8966489b0ec1d2fd3/scripts.yaml#L365)
   - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L98)
 
-### [Automatically turn off the bedroom](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L169)
+### [Automatically turn off the bedroom](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L169)
 
   *which uses:*
   - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L34)
   - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L25)
   - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L98)
 
-### [Turn off bedroom lights auto switch](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L192)
+### [Turn off bedroom lights auto switch](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L192)
 
   *which uses:*
   - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L25)
 
-### [Turn on automatic_bedroom_lights switch](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L218)
+### [Turn on automatic_bedroom_lights switch](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L222)
 
   *which uses:*
   - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/73c8e0dcc0f5162a43d32b08615b5625e32afebb/includes/input_booleans.yaml#L34)
 
-### [Turn off bedroom after 2 hours of inactivity](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L226)
+### [Turn off bedroom after 2 hours of inactivity](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L230)
 
   *which uses:*
   - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L98)
 
-### [Turn on outside lights](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L245)
+### [Turn on outside lights](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L249)
 
 
-### [Turn off outside lights](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L260)
+### [Turn off outside lights](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L264)
 
 
-### [Turn on the outside lights when arriving](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L274)
+### [Turn on the outside lights when arriving](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L278)
 
   *which uses:*
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L193)
 
-### [Turn off toilet (extra check)](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L302)
+### [Turn off toilet (extra check)](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L306)
 
   In case the other automation failed
 
   *which uses:*
   - [binary_sensor.activity_in_toilet](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L68)
 
-### [Turn off bathroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L318)
+### [Turn off bathroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L322)
 
   In case the other automation failed
 
   *which uses:*
   - [binary_sensor.activity_in_bathroom](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L52)
 
-### [Turn off kitchen (extra check)](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L334)
+### [Turn off kitchen (extra check)](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L338)
 
   In case the other automation failed
 
   *which uses:*
   - [binary_sensor.activity_in_kitchen](https://github.com/tmttn/home-assistant-config/blob/5558c9aef36afd45045a3e70b1115b3f060fab5f/includes/binary_sensors.yaml#L74)
 
-### [Turn off bedroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/7cfeec20a808cc806d64a40b073e565a9f5bcf57/automations/light.yaml#L350)
+### [Turn off bedroom (extra check)](https://github.com/tmttn/home-assistant-config/blob/19ac988cfc628be1d2c4554ac99043e8b26f4346/automations/light.yaml#L354)
 
   In case the other automation failed
 
