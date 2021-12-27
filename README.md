@@ -574,7 +574,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Apple Watch ⌚](#apple-watch-) (9 automations)
 1. [Arriving 👞](#arriving-) (1 automations)
 1. [Climate 🔥🥶](#climate-) (10 automations)
-1. [Control switches 🎛](#control-switches-) (2 automations)
+1. [Control switches 🎛](#control-switches-) (4 automations)
 1. [Cube ∛](#cube-) (2 automations)
 1. [Curtains 🪟🪟](#curtains-) (2 automations)
 1. [Doorbell 🚪🔔](#doorbell-) (1 automations)
@@ -593,7 +593,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **90** ⚠️
+⚠️ Total number of automations: **92** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml#L11)
@@ -751,8 +751,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Control switches 🎛](https://github.com/tmttn/home-assistant-config/blob/cc39888eda59abebcd446955edc2c5b3f937b56f/automations/control_switches.yaml)
-### [Living room Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/cc39888eda59abebcd446955edc2c5b3f937b56f/automations/control_switches.yaml#L12)
+## [Control switches 🎛](https://github.com/tmttn/home-assistant-config/blob/14bf4c5ec4334a07a868845ed26947b6a671b622/automations/control_switches.yaml)
+### [Living room Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/14bf4c5ec4334a07a868845ed26947b6a671b622/automations/control_switches.yaml#L12)
 
   *which uses:*
   - [input_select.last_script_living_room](https://github.com/tmttn/home-assistant-config/blob/f62f2cbc1ac3d955f0070b211129b03ccff80ed5/includes/input_selects.yaml#L26)
@@ -761,13 +761,19 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/7259d79c8535edf85c7bcfc8966489b0ec1d2fd3/scripts.yaml#L180)
   - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/7259d79c8535edf85c7bcfc8966489b0ec1d2fd3/scripts.yaml#L76)
 
-### [Back door Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/cc39888eda59abebcd446955edc2c5b3f937b56f/automations/control_switches.yaml#L59)
+### [Back door Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/14bf4c5ec4334a07a868845ed26947b6a671b622/automations/control_switches.yaml#L59)
 
   *which uses:*
   - [script.arriving](https://github.com/tmttn/home-assistant-config/blob/7259d79c8535edf85c7bcfc8966489b0ec1d2fd3/scripts.yaml#L260)
   - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/7259d79c8535edf85c7bcfc8966489b0ec1d2fd3/scripts.yaml#L212)
   - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/7259d79c8535edf85c7bcfc8966489b0ec1d2fd3/scripts.yaml#L11)
   - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/7259d79c8535edf85c7bcfc8966489b0ec1d2fd3/scripts.yaml#L148)
+
+### [Bedroom wall switch](https://github.com/tmttn/home-assistant-config/blob/14bf4c5ec4334a07a868845ed26947b6a671b622/automations/control_switches.yaml#L88)
+
+
+### [Bathroom wall switch](https://github.com/tmttn/home-assistant-config/blob/14bf4c5ec4334a07a868845ed26947b6a671b622/automations/control_switches.yaml#L101)
+
 
 [^ toc](#automations---table-of-content)
 
