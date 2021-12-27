@@ -94,7 +94,7 @@
       id: bedroom_wall_switch
   action:
     choose:
-      - conditions: {{ trigger.event.data.event == 1000 }}
+      - conditions: "{{ trigger.event.data.event == 1000 }}"
         sequence:
           - service: light.toggle
             data:
@@ -110,7 +110,7 @@
       id: bathroom_wall_switch
   action:
     choose:
-      - conditions: {{ trigger.event.data.event == 1000 }}
+      - conditions: "{{ trigger.event.data.event == 1000 }}"
         sequence:
           - service: light.toggle
             data:
