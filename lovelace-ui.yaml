@@ -423,33 +423,33 @@ views:
         name: 'Today''s usage statistics '
         type: custom:template-entity-row
       - icon: mdi:currency-eur
-        name: '{{ states("sensor.daily_power")|round(2) }} kWh power → €{{ states("sensor.daily_power_cost")|float|round(2)
+        name: '{{ states("sensor.daily_power")|round(2) }} kWh power → €{{ states("sensor.daily_power_cost")|float(default=0)|round(2)
           }}. '
         type: custom:template-entity-row
       - icon: mdi:currency-eur
-        name: '{{ states("sensor.daily_gas")|round(2) }} m³ gas → €{{ states("sensor.daily_gas_cost")|float|round(2)
+        name: '{{ states("sensor.daily_gas")|round(2) }} m³ gas → €{{ states("sensor.daily_gas_cost")|float(default=0)|round(2)
           }}. '
         type: custom:template-entity-row
       - icon: mdi:currency-eur
-        name: '€{{ states("sensor.daily_energy_fixed_cost")|float|round(2) }} (fixed)
-          + €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float)|round(2)}}
+        name: '€{{ states("sensor.daily_energy_fixed_cost")|float(default=0)|round(2) }} (fixed)
+          + €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0))|round(2)}}
           = €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
-          + states("sensor.daily_energy_fixed_cost")|float)|round(2) }}. '
+          + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }}. '
         type: custom:template-entity-row
       - type: divider
       - icon: mdi:currency-eur
         name: '{{ as_timestamp(now()) | timestamp_custom("%B") }}''s usage statistics '
         type: custom:template-entity-row
       - icon: mdi:currency-eur
-        name: '{{ states("sensor.monthly_power")|round(2) }} kWh power → €{{ states("sensor.monthly_power_cost")|float|round(2)
+        name: '{{ states("sensor.monthly_power")|round(2) }} kWh power → €{{ states("sensor.monthly_power_cost")|float(default=0)|round(2)
           }}. '
         type: custom:template-entity-row
       - icon: mdi:currency-eur
-        name: '{{ states("sensor.monthly_gas")|round(2) }} m³ gas → €{{ states("sensor.monthly_gas_cost")|float|round(2)
+        name: '{{ states("sensor.monthly_gas")|round(2) }} m³ gas → €{{ states("sensor.monthly_gas_cost")|float(default=0)|round(2)
           }}. '
         type: custom:template-entity-row
       - icon: mdi:currency-eur
-        name: '€{{ states("sensor.monthly_energy_fixed_cost")|float|round(2) }} (fixed)
+        name: '€{{ states("sensor.monthly_energy_fixed_cost")|float(default=0)|round(2) }} (fixed)
           + €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float)|round(2)}}
           = €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0)
           + states("sensor.monthly_energy_fixed_cost")|float)|round(2) }}. '
@@ -460,18 +460,18 @@ views:
         type: custom:template-entity-row
       - icon: mdi:currency-eur
         name: '{{ states("sensor.monthly_power_last_period")|round(2) }} kWh power
-          → €{{ states("sensor.monthly_power_cost_last_period")|float|round(2) }}. '
+          → €{{ states("sensor.monthly_power_cost_last_period")|float(default=0)|round(2) }}. '
         type: custom:template-entity-row
       - icon: mdi:currency-eur
         name: '{{ state_attr("sensor.monthly_gas", "last_period")|round(2) }} m³ gas
-          → €{{ states("sensor.monthly_gas_cost_last_period")|float|round(2) }}. '
+          → €{{ states("sensor.monthly_gas_cost_last_period")|float(default=0)|round(2) }}. '
         type: custom:template-entity-row
       - icon: mdi:currency-eur
-        name: '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float|round(2)
+        name: '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0)|round(2)
           }} (fixed) + €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0)
-          + states("sensor.monthly_power_cost_last_period")|float)|round(2)}} = €{{
+          + states("sensor.monthly_power_cost_last_period")|float(default=0))|round(2)}} = €{{
           (states("sensor.monthly_gas_cost_last_period")|float(default=0) + states("sensor.monthly_power_cost_last_period")|float(default=0)
-          + states("sensor.monthly_energy_fixed_cost_last_period")|float)|round(2)
+          + states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0))|round(2)
           }}. '
         type: custom:template-entity-row
       head:

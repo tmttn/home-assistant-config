@@ -18,7 +18,9 @@
     - service: light.turn_on
       data:
         flash: "short"
-        entity_id: all
+        entity_id:
+          - light.living_room_lights
+          - light.kitchen_lights
     - service: notify.all_iphones
       data:
         title: "Doorbell"
