@@ -803,8 +803,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/d045bed077e97dacb4c15f450898b7fd2f8f4faa/automations/doorbell.yaml)
-### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/d045bed077e97dacb4c15f450898b7fd2f8f4faa/automations/doorbell.yaml#L11)
+## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/a3b8c8284461f9b0d7f848e36cfa4b7e76c9a240/automations/doorbell.yaml)
+### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/a3b8c8284461f9b0d7f848e36cfa4b7e76c9a240/automations/doorbell.yaml#L11)
 
 
 [^ toc](#automations---table-of-content)
