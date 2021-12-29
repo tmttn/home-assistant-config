@@ -21,6 +21,6 @@ ignore: |
   rhasspy/
   notebooks/
   .git
-  .github/*
+  .github/
   scenes.yaml
   blueprints/
