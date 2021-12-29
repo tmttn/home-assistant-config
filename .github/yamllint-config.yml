@@ -21,6 +21,6 @@ ignore: |
   rhasspy/
   notebooks/
   .git
-  .github/workflows/yaml-lint.yaml
+  .github/*
   scenes.yaml
   blueprints/
