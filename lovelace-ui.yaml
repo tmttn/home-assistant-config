@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1718,8 +1709,6 @@ views:
 - badges: []
   cards:
   - entities:
-    - entity: input_boolean.start_spotify_on_google_home
-    - type: divider
     - entity: input_boolean.wake_up_light
     - entity: input_boolean.demo_wake_up_light
     show_header_toggle: false
