@@ -1,6 +1,7 @@
 (living room):light.living_room_lights
 (bathroom):light.bathroom_lights
 (bedroom):light.bedroom_lights
+(guest bedroom):light.guest_bedroom_lights
 (toilet):light.toilet_lights
 (kitchen):light.kitchen_lights
 (terrace):light.terrace_lights

@@ -1,4 +1,20 @@
 ---
+wake_up_light:
+  module: wake_up_light
+  class: WakeUpLight
+  total_time: 600
+  lamp:
+    - light.guest_bedroom_lights
+  input_boolean: input_boolean.wake_up_light
+
+demo_wake_up_light:
+  module: wake_up_light
+  class: WakeUpLight
+  total_time: 20
+  lamp:
+    - light.guest_bedroom_lights
+  input_boolean: input_boolean.demo_wake_up_light
+
 cube:
   module: xiaomi_aqara_cube_action
   class: CubeControl

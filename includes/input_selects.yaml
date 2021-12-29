@@ -37,6 +37,13 @@ last_script_bedroom:
     - script.white_lights_bedroom
   icon: mdi:lightbulb-on
 
+last_script_guest_bedroom:
+  name: Last script guest bedroom
+  options:
+    - script.cozy_lights_guest_bedroom
+    - script.white_lights_guest_bedroom
+  icon: mdi:lightbulb-on
+
 theme:
   name: Theme options
   options:

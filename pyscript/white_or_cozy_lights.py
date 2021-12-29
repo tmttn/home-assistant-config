@@ -28,6 +28,12 @@ def bedroom(domain=None, service=None, service_data=None):
     group_entity_id = "light.bedroom_lights"
     set_input_select(group_entity_id, input_select)
 
+@event_trigger(EVENT_CALL_SERVICE, "domain == 'lights' and service == 'turn_on'")
+def guest_bedroom(domain=None, service=None, service_data=None):
+    input_select = "input_select.last_script_guest_bedroom"
+    group_entity_id = "light.guest_bedroom_lights"
+    set_input_select(group_entity_id, input_select)
+
 # input_select = "input_select.last_script_bedroom"
 # group_entity_id = "light.bedroom_lights"
 # set_input_select(group_entity_id, input_select)

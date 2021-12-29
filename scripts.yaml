@@ -73,6 +73,27 @@ cozy_lights_bedroom:
       data:
         option: script.cozy_lights_bedroom
 
+cozy_lights_guest_bedroom:
+  alias: Set cozy lights in the guest bedroom
+  mode: parallel
+  sequence:
+    - data:
+        entity_id: light.guest_room_bed_reading
+        hs_color:
+          - 26.725
+          - 89.804
+      service: light.turn_on
+    - data:
+        entity_id: light.guest_bedroom_lights
+        hs_color:
+          - 22
+          - 100
+      service: light.turn_on
+    - service: input_select.select_option
+      entity_id: input_select.last_script_guest_bedroom
+      data:
+        option: script.cozy_lights_guest_bedroom
+
 white_lights_living_room:
   alias: Set white lights in the living room
   mode: parallel
@@ -100,6 +121,20 @@ white_lights_bedroom:
       entity_id: input_select.last_script_bedroom
       data:
         option: script.white_lights_bedroom
+
+white_lights_guest_bedroom:
+  alias: Set white lights in the guest bedroom
+  mode: parallel
+  sequence:
+    - data:
+        color_temp: 366
+        entity_id:
+          - light.guest_bedroom_lights
+      service: light.turn_on
+    - service: input_select.select_option
+      entity_id: input_select.last_script_guest_bedroom
+      data:
+        option: script.white_lights_guest_bedroom
 
 increase_brightness:
   alias: Increase the brightness of a group of lights
@@ -156,6 +191,7 @@ turn_off_everything_non_automatic:
           - light.living_room_lights
           - light.bedroom_lights
           - light.bathroom_lights
+          - light.guest_bedroom_lights
     - service: media_player.turn_off
       entity_id: media_player.tv
 
