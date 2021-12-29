@@ -9,8 +9,6 @@ Based on Bas Nijholt's config files.
 
 Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-ios-themes).
 
-[Girlfriend guide ❤️](guide.md).
-
 ## Table of content
 
 - [My devices](#my-devices)
