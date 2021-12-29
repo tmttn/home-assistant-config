@@ -90,6 +90,33 @@ views:
       name: Bed
       type: custom:fold-entity-row
     - entities:
+      - light.guest_bedroom_bedside
+      - input_boolean.automatic_guest_bedroom_lights
+      - input_boolean.guest_bedroom_lights_automatically_turned_on
+      - entity: script.cozy_lights_guest_bedroom
+        icon_height: 20px
+        name: Cozy lights
+        show_icon: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.cozy_lights_guest_bedroom
+      - entity: script.white_lights_guest_bedroom
+        icon_height: 20px
+        name: White lights
+        show_icon: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.white_lights_guest_bedroom
+      head:
+        entity: light.guest_bedroom_lights
+        hide_when_off: false
+        name: Guest Bedroom
+        type: custom:slider-entity-row
+      name: Bed
+      type: custom:fold-entity-row
+    - entities:
       - entities:
         - light.terrace_lights
         - light.outside_switch_1
@@ -434,7 +461,7 @@ views:
         name: '€{{ states("sensor.daily_energy_fixed_cost")|float(default=0)|round(2)
           }} (fixed) + €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float)|round(2)}}
           = €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
-          + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }}. '
+          + states("sensor.daily_energy_fixed_cost")|float)|round(2) }}. '
         type: custom:template-entity-row
       - type: divider
       - icon: mdi:currency-eur
@@ -471,9 +498,9 @@ views:
       - icon: mdi:currency-eur
         name: '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0)|round(2)
           }} (fixed) + €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0)
-          + states("sensor.monthly_power_cost_last_period")|float(default=0))|round(2)}} = €{{
+          + states("sensor.monthly_power_cost_last_period")|float)|round(2)}} = €{{
           (states("sensor.monthly_gas_cost_last_period")|float(default=0) + states("sensor.monthly_power_cost_last_period")|float(default=0)
-          + states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0))|round(2)
+          + states("sensor.monthly_energy_fixed_cost_last_period")|float)|round(2)
           }}. '
         type: custom:template-entity-row
       head:
@@ -1612,6 +1639,16 @@ views:
       state: '{{ states("sensor.hours_bedroom_lights_have_been_on_last_7_days") }}
         h'
       type: custom:template-entity-row
+    - entity: sensor.hours_guest_bedroom_lights_have_been_on_last_7_days
+      icon: mdi:clock
+      name: Guest Bedroom lights
+      secondary: 'Been on {{ (states(''sensor.hours_guest_bedroom_lights_have_been_on_last_7_days'')|float(default=7
+        * 24) / (7*24) * 100) | round(2) }}% during last 7 days.
+
+        '
+      state: '{{ states("sensor.hours_guest_bedroom_lights_have_been_on_last_7_days")
+        }} h'
+      type: custom:template-entity-row
     - entity: sensor.hours_living_room_lights_have_been_on_last_7_days
       icon: mdi:clock
       name: Living room lights
@@ -1681,8 +1718,6 @@ views:
 - badges: []
   cards:
   - entities:
-    - entity: input_boolean.start_spotify_on_google_home
-    - type: divider
     - entity: input_boolean.wake_up_light
     - entity: input_boolean.demo_wake_up_light
     show_header_toggle: false
@@ -1691,6 +1726,7 @@ views:
   - entities:
     - entity: input_select.cube_mode
     - entity: input_select.last_script_bedroom
+    - entity: input_select.last_script_guest_bedroom
     - entity: input_select.last_script_living_room
     show_header_toggle: false
     title: Inputs (automatically switched)
