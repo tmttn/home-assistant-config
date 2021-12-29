@@ -57,7 +57,7 @@
       from: home
       to: not_home
     - platform: state
-      entity_id: binary_sensor.openclose_guest_room
+      entity_id: binary_sensor.openclose_guest_bedroom
       from: "off"
       to: "on"
   condition:

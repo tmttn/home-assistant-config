@@ -78,7 +78,7 @@ cozy_lights_guest_bedroom:
   mode: parallel
   sequence:
     - data:
-        entity_id: light.guest_room_bed_reading
+        entity_id: light.guest_bedroom_bed_reading
         hs_color:
           - 26.725
           - 89.804
