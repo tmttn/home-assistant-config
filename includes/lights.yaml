@@ -27,14 +27,14 @@
     - light.bedroom_bedside_tom
 
 - platform: group
-  name: Guest room lights
+  name: Guest bedroom lights
   entities:
-    - light.guest_room_bedside
+    - light.guest_bedroom_bedside
 
 - platform: group
-  name: Guest room bed reading
+  name: Guest bedroom bed reading
   entities:
-    - light.guest_room_bedside
+    - light.guest_bedroom_bedside
 
 - platform: group
   name: Automatic lights
