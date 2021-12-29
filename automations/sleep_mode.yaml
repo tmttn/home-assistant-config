@@ -36,6 +36,15 @@
     service: input_boolean.turn_off
     entity_id: input_boolean.automatic_bedroom_lights
 
+- alias: "Night mode: turn off automatic guest bedroom lights"
+  trigger:
+    platform: state
+    entity_id: input_select.sleep_mode
+    from: "off"
+  action:
+    service: input_boolean.turn_off
+    entity_id: input_boolean.automatic_guest_bedroom_lights
+
 - alias: "Night mode: set low temperature when sleep mode turns on"
   trigger:
     platform: state

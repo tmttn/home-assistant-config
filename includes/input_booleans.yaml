@@ -26,6 +26,10 @@ bedroom_lights_automatically_turned_on:
   name: Will automatically turn off
   icon: mdi:ceiling-light
   initial: "off"
+guest_bedroom_lights_automatically_turned_on:
+  name: Will automatically turn off
+  icon: mdi:ceiling-light
+  initial: "off"
 dark_mode:
   name: Dark mode
   icon: mdi:theme-light-dark
@@ -33,6 +37,9 @@ theme_alternative:
   name: Theme alternative
 automatic_bedroom_lights:
   name: Automatic bedroom lights
+  icon: mdi:lamp
+automatic_guest_bedroom_lights:
+  name: Automatic guest bedroom lights
   icon: mdi:lamp
 automatic_temperature:
   name: Automatic temperature
@@ -43,3 +50,9 @@ work_hour_notification_sent:
 alarm_clock:
   name: Alarm clock is on
   icon: mdi:alarm
+
+# Apps
+wake_up_light:
+  name: Start wake up light
+  initial: "off"
+  icon: mdi:weather-sunset-up
