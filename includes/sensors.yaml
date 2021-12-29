@@ -292,6 +292,7 @@
       unit_of_measurement: h
       value_template: >
         {{ states('sensor.hours_bedroom_lights_have_been_on_last_7_days')|float(default=0) * 3
+            + states('sensor.hours_guest_bedroom_lights_have_been_on_last_7_days')|float(default=0) * 1
             + states('sensor.hours_living_room_lights_have_been_on_last_7_days')|float(default=0) * 10
             + states('sensor.hours_toilet_light_has_been_on_last_7_days')|float(default=0) * 1
             + states('sensor.hours_bathroom_lights_have_been_on_last_7_days')|float(default=0) * 4
@@ -554,6 +555,15 @@
 - platform: history_stats
   name: Hours bedroom lights have been on last 7 days
   entity_id: light.bedroom_lights
+  state: "on"
+  type: time
+  duration:
+    days: 7
+  end: "{{ now() }}"
+
+- platform: history_stats
+  name: Hours guest bedroom lights have been on last 7 days
+  entity_id: light.guest_bedroom_lights
   state: "on"
   type: time
   duration:

@@ -30,11 +30,13 @@ customize:
     icon: mdi:sofa
   light.bedroom_lights:
     icon: mdi:bed-king
+  light.guest_bedroom_lights:
+    icon: mdi:bed-queen
   light.toilet:
     icon: mdi:emoticon-poop
   light.outside:
     icon: mdi:patio-heater
-  light.bathroom:
+  light.bathroom_lights:
     icon: mdi:shower
   plant.calathea_medaillon:
     friendly_name: Calathea Medaillon
