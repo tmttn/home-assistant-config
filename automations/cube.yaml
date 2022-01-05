@@ -114,7 +114,7 @@
               {% set brightness = state_attr('light.tv_led', 'brightness') %}
               {% set delta = event / 450 %}
               {% set new_brightness = [([0, (brightness + delta)]|max), 255]|min %}
-              {{ new_brightness|int }}
+              {{ new_brightness|int(default=0) }}
 
       - conditions: # Change speaker volume
           condition: state
@@ -133,4 +133,4 @@
               entity_id: media_player.google_home
               language: en
               message: >
-                Volume set to {{ (state_attr("media_player.google_home", "volume_level")|float(default=0) * 100)|int }}.
+                Volume set to {{ (state_attr("media_player.google_home", "volume_level")|float(default=0) * 100)|int(default=0) }}.
