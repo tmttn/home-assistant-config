@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -202,7 +193,7 @@ views:
     - entity: weather.buienradar
       name: Bilzen
       style: "ha-card {\n  background: none;\n  border: none;\n  box-shadow: none;\n\
-        \  padding: 0px\n}\n"
+        \  padding-left: none;\n}\n"
       type: custom:simple-weather-card
     - type: divider
     - entity: sensor.limburg_net_morgen
