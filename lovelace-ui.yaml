@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -898,6 +889,19 @@ views:
           \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
           \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
         type: custom:simple-thermostat
+      - control: false
+        entity: climate.guest_bedroom
+        hide:
+          state: true
+          temperature: true
+        icon: false
+        name: false
+        step_size: '0.5'
+        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
+          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
+          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
+          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
+        type: custom:simple-thermostat
       type: horizontal-stack
     - cards:
       - control: false
@@ -928,6 +932,19 @@ views:
         type: custom:simple-thermostat
       - control: false
         entity: climate.bedroom_marthe
+        hide:
+          state: true
+          temperature: true
+        icon: false
+        name: false
+        step_size: '0.5'
+        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
+          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
+          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
+          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
+        type: custom:simple-thermostat
+      - control: false
+        entity: climate.hall
         hide:
           state: true
           temperature: true
