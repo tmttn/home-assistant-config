@@ -397,18 +397,6 @@
     - type: processor_use
     - type: last_boot
 
-- platform: dnsip
-
-- platform: version
-  name: Installed Version
-  source: local
-
-- platform: version
-  name: Latest Available Version
-  beta: false
-  image: raspberrypi3
-  source: hassio
-
 - platform: uptime
 
 - platform: filesize
