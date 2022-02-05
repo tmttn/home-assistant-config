@@ -3,7 +3,7 @@ Based on Bas Nijholt's config files.
 
 [![GitHub stars](https://img.shields.io/github/stars/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
-[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2022.2.1%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2022.2.1)
+[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2022.2.2%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2022.2.2)
 [![HA Community](https://img.shields.io/badge/HA%20community-forum-orange)](https://community.home-assistant.io/u/tmttn/summary)
 [![Yaml Lint](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml/badge.svg)](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml)
 
@@ -615,7 +615,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L50)
   - [input_boolean.wake_up_light](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L55)
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/aea7d0c5cb7ef64acc3177942b450e189a28b8a6/includes/sensors.yaml#L235)
+  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/efcf39a3e3c8f30f879cfdb665ad1f53fa4585a4/includes/sensors.yaml#L235)
 
 [^ toc](#automations---table-of-content)
 
@@ -641,12 +641,12 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/fe65bd027b351bc7d24089b26c8c81fab82883d7/automations/apple_watch.yaml#L149)
 
   *which uses:*
-  - [sensor.temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/aea7d0c5cb7ef64acc3177942b450e189a28b8a6/includes/sensors.yaml#L316)
-  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/aea7d0c5cb7ef64acc3177942b450e189a28b8a6/includes/sensors.yaml#L312)
-  - [sensor.temperature_bedroom_marthe](https://github.com/tmttn/home-assistant-config/blob/aea7d0c5cb7ef64acc3177942b450e189a28b8a6/includes/sensors.yaml#L324)
-  - [sensor.temperature_kitchen](https://github.com/tmttn/home-assistant-config/blob/aea7d0c5cb7ef64acc3177942b450e189a28b8a6/includes/sensors.yaml#L320)
-  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/aea7d0c5cb7ef64acc3177942b450e189a28b8a6/includes/sensors.yaml#L308)
-  - [sensor.temperature_storage](https://github.com/tmttn/home-assistant-config/blob/aea7d0c5cb7ef64acc3177942b450e189a28b8a6/includes/sensors.yaml#L328)
+  - [sensor.temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/efcf39a3e3c8f30f879cfdb665ad1f53fa4585a4/includes/sensors.yaml#L316)
+  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/efcf39a3e3c8f30f879cfdb665ad1f53fa4585a4/includes/sensors.yaml#L312)
+  - [sensor.temperature_bedroom_marthe](https://github.com/tmttn/home-assistant-config/blob/efcf39a3e3c8f30f879cfdb665ad1f53fa4585a4/includes/sensors.yaml#L324)
+  - [sensor.temperature_kitchen](https://github.com/tmttn/home-assistant-config/blob/efcf39a3e3c8f30f879cfdb665ad1f53fa4585a4/includes/sensors.yaml#L320)
+  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/efcf39a3e3c8f30f879cfdb665ad1f53fa4585a4/includes/sensors.yaml#L308)
+  - [sensor.temperature_storage](https://github.com/tmttn/home-assistant-config/blob/efcf39a3e3c8f30f879cfdb665ad1f53fa4585a4/includes/sensors.yaml#L328)
 
 ### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/fe65bd027b351bc7d24089b26c8c81fab82883d7/automations/apple_watch.yaml#L171)
 
@@ -702,7 +702,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L50)
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L44)
   - [script.set_moderate_temperature](https://github.com/tmttn/home-assistant-config/blob/959c2bdb027ec8e6828a77f024968b2dcf68f335/scripts.yaml#L262)
-  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/aea7d0c5cb7ef64acc3177942b450e189a28b8a6/includes/sensors.yaml#L227)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/efcf39a3e3c8f30f879cfdb665ad1f53fa4585a4/includes/sensors.yaml#L227)
 
 ### [Increase the heating for the afternoon](https://github.com/tmttn/home-assistant-config/blob/fe65bd027b351bc7d24089b26c8c81fab82883d7/automations/climate.yaml#L67)
 
@@ -1137,7 +1137,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L50)
-  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/aea7d0c5cb7ef64acc3177942b450e189a28b8a6/includes/sensors.yaml#L227)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/efcf39a3e3c8f30f879cfdb665ad1f53fa4585a4/includes/sensors.yaml#L227)
 
 ### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L26)
 
