@@ -16,3 +16,5 @@ username: homeassistant
 password: !secret influx_db_user_pw
 max_retries: 3
 default_measurement: state
+include:
+    - sensor.total_yield
