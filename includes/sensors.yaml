@@ -337,6 +337,12 @@
       unit_of_measurement: '°C'
       value_template: '{{state_attr("climate.guest_bedroom", "current_temperature")}}'
 
+- platform: influxdb
+  queries:
+    - name: solar production
+      where: '"name" = ''total_yield'''
+      measurement: kWh
+
 #   ___  _   _
 #  / _ \| |_| |__   ___ _ __ ___
 # | | | | __| '_ \ / _ \ '__/ __|
