@@ -91,9 +91,6 @@
   name: Outside lights
   entities:
     - light.terrace_lights
-    - light.outside_switch_1
-    - light.outside_switch_2
-    - light.outside_switch_3
 
 - platform: group
   name: Terrace lights
