@@ -18,6 +18,12 @@
 
 - platform: template
   sensors:
+    dishwasher_watts:
+      value_template: >
+        {{ state_attr("switch.dishwasher", "power") | float("Unavailable") }}
+      unit_of_measurement: Watt
+      friendly_name: Dishwasher usage
+
     count_automations:
       icon_template: mdi:autorenew
       value_template: "{{ states.automation | count }}"
@@ -245,9 +251,12 @@
       value_template: >
         {% set value = state_attr("sensor.quarantine_meter_tanja", "value") %}
         {% if value != None %}
-        {% if value.split()|length < 3 %}
-        {% set value = "0d " + value %}
-        {% endif %}
+
+        # Fix from https://github.com/basnijholt/home-assistant-config/issues/32
+        {% set nargs = 1 + (value | length) - (value.replace(' ', '') | length) %}
+        {% if nargs < 2 %}{% set value = "0h " ~ value %}{% endif %}
+        {% if nargs < 3 %}{% set value = "0d " ~ value %}{% endif %}
+
         {% set d, h, m = value.split() %}
         {% set d, h, m = d[:-1] | int, h[:-1] | int, m[:-1] | int %}
         {% set hours_outside = ((14 - d) * 86400 - h * 3600 - m * 60) / 3600 %}
@@ -259,9 +268,12 @@
       value_template: >
         {% set value = state_attr("sensor.quarantine_meter_tom", "value") %}
         {% if value != None %}
-        {% if value.split()|length < 3 %}
-        {% set value = "0d " + value %}
-        {% endif %}
+
+        # Fix from https://github.com/basnijholt/home-assistant-config/issues/32
+        {% set nargs = 1 + (value | length) - (value.replace(' ', '') | length) %}
+        {% if nargs < 2 %}{% set value = "0h " ~ value %}{% endif %}
+        {% if nargs < 3 %}{% set value = "0d " ~ value %}{% endif %}
+
         {% set d, h, m = value.split() %}
         {% set d, h, m = d[:-1] | int, h[:-1] | int, m[:-1] | int %}
         {% set hours_outside = ((14 - d) * 86400 - h * 3600 - m * 60) / 3600 %}
@@ -404,10 +416,6 @@
     - type: last_boot
 
 - platform: uptime
-
-- platform: filesize
-  file_paths:
-    - /config/.storage/lovelace
 
 - platform: sql
   db_url: !secret maria_db_url

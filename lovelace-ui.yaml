@@ -328,7 +328,7 @@ views:
     type: entities
   - cards:
     - entities:
-      - entity: vacuum.xiaomi_vacuum_cleaner
+      - entity: vacuum.robot_vacuum
         name: Vacuum cleaner
         primary:
           entity: binary_sensor.vacuum_day
@@ -345,7 +345,7 @@ views:
       type: entities
     - calibration_source:
         camera: true
-      entity: vacuum.xiaomi_vacuum_cleaner
+      entity: vacuum.robot_vacuum
       map_locked: true
       map_source:
         camera: camera.xiaomi_cloud_map_extractor
