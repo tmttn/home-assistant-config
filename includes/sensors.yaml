@@ -252,7 +252,6 @@
         {% set value = state_attr("sensor.quarantine_meter_tanja", "value") %}
         {% if value != None %}
 
-        # Fix from https://github.com/basnijholt/home-assistant-config/issues/32
         {% set nargs = 1 + (value | length) - (value.replace(' ', '') | length) %}
         {% if nargs < 2 %}{% set value = "0h " ~ value %}{% endif %}
         {% if nargs < 3 %}{% set value = "0d " ~ value %}{% endif %}
@@ -269,7 +268,6 @@
         {% set value = state_attr("sensor.quarantine_meter_tom", "value") %}
         {% if value != None %}
 
-        # Fix from https://github.com/basnijholt/home-assistant-config/issues/32
         {% set nargs = 1 + (value | length) - (value.replace(' ', '') | length) %}
         {% if nargs < 2 %}{% set value = "0h " ~ value %}{% endif %}
         {% if nargs < 3 %}{% set value = "0d " ~ value %}{% endif %}
