@@ -65,8 +65,11 @@
         message: "No one is home, turn off everything?"
         data:
           actions:
-            - action: turn_off_everything
-              title: "Turn off everything"
+            - action: TURN_OFF_EVERYTHING
+              title: Turn off everything
+              activationMode: background
+              authenticationRequired: false
+              destructive: true
 
 - alias: "Leaving: turn off everything after notification"
   trigger:

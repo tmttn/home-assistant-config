@@ -14,5 +14,5 @@
   use_blueprint:
     path: PiotrMachowski/disable_vacuum_camera_update_when_docked.yaml
     input:
-      vacuum: vacuum.xiaomi_vacuum_cleaner
+      vacuum: vacuum.robot_vacuum
       camera: camera.xiaomi_cloud_map_extractor
