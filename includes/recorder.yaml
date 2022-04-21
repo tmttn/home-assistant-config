@@ -20,5 +20,3 @@ exclude:
     - sensor.monthly_power_cost_last_period
     - sensor.monthly_gas_cost_last_period
     - sensor.monthly_energy_fixed_cost_last_period
-    - sensor.total_yield
-    - sensor.pv_gen_meter
