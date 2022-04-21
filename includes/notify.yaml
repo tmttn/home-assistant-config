@@ -18,9 +18,12 @@
   name: tom
   services:
     - service: mobile_app_bizzyphone
+    - service: chrome
 
 - platform: group
   name: all
   services:
     - service: mobile_app_bizzyphone
     - service: mobile_app_t_phone
+    - service: tv
+    - service: chrome
