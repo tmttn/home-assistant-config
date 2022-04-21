@@ -19,7 +19,7 @@
       entity_id: group.persons
       state: not_home
     - condition: state
-      entity_id: vacuum.xiaomi_vacuum_cleaner
+      entity_id: vacuum.robot_vacuum
       state: "docked"
   action:
     - service: notify.all_iphones
@@ -27,8 +27,11 @@
         message: "Security: motion is detected, but we are not home."
         data:
           actions:
-            action: sound_alarm
-            title: "Sound Alarm"
+            - action: SOUND_ALARM
+              title: Sound alarm
+              activationMode: background
+              authenticationRequired: true
+              destructive: true
     - wait_for_trigger:
         platform: event
         event_type: mobile_app_notification_action
