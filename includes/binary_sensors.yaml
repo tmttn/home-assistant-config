@@ -182,7 +182,9 @@
         {% set automatic_lights_on = is_state("light.automatic_lights", "on") %}
         {% set bedroom_lights_on = is_state("light.bedroom_lights", "on") %}
         {% set living_room_lights_on = is_state("light.living_room_lights", "on") %}
-        {{ automatic_lights_on or bedroom_lights_on or living_room_lights_on }}
+        {% set bathroom_lights_on = is_state("light.bathroom_lights", "on") %}
+        {% set guest_bedroom_lights_on = is_state("light.guest_bedroom_lights", "on") %}
+        {{ automatic_lights_on or bedroom_lights_on or living_room_lights_on or bathroom_lights_on or guest_bedroom_lights_on }}
 
     anything_on:
       friendly_name: Anything is on
