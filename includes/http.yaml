@@ -8,6 +8,6 @@
 #               |_|
 #
 #- from github.com/tmttn/home-assistant-config
-use_x_forwarded_for: true 
-trusted_proxies: 
-  - 172.30.33.0/24
+use_x_forwarded_for: true
+trusted_proxies:
+  - 192.168.87.70/24
