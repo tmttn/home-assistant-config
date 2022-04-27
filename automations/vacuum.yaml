@@ -35,7 +35,6 @@
       entity_id: input_boolean.cleaned_today
     - service: counter.increment
       entity_id: counter.vacuum_bin_counter
-    
 
 - alias: "Vacuum: reminder notification"
   trigger:
@@ -108,8 +107,8 @@
 
 - alias: "Vacuum: bin is full"
   trigger:
-    - platform: numeric_state 
-      above: '3'
+    - platform: numeric_state
+      above: "3"
       entity_id: counter.vacuum_bin_counter
   action:
     - service: notify.all_iphones
@@ -126,7 +125,7 @@
   trigger:
     - platform: state
       entity_id: binary_sensor.vacuum_water_shortage
-      to: 'on'
+      to: "on"
   action:
     - service: vacuum.pause
     - service: notify.all_iphones
