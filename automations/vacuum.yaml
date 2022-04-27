@@ -33,6 +33,9 @@
         message: "Cleanup successful after {{ sensor.vacuum_last_clean_duration | int / 60 }} minutes."
     - service: input_boolean.turn_on
       entity_id: input_boolean.cleaned_today
+    - service: counter.increment
+      entity_id: counter.vacuum_bin_counter
+    
 
 - alias: "Vacuum: reminder notification"
   trigger:
@@ -102,3 +105,100 @@
     entity_id: vacuum.robot_vacuum
     data:
       fan_speed: Standard
+
+- alias: "Vacuum: bin is full"
+  trigger:
+    - platform: numeric_state 
+      above: '3'
+      entity_id: counter.vacuum_bin_counter
+  action:
+    - service: notify.all_iphones
+      data:
+        title: "Robot"
+        message: "Vacuum dust bin is full, please empty it!"
+    - service: tts.google_translate_say
+      data:
+        entity_id: media_player.google_home
+        language: nl
+        message: Het stofbakje van Brenda is vol. Maak het stofbakje leeg alstublieft.
+
+- alias: "Vacuum: water reservoir empty"
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.vacuum_water_shortage
+      to: 'on'
+  action:
+    - service: vacuum.pause
+    - service: notify.all_iphones
+      data:
+        title: "Robot"
+        message: "Water reservoir is empty, please fill it!"
+    - service: tts.google_translate_say
+      data:
+        entity_id: media_player.google_home
+        language: nl
+        message: Het water reservoir van Brenda is leeg. Vul het water reservoir alstublieft.
+
+- alias: "Vacuum: sensors need cleaning"
+  trigger:
+    platform: state
+    entity_id: vacuum.robot_vacuum
+    from: returning to dock
+    to: docked
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.vacuum_sensor_dirty_left
+      below: 0
+  action:
+    - service: notify.all_iphones
+      data:
+        title: "Robot"
+        message: "Sensors need cleaning!"
+
+- alias: "Vacuum: main brush needs replacing"
+  trigger:
+    platform: state
+    entity_id: vacuum.robot_vacuum
+    from: returning to dock
+    to: docked
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.vacuum_main_brush_left
+      below: 0
+  action:
+    - service: notify.all_iphones
+      data:
+        title: "Robot"
+        message: "Main brush needs replacing!"
+
+- alias: "Vacuum: side brush needs replacing"
+  trigger:
+    platform: state
+    entity_id: vacuum.robot_vacuum
+    from: returning to dock
+    to: docked
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.vacuum_side_brush_left
+      below: 0
+  action:
+    - service: notify.all_iphones
+      data:
+        title: "Robot"
+        message: "Side brush needs replacing!"
+
+- alias: "Vacuum: air filter needs replacing"
+  trigger:
+    platform: state
+    entity_id: vacuum.robot_vacuum
+    from: returning to dock
+    to: docked
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.vacuum_filter_left
+      below: 0
+  action:
+    - service: notify.all_iphones
+      data:
+        title: "Robot"
+        message: "Air filter needs replacing!"
