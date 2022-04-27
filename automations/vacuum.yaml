@@ -30,7 +30,7 @@
     - service: notify.all_iphones
       data:
         title: "Robot"
-        message: "Cleanup successful after {{ sensor.vacuum_last_clean_duration | int / 60 }} minutes."
+        message: "Cleanup successful after {{ (states.sensor.vacuum_last_clean_duration|int / 60)|round }} minutes."
     - service: input_boolean.turn_on
       entity_id: input_boolean.cleaned_today
     - service: counter.increment
