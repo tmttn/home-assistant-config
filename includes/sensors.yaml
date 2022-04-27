@@ -151,19 +151,19 @@
         {{ 0.940036171 }}
 
     daily_gas_cost:
-      friendly_name: Daily Power
+      friendly_name: Daily Gas
       unit_of_measurement: €
       value_template: >
         {{ (states("sensor.daily_gas")|float(default=0) * 0.7884) | round(2) }}
 
     monthly_gas_cost:
-      friendly_name: Monthly Power
+      friendly_name: Monthly Gas
       unit_of_measurement: €
       value_template: >
         {{ (states("sensor.monthly_gas")|float(default=0) * 0.7884) | round(2) }}
 
     monthly_gas_cost_last_period:
-      friendly_name: Monthly Power (Last period)
+      friendly_name: Monthly Gas (Last period)
       unit_of_measurement: €
       value_template: >
         {{ (state_attr("sensor.monthly_gas", "last_period")|float(default=0) * 0.7884) | round(2) }}
