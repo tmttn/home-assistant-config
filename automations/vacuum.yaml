@@ -131,12 +131,27 @@
     - service: notify.all_iphones
       data:
         title: "Robot"
-        message: "Water reservoir is empty, please fill it!"
+        message: "Water reservoir is empty, please fill it! 🚰"
+        data:
+          actions:
+            - action: RESUME_CLEANING
+              title: Resume cleaning
+              activationMode: background
+              authenticationRequired: true
+              destructive: true
     - service: tts.google_translate_say
       data:
         entity_id: media_player.google_home
         language: nl
         message: Het water reservoir van Brenda is leeg. Vul het water reservoir alstublieft.
+    - wait_for_trigger:
+        platform: event
+        event_type: mobile_app_notification_action
+        event_data:
+          action: RESUME_CLEANING
+      timeout: "00:05:00"
+      continue_on_timeout: false
+    - service: vacuum.start
 
 - alias: "Vacuum: sensors need cleaning"
   trigger:
