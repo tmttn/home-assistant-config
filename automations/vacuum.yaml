@@ -84,7 +84,7 @@
     entity_id: vacuum.robot_vacuum
 
 - alias: "Vacuum: reset cleaned today"
-  initial_state: "on"
+  initial_state: true
   trigger:
     platform: time
     at: "00:00:00"

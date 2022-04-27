@@ -9,7 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Lovelace: convert lovelace.json to lovelace-ui.yaml"
-  initial_state: "on"
+  initial_state: true
   trigger:
     platform: state
     entity_id: sensor.lovelace
