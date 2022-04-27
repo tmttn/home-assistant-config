@@ -24,7 +24,7 @@
   trigger:
     platform: state
     entity_id: vacuum.robot_vacuum
-    from: returning
+    from: returning to dock
     to: docked
   action:
     - service: notify.all_iphones
