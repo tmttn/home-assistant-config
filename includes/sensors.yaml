@@ -162,6 +162,12 @@
       value_template: >
         {{ (states("sensor.monthly_gas")|float(default=0) * states("sensor.gas_price")|float(default=0)) | round(2) }}
 
+    monthly_gas_last_period:
+      friendly_name: Monthly Gas (Last period)
+      unit_of_measurement: kWh
+      value_template: >
+        {{ state_attr("sensor.monthly_gas", "last_period")|float(default=0) }}
+
     monthly_gas_cost_last_period:
       friendly_name: Monthly Gas (Last period)
       unit_of_measurement: €
