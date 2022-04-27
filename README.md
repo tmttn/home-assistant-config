@@ -1188,21 +1188,21 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Vacuum 🧹](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml)
-### [Started cleaning](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L11)
+## [Vacuum 🧹](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml)
+### [Started cleaning](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L11)
 
 
-### [Stopped cleaning](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L23)
+### [Stopped cleaning](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L23)
 
   *which uses:*
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L16)
 
-### [Reminder notification](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L40)
+### [Reminder notification](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L40)
 
   *which uses:*
   - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L196)
 
-### [Cleanup if nobody is home](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L54)
+### [Cleanup if nobody is home](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L54)
 
   *which uses:*
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L16)
@@ -1211,30 +1211,30 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L196)
   - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b7f53da6358ab0c08b149ed1918a811a74d644ae/includes/groups.yaml#L11)
 
-### [Reset cleaned today](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L89)
+### [Reset cleaned today](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L89)
 
   *which uses:*
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L16)
 
-### [Reset to standard mode](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L98)
+### [Reset to standard mode](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L98)
 
 
-### [Bin is full](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L109)
+### [Bin is full](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L109)
 
 
-### [Water reservoir empty](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L125)
+### [Water reservoir empty](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L125)
 
 
-### [Sensors need cleaning](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L142)
+### [Sensors need cleaning](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L142)
 
 
-### [Main brush needs replacing](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L158)
+### [Main brush needs replacing](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L158)
 
 
-### [Side brush needs replacing](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L174)
+### [Side brush needs replacing](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L174)
 
 
-### [Air filter needs replacing](https://github.com/tmttn/home-assistant-config/blob/f17b8f46ff7a5ae83229e017f8cd00148c70103b/automations/vacuum.yaml#L190)
+### [Air filter needs replacing](https://github.com/tmttn/home-assistant-config/blob/a15483c385af1363108444d561dcc2728be1c70b/automations/vacuum.yaml#L190)
 
 
 [^ toc](#automations---table-of-content)
