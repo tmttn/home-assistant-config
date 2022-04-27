@@ -10,7 +10,7 @@
 #- from github.com/tmttn/home-assistant-config
 
 - alias: "Leaving: automatically turn off everything"
-  initial_state: "on"
+  initial_state: true
   trigger:
     - platform: state
       entity_id: binary_sensor.someone_in_the_house_in_last_hour
@@ -38,7 +38,7 @@
         message: "Everything automatically turned off!"
 
 - alias: "Leaving: ask to turn off everything"
-  initial_state: "on"
+  initial_state: true
   trigger:
     - platform: state
       entity_id: person.tom

@@ -9,7 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Music: start playlist"
-  initial_state: "on"
+  initial_state: true
   trigger:
     platform: state
     entity_id: input_boolean.start_the_music
