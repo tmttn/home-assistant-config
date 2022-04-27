@@ -1,3 +1,6 @@
+<<<<<<< HEAD
+=======
+---
 #-
 #                        _
 #   ___ ___  _   _ _ __ | |_ ___ _ __ ___
@@ -7,6 +10,7 @@
 #
 #
 #- from github.com/tmttn/home-assistant-config
+>>>>>>> 3d64a47923462e199baeb8aee689bdec2d9a20de
 vacuum_bin_counter:
   initial: 0
   step: 1
