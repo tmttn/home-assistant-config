@@ -727,10 +727,3 @@
   upcomingsensor: 1
   builtinicons: 1
   dutch: 1
-
-# Integration
-- platform: integration
-  source: sensor.washing_machine_current_consumption
-  name: washing_machine_energy
-  unit_prefix: k
-  round: 2
