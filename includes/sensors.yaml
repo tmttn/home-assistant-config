@@ -18,12 +18,6 @@
 
 - platform: template
   sensors:
-    dishwasher_watts:
-      value_template: >
-        {{ state_attr("switch.dishwasher", "power") | float("Unavailable") }}
-      unit_of_measurement: Watt
-      friendly_name: Dishwasher usage
-
     count_automations:
       icon_template: mdi:autorenew
       value_template: "{{ states.automation | count }}"
@@ -718,6 +712,7 @@
     {% if day < 0 %}{% set day = day + 7 %}{% endif %}
     {{ states("sensor.timestamp_start_of_today")|float(default=0) - day * 86400}}
 
+# Waste management
 - platform: afvalbeheer
   wastecollector: Limburg.NET
   resources:
@@ -733,4 +728,9 @@
   builtinicons: 1
   dutch: 1
 
-- platform: spotcast
+# Integration
+- platform: integration
+  source: sensor.washing_machine_current_consumption
+  name: washing_machine_energy
+  unit_prefix: k
+  round: 2
