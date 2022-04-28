@@ -354,11 +354,20 @@
 #  \___/ \__|_| |_|\___|_|  |___/
 #
 - platform: statistics
+  name: Washing machine Today's Consumption
+  entity_id: sensor.washing_machine_today_s_consumption
+  state-characteristic: total
+  sampling_size: 86400 # make sure all data points of the last 24hrs are included
+  max_age:
+    hours: 24
+
+- platform: statistics
   name: Humidity bathroom stats
   entity_id: sensor.humidity_bathroom
   state_characteristic: mean
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
-  max_age: "24:00:00"
+  max_age:
+    hours: 24
 
 - platform: derivative
   source: sensor.humidity_bathroom
@@ -371,7 +380,8 @@
   entity_id: sensor.humidity_storage
   state_characteristic: mean
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
-  max_age: "24:00:00"
+  max_age:
+    hours: 24
 
 - platform: derivative
   source: sensor.humidity_storage
