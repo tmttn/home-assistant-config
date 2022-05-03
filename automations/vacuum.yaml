@@ -30,7 +30,7 @@
     - service: notify.all_iphones
       data:
         title: "Robot"
-        message: "Cleanup successful after {{ (states.sensor.vacuum_last_clean_duration|int / 60)|round }} minutes."
+        message: "Cleanup successful after {{ (states('sensor.vacuum_last_clean_duration')|int / 60)|round }} minutes."
     - service: input_boolean.turn_on
       entity_id: input_boolean.cleaned_today
     - service: counter.increment
@@ -108,8 +108,9 @@
 - alias: "Vacuum: bin is full"
   trigger:
     - platform: numeric_state
-      above: "3"
       entity_id: counter.vacuum_bin_counter
+  condition: "{{ states('counter.vacuum_bin_counter')|int % 3 == 0}}"
+
   action:
     - service: notify.all_iphones
       data:
