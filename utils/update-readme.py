@@ -196,7 +196,8 @@ def get_emoji(title):
         "Vacation mode": "🏝",
         "Vacuum": "🧹",
         "Work": "💼",
-        "Curtains": "🪟🪟"
+        "Curtains": "🪟🪟",
+        "Solar": "☀️"
     }[title]
 
 
