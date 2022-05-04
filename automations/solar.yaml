@@ -1,4 +1,13 @@
 ---
+#-
+#            _
+#  ___  ___ | | __ _ _ __
+# / __|/ _ \| |/ _` | '__|
+# \__ \ (_) | | (_| | |
+# |___/\___/|_|\__,_|_|
+#
+#
+#- from github.com/tmttn/home-assistant-config
 - alias: "Solar: grid export too high"
   trigger:
     - platform: numeric_state
