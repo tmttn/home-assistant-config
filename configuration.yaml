@@ -17,6 +17,7 @@ frontend:
   extra_module_url:
     - /www/community/lovelace-card-mod/card-mod.js
 http: !include includes/http.yaml
+websocket_api:
 
 # Inputs and counters
 input_boolean: !include includes/input_booleans.yaml
