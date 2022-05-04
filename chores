@@ -9,7 +9,7 @@
 #- from github.com/tmttn/home-assistant-config
 
 python3 utils/commit-updates.py
-python3 -m pip install --upgrade pip
+python3 -m pip install --upgrade pip > /dev/null
 pip3 -q install pyfiglet > /dev/null
 python3 utils/ascii_art.py
 python3 utils/update-readme.py
