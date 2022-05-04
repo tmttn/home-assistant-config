@@ -347,6 +347,10 @@
       unit_of_measurement: '°C'
       value_template: '{{state_attr("climate.guest_bedroom", "current_temperature")}}'
 
+    total_grid_export:
+      unit_of_measurement: kWh
+      value_template: '{{states("sensor.p1_meter_total_power_export_t1")|float(default=0) + states("sensor.p1_meter_total_power_export_t2")|float(default=0)}}'
+
 #   ___  _   _
 #  / _ \| |_| |__   ___ _ __ ___
 # | | | | __| '_ \ / _ \ '__/ __|
@@ -360,6 +364,13 @@
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
   max_age:
     hours: 24
+
+- platform: statistics
+  name: Grid export last hour
+  entity_id: sensor.total_grid_export
+  state_characteristic: change
+  max_age:
+    hours: 1
 
 - platform: statistics
   name: Humidity bathroom stats
