@@ -107,7 +107,7 @@
 
 - alias: "Vacuum: bin is full"
   trigger:
-    - platform: numeric_state
+    - platform: state
       entity_id: counter.vacuum_bin_counter
   condition: "{{ states('counter.vacuum_bin_counter')|int % 3 == 0}}"
 
