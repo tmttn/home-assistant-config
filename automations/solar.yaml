@@ -3,7 +3,7 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.grid_export_last_hour
-      above: 1000
+      above: 0.7
   condition:
     condition: state
     entity_id: input_boolean.guest_mode
