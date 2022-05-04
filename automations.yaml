@@ -8,4 +8,11 @@
 #
 #
 #- from github.com/tmttn/home-assistant-config
-[]
+- id: "1636727868357"
+  alias: "Vacuum: disable vacuum camera update when docked"
+  description: ""
+  use_blueprint:
+    path: PiotrMachowski/disable_vacuum_camera_update_when_docked.yaml
+    input:
+      vacuum: vacuum.robot_vacuum
+      camera: camera.xiaomi_cloud_map_extractor
