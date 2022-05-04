@@ -10,7 +10,7 @@
 
 python3 utils/commit-updates.py
 python3 -m pip install --upgrade pip 2> /dev/null
-pip3 -q install pyfiglet 2> /dev/nulls
+pip3 -q install pyfiglet 2> /dev/null
 python3 utils/ascii_art.py
 python3 utils/update-readme.py
 ./utils/commit-readme.sh
