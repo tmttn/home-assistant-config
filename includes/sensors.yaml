@@ -369,6 +369,7 @@
   name: Grid export last hour
   entity_id: sensor.total_grid_export
   state_characteristic: change
+  sampling_size: 3600 # make sure all data points of the last 24hrs are included
   max_age:
     hours: 1
 
