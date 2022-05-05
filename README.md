@@ -584,7 +584,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Plant 🌱](#plant-) (2 automations)
 1. [Security 👮🚨](#security-) (4 automations)
 1. [Night mode 🌕🌑](#night-mode-) (6 automations)
-1. [Solar ☀️](#solar-) (1 automations)
+1. [Solar ☀️](#solar-) (2 automations)
 1. [System 🖥](#system-) (4 automations)
 1. [Utilities 🧺👚🍽](#utilities-) (6 automations)
 1. [Vacation mode 🏝](#vacation-mode-) (2 automations)
@@ -592,7 +592,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **105** ⚠️
+⚠️ Total number of automations: **106** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/fe4de30e51e10dc860bd96ce7d49482d29b6a986/automations/adaptive_lighting.yaml#L11)
@@ -1105,8 +1105,11 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/dd4b5ee85e1723e451cdc57b3786f92a3209fa8e/automations/solar.yaml)
-### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/dd4b5ee85e1723e451cdc57b3786f92a3209fa8e/automations/solar.yaml#L11)
+## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/8ccd7f688c27560d9376fdca162ed9179896d895/automations/solar.yaml)
+### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/8ccd7f688c27560d9376fdca162ed9179896d895/automations/solar.yaml#L11)
+
+
+### [Turn grid export warning automation on again](https://github.com/tmttn/home-assistant-config/blob/8ccd7f688c27560d9376fdca162ed9179896d895/automations/solar.yaml#L24)
 
 
 [^ toc](#automations---table-of-content)
