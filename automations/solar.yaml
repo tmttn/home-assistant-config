@@ -27,4 +27,4 @@
       minutes: "/30"
   action:
     - service: automation.turn_on
-      entity_id: automation.grid_export_too_high
+      entity_id: automation.solar_grid_export_too_high
