@@ -1105,11 +1105,9 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/a94bdc8b2148b94dead4eff2652e7842c66ad060/automations/solar.yaml)
-### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/a94bdc8b2148b94dead4eff2652e7842c66ad060/automations/solar.yaml#L11)
+## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/dd4b5ee85e1723e451cdc57b3786f92a3209fa8e/automations/solar.yaml)
+### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/dd4b5ee85e1723e451cdc57b3786f92a3209fa8e/automations/solar.yaml#L11)
 
-  *which uses:*
-  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L22)
 
 [^ toc](#automations---table-of-content)
 
