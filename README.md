@@ -3,7 +3,7 @@ Based on Bas Nijholt's config files.
 
 [![GitHub stars](https://img.shields.io/github/stars/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
-[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2022.5.0%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2022.5.0)
+[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2022.5.1%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2022.5.1)
 [![HA Community](https://img.shields.io/badge/HA%20community-forum-orange)](https://community.home-assistant.io/u/tmttn/summary)
 [![Yaml Lint](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml/badge.svg)](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml)
 
