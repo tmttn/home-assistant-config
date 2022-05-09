@@ -616,7 +616,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L50)
   - [input_boolean.wake_up_light](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L55)
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/25ed378710688f0ff2b757f21a45d38f0a7cf12b/includes/sensors.yaml#L241)
+  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/28c1245e5cfef2c6e627d99c4824d0749fe20672/includes/sensors.yaml#L241)
 
 [^ toc](#automations---table-of-content)
 
@@ -642,12 +642,12 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/automations/apple_watch.yaml#L233)
 
   *which uses:*
-  - [sensor.temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/25ed378710688f0ff2b757f21a45d38f0a7cf12b/includes/sensors.yaml#L326)
-  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/25ed378710688f0ff2b757f21a45d38f0a7cf12b/includes/sensors.yaml#L322)
-  - [sensor.temperature_bedroom_marthe](https://github.com/tmttn/home-assistant-config/blob/25ed378710688f0ff2b757f21a45d38f0a7cf12b/includes/sensors.yaml#L334)
-  - [sensor.temperature_kitchen](https://github.com/tmttn/home-assistant-config/blob/25ed378710688f0ff2b757f21a45d38f0a7cf12b/includes/sensors.yaml#L330)
-  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/25ed378710688f0ff2b757f21a45d38f0a7cf12b/includes/sensors.yaml#L318)
-  - [sensor.temperature_storage](https://github.com/tmttn/home-assistant-config/blob/25ed378710688f0ff2b757f21a45d38f0a7cf12b/includes/sensors.yaml#L338)
+  - [sensor.temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/28c1245e5cfef2c6e627d99c4824d0749fe20672/includes/sensors.yaml#L326)
+  - [sensor.temperature_bedroom](https://github.com/tmttn/home-assistant-config/blob/28c1245e5cfef2c6e627d99c4824d0749fe20672/includes/sensors.yaml#L322)
+  - [sensor.temperature_bedroom_marthe](https://github.com/tmttn/home-assistant-config/blob/28c1245e5cfef2c6e627d99c4824d0749fe20672/includes/sensors.yaml#L334)
+  - [sensor.temperature_kitchen](https://github.com/tmttn/home-assistant-config/blob/28c1245e5cfef2c6e627d99c4824d0749fe20672/includes/sensors.yaml#L330)
+  - [sensor.temperature_living_room](https://github.com/tmttn/home-assistant-config/blob/28c1245e5cfef2c6e627d99c4824d0749fe20672/includes/sensors.yaml#L318)
+  - [sensor.temperature_storage](https://github.com/tmttn/home-assistant-config/blob/28c1245e5cfef2c6e627d99c4824d0749fe20672/includes/sensors.yaml#L338)
 
 ### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/automations/apple_watch.yaml#L255)
 
@@ -703,7 +703,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L50)
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L44)
   - [script.set_moderate_temperature](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L262)
-  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/25ed378710688f0ff2b757f21a45d38f0a7cf12b/includes/sensors.yaml#L233)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/28c1245e5cfef2c6e627d99c4824d0749fe20672/includes/sensors.yaml#L233)
 
 ### [Increase the heating for the afternoon](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/automations/climate.yaml#L67)
 
@@ -1144,7 +1144,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L50)
-  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/25ed378710688f0ff2b757f21a45d38f0a7cf12b/includes/sensors.yaml#L233)
+  - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/28c1245e5cfef2c6e627d99c4824d0749fe20672/includes/sensors.yaml#L233)
 
 ### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L26)
 
@@ -1199,21 +1199,21 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Vacuum 🧹](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml)
-### [Started cleaning](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L11)
+## [Vacuum 🧹](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml)
+### [Started cleaning](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L11)
 
 
-### [Stopped cleaning](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L23)
+### [Stopped cleaning](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L23)
 
   *which uses:*
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L16)
 
-### [Reminder notification](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L39)
+### [Reminder notification](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L39)
 
   *which uses:*
   - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L196)
 
-### [Cleanup if nobody is home](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L53)
+### [Cleanup if nobody is home](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L53)
 
   *which uses:*
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L16)
@@ -1222,30 +1222,30 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [binary_sensor.vacuum_day](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L196)
   - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b7f53da6358ab0c08b149ed1918a811a74d644ae/includes/groups.yaml#L11)
 
-### [Reset cleaned today](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L88)
+### [Reset cleaned today](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L88)
 
   *which uses:*
   - [input_boolean.cleaned_today](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L16)
 
-### [Reset to standard mode](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L97)
+### [Reset to standard mode](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L97)
 
 
-### [Bin is full](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L108)
+### [Bin is full](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L108)
 
 
-### [Water reservoir empty](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L125)
+### [Water reservoir empty](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L125)
 
 
-### [Sensors need cleaning](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L157)
+### [Sensors need cleaning](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L169)
 
 
-### [Main brush needs replacing](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L173)
+### [Main brush needs replacing](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L185)
 
 
-### [Side brush needs replacing](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L189)
+### [Side brush needs replacing](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L201)
 
 
-### [Air filter needs replacing](https://github.com/tmttn/home-assistant-config/blob/f6f6ad03107b8f32638c72637f0161acd5a770df/automations/vacuum.yaml#L205)
+### [Air filter needs replacing](https://github.com/tmttn/home-assistant-config/blob/9a30b7c832d4e549eea7f5bb52d7aada2f60ea9a/automations/vacuum.yaml#L217)
 
 
 [^ toc](#automations---table-of-content)
