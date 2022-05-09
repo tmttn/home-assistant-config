@@ -127,6 +127,18 @@
     - platform: state
       entity_id: binary_sensor.vacuum_water_shortage
       to: "on"
+    - platform: state
+      entity_id: vacuum.robot_vacuum
+      to: "cleaning"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.vacuum_water_shortage
+      state: "on"
+    - condition: not
+      conditions:
+        - condition: state
+          entity_id: vacuum.robot_vacuum
+          state: "docked"
   action:
     - service: vacuum.pause
     - service: notify.all_iphones
