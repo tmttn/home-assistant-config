@@ -433,13 +433,13 @@
 
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_1_power
-  name: gas_burner_energy_spent
+  name: gas_burner_consumption
   unit_prefix: k
   round: 2
 
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_2_power
-  name: heat_pump_boiler_energy_spent
+  name: heat_pump_boiler_consumption
   unit_prefix: k
   round: 2
 
