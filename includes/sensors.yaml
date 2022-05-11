@@ -443,6 +443,12 @@
   unit_prefix: k
   round: 2
 
+- platform: integration
+  source: sensor.hombli_smart_outdoor_socket_3_power
+  name: guest_bedroom_pc_consumption
+  unit_prefix: k
+  round: 2
+
 #  _____ _                  _                  _
 # |_   _(_)_ __ ___   ___  | |_ _ __ __ _  ___| | _____ _ __ ___
 #   | | | | '_ ` _ \ / _ \ | __| '__/ _` |/ __| |/ / _ \ '__/ __|
