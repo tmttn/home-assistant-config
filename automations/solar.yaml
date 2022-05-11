@@ -17,7 +17,7 @@
     - service: notify.all_iphones
       data:
         title: "Energy"
-        message: "Grid export is above 1kWh, please increase self-consumption. ⚡"
+        message: "Grid export is above 0.7kWh, please increase self-consumption. ⚡"
     - service: automation.turn_off
       entity_id: automation.solar_grid_export_too_high
 
