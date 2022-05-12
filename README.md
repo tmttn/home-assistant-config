@@ -1024,11 +1024,11 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/709126aebfdc60a6b4eae945d3940be2b755c774/automations/plant.yaml)
-### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/709126aebfdc60a6b4eae945d3940be2b755c774/automations/plant.yaml#L11)
+## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/0b181333e815e76a081b6ae5b66a73b17723b470/automations/plant.yaml)
+### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/0b181333e815e76a081b6ae5b66a73b17723b470/automations/plant.yaml#L11)
 
 
-### [Problem with Euphorbia Pulcherrima](https://github.com/tmttn/home-assistant-config/blob/709126aebfdc60a6b4eae945d3940be2b755c774/automations/plant.yaml#L29)
+### [Problem with Peperomia Glabella](https://github.com/tmttn/home-assistant-config/blob/0b181333e815e76a081b6ae5b66a73b17723b470/automations/plant.yaml#L29)
 
 
 [^ toc](#automations---table-of-content)
