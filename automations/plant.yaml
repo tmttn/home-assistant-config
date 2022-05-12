@@ -26,20 +26,20 @@
       message: >
         You need to give the Calathea Medaillon 🪴 attention and love: {{ state_attr("plant.calathea_medaillon", "problem") }}!
 
-- alias: "Plant: problem with Euphorbia Pulcherrima"
+- alias: "Plant: problem with Peperomia Glabella"
   trigger:
     - platform: state
-      entity_id: plant.euphorbia_pulcherrima
+      entity_id: plant.peperomia_glabella
       to: "problem"
     - platform: time
       at: "20:00"
   condition:
     condition: state
-    entity_id: plant.euphorbia_pulcherrima
+    entity_id: plant.peperomia_glabella
     state: "problem"
   action:
     service: notify.all_iphones
     data:
       title: "Plant in trouble! ⚠️☢️☠️"
       message: >
-        You need to give the Euphorbia Pulcherrima 🌺 attention and love: {{ state_attr("plant.euphorbia_pulcherrima", "problem") }}!
+        You need to give the Euphorbia Pulcherrima 🌺 attention and love: {{ state_attr("plant.peperomia_glabella", "problem") }}!
