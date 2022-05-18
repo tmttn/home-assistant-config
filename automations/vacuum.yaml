@@ -141,6 +141,7 @@
           state: "docked"
   action:
     - service: vacuum.pause
+      entity_id: vacuum.robot_vacuum
     - service: notify.all_iphones
       data:
         title: "Robot"
@@ -165,6 +166,7 @@
       timeout: "00:05:00"
       continue_on_timeout: false
     - service: vacuum.start
+      entity_id: vacuum.robot_vacuum
 
 - alias: "Vacuum: sensors need cleaning"
   trigger:
