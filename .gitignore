@@ -140,3 +140,4 @@ airsonos.xml
 themes/ios-*
 *.code-workspace
 zigbee.db
+zigbee2mqtt/
