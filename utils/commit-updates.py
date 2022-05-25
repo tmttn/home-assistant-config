@@ -12,7 +12,7 @@
 import subprocess
 from pathlib import Path
 
-cmd = " ".split()
+cmd = "git status --porcelain".split()
 p = subprocess.run(cmd, capture_output=True).stdout.decode()
 
 ha_version = ".HA_VERSION"
