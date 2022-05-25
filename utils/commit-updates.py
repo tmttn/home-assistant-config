@@ -12,7 +12,7 @@
 import subprocess
 from pathlib import Path
 
-cmd = "git status --porcelain".split()
+cmd = " ".split()
 p = subprocess.run(cmd, capture_output=True).stdout.decode()
 
 ha_version = ".HA_VERSION"
@@ -40,6 +40,10 @@ for line in p.split("\n"):
         if path.startswith(hacs):
             folders_to_add.add(hacs)
 
+        other_custom_components = "custom_components/"
+        if not path.startswith(hacs) and path.startswith(other_custom_components):
+            folders_to_add.add(other_custom_components)
+
         if path == ha_version:
             ha_update = True
 
@@ -49,7 +53,7 @@ for line in p.split("\n"):
 for folder in folders_to_add:
     print(folder)
     subprocess.run(f"git add {folder}".split())
-    subprocess.run(["git", "commit", "-m", f"update {folder} via HACS"])
+    subprocess.run(["git", "commit", "-m", f"update {folder}"])
     folder_update = True
 
 if ha_update:
