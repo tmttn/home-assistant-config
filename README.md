@@ -1024,36 +1024,41 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/047fd3a761bd3df239c7f24c2fc1acdec810f1b1/automations/plant.yaml)
-### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/047fd3a761bd3df239c7f24c2fc1acdec810f1b1/automations/plant.yaml#L11)
+## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/plant.yaml)
+### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/plant.yaml#L11)
 
+  *which uses:*
+  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L19)
 
-### [Problem with Peperomia Glabella](https://github.com/tmttn/home-assistant-config/blob/047fd3a761bd3df239c7f24c2fc1acdec810f1b1/automations/plant.yaml#L29)
+### [Problem with Peperomia Glabella](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/plant.yaml#L32)
 
+  *which uses:*
+  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L19)
 
 [^ toc](#automations---table-of-content)
 
 
-## [Security 👮🚨](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/automations/security.yaml)
-### [Motion detected but we are not home](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/automations/security.yaml#L11)
+## [Security 👮🚨](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/security.yaml)
+### [Motion detected but we are not home](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/security.yaml#L11)
 
   *which uses:*
   - [binary_sensor.motion_detected](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L30)
   - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b7f53da6358ab0c08b149ed1918a811a74d644ae/includes/groups.yaml#L11)
 
-### [Front door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/automations/security.yaml#L48)
+### [Front door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/security.yaml#L48)
 
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L22)
 
-### [Back door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/automations/security.yaml#L65)
+### [Back door has been open for more than 5 minutes](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/security.yaml#L65)
 
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L22)
 
-### [No one is home but high power usage](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/automations/security.yaml#L82)
+### [No one is home but high power usage](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/security.yaml#L82)
 
   *which uses:*
+  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L19)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L202)
 
 [^ toc](#automations---table-of-content)
@@ -1105,11 +1110,13 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/3a63caea02f893856c521fbd96a3568719d880cf/automations/solar.yaml)
-### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/3a63caea02f893856c521fbd96a3568719d880cf/automations/solar.yaml#L11)
+## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/solar.yaml)
+### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/solar.yaml#L11)
 
+  *which uses:*
+  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L19)
 
-### [Turn grid export warning automation on again](https://github.com/tmttn/home-assistant-config/blob/3a63caea02f893856c521fbd96a3568719d880cf/automations/solar.yaml#L24)
+### [Turn grid export warning automation on again](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/solar.yaml#L28)
 
 
 [^ toc](#automations---table-of-content)
@@ -1139,14 +1146,15 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Utilities 🧺👚🍽](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml)
-### [Turn on espresso machine 10 minutes before waking up](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L13)
+## [Utilities 🧺👚🍽](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/utilities.yaml)
+### [Turn on espresso machine 10 minutes before waking up](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/utilities.yaml#L13)
 
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L50)
+  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L19)
   - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/ca58f830033c2eea663f00ba21367567dffb5886/includes/sensors.yaml#L233)
 
-### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L26)
+### [Washing machine, dishwasher,tumble dryer or espresso machine started or finished](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/utilities.yaml#L29)
 
   *which uses:*
   - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L137)
@@ -1154,25 +1162,25 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L161)
   - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L125)
 
-### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L47)
+### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/utilities.yaml#L50)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L311)
   - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L125)
 
-### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L59)
+### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/utilities.yaml#L62)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L311)
   - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L137)
 
-### [Tumble dryer notification](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L71)
+### [Tumble dryer notification](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/utilities.yaml#L74)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L311)
   - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L161)
 
-### [Espresso machine notification](https://github.com/tmttn/home-assistant-config/blob/2158ee959673fdf68867d0b5251a6db183844106/automations/utilities.yaml#L83)
+### [Espresso machine notification](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/utilities.yaml#L86)
 
   *which uses:*
   - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L311)
