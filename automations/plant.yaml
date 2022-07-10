@@ -16,9 +16,12 @@
     - platform: time
       at: "20:00"
   condition:
-    condition: state
-    entity_id: plant.calathea_medaillon
-    state: "problem"
+    - condition: state
+      entity_id: plant.calathea_medaillon
+      state: "problem"
+    - condition: state
+      entity_id: input_boolean.vacation_mode
+      state: "off"
   action:
     service: notify.all_iphones
     data:
@@ -34,9 +37,12 @@
     - platform: time
       at: "20:00"
   condition:
-    condition: state
-    entity_id: plant.peperomia_glabella
-    state: "problem"
+    - condition: state
+      entity_id: plant.peperomia_glabella
+      state: "problem"
+    - condition: state
+      entity_id: input_boolean.vacation_mode
+      state: "off"
   action:
     service: notify.all_iphones
     data:
