@@ -92,7 +92,10 @@
       state: "on"
     - condition: numeric_state
       entity_id: sensor.p1_meter_active_power
-      above: 800
+      above: 1200
+    - condition: state
+      entity_id: input_boolean.vacation_mode
+      state: "off"
   action:
     service: notify.all_iphones
     data:
