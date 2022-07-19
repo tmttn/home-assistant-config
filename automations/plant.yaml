@@ -22,6 +22,7 @@
     - condition: state
       entity_id: input_boolean.vacation_mode
       state: "off"
+    - "{{((now() - as_datetime(states('sensor.uptime'))).seconds)|int > 60}}"
   action:
     service: notify.all_iphones
     data:
@@ -43,6 +44,7 @@
     - condition: state
       entity_id: input_boolean.vacation_mode
       state: "off"
+    - "{{((now() - as_datetime(states('sensor.uptime'))).seconds)|int > 60}}"
   action:
     service: notify.all_iphones
     data:
