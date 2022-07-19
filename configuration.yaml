@@ -59,7 +59,6 @@ intent:
 intent_script: !include includes/intent_script.yaml
 evohome: !include includes/evohome.yaml
 miele: !include includes/miele.yaml
-withings: !include includes/withings.yaml
 tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
 spotify: !include includes/spotify.yaml
