@@ -1024,13 +1024,13 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/plant.yaml)
-### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/plant.yaml#L11)
+## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/ad90ce62fe11be596f9870ceac1116c57328851c/automations/plant.yaml)
+### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/ad90ce62fe11be596f9870ceac1116c57328851c/automations/plant.yaml#L11)
 
   *which uses:*
   - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L19)
 
-### [Problem with Peperomia Glabella](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/plant.yaml#L32)
+### [Problem with Peperomia Glabella](https://github.com/tmttn/home-assistant-config/blob/ad90ce62fe11be596f9870ceac1116c57328851c/automations/plant.yaml#L33)
 
   *which uses:*
   - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/3d55e61b7c5a0e5cd003e93811f279dcf6a585ef/includes/input_booleans.yaml#L19)
