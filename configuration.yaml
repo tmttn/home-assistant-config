@@ -61,7 +61,6 @@ evohome: !include includes/evohome.yaml
 miele: !include includes/miele.yaml
 tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
-spotify: !include includes/spotify.yaml
 spotcast: !include includes/spotcast.yaml
 
 # Custom components
