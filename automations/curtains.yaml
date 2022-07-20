@@ -21,7 +21,6 @@
         - "partlycloudy"
       to:
         - "clear-night"
-        - "cloudy"
         - "fog"
         - "hail"
         - "lightning"
