@@ -789,11 +789,11 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Curtains 🪟🪟](https://github.com/tmttn/home-assistant-config/blob/bfe670b116965580740d0984aa7c8013e64c1cd3/automations/curtains.yaml)
-### [Open the screens](https://github.com/tmttn/home-assistant-config/blob/bfe670b116965580740d0984aa7c8013e64c1cd3/automations/curtains.yaml#L11)
+## [Curtains 🪟🪟](https://github.com/tmttn/home-assistant-config/blob/bf098d5b7bfaa6567745c30a81763a9503210af7/automations/curtains.yaml)
+### [Open the screens](https://github.com/tmttn/home-assistant-config/blob/bf098d5b7bfaa6567745c30a81763a9503210af7/automations/curtains.yaml#L11)
 
 
-### [Close the screens](https://github.com/tmttn/home-assistant-config/blob/bfe670b116965580740d0984aa7c8013e64c1cd3/automations/curtains.yaml#L20)
+### [Close the screens](https://github.com/tmttn/home-assistant-config/blob/bf098d5b7bfaa6567745c30a81763a9503210af7/automations/curtains.yaml#L24)
 
 
 [^ toc](#automations---table-of-content)
