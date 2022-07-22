@@ -11,6 +11,10 @@
 - alias: "Curtains: open the screens"
   trigger:
     - platform: numeric_state
+      entity_id: sun.sun
+      attribute: elevation
+      below: 1
+    - platform: numeric_state
       entity_id: sensor.bizzyhome_weerstation_ws_2902c_event_rain
       above: 0
   action:
