@@ -15,7 +15,7 @@
       attribute: elevation
       below: 1
     - platform: numeric_state
-      entity_id: sensor.bizzyhome_weerstation_ws_2902c_event_rain
+      entity_id: sensor.bunderhome_weerstation_ws_2902c_event_rain
       above: 0
   action:
     - service: cover.open_cover
@@ -24,7 +24,7 @@
 - alias: "Curtains: close the screens"
   trigger:
     - platform: numeric_state
-      entity_id: sensor.bizzyhome_weerstation_ws_2902c_solar_rad_lx
+      entity_id: sensor.bunderhome_weerstation_ws_2902c_solar_rad_lx
       above: 10000
   condition:
     - condition: numeric_state
@@ -32,7 +32,7 @@
       attribute: elevation
       above: 10
     - condition: numeric_state
-      entity_id: sensor.bizzyhome_weerstation_ws_2902c_event_rain
+      entity_id: sensor.bunderhome_weerstation_ws_2902c_event_rain
       below: 1
   action:
     - service: cover.close_cover
