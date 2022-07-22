@@ -62,7 +62,7 @@ miele: !include includes/miele.yaml
 tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
 spotcast: !include includes/spotcast.yaml
-ambient_weather: !include includes/ambient_weather.yaml
+ambient_station: !include includes/ambient_station.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
