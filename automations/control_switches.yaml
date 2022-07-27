@@ -123,7 +123,7 @@
     platform: event
     event_type: deconz_event
     event_data:
-      id: smart_switch_back_door
+      id: smart_switch_guest_bedroom
   action:
     choose:
       # Toggle bedside light
