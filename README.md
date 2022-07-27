@@ -747,8 +747,8 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Control switches 🎛](https://github.com/tmttn/home-assistant-config/blob/0eca6d6f767e0e252bfdaab3b4a422d3ae8a3019/automations/control_switches.yaml)
-### [Living room Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/0eca6d6f767e0e252bfdaab3b4a422d3ae8a3019/automations/control_switches.yaml#L12)
+## [Control switches 🎛](https://github.com/tmttn/home-assistant-config/blob/f862925c5cec5339f9e4e21739e7ff097625a0f3/automations/control_switches.yaml)
+### [Living room Philips Hue dimmer switch](https://github.com/tmttn/home-assistant-config/blob/f862925c5cec5339f9e4e21739e7ff097625a0f3/automations/control_switches.yaml#L12)
 
   *which uses:*
   - [input_select.last_script_living_room](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L26)
@@ -757,7 +757,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L216)
   - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L97)
 
-### [Back door Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/0eca6d6f767e0e252bfdaab3b4a422d3ae8a3019/automations/control_switches.yaml#L59)
+### [Back door Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/f862925c5cec5339f9e4e21739e7ff097625a0f3/automations/control_switches.yaml#L59)
 
   *which uses:*
   - [script.arriving](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L296)
@@ -765,13 +765,13 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L11)
   - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/a8fed1a0bbaf46d31d7bff171852b439dff419e0/scripts.yaml#L183)
 
-### [Bedroom wall switch](https://github.com/tmttn/home-assistant-config/blob/0eca6d6f767e0e252bfdaab3b4a422d3ae8a3019/automations/control_switches.yaml#L88)
+### [Bedroom wall switch](https://github.com/tmttn/home-assistant-config/blob/f862925c5cec5339f9e4e21739e7ff097625a0f3/automations/control_switches.yaml#L88)
 
 
-### [Bathroom wall switch](https://github.com/tmttn/home-assistant-config/blob/0eca6d6f767e0e252bfdaab3b4a422d3ae8a3019/automations/control_switches.yaml#L104)
+### [Bathroom wall switch](https://github.com/tmttn/home-assistant-config/blob/f862925c5cec5339f9e4e21739e7ff097625a0f3/automations/control_switches.yaml#L104)
 
 
-### [Guest bedroom Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/0eca6d6f767e0e252bfdaab3b4a422d3ae8a3019/automations/control_switches.yaml#L120)
+### [Guest bedroom Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/f862925c5cec5339f9e4e21739e7ff097625a0f3/automations/control_switches.yaml#L120)
 
   *which uses:*
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
