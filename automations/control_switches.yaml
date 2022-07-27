@@ -76,7 +76,7 @@
         sequence:
           - service: script.arriving
 
-      # Leaving: turn on music and cozy lights
+      # Arriving: turn on music and cozy lights
       - conditions: "{{ trigger.event.data.event == 1001 }}" # Long click
         sequence:
           - service: script.arriving
@@ -116,3 +116,28 @@
             data:
               entity_id: light.bathroom_lights
               transition: 1
+
+- alias: "Control switches: guest bedroom Aqara Wireless Mini Switch"
+  mode: parallel
+  trigger:
+    platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_back_door
+  action:
+    choose:
+      # Toggle bedside light
+      - conditions: "{{ trigger.event.data.event == 1002 }}" # Single click
+        sequence:
+          - service: light.toggle
+            data:
+              entity_id: light.guest_bedroom_lights
+              transition: 1
+      # Sleep mode
+      - conditions: "{{ trigger.event.data.event == 1001 }}" # Long click
+        sequence:
+          - service: input_select.select_option
+            entity_id: input_select.sleep_mode
+            data:
+              option: "total"
+          - service: script.turn_off_everything_non_automatic

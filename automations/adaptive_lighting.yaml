@@ -89,7 +89,6 @@
       event_type: adaptive_lighting.manual_control
   variables:
     light: "{{ trigger.event.data.entity_id }}"
-  condition: "{{ 'hall' not in light and 'stairs' not in light }}"
   action:
     - service: system_log.write
       data:
