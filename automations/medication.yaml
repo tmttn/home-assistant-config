@@ -45,7 +45,7 @@
             language: nl
             message: Stop! Marthe heeft haar vitamines al kregen vandaag.
 
-- alias: "Medication: kitchen meds tom Aqara Wireless Mini Switch"
+- alias: "Medication: Tom medication button pressed"
   mode: single
   trigger:
     platform: event
@@ -57,18 +57,18 @@
     - choose:
         - conditions:
             - condition: state
-              entity_id: input_boolean.tom_meds
+              entity_id: input_boolean.tom_medication
               state: "off"
           sequence:
             - service: tts.google_translate_say
               data:
                 entity_id: media_player.kitchen_display
                 language: nl
-                message: Ja, Marthe haar vitamines geven en ik heb genoteerd dat ze ze gekregen heeft.
+                message: Ja, medicatie nemen en ik heb genoteerd dat je ze genomen hebt.
             - service: input_boolean.turn_on
               data: {}
               target:
-                entity_id: input_boolean.tom_meds
+                entity_id: input_boolean.tom_medication
       default:
         - service: tts.google_translate_say
           data:
