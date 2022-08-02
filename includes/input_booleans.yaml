@@ -50,6 +50,12 @@ work_hour_notification_sent:
 alarm_clock:
   name: Alarm clock is on
   icon: mdi:alarm
+marthe_vitamins:
+  name: Marthe has taken her vitamins
+  icon: mdi:pill
+tom_medication:
+  name: Tom has taken his medication
+  icon: mdi:pill
 
 # Apps
 wake_up_light:
