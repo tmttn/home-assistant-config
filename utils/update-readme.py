@@ -197,7 +197,8 @@ def get_emoji(title):
         "Vacuum": "🧹",
         "Work": "💼",
         "Curtains": "🪟🪟",
-        "Solar": "☀️"
+        "Solar": "☀️",
+        "Medication": "💊"
     }[title]
 
 
