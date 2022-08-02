@@ -36,8 +36,6 @@
             language: nl
             message: Stop! Marthe heeft haar vitamines al kregen vandaag.
 
-
-
 - alias: "Medication: kitchen meds tom Aqara Wireless Mini Switch"
   mode: single
   trigger:
