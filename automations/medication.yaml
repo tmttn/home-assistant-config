@@ -1,0 +1,146 @@
+---
+- alias: "Medication: Marthe vitamin button pressed"
+  mode: single
+  trigger:
+    platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_kitchen_meds_tom
+  condition: "{{ trigger.event.data.event == 1002 }}" #Single click
+  action:
+    - service: media_player.volume_set
+      data:
+        volume_level: 0.6
+      target:
+        entity_id:
+          - media_player.kitchen_display
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: input_boolean.marthe_vitamins
+              state: "off"
+          sequence:
+            - service: tts.google_translate_say
+              data:
+                entity_id: media_player.kitchen_display
+                language: nl
+                message: Ja, Marthe haar vitamines geven en ik heb genoteerd dat ze ze gekregen heeft.
+            - service: input_boolean.turn_on
+              data: {}
+              target:
+                entity_id: input_boolean.marthe_vitamins
+      default:
+        - service: tts.google_translate_say
+          data:
+            entity_id: media_player.kitchen_display
+            language: nl
+            message: Stop! Marthe heeft haar vitamines al kregen vandaag.
+
+
+
+- alias: "Medication: kitchen meds tom Aqara Wireless Mini Switch"
+  mode: single
+  trigger:
+    platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_kitchen_meds_tom
+  condition: "{{ trigger.event.data.event == 1004 }}" #Double click
+  action:
+    - choose:
+        - conditions:
+            - condition: state
+              entity_id: input_boolean.tom_meds
+              state: "off"
+          sequence:
+            - service: tts.google_translate_say
+              data:
+                entity_id: media_player.kitchen_display
+                language: nl
+                message: Ja, Marthe haar vitamines geven en ik heb genoteerd dat ze ze gekregen heeft.
+            - service: input_boolean.turn_on
+              data: {}
+              target:
+                entity_id: input_boolean.tom_meds
+      default:
+        - service: tts.google_translate_say
+          data:
+            entity_id: media_player.kitchen_display
+            language: nl
+            message: Stop! Je hebt je medicatie al genomen vandaag.
+
+- alias: "Medication: Marthe vitamin reminder"
+  mode: single
+  trigger:
+    - platform: time
+      at: '17:10:00'
+  condition:
+    - condition: state
+      entity_id: input_boolean.marthe_vitamins
+      state: 'off'
+  action:
+    - service: media_player.volume_set
+      data:
+        volume_level: 0.6
+      target:
+        entity_id:
+          - media_player.kitchen_display
+    - service: tts.google_translate_say
+      data:
+        entity_id: media_player.kitchen_display
+        language: nl
+        message: Dit is een vriendelijke herinnering dat Marthe haar vitaminen vandaag nog niet heeft gekregen.
+    - service: notify.all_iphones
+      data:
+        title: "Vitamines Marthe"
+        message: "Medicatie: Marthe moet haar vitamines nog krijgen. 💊🧸"
+
+- alias: "Medication: Tom medication reminder"
+  mode: single
+  trigger:
+    - platform: time
+      at: '12:10:00'
+  condition:
+    - condition: state
+      entity_id: input_boolean.marthe_vitamins
+      state: 'off'
+  action:
+    - service: media_player.volume_set
+      data:
+        volume_level: 0.6
+      target:
+        entity_id:
+          - media_player.kitchen_display
+    - service: tts.google_translate_say
+      data:
+        entity_id: media_player.kitchen_display
+        language: nl
+        message: Dit is een vriendelijke herinnering dat Tom zijn medicatie vandaag nog niet heeft genomen.
+    - service: notify.mobile_app_bizzyphone
+      data:
+        title: "Medicatie"
+        message: "Medicatie: je moet je medicatie nog nemen. 💊"
+
+- alias: "Medication: reset input_boolean Marthe vitamins at midnight"
+  trigger:
+    platform: time
+    at: "00:00"
+  condition:
+    condition: state
+    entity_id: input_boolean.marthe_vitamins
+    state: "on"
+  action:
+    service: input_boolean.turn_off
+    entity_id: input_boolean.marthe_vitamins
+
+- alias: "Medication: reset input_boolean Tom medication at midnight"
+  trigger:
+    platform: time
+    at: "00:00"
+  condition:
+    condition: state
+    entity_id: input_boolean.tom_medication
+    state: "on"
+  action:
+    service: input_boolean.turn_off
+    entity_id: input_boolean.tom_medication
