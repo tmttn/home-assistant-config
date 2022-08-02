@@ -117,6 +117,31 @@
               entity_id: light.bathroom_lights
               transition: 1
 
+- alias: "Control switches: guest bedroom Aqara Wireless Mini Switch 2"
+  mode: parallel
+  trigger:
+    platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_guest_bedroom_2
+  action:
+    choose:
+      # Toggle bedside light
+      - conditions: "{{ trigger.event.data.event == 1002 }}" # Single click
+        sequence:
+          - service: light.toggle
+            data:
+              entity_id: light.guest_bedroom_lights
+              transition: 1
+      # Sleep mode
+      - conditions: "{{ trigger.event.data.event == 1001 }}" # Long click
+        sequence:
+          - service: input_select.select_option
+            entity_id: input_select.sleep_mode
+            data:
+              option: "total"
+          - service: script.turn_off_everything_non_automatic
+
 - alias: "Control switches: guest bedroom Aqara Wireless Mini Switch"
   mode: parallel
   trigger:
