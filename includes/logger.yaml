@@ -14,8 +14,8 @@ logs:
   # homeassistant.components.tplink: debug
   # pyotgw: warning
   # custom_components.derivative_custom: debug
-  # custom_components.pyscript: debug
+  custom_components.pyscript: debug
   # custom_components.circadian_lighting: debug
-  # custom_components.adaptive_lighting: debug
+  custom_components.adaptive_lighting: debug
   homeassistant.components.camera: critical
-  # homeassistant.components.shell_command: debug
+  homeassistant.components.shell_command: debug
