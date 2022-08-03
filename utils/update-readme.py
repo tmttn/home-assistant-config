@@ -199,6 +199,7 @@ def get_emoji(title):
         "Curtains": "🪟🪟",
         "Solar": "☀️",
         "Medication": "💊"
+        "Candy": "🍬🍭🍫",
     }[title]
 
 
