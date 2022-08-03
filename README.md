@@ -1071,13 +1071,13 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/ad90ce62fe11be596f9870ceac1116c57328851c/automations/plant.yaml)
-### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/ad90ce62fe11be596f9870ceac1116c57328851c/automations/plant.yaml#L11)
+## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/7c527bf1ccf86001cbab3d6bcf9edc4aeadf36bd/automations/plant.yaml)
+### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/7c527bf1ccf86001cbab3d6bcf9edc4aeadf36bd/automations/plant.yaml#L11)
 
   *which uses:*
   - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L19)
 
-### [Problem with Peperomia Glabella](https://github.com/tmttn/home-assistant-config/blob/ad90ce62fe11be596f9870ceac1116c57328851c/automations/plant.yaml#L33)
+### [Problem with Peperomia Glabella](https://github.com/tmttn/home-assistant-config/blob/7c527bf1ccf86001cbab3d6bcf9edc4aeadf36bd/automations/plant.yaml#L33)
 
   *which uses:*
   - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L19)
@@ -1306,19 +1306,19 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Work 💼](https://github.com/tmttn/home-assistant-config/blob/a2dd2ab7acd889c8a0d251b9b111eca40da482b1/automations/work.yaml)
-### [Go home notification](https://github.com/tmttn/home-assistant-config/blob/a2dd2ab7acd889c8a0d251b9b111eca40da482b1/automations/work.yaml#L11)
+## [Work 💼](https://github.com/tmttn/home-assistant-config/blob/dc6940a99e6589136597de69bb65675a8657cb8b/automations/work.yaml)
+### [Go home notification](https://github.com/tmttn/home-assistant-config/blob/dc6940a99e6589136597de69bb65675a8657cb8b/automations/work.yaml#L11)
 
   *which uses:*
   - [input_boolean.work_hour_notification_sent](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L47)
   - [binary_sensor.worked_enough_today](https://github.com/tmttn/home-assistant-config/blob/45650481639659ef83972816e94df19acf638395/includes/binary_sensors.yaml#L173)
 
-### [Reset input_boolean at midnight](https://github.com/tmttn/home-assistant-config/blob/a2dd2ab7acd889c8a0d251b9b111eca40da482b1/automations/work.yaml#L32)
+### [Reset input_boolean at midnight](https://github.com/tmttn/home-assistant-config/blob/dc6940a99e6589136597de69bb65675a8657cb8b/automations/work.yaml#L32)
 
   *which uses:*
   - [input_boolean.work_hour_notification_sent](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L47)
 
-### [Tom left work notification for Tanja](https://github.com/tmttn/home-assistant-config/blob/a2dd2ab7acd889c8a0d251b9b111eca40da482b1/automations/work.yaml#L44)
+### [Tom left work notification for Tanja](https://github.com/tmttn/home-assistant-config/blob/dc6940a99e6589136597de69bb65675a8657cb8b/automations/work.yaml#L44)
 
 
 [^ toc](#automations---table-of-content)
