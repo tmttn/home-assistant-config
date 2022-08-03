@@ -9,7 +9,9 @@
 #- from github.com/tmttn/home-assistant-config
 
 python3 utils/commit-updates.py
+echo "I did it mom!"
 pip3 -q install pyfiglet
+echo "I didn't do it mom"
 python3 utils/ascii_art.py
 python3 utils/update-readme.py
 ./utils/commit-readme.sh
