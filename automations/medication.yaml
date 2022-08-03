@@ -34,7 +34,7 @@
           data:
             entity_id: media_player.kitchen_display
             language: nl
-            message: Stop! Marthe heeft haar vitamines al kregen vandaag.
+            message: Stop! Marthe heeft haar vitamines al gekregen vandaag.
 
 - alias: "Medication: Tom medication button pressed"
   mode: single
