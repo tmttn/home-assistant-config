@@ -13,3 +13,4 @@ pip3 -q install pyfiglet || true
 python3 utils/ascii_art.py || true
 python3 utils/update-readme.py || true
 ./utils/commit-readme.sh
+git push
