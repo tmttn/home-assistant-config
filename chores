@@ -8,6 +8,8 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
+git config --global user.name "Thomas Metten"
+git config --global user.email "thomas.metten@gmail.com"
 python3 utils/commit-updates.py
 pip3 -q install pyfiglet
 python3 utils/ascii_art.py
