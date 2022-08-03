@@ -56,6 +56,9 @@ marthe_vitamins:
 tom_medication:
   name: Tom has taken his medication
   icon: mdi:pill
+marthe_candy:
+  name: Marthe got candy today
+  icon: mdi:candycane
 
 # Apps
 wake_up_light:
