@@ -18,11 +18,9 @@
   condition: "{{ trigger.event.data.event == 1002 }}" #Single click
   action:
     - service: media_player.volume_set
+      entity_id: media_player.kitchen_display
       data:
         volume_level: 0.6
-      target:
-        entity_id:
-          - media_player.kitchen_display
     - choose:
         - conditions:
             - condition: state
@@ -54,6 +52,10 @@
       id: smart_switch_kitchen_meds_tom
   condition: "{{ trigger.event.data.event == 1004 }}" #Double click
   action:
+    - service: media_player.volume_set
+      entity_id: media_player.kitchen_display
+      data:
+        volume_level: 0.6
     - choose:
         - conditions:
             - condition: state
@@ -87,11 +89,9 @@
       state: 'off'
   action:
     - service: media_player.volume_set
+      entity_id: media_player.kitchen_display
       data:
         volume_level: 0.6
-      target:
-        entity_id:
-          - media_player.kitchen_display
     - service: tts.google_translate_say
       data:
         entity_id: media_player.kitchen_display
@@ -113,11 +113,9 @@
       state: 'off'
   action:
     - service: media_player.volume_set
+      entity_id: media_player.kitchen_display
       data:
         volume_level: 0.6
-      target:
-        entity_id:
-          - media_player.kitchen_display
     - service: tts.google_translate_say
       data:
         entity_id: media_player.kitchen_display
