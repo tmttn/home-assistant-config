@@ -585,7 +585,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Plant 🌱](#plant-) (2 automations)
 1. [Security 👮🚨](#security-) (4 automations)
 1. [Night mode 🌕🌑](#night-mode-) (6 automations)
-1. [Solar ☀️](#solar-) (2 automations)
+1. [Solar ☀️](#solar-) (1 automations)
 1. [System 🖥](#system-) (4 automations)
 1. [Utilities 🧺👚🍽](#utilities-) (6 automations)
 1. [Vacation mode 🏝](#vacation-mode-) (2 automations)
@@ -593,7 +593,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **114** ⚠️
+⚠️ Total number of automations: **113** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/0eca6d6f767e0e252bfdaab3b4a422d3ae8a3019/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/0eca6d6f767e0e252bfdaab3b4a422d3ae8a3019/automations/adaptive_lighting.yaml#L11)
@@ -1157,14 +1157,11 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/solar.yaml)
-### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/solar.yaml#L11)
+## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/371911bc917293d1ee36d5b74c12863a69941b8c/automations/solar.yaml)
+### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/371911bc917293d1ee36d5b74c12863a69941b8c/automations/solar.yaml#L11)
 
   *which uses:*
   - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L19)
-
-### [Turn grid export warning automation on again](https://github.com/tmttn/home-assistant-config/blob/ee4582493f4933498307e87a6986034898825538/automations/solar.yaml#L28)
-
 
 [^ toc](#automations---table-of-content)
 
