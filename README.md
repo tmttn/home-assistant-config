@@ -1022,33 +1022,33 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Medication 💊](https://github.com/tmttn/home-assistant-config/blob/25fc745f0fc285059d504a6b3e07790130983bce/automations/medication.yaml)
-### [Marthe vitamin button pressed](https://github.com/tmttn/home-assistant-config/blob/25fc745f0fc285059d504a6b3e07790130983bce/automations/medication.yaml#L11)
+## [Medication 💊](https://github.com/tmttn/home-assistant-config/blob/40a05694f040955b648699e61ecd312cc3805615/automations/medication.yaml)
+### [Marthe vitamin button pressed](https://github.com/tmttn/home-assistant-config/blob/40a05694f040955b648699e61ecd312cc3805615/automations/medication.yaml#L11)
 
   *which uses:*
   - [input_boolean.marthe_vitamins](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L53)
 
-### [Tom medication button pressed](https://github.com/tmttn/home-assistant-config/blob/25fc745f0fc285059d504a6b3e07790130983bce/automations/medication.yaml#L48)
+### [Tom medication button pressed](https://github.com/tmttn/home-assistant-config/blob/40a05694f040955b648699e61ecd312cc3805615/automations/medication.yaml#L46)
 
   *which uses:*
   - [input_boolean.tom_medication](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L56)
 
-### [Marthe vitamin reminder](https://github.com/tmttn/home-assistant-config/blob/25fc745f0fc285059d504a6b3e07790130983bce/automations/medication.yaml#L79)
+### [Marthe vitamin reminder](https://github.com/tmttn/home-assistant-config/blob/40a05694f040955b648699e61ecd312cc3805615/automations/medication.yaml#L81)
 
   *which uses:*
   - [input_boolean.marthe_vitamins](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L53)
 
-### [Tom medication reminder](https://github.com/tmttn/home-assistant-config/blob/25fc745f0fc285059d504a6b3e07790130983bce/automations/medication.yaml#L105)
+### [Tom medication reminder](https://github.com/tmttn/home-assistant-config/blob/40a05694f040955b648699e61ecd312cc3805615/automations/medication.yaml#L105)
 
   *which uses:*
   - [input_boolean.marthe_vitamins](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L53)
 
-### [Reset input_boolean Marthe vitamins at midnight](https://github.com/tmttn/home-assistant-config/blob/25fc745f0fc285059d504a6b3e07790130983bce/automations/medication.yaml#L131)
+### [Reset input_boolean Marthe vitamins at midnight](https://github.com/tmttn/home-assistant-config/blob/40a05694f040955b648699e61ecd312cc3805615/automations/medication.yaml#L129)
 
   *which uses:*
   - [input_boolean.marthe_vitamins](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L53)
 
-### [Reset input_boolean Tom medication at midnight](https://github.com/tmttn/home-assistant-config/blob/25fc745f0fc285059d504a6b3e07790130983bce/automations/medication.yaml#L143)
+### [Reset input_boolean Tom medication at midnight](https://github.com/tmttn/home-assistant-config/blob/40a05694f040955b648699e61ecd312cc3805615/automations/medication.yaml#L141)
 
   *which uses:*
   - [input_boolean.tom_medication](https://github.com/tmttn/home-assistant-config/blob/983f212dc4df0c62e06ea207ec45306441714167/includes/input_booleans.yaml#L56)
