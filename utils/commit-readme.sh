@@ -9,5 +9,4 @@
 if [[ `git status --porcelain` ]]; then
   git commit -m "update automatically generated part of README.md ✏️" README.md
   git commit -am "update automatically generated ascii art 🎨"
-  git push
 fi
