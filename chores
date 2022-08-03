@@ -8,12 +8,8 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
-eval "$(ssh-agent -s)"
-ssh-add .ssh/id_rsa_homeassistant
-python3 utils/commit-updates.py
-echo "I did it mom!"
-pip3 -q install pyfiglet
-echo "I didn't do it mom"
-python3 utils/ascii_art.py
-python3 utils/update-readme.py
+python3 utils/commit-updates.py || true
+pip3 -q install pyfiglet || true
+python3 utils/ascii_art.py || true
+python3 utils/update-readme.py || true
 ./utils/commit-readme.sh
