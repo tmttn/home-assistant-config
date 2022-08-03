@@ -8,9 +8,8 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
-python3 utils/commit-updates.py || true
-pip3 -q install pyfiglet || true
-python3 utils/ascii_art.py || true
-python3 utils/update-readme.py || true
-./utils/commit-readme.sh || true
-git push
+python3 utils/commit-updates.py
+pip3 -q install pyfiglet
+python3 utils/ascii_art.py
+python3 utils/update-readme.py
+./utils/commit-readme.sh
