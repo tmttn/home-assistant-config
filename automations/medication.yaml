@@ -109,7 +109,7 @@
       at: '12:10:00'
   condition:
     - condition: state
-      entity_id: input_boolean.marthe_vitamins
+      entity_id: input_boolean.tom_medication
       state: 'off'
   action:
     - service: media_player.volume_set
