@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Alarm clock: wake up"
+  id: "alarm-clock_wake-up"
   trigger:
     platform: template
     value_template: >

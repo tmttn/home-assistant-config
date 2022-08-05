@@ -10,6 +10,7 @@
 #- from github.com/tmttn/home-assistant-config
 
 - alias: "Leaving: automatically turn off everything"
+  id: "leaving_automatically-turn-off-everything"
   initial_state: true
   trigger:
     - platform: state
@@ -38,6 +39,7 @@
         message: "Everything automatically turned off!"
 
 - alias: "Leaving: ask to turn off everything"
+  id: "leaving_ask-to-turn-off-everything"
   initial_state: true
   trigger:
     - platform: state
@@ -72,6 +74,7 @@
               destructive: true
 
 - alias: "Leaving: turn off everything after notification"
+  id: "leaving_turn-off-everything-after-notification"
   trigger:
     platform: event
     event_type: mobile_app_notification_action

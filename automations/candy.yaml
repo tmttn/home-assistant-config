@@ -1,5 +1,6 @@
 ---
 - alias: "Candy: Marthe candy button pressed"
+  id: "candy_marthe-candy-button-pressed"
   mode: single
   trigger:
     platform: event
@@ -35,6 +36,7 @@
             message: Stop! Jij hebt al een snoepje gekregen. Geen snoepjes meer vandaag, anders krijg je rotte tandjes.
 
 - alias: "Candy: reset input_boolean Marthe candy at midnight"
+  id: "candy_marthe-candy-reset-at-midnight"
   trigger:
     platform: time
     at: "00:00"

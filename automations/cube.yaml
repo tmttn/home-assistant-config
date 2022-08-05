@@ -10,6 +10,7 @@
 #- from github.com/tmttn/home-assistant-config
 
 - alias: "Cube: perform operation"
+  id: "cube_perform-operation"
   mode: parallel
   trigger:
     platform: event
@@ -75,6 +76,7 @@
             entity_id: media_player.google_home
 
 - alias: "Cube: rotate the cube"
+  id: "cube_rotate-cube"
   trigger:
     platform: event
     event_type: deconz_event
