@@ -115,5 +115,4 @@
 
 - platform: switch
   name: Hue plug
-  unique_id: hue_plug
   entity_id: switch.hue_plug
