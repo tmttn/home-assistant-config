@@ -10,6 +10,7 @@
 #- from github.com/tmttn/home-assistant-config
 
 - alias: "Control switches: living room Philips Hue dimmer switch"
+  id: "control-switches_living-room-philips-hue-dimmer-switch"
   mode: parallel
   trigger:
     platform: event
@@ -57,6 +58,7 @@
             group: light.living_room_lights
 
 - alias: "Control switches: back door Aqara Wireless Mini Switch"
+  id: "control-switches_back-door-aqara-wireless-mini-switch"
   mode: parallel
   trigger:
     platform: event
@@ -86,6 +88,7 @@
               entity_id: media_player.google_home
 
 - alias: "Control switches: bedroom wall switch"
+  id: "control-switches_bedroom-wall-switch"
   mode: parallel
   trigger:
     platform: event
@@ -102,6 +105,7 @@
               transition: 1
 
 - alias: "Control switches: bathroom wall switch"
+  id: "control-switches_bathroom-wall-switch"
   mode: parallel
   trigger:
     platform: event
@@ -118,6 +122,7 @@
               transition: 1
 
 - alias: "Control switches: guest bedroom Aqara Wireless Mini Switch 2"
+  id: "control-switches_guest-bedroom-aqara-wireless-mini-switch-2"
   mode: parallel
   trigger:
     platform: event
@@ -143,6 +148,7 @@
           - service: script.turn_off_everything_non_automatic
 
 - alias: "Control switches: guest bedroom Aqara Wireless Mini Switch"
+  id: "control-switches_guest-bedroom-aqara-wireless-mini-switch"
   mode: parallel
   trigger:
     platform: event

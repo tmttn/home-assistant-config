@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Adaptive lighting: turn on and off switches"
+  id: "adaptive-lighting_turn-on-and-off-switches"
   trigger:
     - platform: state
       entity_id: input_select.sleep_mode
@@ -58,6 +59,7 @@
               - switch.adaptive_lighting_sleep_mode_default
 
 - alias: "Adaptive lighting: reset manual_control after 1 hour"
+  id: "adaptive-lighting_reset-manual-control-after-1-hour"
   mode: parallel
   max: 200
   trigger:
@@ -82,6 +84,7 @@
         message: "{{ light }} is reset to not 'manually controlled'"
 
 - alias: "Adaptive lighting: notify manual_control"
+  id: "adaptive-lighting_notify-manual_control"
   mode: parallel
   max: 20
   trigger:

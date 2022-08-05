@@ -11,6 +11,7 @@
 
 
 - alias: "Utilities: turn on espresso machine 10 minutes before waking up"
+  id: "utilities_turn-on-espresso-machine-10-minutes-before-waking-up"
   trigger:
     platform: template
     value_template: >
@@ -27,6 +28,7 @@
     entity_id: switch.espresso_machine
 
 - alias: "Utilities: washing machine, dishwasher,tumble dryer or espresso machine started or finished"
+  id: "utilities_washing-machine-dishwasher-tumble-dryer-or-espresso-machine-started-or-finished"
   trigger:
     - platform: state
       entity_id: binary_sensor.dishwasher
@@ -48,6 +50,7 @@
       timestamp: "{{ now().timestamp() }}"
 
 - alias: "Utilities: washing machine notification"
+  id: "utilities_washing-machine-notification"
   trigger:
     platform: state
     entity_id: binary_sensor.washing_machine
@@ -60,6 +63,7 @@
       emojis: "👚👕"
 
 - alias: "Utilities: dishwasher notification"
+  id: "utilities_dishwasher-notification"
   trigger:
     platform: state
     entity_id: binary_sensor.dishwasher
@@ -72,6 +76,7 @@
       emojis: "🍽🍳"
 
 - alias: "Utilities: tumble dryer notification"
+  id: "utilities_tumble-dryer-notification"
   trigger:
     platform: state
     entity_id: binary_sensor.tumble_dryer
@@ -84,6 +89,7 @@
       emojis: "🧺💦"
 
 - alias: "Utilities: espresso machine notification"
+  id: "utilities_espresso-machine-notification"
   trigger:
     platform: state
     entity_id: binary_sensor.espresso_machine

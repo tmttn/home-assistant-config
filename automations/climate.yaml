@@ -10,6 +10,7 @@
 #- from github.com/tmttn/home-assistant-config
 
 - alias: "Climate: turn on the bathroom heating in the early morning"
+  id: "climate_turn-on-bathroom-heating-in-the-early-morning"
   trigger:
     platform: time
     at: "05:30"
@@ -29,6 +30,7 @@
         message: "Automatically turned on the bathroom heating 🛁🥵℃"
 
 - alias: "Climate: turn off the bathroom heating in the morning"
+  id: "climate_turn-off-bathroom-heating-in-the-morning"
   trigger:
     platform: time
     at: "11:00"
@@ -47,6 +49,7 @@
         message: "Turned off the bathroom heating 🛁🥶"
 
 - alias: "Climate: turn on the heating 30 min before waking up"
+  id: "climate_turn-on-heating-30-min-before-waking-up"
   trigger:
     platform: template
     value_template: >
@@ -65,6 +68,7 @@
         message: "Automatically turned on the heating 🥵℃"
 
 - alias: "Climate: increase the heating for the afternoon"
+  id: "climate_increase-the-heating-for-the-afternoon"
   trigger:
     platform: time
     at: "11:00"
@@ -80,6 +84,7 @@
     - service: script.set_high_temperature
 
 - alias: "Climate: turn on the heating when going home"
+  id: "climate_turn-on-heating-when-going-home"
   trigger:
     platform: numeric_state
     entity_id: proximity.home
@@ -105,6 +110,7 @@
         message: "Automatically turned on the heating 🥵℃"
 
 - alias: "Climate: turn off the heating at 23:00"
+  id: "climate_turn-off-heating-at-23-00"
   trigger:
     platform: time
     at: "23:00"
@@ -138,6 +144,7 @@
     - service: script.set_high_temperature
 
 - alias: "Climate: warning when heating on and back door open"
+  id: "climate_warning-when-heating-on-and-back-door-open"
   trigger:
     platform: state
     entity_id: binary_sensor.openclose_back_door
@@ -182,6 +189,7 @@
           {{ states("input_number.temperature_low") }}
 
 - alias: "Climate: warning when heating on and living room door open"
+  id: "climate_warning-when-heating-on-and-living-room-door-open"
   trigger:
     platform: state
     entity_id: binary_sensor.openclose_living_room_door
@@ -226,6 +234,7 @@
           {{ states("input_number.temperature_low") }}
 
 - alias: "Climate: warning when heating on and storage door open"
+  id: "climate_warning-when-heating-on-and-storage-door-open"
   trigger:
     platform: state
     entity_id: binary_sensor.openclose_storage_door
