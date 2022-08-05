@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Doorbell: the doorbell has been pressed"
+  id: "doorbell_the-doorbell-has-been-pressed"
   trigger:
     platform: state
     entity_id: binary_sensor.doorbell_ding

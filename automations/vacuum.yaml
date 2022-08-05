@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Vacuum: started cleaning"
+  id: "vacuum_started-cleaning"
   trigger:
     platform: state
     entity_id: vacuum.robot_vacuum
@@ -21,6 +22,7 @@
       message: "Robot started to clean!"
 
 - alias: "Vacuum: stopped cleaning"
+  id: "vacuum_stopped-cleaning"
   trigger:
     platform: state
     entity_id: vacuum.robot_vacuum
@@ -37,6 +39,7 @@
       entity_id: counter.vacuum_bin_counter
 
 - alias: "Vacuum: reminder notification"
+  id: "vacuum_reminder-notification"
   trigger:
     platform: time
     at: "07:00"
@@ -51,6 +54,7 @@
       message: "Vacuum will go today, make sure to leave the doors open and leave nothing on the floor!"
 
 - alias: "Vacuum: cleanup if nobody is home"
+  id: "vacuum_cleanup-if-nobody-is-home"
   trigger:
     - platform: time
       at: "08:30"
@@ -106,6 +110,7 @@
       fan_speed: Standard
 
 - alias: "Vacuum: bin is full"
+  id: "vacuum_bin-is-full"
   trigger:
     - platform: state
       entity_id: counter.vacuum_bin_counter
@@ -123,6 +128,7 @@
         message: Het stofbakje van Brenda is vol. Maak het stofbakje leeg alstublieft.
 
 - alias: "Vacuum: water reservoir empty"
+  id: "vacuum_water-reservoir-empty"
   trigger:
     - platform: state
       entity_id: binary_sensor.vacuum_water_shortage
@@ -169,6 +175,7 @@
       entity_id: vacuum.robot_vacuum
 
 - alias: "Vacuum: sensors need cleaning"
+  id: "vacuum_sensors-need-cleaning"
   trigger:
     platform: state
     entity_id: vacuum.robot_vacuum
@@ -185,6 +192,7 @@
         message: "Sensors need cleaning!"
 
 - alias: "Vacuum: main brush needs replacing"
+  id: "vacuum_main-brush-needs-replacing"
   trigger:
     platform: state
     entity_id: vacuum.robot_vacuum
@@ -201,6 +209,7 @@
         message: "Main brush needs replacing!"
 
 - alias: "Vacuum: side brush needs replacing"
+  id: "vacuum_side-brush-needs-replacing"
   trigger:
     platform: state
     entity_id: vacuum.robot_vacuum
@@ -217,6 +226,7 @@
         message: "Side brush needs replacing!"
 
 - alias: "Vacuum: air filter needs replacing"
+  id: "vacuum_air-filter-needs-replacing"
   trigger:
     platform: state
     entity_id: vacuum.robot_vacuum

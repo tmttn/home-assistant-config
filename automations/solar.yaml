@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Solar: grid export too high"
+  id: "solar_grid-export-too-high"
   trigger:
     - platform: numeric_state
       entity_id: sensor.grid_export_last_hour

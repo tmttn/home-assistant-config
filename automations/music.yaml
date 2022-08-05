@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Music: start playlist"
+  id: "music_start-playlist"
   initial_state: true
   trigger:
     platform: state
@@ -24,6 +25,7 @@
         entity_id: media_player.google_home
 
 - alias: "Music: switch music from iPhone to speakers if coming home"
+  id: "music_switch-music-from-iphone-to-speakers-if-coming-home"
   trigger:
     platform: state
     entity_id: binary_sensor.openclose_back_door

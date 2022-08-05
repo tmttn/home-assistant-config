@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "System: warning about high CPU usage"
+  id: "system_warning-about-high-cpu-usage"
   trigger:
     platform: numeric_state
     entity_id: sensor.processor_use
@@ -22,6 +23,7 @@
       message: "CPU usage has been above 70% for 4 hours! ⚠️🖥"
 
 - alias: "System: update DNS"
+  id: "system_update-dns"
   description: Update the DNS at Gandi to point my domain to my Home Assistant instance.
   trigger:
     platform: time_pattern # XXX: trigger on IP change
@@ -38,6 +40,7 @@
     service: shell_command.chores
 
 - alias: "System: battery level low"
+  id: "system_battery-level-low"
   trigger:
     platform: time
     at: "14:30:00"

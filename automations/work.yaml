@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Work: go home notification"
+  id: "work_go-home-notification"
   trigger:
     platform: state
     entity_id: binary_sensor.worked_enough_today
@@ -30,6 +31,7 @@
       entity_id: input_boolean.work_hour_notification_sent
 
 - alias: "Work: reset input_boolean at midnight"
+  id: "work_reset-input-boolean-at-midnight"
   trigger:
     platform: time
     at: "00:00"
@@ -42,6 +44,7 @@
     entity_id: input_boolean.work_hour_notification_sent
 
 - alias: "Work: Tom left work notification for Tanja"
+  id: "work_tom-left-work-notification-for-tanja"
   trigger:
     platform: state
     entity_id: person.tom

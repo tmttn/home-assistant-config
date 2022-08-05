@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Plant: problem with Calathea Medaillon"
+  id: "plant_problem-with-calathea-medallion"
   trigger:
     - platform: state
       entity_id: plant.calathea_medaillon
@@ -31,6 +32,7 @@
         You need to give the Calathea Medaillon 🪴 attention and love: {{ state_attr("plant.calathea_medaillon", "problem") }}!
 
 - alias: "Plant: problem with Peperomia Glabella"
+  id: "plant_problem-with-peperomia-glabella"
   trigger:
     - platform: state
       entity_id: plant.peperomia_glabella
