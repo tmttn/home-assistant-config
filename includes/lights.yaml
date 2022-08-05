@@ -11,33 +11,39 @@
 
 - platform: group
   name: Bedroom ceiling lights
+  unique_id: bedroom_ceiling_lights
   entities:
     - light.bedroom_1
     - light.bedroom_2
 
 - platform: group
   name: Bedroom lights
+  unique_id: bedroom_lights
   entities:
     - light.bedroom_ceiling_lights
     - light.bedroom_bedside_tom
 
 - platform: group
   name: Bed reading
+  unique_id: bed_reading
   entities:
     - light.bedroom_bedside_tom
 
 - platform: group
   name: Guest bedroom lights
+  unique_id: guest_bedroom_lights
   entities:
     - light.guest_bedroom_bedside
 
 - platform: group
   name: Guest bedroom bed reading
+  unique_id: guest_bedroom_bed_reading
   entities:
     - light.guest_bedroom_bedside
 
 - platform: group
   name: Automatic lights
+  unique_id: automatic_lights
   entities:
     - light.kitchen_lights
     - light.toilet
@@ -45,6 +51,7 @@
 
 - platform: group
   name: Kitchen lights
+  unique_id: kitchen_lights
   entities:
     - light.kitchen_1
     - light.kitchen_2
@@ -52,6 +59,7 @@
 
 - platform: group
   name: Living room dining table lights
+  unique_id: living_room_dining_table_lights
   entities:
     - light.dining_table_1
     - light.dining_table_2
@@ -60,6 +68,7 @@
 
 - platform: group
   name: Living room middle lights
+  unique_id: living_room_middle_lights
   entities:
     - light.living_room_middle_1
     - light.living_room_middle_2
@@ -68,6 +77,7 @@
 
 - platform: group
   name: Living room lights
+  unique_id: living_room_lights
   entities:
     - light.living_room_dining_table_lights
     - light.living_room_middle_lights
@@ -76,6 +86,7 @@
 
 - platform: group
   name: Bathroom lights
+  unique_id: bathroom_lights
   entities:
     - light.bathroom_1
     - light.bathroom_2
@@ -84,16 +95,19 @@
 
 - platform: group
   name: Bed reading
+  unique_id: bed_reading
   entities:
     - light.bedroom_bedside_tom
 
 - platform: group
   name: Outside lights
+  unique_id: outside_lights
   entities:
     - light.terrace_lights
 
 - platform: group
   name: Terrace lights
+  unique_id: terrace_lights
   entities:
     - light.terrace_corner
     - light.terrace_wall
@@ -101,4 +115,5 @@
 
 - platform: switch
   name: Hue plug
+  unique_id: hue_plug
   entity_id: switch.hue_plug
