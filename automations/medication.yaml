@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Medication: Marthe vitamin button pressed"
+  id: "medication_marthe-vitamin-button-pressed"
   mode: single
   trigger:
     platform: event
@@ -44,6 +45,7 @@
             message: Stop! Marthe heeft haar vitamines al gekregen vandaag.
 
 - alias: "Medication: Tom medication button pressed"
+  id: "medication_tom-medication-button-pressed"
   mode: single
   trigger:
     platform: event
@@ -79,6 +81,7 @@
             message: Stop! Je hebt je medicatie al genomen vandaag.
 
 - alias: "Medication: Marthe vitamin reminder"
+  id: "medication_marthe-vitamin-reminder"
   mode: single
   trigger:
     - platform: time
@@ -103,6 +106,7 @@
         message: "Medicatie: Marthe moet haar vitamines nog krijgen. 💊🧸"
 
 - alias: "Medication: Tom medication reminder"
+  id: "medication_tom-medication-reminder"
   mode: single
   trigger:
     - platform: time
@@ -127,6 +131,7 @@
         message: "Medicatie: je moet je medicatie nog nemen. 💊"
 
 - alias: "Medication: reset input_boolean Marthe vitamins at midnight"
+  id: "medication_marthe-vitamin-reset-at-midnight"
   trigger:
     platform: time
     at: "00:00"
@@ -139,6 +144,7 @@
     entity_id: input_boolean.marthe_vitamins
 
 - alias: "Medication: reset input_boolean Tom medication at midnight"
+  id: "medication_tom-medication-reset-at-midnight"
   trigger:
     platform: time
     at: "00:00"

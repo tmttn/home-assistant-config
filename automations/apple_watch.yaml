@@ -10,6 +10,7 @@
 #- from github.com/tmttn/home-assistant-config
 
 - alias: "Apple Watch: minimal lights bedroom"
+  id: "apple-watch_minimal-lights-bedroom"
   trigger:
     platform: event
     event_type: ios.action_fired
@@ -24,6 +25,7 @@
       color_name: red
 
 - alias: "Apple Watch: set sleep mode"
+  id: "apple-watch_set-sleep-mode"
   mode: parallel
   trigger:
     platform: event
@@ -67,6 +69,7 @@
         option: "{{ event }}"
 
 - alias: "Apple Watch: set lights"
+  id: "apple-watch_set-lights"
   mode: parallel
   trigger:
     platform: event
@@ -231,6 +234,7 @@
             service: script.cozy_lights_bedroom
 
 - alias: "Apple Watch: temperature report"
+  id: "apple-watch_temperature-report"
   mode: parallel
   trigger:
     platform: event
@@ -253,6 +257,7 @@
           Outside: {{ state_attr('weather.buienradar', 'temperature') }}°C and it's {{ states('weather.buienradar') }}
 
 - alias: "Apple Watch: send vacuum cleaner"
+  id: "apple-watch_send-vacuum-cleaner"
   mode: parallel
   trigger:
     platform: event
@@ -319,6 +324,7 @@
         option: "{{ location }}"
 
 - alias: "Apple Watch: movie time"
+  id: "apple-watch_movie-time"
   trigger:
     platform: event
     event_type: ios.action_fired
@@ -338,6 +344,7 @@
         brightness: 5
 
 - alias: "Apple Watch: reset adaptive lighting"
+  id: "apple-watch_reset-adaptive-lighting"
   trigger:
     platform: event
     event_type: ios.action_fired
@@ -414,6 +421,7 @@
         temperature: "{{ temperature }}"
 
 - alias: "Apple Watch: where is other person?"
+  id: "apple-watch_where-is-other-person"
   mode: parallel
   trigger:
     platform: event

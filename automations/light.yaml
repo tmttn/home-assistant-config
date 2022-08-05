@@ -33,6 +33,7 @@
 #                        |___/
 
 - alias: "Light: turn on living room"
+  id: "light_turn-on-living-room"
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_living_room
@@ -42,6 +43,7 @@
     entity_id: light.living_room_lights
 
 - alias: "Light: turn on cozy lights at sunset"
+  id: "light_turn-on-cozy-lights-at-sunset"
   trigger:
     platform: numeric_state
     entity_id: sun.sun
@@ -55,6 +57,7 @@
     - service: script.cozy_lights_living_room
 
 - alias: "Light: turn off living room"
+  id: "light_turn-off-living-room"
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_living_room
@@ -70,6 +73,7 @@
 # |_|\_\_|\__\___|_| |_|\___|_| |_|
 
 - alias: "Light: toggle kitchen ceiling"
+  id: "light_toggle-kitchen-ceiling"
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_kitchen
@@ -96,6 +100,7 @@
 #
 
 - alias: "Light: toggle bathroom"
+  id: "light_toggle-bathroom"
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_bathroom
@@ -113,6 +118,7 @@
 #   |_|\___/|_|_|\___|\__|
 
 - alias: "Light: toggle toilet"
+  id: "light_toggle-toilet"
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_toilet
@@ -138,6 +144,7 @@
   # | |_) |  __/ (_| | | | (_) | (_) | | | | | |
   # |____/ \___|\__,_|_|  \___/ \___/|_| |_| |_|
 - alias: "Light: automatically turn on the bedroom"
+  id: "light_automatically-turn-on-bedroom"
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_bedroom
@@ -168,6 +175,7 @@
       entity_id: input_boolean.bedroom_lights_automatically_turned_on
 
 - alias: "Light: automatically turn off the bedroom"
+  id: "light_automatically-turn-off-bedroom"
   initial_state: true
   trigger:
     platform: state
@@ -191,6 +199,7 @@
       transition: 10
 
 - alias: "Light: turn off bedroom lights auto switch"
+  id: "light_turn-off-bedroom-lights-auto-switch"
   mode: parallel
   trigger:
     - platform: state
@@ -221,6 +230,7 @@
     entity_id: input_boolean.bedroom_lights_automatically_turned_on
 
 - alias: "Light: turn on automatic_bedroom_lights switch"
+  id: "light_turn-on-automatic_bedroom_lights-switch"
   trigger:
     platform: time
     at: "12:00"
@@ -229,6 +239,7 @@
     service: input_boolean.turn_on
 
 - alias: "Light: turn off bedroom after 2 hours of inactivity"
+  id: "light_turn-off-bedroom-after-2-hours-of-inactivity"
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_bedroom
@@ -248,6 +259,7 @@
   # | |_| | |_| |  __/\__ \ |_  | |_) |  __/ (_| | | | (_) | (_) | | | | | |
   #  \____|\__,_|\___||___/\__| |_.__/ \___|\__,_|_|  \___/ \___/|_| |_| |_|
 - alias: "Light: automatically turn on the guest bedroom"
+  id: "light_automatically-turn-on-guest-bedroom"
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_guest_bedroom
@@ -278,6 +290,7 @@
       entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
 
 - alias: "Light: automatically turn off the guest bedroom"
+  id: "light_automatically-turn-off-guest-bedroom"
   initial_state: true
   trigger:
     platform: state
@@ -301,6 +314,7 @@
       transition: 10
 
 - alias: "Light: turn off guest bedroom lights auto switch"
+  id: "light_turn-off-guest-bedroom-lights-auto-switch"
   mode: parallel
   trigger:
     - platform: state
@@ -327,6 +341,7 @@
     entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
 
 - alias: "Light: turn on automatic_guest_bedroom_lights switch"
+  id: "light_turn-on-automatic_guest_bedroom_lights-switch"
   trigger:
     platform: time
     at: "12:00"
@@ -335,6 +350,7 @@
     service: input_boolean.turn_on
 
 - alias: "Light: turn off guest bedroom after 2 hours of inactivity"
+  id: "light_turn-off-guest-bedroom-after-2-hours-of-inactivity"
   trigger:
     platform: state
     entity_id: binary_sensor.activity_in_guest_bedroom
@@ -354,6 +370,7 @@
   # | |_| | |_| | |_\__ \ | (_| |  __/
   #  \___/ \__,_|\__|___/_|\__,_|\___|
 - alias: "Light: turn on outside lights"
+  id: "light_turn-on-outside-lights"
   trigger:
     - platform: numeric_state
       entity_id: sun.sun
@@ -369,6 +386,7 @@
         transition: 1
 
 - alias: "Light: turn off outside lights"
+  id: "light_turn-off-outside-lights"
   trigger:
     - platform: time
       at: "01:00:00"
@@ -383,6 +401,7 @@
         transition: 1
 
 - alias: "Light: turn on the outside lights when arriving"
+  id: "light_turn-on-outside-lights-when-arriving"
   trigger:
     platform: numeric_state
     entity_id: proximity.home
@@ -411,6 +430,7 @@
 # |_____/_/\_\\__|_|  \__,_|  \___|_| |_|\___|\___|_|\_\___/
 
 - alias: "Light: turn off toilet (extra check)"
+  id: "light_turn-off-toilet-extra-check"
   description: In case the other automation failed
   trigger:
     platform: time_pattern
@@ -427,6 +447,7 @@
     entity_id: light.toilet
 
 - alias: "Light: turn off bathroom (extra check)"
+  id: "light_turn-off-bathroom-extra-check"
   description: In case the other automation failed
   trigger:
     platform: time_pattern
@@ -443,6 +464,7 @@
     entity_id: light.bathroom_lights
 
 - alias: "Light: turn off kitchen (extra check)"
+  id: "light_turn-off-kitchen-extra-check"
   description: In case the other automation failed
   trigger:
     platform: time_pattern
@@ -459,6 +481,7 @@
     entity_id: light.kitchen_lights
 
 - alias: "Light: turn off bedroom (extra check)"
+  id: "light_turn-off-bedroom-extra-check"
   description: In case the other automation failed
   trigger:
     platform: time_pattern
@@ -480,6 +503,7 @@
       entity_id: input_boolean.bedroom_lights_automatically_turned_on
 
 - alias: "Light: turn off guest bedroom (extra check)"
+  id: "light_turn-off-guest-bedroom-extra-check"
   description: In case the other automation failed
   trigger:
     platform: time_pattern

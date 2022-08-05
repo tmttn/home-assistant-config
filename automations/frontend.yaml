@@ -9,6 +9,7 @@
 #
 #- from github.com/tmttn/home-assistant-config
 - alias: "Frontend: turn on dark mode"
+  id: "frontend_turn-on-dark-mode"
   trigger:
     - platform: time
       at: "20:00"
@@ -20,6 +21,7 @@
     service: input_boolean.turn_on
 
 - alias: "Frontend: turn on light mode"
+  id: "frontend_turn-on-light-mode"
   trigger:
     - platform: time
       at: "06:00"
@@ -31,6 +33,7 @@
     service: input_boolean.turn_off
 
 - alias: "Frontend: change theme"
+  id: "frontend_change-theme"
   trigger:
     - platform: state
       entity_id: input_select.theme
