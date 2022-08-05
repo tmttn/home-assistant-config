@@ -17,6 +17,9 @@
     - platform: numeric_state
       entity_id: sensor.bunderhome_weerstation_ws_2902c_event_rain
       above: 0
+    - platform: numeric_state
+      entity_id: sensor.bunderhome_weerstation_ws_2902c_uv_index
+      below: 2
   action:
     - service: cover.open_cover
       entity_id: cover.curtain_controller_curtain
@@ -24,8 +27,8 @@
 - alias: "Curtains: close the screens"
   trigger:
     - platform: numeric_state
-      entity_id: sensor.bunderhome_weerstation_ws_2902c_solar_rad_lx
-      above: 10000
+      entity_id: sensor.bunderhome_weerstation_ws_2902c_uv_index
+      above: 1
   condition:
     - condition: numeric_state
       entity_id: sun.sun
