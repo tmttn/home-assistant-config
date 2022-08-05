@@ -378,6 +378,7 @@
 #
 - platform: statistics
   name: Washing machine Today's Consumption
+  unique_id: washing_machine_today_consumption
   entity_id: sensor.washing_machine_today_s_consumption
   state_characteristic: total
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
@@ -386,6 +387,7 @@
 
 - platform: statistics
   name: Grid export last hour
+  unique_id: grid_export_last_hour
   entity_id: sensor.total_grid_export
   state_characteristic: change
   sampling_size: 3600 # make sure all data points of the last 24hrs are included
@@ -394,6 +396,7 @@
 
 - platform: statistics
   name: Humidity bathroom stats
+  unique_id: humidity_bathroom_stats
   entity_id: sensor.humidity_bathroom
   state_characteristic: mean
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
@@ -408,6 +411,7 @@
 
 - platform: statistics
   name: Humidity storage stats
+  unique_id: humidity_storage_stats
   entity_id: sensor.humidity_storage
   state_characteristic: mean
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
@@ -453,18 +457,21 @@
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_1_power
   name: gas_burner_consumption
+  unique_id: "gas_burner_consumption"
   unit_prefix: k
   round: 2
 
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_2_power
   name: heat_pump_boiler_consumption
+  unique_id: "heat_pump_boiler_consumption"
   unit_prefix: k
   round: 2
 
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_3_power
   name: guest_bedroom_pc_consumption
+  unique_id: "guest_bedroom_pc_consumption"
   unit_prefix: k
   round: 2
 
