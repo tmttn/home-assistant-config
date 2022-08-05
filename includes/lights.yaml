@@ -94,12 +94,6 @@
     - light.bathroom_4
 
 - platform: group
-  name: Bed reading
-  unique_id: bed_reading
-  entities:
-    - light.bedroom_bedside_tom
-
-- platform: group
   name: Outside lights
   unique_id: outside_lights
   entities:
