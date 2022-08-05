@@ -1,0 +1,44 @@
+living_room:
+  icon: mdi:sofa
+  floor: Downstairs
+  disabled: false
+kitchen:
+  icon: mdi:stove
+  floor: Downstairs
+  disabled: false
+bedroom:
+  icon: mdi:bed-king
+  floor: Upstairs
+  disabled: false
+bedroom_marthe:
+  icon: mdi:bed
+  floor: Upstairs
+  disabled: false
+guest_bedroom:
+  icon: mdi:bed-clock
+  floor: Upstairs
+  disabled: false
+storage:
+  icon: mdi:cupboard
+  floor: Downstairs
+  disabled: false
+bathroom:
+  icon: mdi:shower
+  floor: Upstairs
+  disabled: false
+hall:
+  icon: ''
+  floor: Downstairs
+  disabled: false
+outside:
+  icon: mdi:flower
+  floor: Outside
+  disabled: false
+basement:
+  icon: ''
+  floor: Basement
+  disabled: false
+toilet:
+  icon: mdi:toilet
+  floor: Downstairs
+  disabled: false
