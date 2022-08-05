@@ -90,6 +90,7 @@
     entity_id: vacuum.robot_vacuum
 
 - alias: "Vacuum: reset cleaned today"
+  id: "vacuum_reset-cleaned-today"
   initial_state: true
   trigger:
     platform: time
@@ -99,6 +100,7 @@
     entity_id: input_boolean.cleaned_today
 
 - alias: "Vacuum: reset to standard mode"
+  id: "vacuum_reset-to-standard-mode"
   trigger:
     platform: state
     entity_id: vacuum.living_room
