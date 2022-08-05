@@ -457,18 +457,21 @@
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_1_power
   name: gas_burner_consumption
+  unique_id: "gas_burner_consumption"
   unit_prefix: k
   round: 2
 
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_2_power
   name: heat_pump_boiler_consumption
+  unique_id: "heat_pump_boiler_consumption"
   unit_prefix: k
   round: 2
 
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_3_power
   name: guest_bedroom_pc_consumption
+  unique_id: "guest_bedroom_pc_consumption"
   unit_prefix: k
   round: 2
 
