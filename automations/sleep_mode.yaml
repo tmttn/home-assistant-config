@@ -39,6 +39,7 @@
     entity_id: input_boolean.automatic_bedroom_lights
 
 - alias: "Night mode: turn off automatic guest bedroom lights"
+  id: "night-mode_turn-off-automatic-guest-bedroom-lights"
   trigger:
     platform: state
     entity_id: input_select.sleep_mode
