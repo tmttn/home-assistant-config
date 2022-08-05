@@ -19,7 +19,7 @@
       above: 0
     - platform: numeric_state
       entity_id: sensor.bunderhome_weerstation_ws_2902c_uv_index
-      below: 2
+      below: 1
   action:
     - service: cover.open_cover
       entity_id: cover.curtain_controller_curtain
@@ -28,7 +28,7 @@
   trigger:
     - platform: numeric_state
       entity_id: sensor.bunderhome_weerstation_ws_2902c_uv_index
-      above: 1
+      above: 2
   condition:
     - condition: numeric_state
       entity_id: sun.sun
