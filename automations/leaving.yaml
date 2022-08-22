@@ -31,6 +31,7 @@
         - binary_sensor.someone_in_the_house_in_last_hour
         - input_boolean.guest_mode
       state: "off"
+    - "{{ not is_state_attr('proximity.home', 'dir_of_travel', 'towards') }}"
   action:
     - service: script.leaving
     - service: notify.all_iphones
