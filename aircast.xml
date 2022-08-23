@@ -19,6 +19,12 @@
 <ports>0:0</ports>
 <binding>?</binding>
 <device>
+<udn>9caaf51b1d017512b32d4c71643d6117</udn>
+<name>Logeerkamer Wifi+</name>
+<mac>cc:cc:b0:6b:94:f2</mac>
+<enabled>1</enabled>
+</device>
+<device>
 <udn>f019db20981d52c7887dc62a598439b3</udn>
 <name>Badkamer Wifi+</name>
 <mac>cc:cc:26:ac:c0:4e</mac>
