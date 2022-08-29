@@ -403,10 +403,18 @@
 - alias: "Light: turn on the outside lights when arriving"
   id: "light_turn-on-outside-lights-when-arriving"
   trigger:
-    platform: numeric_state
-    entity_id: proximity.home
-    below: 6
-    above: 1
+    - platform: numeric_state
+      entity_id: proximity.home
+      below: 6
+      above: 1
+    - platform: zone
+      entity_id: person.tom
+      zone: zone.home
+      event: enter
+    - platform: zone
+      entity_id: person.tanja
+      zone: zone.home
+      event: enter
   condition:
     - condition: template
       value_template: "{{ state_attr('sun.sun', 'elevation') < 1 }}"
