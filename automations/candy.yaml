@@ -37,6 +37,18 @@
               data: {}
               target:
                 entity_id: input_boolean.marthe_candy
+        - conditions:
+            - condition: state
+              entity_id: input_boolean.marthe_candy
+              state: "on"
+            - condition: time
+              before: "10:00:00"
+          sequence:
+            - service: tts.google_translate_say
+              data:
+                entity_id: media_player.kitchen_display
+                language: nl
+                message: Nu al een snoepje, nee dat is veel te vroeg hoor. Moet jij niet eerst ontbijten?
       default:
         - service: tts.google_translate_say
           data:
