@@ -55,7 +55,6 @@
           data: {}
           target:
             entity_id: input_boolean.marthe_candy
-        
 
 - alias: "Candy: reset input_boolean Marthe candy at midnight"
   id: "candy_marthe-candy-reset-at-midnight"
