@@ -26,17 +26,13 @@
         - conditions:
             - condition: state
               entity_id: input_boolean.marthe_candy
-              state: "off"
+              state: "on"
           sequence:
             - service: tts.google_translate_say
               data:
                 entity_id: media_player.kitchen_display
                 language: nl
-                message: Ja hoor, neem maar een snoepje Marthe. Lekker!
-            - service: input_boolean.turn_on
-              data: {}
-              target:
-                entity_id: input_boolean.marthe_candy
+                message: Stop! Jij hebt al een snoepje gekregen. Geen snoepjes meer vandaag, anders krijg je rotte tandjes.
         - conditions:
             - condition: state
               entity_id: input_boolean.marthe_candy
@@ -54,7 +50,12 @@
           data:
             entity_id: media_player.kitchen_display
             language: nl
-            message: Stop! Jij hebt al een snoepje gekregen. Geen snoepjes meer vandaag, anders krijg je rotte tandjes.
+            message: Ja hoor, neem maar een snoepje Marthe. Lekker!
+        - service: input_boolean.turn_on
+          data: {}
+          target:
+            entity_id: input_boolean.marthe_candy
+        
 
 - alias: "Candy: reset input_boolean Marthe candy at midnight"
   id: "candy_marthe-candy-reset-at-midnight"
