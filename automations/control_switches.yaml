@@ -116,7 +116,12 @@
     choose:
       - conditions: "{{ trigger.event.data.event == 1000 }}"
         sequence:
-          - service: light.toggle
+          - service: >
+              {% if is_state('light.bathroom_lights', 'on') %}
+                light.turn_off
+              {% else %}
+                light.turn_on
+              {% endif %}
             data:
               entity_id: light.bathroom_lights
               transition: 1
