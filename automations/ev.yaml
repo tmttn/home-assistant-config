@@ -57,7 +57,7 @@
     - service: automation.turn_on
       data: {}
       target:
-        entity_id: automation.electric-vehicle_update-charge-rate-every-minute
+        entity_id: automation.electric_vehicle_update_charge_rate_every_minute
   mode: single
 
 - alias: "Electric vehicle: check total solar on plugin"
@@ -82,7 +82,7 @@
     - service: automation.turn_on
       data: {}
       target:
-        entity_id: automation.electric-vehicle_update-charge-rate-every-minute
+        entity_id: automation.electric_vehicle_update_charge_rate_every_minute
   mode: single
 
 - alias: "Electric vehicle: update charge rate every minute"
@@ -138,6 +138,5 @@
     - service: automation.turn_off
       data: {}
       target:
-        entity_id:
-          - automation.electric-vehicle_update-charge-rate-every-minute
+        entity_id: automation.electric_vehicle_update_charge_rate_every_minute
   mode: single
