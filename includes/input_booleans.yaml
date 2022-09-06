@@ -59,6 +59,9 @@ tom_medication:
 marthe_candy:
   name: Marthe got candy today
   icon: mdi:candycane
+optimal_electric_vehicle_charging:
+  name: Optimal electric vehicle charging
+  icon: mdi:car-electric
 
 # Apps
 wake_up_light:

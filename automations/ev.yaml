@@ -58,6 +58,9 @@
     - condition: state
       entity_id: device_tracker.bizzylectric_location_tracker
       state: home
+    - condition: state
+      entity_id: input_boolean.optimal_electric_vehicle_charging
+      state: "on"
   action:
     - service: switch.turn_on
       data: {}
@@ -83,6 +86,9 @@
     - condition: state
       entity_id: device_tracker.bizzylectric_location_tracker
       state: home
+    - condition: state
+      entity_id: input_boolean.optimal_electric_vehicle_charging
+      state: "on"
   action:
     - service: switch.turn_on
       data: {}
@@ -107,6 +113,9 @@
     - condition: state
       entity_id: device_tracker.bizzylectric_location_tracker
       state: home
+    - condition: state
+      entity_id: input_boolean.optimal_electric_vehicle_charging
+      state: "on"
   action:
     - service: script.electric_vehicle_charging_set_amps_link_to_excess_solar
       data: {}
@@ -139,6 +148,9 @@
     - condition: numeric_state
       entity_id: sensor.bizzylectric_charging_rate_sensor
       above: "2"
+    - condition: state
+      entity_id: input_boolean.optimal_electric_vehicle_charging
+      state: "on"
   action:
     - service: switch.turn_off
       data: {}
