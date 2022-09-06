@@ -431,3 +431,32 @@ reset_adaptive_lighting:
       data:
         entity_id: switch.adaptive_lighting_living_room
         manual_control: false
+
+electric_vehicle_polling_interval_to_60:
+  alias: Electric vehicle polling interval to 60
+  sequence:
+    - service: tesla_custom.polling_interval
+      data:
+        scan_interval: 60
+  mode: single
+
+electric_vehicle_polling_interval_to_default:
+  alias: Electric vehicle polling interval to default
+  sequence:
+    - service: tesla_custom.polling_interval
+      data:
+        scan_interval: 660
+  mode: single
+
+electric_vehicle_charging_set_amps_link_to_excess_solar:
+  alias: Electric vehicle charging set amps link to excess solar
+  sequence:
+    - service: tesla_custom.api
+      data:
+        email: REDACTED
+        command: CHARGING_AMPS
+        parameters:
+          path_vars:
+            vehicle_id: "{{ state_attr('binary_sensor.bizzylectric_online_sensor', 'id') }}"
+          charging_amps: "{{ ((states('sensor.pv_power_a'))| float + (states('sensor.pv_power_b')) | float - 500 / 398.371685741| int }}"
+  mode: single

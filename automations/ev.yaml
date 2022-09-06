@@ -1,0 +1,143 @@
+---
+- alias: "Electric vehicle: polling interval to 60"
+  id: electric-vehicle_polling-interval-to-60
+  description: ""
+  trigger:
+    - platform: state
+      entity_id: switch.bizzylectric_charger_switch
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: device_tracker.bizzylectric_location_tracker
+      state: home
+  action:
+    - service: script.electric_vehicle_polling_interval_to_60
+      data: {}
+  mode: single
+
+- alias: "Electric vehicle: polling interval to default"
+  id: electric-vehicle_polling-interval-to-default
+  description: ""
+  trigger:
+    - platform: state
+      entity_id: switch.bizzylectric_charger_switch
+      to: "off"
+  condition:
+    - condition: state
+      entity_id: device_tracker.bizzylectric_location_tracker
+      state: home
+  action:
+    - service: script.electric_vehicle_polling_interval_to_default
+      data: {}
+  mode: single
+
+- alias: "Electric vehicle: start charging at total solar"
+  id: electric-vehicle_start-charging-at-total-solar
+  description: ""
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.p1_meter_active_power
+      for:
+        hours: 0
+        minutes: 0
+        seconds: 20
+      below: "-500"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.bizzylectric_charger_sensor
+      state: "on"
+    - condition: state
+      entity_id: device_tracker.bizzylectric_location_tracker
+      state: home
+  action:
+    - service: switch.turn_on
+      data: {}
+      target:
+        entity_id: switch.bizzylectric_charger_switch
+    - service: automation.turn_on
+      data: {}
+      target:
+        entity_id: automation.electric-vehicle_update-charge-rate-every-minute
+  mode: single
+
+- alias: "Electric vehicle: check total solar on plugin"
+  id: electric-vehicle_check-total-solar-on-plugin
+  description: ""
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.bizzylectric_charger_sensor
+      to: "on"
+  condition:
+    - condition: numeric_state
+      entity_id: sensor.p1_meter_active_power
+      below: "-500"
+    - condition: state
+      entity_id: device_tracker.bizzylectric_location_tracker
+      state: home
+  action:
+    - service: switch.turn_on
+      data: {}
+      target:
+        entity_id: switch.bizzylectric_charger_switch
+    - service: automation.turn_on
+      data: {}
+      target:
+        entity_id: automation.electric-vehicle_update-charge-rate-every-minute
+  mode: single
+
+- alias: "Electric vehicle: update charge rate every minute"
+  id: electric-vehicle_update-charge-rate-every-minute
+  description: ""
+  trigger:
+    - platform: time_pattern
+      minutes: /1
+  condition:
+    - condition: time
+      after: "04:00:00"
+      before: "23:00:00"
+    - condition: state
+      entity_id: device_tracker.bizzylectric_location_tracker
+      state: home
+  action:
+    - service: script.electric_vehicle_charging_set_amps_link_to_excess_solar
+      data: {}
+  mode: single
+
+- alias: "Electric vehicle: stop charging"
+  id: electric-vehicle_stop-charging
+  description: ""
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.p1_meter_active_power
+      for:
+        hours: 0
+        minutes: 1
+        seconds: 0
+      above: "5000"
+    - platform: sun
+      event: sunset
+      offset: "0"
+    - platform: numeric_state
+      entity_id: sensor.bizzylectric_range_sensor
+      above: "415"
+    - platform: state
+      entity_id: switch.bizzylectric_charger_switch
+      to: "Off"
+  condition:
+    - condition: state
+      entity_id: device_tracker.bizzylectric_location_tracker
+      state: home
+    - condition: numeric_state
+      entity_id: sensor.bizzylectric_charging_rate_sensor
+      above: "2"
+  action:
+    - service: switch.turn_off
+      data: {}
+      target:
+        entity_id: switch.bizzylectric_charger_switch
+    - service: automation.turn_off
+      data: {}
+      target:
+        entity_id:
+          - automation.electric-vehicle_update-charge-rate-every-minute
+  mode: single
