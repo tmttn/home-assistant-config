@@ -200,6 +200,7 @@ def get_emoji(title):
         "Solar": "☀️",
         "Medication": "💊"
         "Candy": "🍬🍭🍫",
+        "Electric vehicle": "🚗⚡️"
     }[title]
 
 
