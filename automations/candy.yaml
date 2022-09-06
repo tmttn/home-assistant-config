@@ -24,6 +24,18 @@
         volume_level: 0.6
     - choose:
         - conditions:
+            - condition: time
+              weekday:
+                - tue
+                - thu
+                - sat
+          sequence:
+            - service: tts.google_translate_say
+              data:
+                entity_id: media_player.kitchen_display
+                language: nl
+                message: Het is vandaag geen snoepdag. Je mag vandaag geen snoepjes.
+        - conditions:
             - condition: state
               entity_id: input_boolean.marthe_candy
               state: "on"
