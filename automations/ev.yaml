@@ -131,7 +131,7 @@
       above: "415"
     - platform: state
       entity_id: switch.bizzylectric_charger_switch
-      to: "Off"
+      to: "off"
   condition:
     - condition: state
       entity_id: device_tracker.bizzylectric_location_tracker
