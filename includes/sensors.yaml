@@ -386,15 +386,6 @@
     hours: 24
 
 - platform: statistics
-  name: Grid export last hour
-  unique_id: grid_export_last_hour
-  entity_id: sensor.total_grid_export
-  state_characteristic: change
-  sampling_size: 3600 # make sure all data points of the last 24hrs are included
-  max_age:
-    hours: 1
-
-- platform: statistics
   name: Humidity bathroom stats
   unique_id: humidity_bathroom_stats
   entity_id: sensor.humidity_bathroom

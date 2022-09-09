@@ -12,8 +12,12 @@
   id: "solar_grid-export-too-high"
   trigger:
     - platform: numeric_state
-      entity_id: sensor.grid_export_last_hour
-      above: 0.7
+      entity_id: sensor.p1_meter_active_power
+      for:
+        hours: 0
+        minutes: 5
+        seconds: 0
+      below: "-700"
   condition:
     - condition: state
       entity_id: input_boolean.vacation_mode
