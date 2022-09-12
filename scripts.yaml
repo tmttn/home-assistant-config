@@ -453,7 +453,7 @@ electric_vehicle_charging_set_amps_link_to_excess_solar:
   sequence:
     - service: tesla_custom.api
       data:
-        email: REDACTED
+        email: !secret tesla_email
         command: CHARGING_AMPS
         parameters:
           path_vars:
