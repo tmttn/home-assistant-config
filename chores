@@ -11,7 +11,7 @@
 git config --global user.name "Thomas Metten"
 git config --global user.email "thomas.metten@gmail.com"
 python3 utils/commit-updates.py
-pip3 -q install pyfiglet
+pip3 -q install --root-user-action=ignore pyfiglet
 python3 utils/ascii_art.py
 python3 utils/update-readme.py
 ./utils/commit-readme.sh
