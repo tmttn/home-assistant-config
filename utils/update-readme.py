@@ -198,7 +198,7 @@ def get_emoji(title):
         "Work": "💼",
         "Curtains": "🪟🪟",
         "Solar": "☀️",
-        "Medication": "💊"
+        "Medication": "💊",
         "Candy": "🍬🍭🍫",
         "Electric vehicle": "🚗⚡️"
     }[title]
