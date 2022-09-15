@@ -100,3 +100,16 @@
     data:
       name: "espresso_machine"
       emojis: "☕️🥤"
+
+- alias: "Utilities: toggle espresso machine on/off"
+  id: "utilities_toggle-espresso-machine-on-off"
+  mode: single
+  trigger:
+    platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_kitchen_meds_tom
+  condition: "{{ trigger.event.data.event == 1001 }}" #Long click
+  action:
+    service: switch.toggle
+    entity_id: switch.espresso_machine
