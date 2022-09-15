@@ -226,25 +226,6 @@ next_colors:
         entity_id: "{{ input_select }}"
     - service: "{{ states(input_select) }}"
 
-set_low_temperature_bathroom:
-  alias: Set low temperature bathroom
-  sequence:
-    - service: evohome.set_zone_override
-      data:
-        entity_id: climate.bathroom
-        setpoint: >
-          {{ states("input_number.temperature_low") }}
-
-set_moderate_temperature_bathroom:
-  alias: Set moderate temperature bathroom
-  sequence:
-    - service: evohome.set_zone_override
-
-      data:
-        entity_id: climate.bathroom
-        setpoint: >
-          {{ states("input_number.temperature_moderate") }}
-
 set_low_temperature:
   alias: Set low temperature
   sequence:
