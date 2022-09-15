@@ -8,46 +8,6 @@
 #
 #
 #- from github.com/tmttn/home-assistant-config
-
-- alias: "Climate: turn on the bathroom heating in the early morning"
-  id: "climate_turn-on-bathroom-heating-in-the-early-morning"
-  trigger:
-    platform: time
-    at: "05:30"
-  condition:
-    - condition: state
-      entity_id: input_boolean.automatic_temperature
-      state: "on"
-    - condition: state
-      entity_id: binary_sensor.no_one_home
-      state: "off"
-    - "{{ not is_state_attr('climate.bathroom', 'temperature', states('input_number.temperature_moderate')|float(default=0)) }}"
-  action:
-    - service: script.set_moderate_temperature_bathroom
-    - service: notify.all_iphones
-      data:
-        title: "Climate"
-        message: "Automatically turned on the bathroom heating 🛁🥵℃"
-
-- alias: "Climate: turn off the bathroom heating in the morning"
-  id: "climate_turn-off-bathroom-heating-in-the-morning"
-  trigger:
-    platform: time
-    at: "11:00"
-  condition:
-    - condition: state
-      entity_id: input_boolean.automatic_temperature
-      state: "on"
-    - condition: state
-      entity_id: binary_sensor.no_one_home
-      state: "off"
-    - "{{ not is_state_attr('climate.bathroom', 'temperature', states('input_number.temperature_low')|float(default=0)) }}"
-  action:
-    - service: script.set_low_temperature_bathroom
-    - service: notify.all_iphones
-      data:
-        message: "Turned off the bathroom heating 🛁🥶"
-
 - alias: "Climate: turn on the heating 30 min before waking up"
   id: "climate_turn-on-heating-30-min-before-waking-up"
   trigger:
