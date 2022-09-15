@@ -572,7 +572,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Apple Watch ⌚](#apple-watch-) (9 automations)
 1. [Arriving 👞](#arriving-) (1 automations)
 1. [Candy 🍬🍭🍫](#candy-) (2 automations)
-1. [Climate 🔥🥶](#climate-) (9 automations)
+1. [Climate 🔥🥶](#climate-) (7 automations)
 1. [Control switches 🎛](#control-switches-) (6 automations)
 1. [Cube ∛](#cube-) (2 automations)
 1. [Curtains 🪟🪟](#curtains-) (2 automations)
@@ -595,7 +595,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **122** ⚠️
+⚠️ Total number of automations: **120** ⚠️
 
 ## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/adaptive_lighting.yaml)
 ### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/adaptive_lighting.yaml#L11)
@@ -636,11 +636,11 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Set lights](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/apple_watch.yaml#L71)
 
   *which uses:*
-  - [script.cozy_lights_bedroom](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L55)
-  - [script.cozy_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L28)
-  - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L401)
-  - [script.white_lights_bedroom](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L111)
-  - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L97)
+  - [script.cozy_lights_bedroom](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L55)
+  - [script.cozy_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L28)
+  - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L382)
+  - [script.white_lights_bedroom](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L111)
+  - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L97)
 
 ### [Temperature report](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/apple_watch.yaml#L236)
 
@@ -655,7 +655,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Send vacuum cleaner](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/apple_watch.yaml#L259)
 
   *which uses:*
-  - [script.vacuum_command](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L349)
+  - [script.vacuum_command](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L330)
 
 ### [Movie time](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/apple_watch.yaml#L326)
 
@@ -663,7 +663,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Reset adaptive lighting](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/apple_watch.yaml#L346)
 
   *which uses:*
-  - [script.reset_adaptive_lighting](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L415)
+  - [script.reset_adaptive_lighting](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L396)
 
 ### [Set temperature](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/apple_watch.yaml#L356)
 
@@ -697,66 +697,50 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Climate 🔥🥶](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml)
-### [Turn on the bathroom heating in the early morning](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml#L12)
-
-  *which uses:*
-  - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L44)
-  - [input_number.temperature_moderate](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L20)
-  - [script.set_moderate_temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L238)
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L223)
-
-### [Turn off the bathroom heating in the morning](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml#L32)
-
-  *which uses:*
-  - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L44)
-  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L12)
-  - [script.set_low_temperature_bathroom](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L229)
-  - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L223)
-
-### [Turn on the heating 30 min before waking up](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml#L51)
+## [Climate 🔥🥶](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml)
+### [Turn on the heating 30 min before waking up](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L11)
 
   *which uses:*
   - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L50)
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L44)
-  - [script.set_moderate_temperature](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L262)
+  - [script.set_moderate_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L243)
   - [sensor.half_hour_before_alarm](https://github.com/tmttn/home-assistant-config/blob/aaaa4085cb90a78244f20fdeed31fe9cfba58a22/includes/sensors.yaml#L268)
 
-### [Increase the heating for the afternoon](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml#L70)
+### [Increase the heating for the afternoon](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L30)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L44)
-  - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L276)
+  - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L257)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L223)
 
-### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml#L86)
+### [Turn on the heating when going home](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L46)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L44)
   - [input_number.temperature_high](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L28)
-  - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L276)
+  - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L257)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L223)
 
-### [Turn off the heating at 23:00](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml#L112)
+### [Turn off the heating at 23:00](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L72)
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L44)
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L12)
-  - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L276)
-  - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L248)
+  - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L257)
+  - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L229)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L223)
 
-### [Warning when heating on and back door open](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml#L146)
+### [Warning when heating on and back door open](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L106)
 
   *which uses:*
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L12)
 
-### [Warning when heating on and living room door open](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml#L191)
+### [Warning when heating on and living room door open](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L151)
 
   *which uses:*
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L12)
 
-### [Warning when heating on and storage door open](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/climate.yaml#L236)
+### [Warning when heating on and storage door open](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L196)
 
   *which uses:*
   - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L12)
@@ -769,18 +753,18 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_select.last_script_living_room](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L26)
-  - [script.decrease_brightness](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L160)
-  - [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L139)
-  - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L216)
-  - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L97)
+  - [script.decrease_brightness](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L160)
+  - [script.increase_brightness](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L139)
+  - [script.next_colors](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L216)
+  - [script.white_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L97)
 
 ### [Back door Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/3ff86a7b33de48888b5b358acd16db6870d946d4/automations/control_switches.yaml#L60)
 
   *which uses:*
-  - [script.arriving](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L296)
-  - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L248)
-  - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L11)
-  - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L183)
+  - [script.arriving](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L277)
+  - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L229)
+  - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L11)
+  - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L183)
 
 ### [Bedroom wall switch](https://github.com/tmttn/home-assistant-config/blob/3ff86a7b33de48888b5b358acd16db6870d946d4/automations/control_switches.yaml#L90)
 
@@ -792,13 +776,13 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-  - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L183)
+  - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L183)
 
 ### [Guest bedroom Aqara Wireless Mini Switch](https://github.com/tmttn/home-assistant-config/blob/3ff86a7b33de48888b5b358acd16db6870d946d4/automations/control_switches.yaml#L129)
 
   *which uses:*
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-  - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L183)
+  - [script.turn_off_everything_non_automatic](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L183)
 
 [^ toc](#automations---table-of-content)
 
@@ -808,7 +792,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_select.cube_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L19)
-  - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L11)
+  - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L11)
 
 ### [Rotate the cube](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/cube.yaml#L78)
 
@@ -841,14 +825,14 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   
 
   *which uses:*
-  - [script.electric_vehicle_polling_interval_to_60](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L435)
+  - [script.electric_vehicle_polling_interval_to_60](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L416)
 
 ### [Polling interval to default](https://github.com/tmttn/home-assistant-config/blob/4d186be2da1204e086c26875a47121a01164e3a1/automations/ev.yaml#L27)
 
   
 
   *which uses:*
-  - [script.electric_vehicle_polling_interval_to_default](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L443)
+  - [script.electric_vehicle_polling_interval_to_default](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L424)
 
 ### [Start charging at total solar](https://github.com/tmttn/home-assistant-config/blob/4d186be2da1204e086c26875a47121a01164e3a1/automations/ev.yaml#L43)
 
@@ -870,7 +854,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.optimal_electric_vehicle_charging](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L62)
-  - [script.electric_vehicle_charging_set_amps_link_to_excess_solar](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L451)
+  - [script.electric_vehicle_charging_set_amps_link_to_excess_solar](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L432)
 
 ### [Stop charging](https://github.com/tmttn/home-assistant-config/blob/4d186be2da1204e086c26875a47121a01164e3a1/automations/ev.yaml#L124)
 
@@ -908,7 +892,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L22)
-  - [script.leaving](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L290)
+  - [script.leaving](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L271)
   - [binary_sensor.anything_on](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L208)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L223)
   - [binary_sensor.someone_in_the_house_in_last_hour](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L51)
@@ -923,7 +907,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Turn off everything after notification](https://github.com/tmttn/home-assistant-config/blob/afd0637c7835d95b37036413311cfd571fbc2317/automations/leaving.yaml#L77)
 
   *which uses:*
-  - [script.leaving](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L290)
+  - [script.leaving](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L271)
 
 [^ toc](#automations---table-of-content)
 
@@ -937,7 +921,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Turn on cozy lights at sunset](https://github.com/tmttn/home-assistant-config/blob/fe7781766c4d055de11f2270b9574dbbcf0ab00a/automations/light.yaml#L45)
 
   *which uses:*
-  - [script.cozy_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L28)
+  - [script.cozy_lights_living_room](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L28)
   - [group.persons](https://github.com/tmttn/home-assistant-config/blob/b7f53da6358ab0c08b149ed1918a811a74d644ae/includes/groups.yaml#L11)
 
 ### [Turn off living room](https://github.com/tmttn/home-assistant-config/blob/fe7781766c4d055de11f2270b9574dbbcf0ab00a/automations/light.yaml#L59)
@@ -966,7 +950,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.automatic_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L38)
   - [input_boolean.bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L25)
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-  - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L401)
+  - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L382)
   - [binary_sensor.activity_in_bedroom](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L109)
 
 ### [Automatically turn off the bedroom](https://github.com/tmttn/home-assistant-config/blob/fe7781766c4d055de11f2270b9574dbbcf0ab00a/automations/light.yaml#L177)
@@ -997,7 +981,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   - [input_boolean.automatic_guest_bedroom_lights](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L41)
   - [input_boolean.guest_bedroom_lights_automatically_turned_on](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L29)
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-  - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L401)
+  - [script.turn_on_lights](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L382)
   - [binary_sensor.activity_in_guest_bedroom](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L119)
 
 ### [Automatically turn off the guest bedroom](https://github.com/tmttn/home-assistant-config/blob/fe7781766c4d055de11f2270b9574dbbcf0ab00a/automations/light.yaml#L292)
@@ -1124,7 +1108,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.start_the_music](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L12)
-  - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L11)
+  - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L11)
 
 ### [Switch music from iPhone to speakers if coming home](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/music.yaml#L27)
 
@@ -1197,7 +1181,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-  - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L248)
+  - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L229)
 
 ### [Go from half to total sleeping mode](https://github.com/tmttn/home-assistant-config/blob/7f472b1061ad523d60d864cb6274f180a8060a60/automations/sleep_mode.yaml#L60)
 
@@ -1220,11 +1204,12 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/aaaa4085cb90a78244f20fdeed31fe9cfba58a22/automations/solar.yaml)
-### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/aaaa4085cb90a78244f20fdeed31fe9cfba58a22/automations/solar.yaml#L11)
+## [Solar ☀️](https://github.com/tmttn/home-assistant-config/blob/482f3eee62e47b0ae3ef82098aab93e6e863c845/automations/solar.yaml)
+### [Grid export too high](https://github.com/tmttn/home-assistant-config/blob/482f3eee62e47b0ae3ef82098aab93e6e863c845/automations/solar.yaml#L11)
 
   *which uses:*
   - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L19)
+  - [sensor.nearest_iphone_notify](https://github.com/tmttn/home-assistant-config/blob/aaaa4085cb90a78244f20fdeed31fe9cfba58a22/includes/sensors.yaml#L256)
 
 [^ toc](#automations---table-of-content)
 
@@ -1238,7 +1223,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
   Update the DNS at Gandi to point my domain to my Home Assistant instance.
 
   *which uses:*
-  - [script.update_dns](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L302)
+  - [script.update_dns](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L283)
 
 ### [Run chores](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/system.yaml#L34)
 
@@ -1272,25 +1257,25 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Washing machine notification](https://github.com/tmttn/home-assistant-config/blob/8956c4a0533327b790bfe940009325d42877a613/automations/utilities.yaml#L52)
 
   *which uses:*
-  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L311)
+  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L292)
   - [binary_sensor.washing_machine](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L138)
 
 ### [Dishwasher notification](https://github.com/tmttn/home-assistant-config/blob/8956c4a0533327b790bfe940009325d42877a613/automations/utilities.yaml#L65)
 
   *which uses:*
-  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L311)
+  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L292)
   - [binary_sensor.dishwasher](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L151)
 
 ### [Tumble dryer notification](https://github.com/tmttn/home-assistant-config/blob/8956c4a0533327b790bfe940009325d42877a613/automations/utilities.yaml#L78)
 
   *which uses:*
-  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L311)
+  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L292)
   - [binary_sensor.tumble_dryer](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L177)
 
 ### [Espresso machine notification](https://github.com/tmttn/home-assistant-config/blob/8956c4a0533327b790bfe940009325d42877a613/automations/utilities.yaml#L91)
 
   *which uses:*
-  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/324dc3a09a623c928236f0e36baa4331a4b77f00/scripts.yaml#L311)
+  - [script.utility_notification](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L292)
   - [binary_sensor.espresso_machine](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L164)
 
 ### [Toggle espresso machine on/off](https://github.com/tmttn/home-assistant-config/blob/8956c4a0533327b790bfe940009325d42877a613/automations/utilities.yaml#L104)
