@@ -32,7 +32,7 @@
     - service: notify.all_iphones
       data:
         title: "Robot"
-        message: "Cleanup successful after {{ (states('sensor.vacuum_last_clean_duration')|int / 60)|round }} minutes."
+        message: "Cleanup successful after {{ (states('sensor.robot_vacuum_last_clean_duration')|int / 60)|round }} minutes."
     - service: input_boolean.turn_on
       entity_id: input_boolean.cleaned_today
     - service: counter.increment
@@ -133,14 +133,14 @@
   id: "vacuum_water-reservoir-empty"
   trigger:
     - platform: state
-      entity_id: binary_sensor.vacuum_water_shortage
+      entity_id: binary_sensor.robot_vacuum_water_shortage
       to: "on"
     - platform: state
       entity_id: vacuum.robot_vacuum
       to: "cleaning"
   condition:
     - condition: state
-      entity_id: binary_sensor.vacuum_water_shortage
+      entity_id: binary_sensor.robot_vacuum_water_shortage
       state: "on"
     - condition: not
       conditions:
@@ -185,7 +185,7 @@
     to: docked
   condition:
     - condition: numeric_state
-      entity_id: sensor.vacuum_sensor_dirty_left
+      entity_id: sensor.robot_vacuum_sensor_dirty_left
       below: 0
   action:
     - service: notify.all_iphones
@@ -202,7 +202,7 @@
     to: docked
   condition:
     - condition: numeric_state
-      entity_id: sensor.vacuum_main_brush_left
+      entity_id: sensor.robot_vacuum_main_brush_left
       below: 0
   action:
     - service: notify.all_iphones
@@ -219,7 +219,7 @@
     to: docked
   condition:
     - condition: numeric_state
-      entity_id: sensor.vacuum_side_brush_left
+      entity_id: sensor.robot_vacuum_side_brush_left
       below: 0
   action:
     - service: notify.all_iphones
@@ -236,7 +236,7 @@
     to: docked
   condition:
     - condition: numeric_state
-      entity_id: sensor.vacuum_filter_left
+      entity_id: sensor.robot_vacuum_filter_left
       below: 0
   action:
     - service: notify.all_iphones
