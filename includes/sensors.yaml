@@ -443,8 +443,6 @@
     - type: processor_use
     - type: last_boot
 
-- platform: uptime
-
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_1_power
   name: gas_burner_consumption
