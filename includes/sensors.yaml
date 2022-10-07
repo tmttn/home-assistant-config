@@ -379,7 +379,7 @@
 - platform: statistics
   name: Washing machine Today's Consumption
   unique_id: washing_machine_today_consumption
-  entity_id: sensor.washing_machine_today_s_consumption
+  entity_id: sensor.washing_machine_energy
   state_characteristic: total
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
   max_age:
