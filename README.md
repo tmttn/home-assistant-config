@@ -567,7 +567,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
 <!-- start-automations -->
 # Automations - Table of Content
-1. [Adaptive lighting 🌄🌇](#adaptive-lighting-) (3 automations)
+1. [Adaptive lighting 🌄🌇](#adaptive-lighting-) (1 automations)
 1. [Alarm clock ⏰](#alarm-clock-) (1 automations)
 1. [Apple Watch ⌚](#apple-watch-) (9 automations)
 1. [Arriving 👞](#arriving-) (1 automations)
@@ -595,19 +595,13 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **120** ⚠️
+⚠️ Total number of automations: **118** ⚠️
 
-## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/adaptive_lighting.yaml)
-### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/adaptive_lighting.yaml#L11)
+## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/f0b7fc351c52d32faa09b8579735e05d87396855/automations/adaptive_lighting.yaml)
+### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/f0b7fc351c52d32faa09b8579735e05d87396855/automations/adaptive_lighting.yaml#L11)
 
   *which uses:*
   - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-
-### [Reset manual_control after 1 hour](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/adaptive_lighting.yaml#L61)
-
-
-### [Notify manual_control](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/adaptive_lighting.yaml#L86)
-
 
 [^ toc](#automations---table-of-content)
 
@@ -717,7 +711,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L44)
-  - [input_number.temperature_high](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L28)
+  - [input_number.temperature_high](https://github.com/tmttn/home-assistant-config/blob/f0b7fc351c52d32faa09b8579735e05d87396855/includes/input_numbers.yaml#L28)
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L257)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L223)
 
@@ -725,7 +719,7 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.automatic_temperature](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L44)
-  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L12)
+  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/f0b7fc351c52d32faa09b8579735e05d87396855/includes/input_numbers.yaml#L12)
   - [script.set_high_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L257)
   - [script.set_low_temperature](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L229)
   - [binary_sensor.no_one_home](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L223)
@@ -733,17 +727,17 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 ### [Warning when heating on and back door open](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L106)
 
   *which uses:*
-  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L12)
+  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/f0b7fc351c52d32faa09b8579735e05d87396855/includes/input_numbers.yaml#L12)
 
 ### [Warning when heating on and living room door open](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L151)
 
   *which uses:*
-  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L12)
+  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/f0b7fc351c52d32faa09b8579735e05d87396855/includes/input_numbers.yaml#L12)
 
 ### [Warning when heating on and storage door open](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/automations/climate.yaml#L196)
 
   *which uses:*
-  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/b41ab6d693c223d1bb72368ee6a10a0322c82db8/includes/input_numbers.yaml#L12)
+  - [input_number.temperature_low](https://github.com/tmttn/home-assistant-config/blob/f0b7fc351c52d32faa09b8579735e05d87396855/includes/input_numbers.yaml#L12)
 
 [^ toc](#automations---table-of-content)
 
