@@ -1,0 +1,108 @@
+---
+- sensor:
+    - name: "Google Home Timer"
+      unique_id: google_home_timer
+      icon: mdi:timer
+      state: >
+        {% set entity = 'sensor.google_home_timers' %}
+        {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+          {% set status = state_attr(entity,'timers')[0].status %}
+          {% if status == 'set' %} active
+          {% elif status == 'paused' %} paused
+          {% elif status == 'waiting' %} waiting
+          {% else %} idle
+          {% endif %}
+        {% endif %}
+      attributes:
+        duration: >
+          {% set entity = 'sensor.google_home_timers' %}
+          {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+            {{ state_attr(entity,'timers')[0].duration }}
+          {% endif %}
+        end_time: >
+          {% set entity = 'sensor.google_home_timers' %}
+          {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+            {{ state_attr(entity,'timers')[0].local_time_iso }}
+          {% endif %}
+        integration: google_home
+
+- sensor:
+    - name: "Google Home Mini Timer"
+      unique_id: google_home_mini_timer
+      icon: mdi:timer
+      state: >
+        {% set entity = 'sensor.google_home_mini_timers' %}
+        {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+          {% set status = state_attr(entity,'timers')[0].status %}
+          {% if status == 'set' %} active
+          {% elif status == 'paused' %} paused
+          {% elif status == 'waiting' %} waiting
+          {% else %} idle
+          {% endif %}
+        {% endif %}
+      attributes:
+        duration: >
+          {% set entity = 'sensor.google_home_mini_timers' %}
+          {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+            {{ state_attr(entity,'timers')[0].duration }}
+          {% endif %}
+        end_time: >
+          {% set entity = 'sensor.google_home_mini_timers' %}
+          {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+            {{ state_attr(entity,'timers')[0].local_time_iso }}
+          {% endif %}
+        integration: google_home
+
+- sensor:
+    - name: "Kitchen Display Timer"
+      unique_id: google_home_timer
+      icon: mdi:timer
+      state: >
+        {% set entity = 'sensor.kitchen_display_timers' %}
+        {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+          {% set status = state_attr(entity,'timers')[0].status %}
+          {% if status == 'set' %} active
+          {% elif status == 'paused' %} paused
+          {% elif status == 'waiting' %} waiting
+          {% else %} idle
+          {% endif %}
+        {% endif %}
+      attributes:
+        duration: >
+          {% set entity = 'sensor.kitchen_display_timers' %}
+          {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+            {{ state_attr(entity,'timers')[0].duration }}
+          {% endif %}
+        end_time: >
+          {% set entity = 'sensor.kitchen_display_timers' %}
+          {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+            {{ state_attr(entity,'timers')[0].local_time_iso }}
+          {% endif %}
+        integration: google_home
+
+- sensor:
+    - name: "Guest Bedroom Timer"
+      unique_id: google_home_timer
+      icon: mdi:timer
+      state: >
+        {% set entity = 'sensor.logeerkamer_wifi_timers' %}
+        {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+          {% set status = state_attr(entity,'timers')[0].status %}
+          {% if status == 'set' %} active
+          {% elif status == 'paused' %} paused
+          {% elif status == 'waiting' %} waiting
+          {% else %} idle
+          {% endif %}
+        {% endif %}
+      attributes:
+        duration: >
+          {% set entity = 'sensor.logeerkamer_wifi_timers' %}
+          {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+            {{ state_attr(entity,'timers')[0].duration }}
+          {% endif %}
+        end_time: >
+          {% set entity = 'sensor.logeerkamer_wifi_timers' %}
+          {% if state_attr(entity,'timers')|lower not in ['','[]','unknown','unavailable','none'] %}
+            {{ state_attr(entity,'timers')[0].local_time_iso }}
+          {% endif %}
+        integration: google_home
