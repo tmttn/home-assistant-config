@@ -132,3 +132,320 @@
     data:
       option: 'off'
   mode: single
+- id: '1667822429438'
+  alias: 'Candy: Marthe candy button pressed'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_kitchen_candy
+  condition:
+  - '{{ trigger.event.data.event == 1002 }}'
+  action:
+  - service: media_player.volume_set
+    entity_id: media_player.kitchen_display
+    data:
+      volume_level: 0.6
+  - choose:
+    - conditions:
+      - condition: time
+        weekday:
+        - tue
+        - thu
+        - sat
+      sequence:
+      - service: tts.google_translate_say
+        data:
+          entity_id: media_player.kitchen_display
+          language: nl
+          message: Het is vandaag geen snoepdag. Je mag vandaag geen snoepjes.
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.marthe_candy
+        state: 'on'
+      sequence:
+      - service: tts.google_translate_say
+        data:
+          entity_id: media_player.kitchen_display
+          language: nl
+          message: Stop! Jij hebt al een snoepje gekregen. Geen snoepjes meer vandaag,
+            anders krijg je rotte tandjes.
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.marthe_candy
+        state: 'off'
+      - condition: time
+        before: '10:00:00'
+      sequence:
+      - service: tts.google_translate_say
+        data:
+          entity_id: media_player.kitchen_display
+          language: nl
+          message: Nu al een snoepje, nee dat is veel te vroeg hoor. Moet jij niet
+            eerst ontbijten?
+    - conditions:
+      - condition: state
+        entity_id: input_boolean.marthe_candy
+        state: 'off'
+      sequence:
+      - service: tts.google_translate_say
+        data:
+          entity_id: media_player.kitchen_display
+          language: nl
+          message: Ja hoor, neem maar een snoepje Marthe. Lekker!
+      - service: input_boolean.turn_on
+        data: {}
+        target:
+          entity_id: input_boolean.marthe_candy
+  mode: single
+- id: '1667822442780'
+  alias: 'Candy: reset input_boolean Marthe candy at midnight'
+  description: ''
+  trigger:
+  - platform: time
+    at: 00:00
+  condition:
+  - condition: state
+    entity_id: input_boolean.marthe_candy
+    state: 'on'
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.marthe_candy
+  mode: single
+- id: '1667822469555'
+  alias: 'Doorbell: the doorbell has been pressed'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.doorbell_ding
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: light.turn_on
+    data:
+      flash: short
+      entity_id:
+      - light.living_room_lights
+      - light.kitchen_lights
+  - service: notify.all_iphones
+    data:
+      title: Doorbell
+      message: Someone in front of the door!
+  - service: tts.google_translate_say
+    data:
+      entity_id: media_player.google_home
+      language: nl
+      message: Er is iemand aan de voordeur.
+  mode: single
+- id: '1667822507159'
+  alias: 'Music: start playlist'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_boolean.start_the_music
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.start_the_music
+  - service: script.start_spotify_playlist_of_nearest_person
+    data:
+      source: Google Home
+      entity_id: media_player.google_home
+  mode: single
+  initial_state: true
+- id: '1667822516904'
+  alias: 'Music: switch music from iPhone to speakers if coming home'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.openclose_back_door
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: person.tanja
+    state: not_home
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  - '{{ is_state_attr(''media_player.spotify'', ''source'', ''bizzyphone'') }}'
+  - '{{ is_state(''media_player.spotify'', ''playing'') }}'
+  - '{{ as_timestamp(now()) - as_timestamp(states.person.tom.last_changed) < 5 * 60
+    }}'
+  - condition: numeric_state
+    entity_id: proximity.home
+    below: 2
+  action:
+  - service: spotcast.start
+    data:
+      entity_id: media_player.google_home
+      force_playback: false
+  mode: single
+- id: '1667822559671'
+  alias: 'Plant: problem with Calathea Medaillon'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: plant.calathea_medaillon
+    to: problem
+  - platform: time
+    at: '20:00'
+  condition:
+  - condition: state
+    entity_id: plant.calathea_medaillon
+    state: problem
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: 'off'
+  - '{{ state_attr(''plant.calathea_medaillon'', ''moisture'') | int(default=-1) >=
+    0}}'
+  action:
+  - service: notify.all_iphones
+    data:
+      title: Plant in trouble! ⚠️☢️☠️
+      message: "You need to give the Calathea Medaillon \U0001FAB4 attention and love:
+        {{ state_attr(\"plant.calathea_medaillon\", \"problem\") }}!\n"
+  mode: single
+- id: '1667822568415'
+  alias: 'Plant: problem with Peperomia Glabella'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: plant.peperomia_glabella
+    to: problem
+  - platform: time
+    at: '20:00'
+  condition:
+  - condition: state
+    entity_id: plant.peperomia_glabella
+    state: problem
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: 'off'
+  - '{{ state_attr(''plant.peperomia_glabella'', ''moisture'') | int(default=-1) >=
+    0}}'
+  action:
+  - service: notify.all_iphones
+    data:
+      title: Plant in trouble! ⚠️☢️☠️
+      message: "You need to give the Peperomia Glabella \U0001F33A attention and love:
+        {{ state_attr(\"plant.peperomia_glabella\", \"problem\") }}!\n"
+  mode: single
+- id: '1667822595280'
+  alias: 'Work: go home notification'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.worked_enough_today
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: binary_sensor.workday_sensor
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.work_hour_notification_sent
+    state: 'off'
+  action:
+  - service: notify.mobile_app_bizzyphone
+    data:
+      title: Work
+      message: "You have worked 8 hours today, very good! Go home \U0001F389"
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.work_hour_notification_sent
+  mode: single
+- id: '1667822602824'
+  alias: 'Work: reset input_boolean at midnight'
+  description: ''
+  trigger:
+  - platform: time
+    at: 00:00
+  condition:
+  - condition: state
+    entity_id: input_boolean.work_hour_notification_sent
+    state: 'on'
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.work_hour_notification_sent
+  mode: single
+- id: '1667822612254'
+  alias: 'Work: Tom left work notification for Tanja'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: person.tom
+    from: Work
+  condition:
+  - condition: time
+    after: '15:00:00'
+    before: '22:00:00'
+  action:
+  - service: notify.mobile_app_t_phone
+    data:
+      title: Work
+      message: "Tom has left work! ♥️\U0001F389"
+  mode: single
+- id: '1667822923688'
+  alias: 'Lovelace: convert lovelace.json to lovelace-ui.yaml'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: sensor.lovelace
+  condition: []
+  action:
+  - service: shell_command.convert_lovelace
+    data: {}
+  - service: shell_command.chores
+    data: {}
+  mode: single
+  initial_state: true
+- id: '1667822959782'
+  alias: 'Vacation mode: auto turn off'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: group.persons
+    from: not_home
+    to: home
+  condition:
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.vacation_mode
+  - service: notify.all_iphones
+    data:
+      title: Vacation mode
+      message: Welcome back! Switching off the vacation mode.
+  mode: single
+  initial_state: true
+- id: '1667822970472'
+  alias: 'Vacation mode: auto turn on'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: group.persons
+    from: home
+    to: not_home
+    for: '24:00:00'
+  condition:
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  action:
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.vacation_mode
+  - service: notify.all_iphones
+    data:
+      title: Vacation mode
+      message: No one at home for 24 hours, switching on vacation mode.
+  mode: single
+  initial_state: true
