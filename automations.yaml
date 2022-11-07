@@ -1,3 +1,12 @@
+#-
+#              _                        _   _
+#   __ _ _   _| |_ ___  _ __ ___   __ _| |_(_) ___  _ __  ___
+#  / _` | | | | __/ _ \| '_ ` _ \ / _` | __| |/ _ \| '_ \/ __|
+# | (_| | |_| | || (_) | | | | | | (_| | |_| | (_) | | | \__ \
+#  \__,_|\__,_|\__\___/|_| |_| |_|\__,_|\__|_|\___/|_| |_|___/
+#
+#
+#- from github.com/tmttn/home-assistant-config
 - id: '1636727868357'
   alias: 'Vacuum: disable vacuum camera update when docked'
   description: ''
@@ -1389,4 +1398,522 @@
     data:
       title: Robot
       message: Robot started to clean!
+  mode: single
+- id: '1667824214178'
+  alias: 'Vacuum: stopped cleaning'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: vacuum.robot_vacuum
+    from: returning
+    to: docked
+  condition: []
+  action:
+  - service: notify.all_iphones
+    data:
+      title: Robot
+      message: Cleanup successful after {{ (states('sensor.robot_vacuum_last_clean_duration')|int
+        / 60)|round }} minutes.
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.cleaned_today
+  - service: counter.increment
+    entity_id: counter.vacuum_bin_counter
+  mode: single
+- id: '1667824228103'
+  alias: 'Vacuum: water reservoir empty'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.robot_vacuum_water_shortage
+    to: 'on'
+  - platform: state
+    entity_id: vacuum.robot_vacuum
+    to: cleaning
+  condition:
+  - condition: state
+    entity_id: binary_sensor.robot_vacuum_water_shortage
+    state: 'on'
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: vacuum.robot_vacuum
+      state: docked
+  action:
+  - service: vacuum.pause
+    entity_id: vacuum.robot_vacuum
+  - service: notify.all_iphones
+    data:
+      title: Robot
+      message: "Water reservoir is empty, please fill it! \U0001F6B0"
+      data:
+        actions:
+        - action: RESUME_CLEANING
+          title: Resume cleaning
+          activationMode: background
+          authenticationRequired: true
+          destructive: true
+  - service: tts.google_translate_say
+    data:
+      entity_id: media_player.google_home
+      language: nl
+      message: Het water reservoir van Brenda is leeg. Vul het water reservoir alstublieft.
+  - wait_for_trigger:
+      platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: RESUME_CLEANING
+    timeout: 00:05:00
+    continue_on_timeout: false
+  - service: vacuum.start
+    entity_id: vacuum.robot_vacuum
+  mode: single
+- id: '1667824265314'
+  alias: 'System: battery level low'
+  description: ''
+  trigger:
+  - platform: time
+    at: '14:30:00'
+  condition: []
+  action:
+  - variables:
+      battery_ids: "{% set ns = namespace(battery=[]) %} {% for s in states.sensor
+        if 'battery_level' in s.entity_id %}\n  {% set ns.battery = ns.battery + [s]
+        %}\n{% endfor %} {{ ns.battery | map(attribute='entity_id') | list }}\n"
+  - alias: Repeat
+    repeat:
+      count: '{{ battery_ids | length }}'
+      sequence:
+      - variables:
+          current: '{{ battery_ids[repeat.index - 1] }}'
+      - condition: template
+        value_template: '{{ ''iphone'' not in current and ''ipad'' not in current
+          }}'
+      - condition: template
+        value_template: '{{ 0 < (states(current) | float(default=0)) < (min_battery_level
+          | float(default=50) ) }}'
+      - service: '{{ notify_service }}'
+        data:
+          title: System
+          message: 'Battery level low of {{ current }}: {{ states(current) }}%! ⚠️'
+  mode: single
+  variables:
+    min_battery_level: 50
+    notify_service: notify.mobile_app_bizzyphone
+    battery_ids: ''
+    current: ''
+- id: '1667824272728'
+  alias: 'System: run chores'
+  description: Run shell and Python scripts in utils folder.
+  trigger:
+  - platform: time_pattern
+    minutes: /15
+  condition: []
+  action:
+  - service: shell_command.chores
+    data: {}
+  mode: single
+- id: '1667824280190'
+  alias: 'System: update DNS'
+  description: Update the DNS at Gandi to point my domain to my Home Assistant instance.
+  trigger:
+  - platform: time_pattern
+    minutes: /15
+  condition: []
+  action:
+  - service: script.update_dns
+    data: {}
+  mode: single
+- id: '1667824287046'
+  alias: 'System: warning about high CPU usage'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.processor_use
+    above: 70
+    for:
+      hours: 4
+  condition: []
+  action:
+  - service: notify.mobile_app_bizzyphone
+    data:
+      title: System
+      message: "CPU usage has been above 70% for 4 hours! ⚠️\U0001F5A5"
+  mode: single
+- id: '1667824315370'
+  alias: 'Curtains: close the screens'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.bunderhome_weerstation_ws_2902c_uv_index
+    above: 2
+  condition:
+  - condition: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    above: 10
+  - condition: numeric_state
+    entity_id: sensor.bunderhome_weerstation_ws_2902c_event_rain
+    below: 1
+  action:
+  - service: cover.close_cover
+    entity_id: cover.curtain_controller_curtain
+  mode: single
+- id: '1667824329070'
+  alias: 'Curtains: open the screens'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: 1
+  - platform: numeric_state
+    entity_id: sensor.bunderhome_weerstation_ws_2902c_event_rain
+    above: 0
+  - platform: numeric_state
+    entity_id: sensor.bunderhome_weerstation_ws_2902c_uv_index
+    below: 1
+  condition: []
+  action:
+  - service: cover.open_cover
+    entity_id: cover.curtain_controller_curtain
+  mode: single
+- id: '1667824358822'
+  alias: 'Utilities: dishwasher notification'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.dishwasher
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: script.utility_notification
+    data:
+      name: dishwasher
+      emojis: "\U0001F37D\U0001F373"
+  mode: single
+- id: '1667824369262'
+  alias: 'Utilities: espresso machine notification'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.espresso_machine
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: script.utility_notification
+    data:
+      name: espresso_machine
+      emojis: "☕️\U0001F964"
+  mode: single
+- id: '1667824376670'
+  alias: 'Utilities: toggle espresso machine on/off'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_kitchen_meds_tom
+  condition:
+  - '{{ trigger.event.data.event == 1001 }}'
+  action:
+  - service: switch.toggle
+    entity_id: switch.espresso_machine
+  mode: single
+- id: '1667824384683'
+  alias: 'Utilities: tumble dryer notification'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.tumble_dryer
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: script.utility_notification
+    data:
+      name: tumble_dryer
+      emojis: "\U0001F9FA\U0001F4A6"
+  mode: single
+- id: '1667824391839'
+  alias: 'Utilities: turn on espresso machine 10 minutes before waking up'
+  description: ''
+  trigger:
+  - platform: template
+    value_template: '{{ states("sensor.time")[0:5] == states("sensor.half_hour_before_alarm")
+      }}
+
+      '
+  condition:
+  - condition: state
+    entity_id: input_boolean.alarm_clock
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: 'off'
+  action:
+  - service: switch.turn_on
+    entity_id: switch.espresso_machine
+  mode: single
+- id: '1667824399151'
+  alias: 'Utilities: washing machine notification'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.washing_machine
+    from: 'off'
+    to: 'on'
+  condition: []
+  action:
+  - service: script.utility_notification
+    data:
+      name: washing_machine
+      emojis: "\U0001F45A\U0001F455"
+  mode: single
+- id: '1667824406336'
+  alias: 'Utilities: washing machine, dishwasher,tumble dryer or espresso machine
+    started or finished'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.dishwasher
+  - platform: state
+    entity_id: binary_sensor.washing_machine
+  - platform: state
+    entity_id: binary_sensor.tumble_dryer
+  - platform: state
+    entity_id: binary_sensor.espresso_machine
+  condition:
+  - '{{ (to_state == ''on'' and from_state == ''off'') or (to_state == ''off'' and
+    from_state == ''on'') }}'
+  action:
+  - service: input_datetime.set_datetime
+    data:
+      entity_id: input_datetime.{{ name }}_{{ to_state }}
+      timestamp: '{{ now().timestamp() }}'
+  mode: single
+  variables:
+    from_state: '{{ trigger.from_state.state }}'
+    to_state: '{{ trigger.to_state.state }}'
+    name: '{{ trigger.entity_id.split(''.'', 1)[1] }}'
+- id: '1667824436721'
+  alias: 'Night mode: automatically turn off when alarm turns off or at 7AM'
+  description: ''
+  trigger:
+  - platform: time
+    at: 07:00
+  - platform: state
+    entity_id: input_boolean.alarm_clock
+    from: 'on'
+    to: 'off'
+  condition:
+  - condition: state
+    entity_id: input_boolean.alarm_clock
+    state: 'off'
+  action:
+  - entity_id: input_select.sleep_mode
+    service: input_select.select_option
+    data:
+      option: 'off'
+  mode: single
+- id: '1667824444731'
+  alias: 'Night mode: go from half to total sleeping mode'
+  description: 'When it is half sleeping mode and there is no activity in the house
+    for more than an hour go to total sleeping mode.
+
+    '
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_outside_bedroom
+    to: 'off'
+    for: 01:00:00
+  condition:
+  - condition: state
+    entity_id: input_select.sleep_mode
+    state: half
+  action:
+  - service: input_select.select_option
+    entity_id: input_select.sleep_mode
+    data:
+      option: total
+  - service: notify.mobile_app_bizzyphone
+    data:
+      title: Night mode
+      message: "Automatically switched from 'half' to 'total' sleeping mode! \U0001F4A4\U0001F6CC"
+  mode: single
+- id: '1667824453738'
+  alias: 'Night mode: set low temperature when sleep mode turns on'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_select.sleep_mode
+    from: 'off'
+  condition: []
+  action:
+  - service: script.set_low_temperature
+    data: {}
+  mode: single
+- id: '1667824461865'
+  alias: 'Night mode: set sleeping mode in the living room'
+  description: 'Set the living room lights to sleep mode only when no-one is there
+    anymore.
+
+    '
+  trigger:
+  - platform: state
+    entity_id: input_select.sleep_mode
+    to: total
+  condition: []
+  action:
+  - choose:
+    - conditions: '{{ is_state(''binary_sensor.activity_in_living_room'', ''on'')
+        }}'
+      sequence:
+      - wait_for_trigger:
+          platform: state
+          entity_id: binary_sensor.activity_in_living_room
+          from: 'on'
+          to: 'off'
+        timeout: 06:00:00
+        continue_on_timeout: false
+      - condition: state
+        entity_id: input_select.sleep_mode
+        state: total
+      - service: switch.turn_on
+        entity_id: switch.adaptive_lighting_sleep_mode_living_room
+    - conditions: '{{ is_state(''binary_sensor.activity_in_living_room'', ''off'')
+        }}'
+      sequence:
+        service: switch.turn_on
+        entity_id: switch.adaptive_lighting_sleep_mode_living_room
+  mode: single
+- id: '1667824473454'
+  alias: 'Night mode: turn off automatic bedroom lights'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_select.sleep_mode
+    from: 'off'
+  condition: []
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.automatic_bedroom_lights
+  mode: single
+- id: '1667824481173'
+  alias: 'Night mode: turn off automatic guest bedroom lights'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: input_select.sleep_mode
+    from: 'off'
+  condition: []
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.automatic_guest_bedroom_lights
+  mode: single
+- id: '1667824514805'
+  alias: 'Security: back door has been open for more than 5 minutes'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.openclose_back_door
+    from: 'off'
+    to: 'on'
+    for: 00:05:00
+  condition:
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  action:
+  - service: notify.all_iphones
+    data:
+      title: Security
+      message: The back door has been open for more than 5 minutes.
+  mode: single
+- id: '1667824523088'
+  alias: 'Security: front door has been open for more than 5 minutes'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.openclose_front_door
+    from: 'off'
+    to: 'on'
+    for: 00:05:00
+  condition:
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  action:
+  - service: notify.all_iphones
+    data:
+      title: Security
+      message: The front door has been open for more than 5 minutes.
+  mode: single
+- id: '1667824532145'
+  alias: 'Security: motion detected but we are not home'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.motion_detected
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: group.persons
+    state: not_home
+  - condition: state
+    entity_id: vacuum.robot_vacuum
+    state: docked
+  action:
+  - service: notify.all_iphones
+    data:
+      message: 'Security: motion is detected, but we are not home.'
+      data:
+        actions:
+        - action: SOUND_ALARM
+          title: Sound alarm
+          activationMode: background
+          authenticationRequired: true
+          destructive: true
+  - wait_for_trigger:
+      platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: SOUND_ALARM
+    timeout: 01:00:00
+    continue_on_timeout: false
+  - service: light.turn_on
+    entity_id: all
+    data:
+      flash: long
+      color_name: red
+  mode: single
+- id: '1667824542123'
+  alias: 'Security: no one is home but high power usage'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.no_one_home
+    to: 'on'
+  - platform: time_pattern
+    minutes: /10
+  condition:
+  - condition: state
+    entity_id: binary_sensor.no_one_home
+    state: 'on'
+  - condition: numeric_state
+    entity_id: sensor.p1_meter_active_power
+    above: 1200
+  - condition: state
+    entity_id: input_boolean.vacation_mode
+    state: 'off'
+  action:
+  - service: notify.all_iphones
+    data:
+      title: Security
+      message: 'No one is home and we are using a lot of energy ({{ states(''sensor.p1_meter_active_power'')
+        }} W now)! ⚡️
+
+        '
   mode: single
