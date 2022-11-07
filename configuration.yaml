@@ -61,6 +61,7 @@ miele: !include includes/miele.yaml
 tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
 spotcast: !include includes/spotcast.yaml
+template: !include includes/template.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
