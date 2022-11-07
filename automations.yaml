@@ -1917,3 +1917,1199 @@
 
         '
   mode: single
+- id: '1667825405553'
+  alias: 'Cube: perform operation'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: mi_magic_cube
+  condition:
+  - '{{ (event | string)[1:-1] == ''00'' }}'
+  action:
+  - choose:
+    - conditions: '{% set event = event | string %} {% set correct_start = event[:3]
+        in ("100", "200", "300", "400", "500", "600") %} {% set first_last_different
+        = event[0] != event[-1] %} {{ correct_start and first_last_different }}
+
+        '
+      sequence:
+      - service: input_select.select_option
+        entity_id: input_select.cube_mode
+        data:
+          option: "{% if is_state('input_select.cube_mode', 'Hue') %}\n  Brightness\n{%
+            elif is_state('input_select.cube_mode', 'Brightness') %}\n  Volume\n{%
+            elif is_state('input_select.cube_mode', 'Volume') %}\n  Hue\n{% endif
+            %}\n"
+      - service: tts.google_translate_say
+        data:
+          entity_id: media_player.google_home
+          language: en
+          message: '{{ states("input_select.cube_mode") }} mode
+
+            '
+    - conditions:
+      - '{{ event == 7007 }}'
+      - '{{ is_state_attr(''media_player.spotify'', ''source'', ''Google Home'') }}'
+      sequence:
+      - service: media_player.shuffle_set
+        entity_id: media_player.spotify
+        data:
+          shuffle: true
+      - service: media_player.media_next_track
+        entity_id: media_player.spotify
+    - conditions:
+      - '{{ event in (1001, 2002, 3003, 4004, 5005, 6006) }}'
+      - '{{ is_state_attr(''media_player.spotify'', ''source'', ''Google Home'') }}'
+      sequence:
+        service: media_player.media_play_pause
+        entity_id: media_player.spotify
+    - conditions: '{{ event == 7008 }}'
+      sequence:
+        service: script.start_spotify_playlist_of_nearest_person
+        data:
+          source: Google Home
+          entity_id: media_player.google_home
+  mode: parallel
+  variables:
+    event: '{{ trigger.event.data.event }}'
+- id: '1667825415257'
+  alias: 'Cube: rotate the cube'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: mi_magic_cube
+  condition:
+  - '{{ (event | string)[1:-1] != ''00'' or event < 0 }}'
+  action:
+  - choose:
+    - conditions:
+        condition: state
+        entity_id: input_select.cube_mode
+        state: Hue
+      sequence:
+      - variables:
+          hue_sat: '{{ state_attr(''light.tv_led'', ''hs_color'') or [30, 56] }}'
+      - service: light.turn_on
+        entity_id: light.tv_led
+        data:
+          hs_color:
+          - '{% set delta = event / 200 %} {% set new_hue = [([0, (hue_sat[0] + delta)]|max),
+            360]|min %} {{ new_hue|round(3) }}
+
+            '
+          - '{{ hue_sat[1] }}'
+    - conditions:
+        condition: state
+        entity_id: input_select.cube_mode
+        state: Brightness
+      sequence:
+        service: light.turn_on
+        entity_id: light.tv_led
+        data:
+          brightness: '{% set brightness = state_attr(''light.tv_led'', ''brightness'')
+            %} {% set delta = event / 450 %} {% set new_brightness = [([0, (brightness
+            + delta)]|max), 255]|min %} {{ new_brightness|int(default=0) }}
+
+            '
+    - conditions:
+        condition: state
+        entity_id: input_select.cube_mode
+        state: Volume
+      sequence:
+      - service: media_player.volume_set
+        entity_id: media_player.google_home
+        data:
+          volume_level: '{% set max_change = 0.15 %} {% set dV = [event / 100 / 900,
+            max_change] | min %} {{ (states.media_player.google_home.attributes.volume_level
+            + dV)|round(2) }}
+
+            '
+      - service: tts.google_translate_say
+        data:
+          entity_id: media_player.google_home
+          language: en
+          message: 'Volume set to {{ (state_attr("media_player.google_home", "volume_level")|float(default=0)
+            * 100)|int(default=0) }}.
+
+            '
+  mode: single
+  variables:
+    event: '{{ trigger.event.data.event }}'
+- id: '1667825456773'
+  alias: 'Light: automatically turn off the bedroom'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_bedroom
+    to: 'off'
+    for: 00:08:00
+  condition:
+  - condition: state
+    entity_id: input_boolean.bedroom_lights_automatically_turned_on
+    state: 'on'
+  - condition: state
+    entity_id: light.bedroom_lights
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.automatic_bedroom_lights
+    state: 'on'
+  action:
+  - service: light.turn_off
+    entity_id: light.bedroom_lights
+    data:
+      transition: 10
+  mode: single
+  initial_state: true
+- id: '1667825464005'
+  alias: 'Light: automatically turn off the guest bedroom'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_guest_bedroom
+    to: 'off'
+    for: 00:08:00
+  condition:
+  - condition: state
+    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
+    state: 'on'
+  - condition: state
+    entity_id: light.guest_bedroom_lights
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.automatic_guest_bedroom_lights
+    state: 'on'
+  action:
+  - service: light.turn_off
+    entity_id: light.guest_bedroom_lights
+    data:
+      transition: 10
+  mode: single
+  initial_state: true
+- id: '1667825471613'
+  alias: 'Light: automatically turn on the bedroom'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_bedroom
+    to: 'on'
+  condition:
+  - '{{ (off_lights | length) > 0 }}'
+  - condition: state
+    entity_id: input_select.sleep_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.automatic_bedroom_lights
+    state: 'on'
+  action:
+  - alias: Turn on lights that are off
+    repeat:
+      count: '{{ off_lights | length }}'
+      sequence:
+        service: script.turn_on_lights
+        data:
+          entity_id: '{{ off_lights[repeat.index - 1] }}'
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.bedroom_lights_automatically_turned_on
+  mode: single
+  variables:
+    off_lights: "{{ expand(state_attr(\"light.bedroom_lights\", \"entity_id\"))\n
+      \   | selectattr(\"state\", \"eq\", \"off\")\n    | map(attribute=\"entity_id\")\n
+      \   | list }}\n"
+- id: '1667825482217'
+  alias: 'Light: automatically turn on the guest bedroom'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_guest_bedroom
+    to: 'on'
+  condition:
+  - '{{ (off_lights | length) > 0 }}'
+  - condition: state
+    entity_id: input_select.sleep_mode
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.automatic_guest_bedroom_lights
+    state: 'on'
+  action:
+  - alias: Turn on lights that are off
+    repeat:
+      count: '{{ off_lights | length }}'
+      sequence:
+        service: script.turn_on_lights
+        data:
+          entity_id: '{{ off_lights[repeat.index - 1] }}'
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
+  mode: single
+  variables:
+    off_lights: "{{ expand(state_attr(\"light.guest_bedroom_lights\", \"entity_id\"))\n
+      \   | selectattr(\"state\", \"eq\", \"off\")\n    | map(attribute=\"entity_id\")\n
+      \   | list }}\n"
+- id: '1667825490219'
+  alias: 'Light: toggle bathroom'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_bathroom
+  condition:
+  - '{{ not is_state(''light.bathroom_lights'', trigger.to_state.state) }}'
+  action:
+  - service: light.turn_{{ trigger.to_state.state }}
+    data:
+      entity_id: light.bathroom_lights
+      transition: 1
+  mode: single
+- id: '1667825497384'
+  alias: 'Light: toggle kitchen ceiling'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_kitchen
+  condition:
+  - alias: Light is already on, or the light is off and light level is below dark
+    condition: or
+    conditions:
+    - '{{ is_state(''light.kitchen_lights'', ''on'') }}'
+    - condition: and
+      conditions:
+      - '{{ is_state(''light.kitchen_lights'', ''off'') }}'
+      - '{{ states(''sensor.motion_sensor_kitchen_light_level'')|int(default=0) <
+        50 }}'
+  action:
+  - service: light.turn_{{ trigger.to_state.state }}
+    data:
+      entity_id: light.kitchen_lights
+      transition: 1
+  mode: single
+- id: '1667825504387'
+  alias: 'Light: toggle toilet'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_toilet
+  condition:
+  - alias: Light is already on, or the light is off and light level is below dark
+    condition: or
+    conditions:
+    - '{{ is_state(''light.toilet'', ''on'') }}'
+    - condition: and
+      conditions:
+      - '{{ is_state(''light.toilet'', ''off'') }}'
+      - '{{ states(''sensor.motion_sensor_toilet_light_level'')|int(default=0) < 150
+        }}'
+  action:
+  - service: light.turn_{{ trigger.to_state.state }}
+    data:
+      entity_id: light.toilet
+      transition: 1
+  mode: single
+- id: '1667825512579'
+  alias: 'Light: turn off bathroom (extra check)'
+  description: In case the other automation failed
+  trigger:
+  - platform: time_pattern
+    minutes: /10
+  condition:
+  - condition: state
+    entity_id: binary_sensor.activity_in_bathroom
+    state: 'off'
+  - condition: state
+    entity_id: light.bathroom_lights
+    state: 'on'
+  action:
+  - service: light.turn_off
+    entity_id: light.bathroom_lights
+  mode: single
+- id: '1667825521896'
+  alias: 'Light: turn off bedroom (extra check)'
+  description: In case the other automation failed
+  trigger:
+  - platform: time_pattern
+    minutes: /30
+  condition:
+  - condition: state
+    entity_id: binary_sensor.activity_in_bedroom
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.automatic_bedroom_lights
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.bedroom_lights_automatically_turned_on
+    state: 'on'
+  action:
+  - service: light.turn_off
+    entity_id: light.bedroom_lights
+  - service: light.turn_off
+    entity_id: input_boolean.bedroom_lights_automatically_turned_on
+  mode: single
+- id: '1667825530088'
+  alias: 'Light: turn off bedroom after 2 hours of inactivity'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_bedroom
+    from: 'on'
+    to: 'off'
+    for: 02:00:00
+  condition:
+  - '{{ is_state(''light.bedroom_lights'', ''on'') }}'
+  action:
+  - service: light.turn_off
+    data:
+      entity_id: light.bedroom_lights
+  mode: single
+- id: '1667825538989'
+  alias: 'Light: turn off bedroom lights auto switch'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: light.bedroom_lights
+    to: 'off'
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: dimmer_switch_bedroom
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_bedroom_tom
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_bedroom_tanja
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: bedroom_wall_switch
+  condition:
+  - condition: state
+    entity_id: input_boolean.bedroom_lights_automatically_turned_on
+    state: 'on'
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.bedroom_lights_automatically_turned_on
+  mode: parallel
+- id: '1667825551422'
+  alias: 'Light: turn off guest bedroom (extra check)'
+  description: In case the other automation failed
+  trigger:
+  - platform: time_pattern
+    minutes: /30
+  condition:
+  - condition: state
+    entity_id: binary_sensor.activity_in_guest_bedroom
+    state: 'off'
+  - condition: state
+    entity_id: input_boolean.automatic_guest_bedroom_lights
+    state: 'on'
+  - condition: state
+    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
+    state: 'on'
+  action:
+  - service: light.turn_off
+    entity_id: light.guest_bedroom_lights
+  - service: light.turn_off
+    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
+  mode: single
+- id: '1667825572757'
+  alias: 'Light: turn off guest bedroom after 2 hours of inactivity'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_guest_bedroom
+    from: 'on'
+    to: 'off'
+    for: 02:00:00
+  condition:
+  - '{{ is_state(''light.guest_bedroom_lights'', ''on'') }}'
+  action:
+  - service: light.turn_off
+    data:
+      entity_id: light.guest_bedroom_lights
+  mode: single
+- id: '1667825581074'
+  alias: 'Light: turn off guest bedroom lights auto switch'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: light.guest_bedroom_lights
+    to: 'off'
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: dimmer_switch_guest_bedroom
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_guest_bedroom
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: guest_bedroom_wall_switch
+  condition:
+  - condition: state
+    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
+    state: 'on'
+  action:
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
+  mode: parallel
+- id: '1667825591656'
+  alias: 'Light: turn off kitchen (extra check)'
+  description: In case the other automation failed
+  trigger:
+  - platform: time_pattern
+    minutes: /10
+  condition:
+  - condition: state
+    entity_id: binary_sensor.activity_in_kitchen
+    state: 'off'
+  - condition: state
+    entity_id: light.kitchen_lights
+    state: 'on'
+  action:
+  - service: light.turn_off
+    entity_id: light.kitchen_lights
+  mode: single
+- id: '1667825599556'
+  alias: 'Light: turn off living room'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_living_room
+    to: 'off'
+  condition: []
+  action:
+  - service: light.turn_off
+    entity_id: light.living_room_lights
+  mode: single
+- id: '1667825609122'
+  alias: 'Light: turn off outside lights'
+  description: ''
+  trigger:
+  - platform: time
+    at: 01:00:00
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    above: 1
+  condition: []
+  action:
+  - service: light.turn_off
+    data:
+      entity_id: light.outside_lights
+      transition: 1
+  mode: single
+- id: '1667825617439'
+  alias: 'Light: turn off toilet (extra check)'
+  description: In case the other automation failed
+  trigger:
+  - platform: time_pattern
+    minutes: /10
+  condition:
+  - condition: state
+    entity_id: binary_sensor.activity_in_toilet
+    state: 'off'
+  - condition: state
+    entity_id: light.toilet
+    state: 'on'
+  action:
+  - service: light.turn_off
+    entity_id: light.toilet
+  mode: single
+- id: '1667825627092'
+  alias: 'Light: turn on automatic_bedroom_lights switch'
+  description: ''
+  trigger:
+  - platform: time
+    at: '12:00'
+  condition: []
+  action:
+  - entity_id: input_boolean.automatic_bedroom_lights
+    service: input_boolean.turn_on
+  mode: single
+- id: '1667825645381'
+  alias: 'Light: turn on automatic_guest_bedroom_lights switch'
+  description: ''
+  trigger:
+  - platform: time
+    at: '12:00'
+  condition: []
+  action:
+  - entity_id: input_boolean.automatic_guest_bedroom_lights
+    service: input_boolean.turn_on
+  mode: single
+- id: '1667825653475'
+  alias: 'Light: turn on cozy lights at sunset'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: 1
+  condition:
+  - condition: state
+    entity_id: group.persons
+    state: home
+  action:
+  - service: script.cozy_lights_living_room
+    data: {}
+  mode: single
+- id: '1667825661217'
+  alias: 'Light: turn on living room'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.activity_in_living_room
+    to: 'on'
+  condition: []
+  action:
+  - service: light.turn_on
+    entity_id: light.living_room_lights
+  mode: single
+- id: '1667825668872'
+  alias: 'Light: turn on outside lights'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: 1
+  - platform: sun
+    event: sunrise
+    offset: '-2:00:00'
+  condition: []
+  action:
+  - service: light.turn_on
+    data:
+      entity_id: light.outside_lights
+      transition: 1
+  mode: single
+- id: '1667825677223'
+  alias: 'Light: turn on the outside lights when arriving'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: proximity.home
+    below: 6
+    above: 1
+  - platform: zone
+    entity_id: person.tom
+    zone: zone.home
+    event: enter
+  - platform: zone
+    entity_id: person.tanja
+    zone: zone.home
+    event: enter
+  condition:
+  - condition: template
+    value_template: '{{ state_attr(''sun.sun'', ''elevation'') < 1 }}'
+  - '{{ is_state_attr(''proximity.home'', ''dir_of_travel'', ''towards'') }}'
+  - condition: state
+    entity_id: binary_sensor.no_one_home
+    state: 'on'
+  action:
+  - service: light.turn_on
+    data:
+      entity_id: light.outside_lights
+      transition: 1
+  mode: single
+- id: '1667825784014'
+  alias: 'Arriving: switch music from iPhone to speakers if no one is home'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.openclose_front_door
+    from: 'off'
+    to: 'on'
+  - platform: state
+    entity_id: binary_sensor.openclose_back_door
+    from: 'off'
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: person.tanja
+    state: not_home
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  - '{{ is_state_attr(''media_player.spotify'', ''source'', ''bizzyphone'') }}'
+  - '{{ is_state(''media_player.spotify'', ''playing'') }}'
+  action:
+  - service: notify.mobile_app_bizzyphone
+    data:
+      title: Arriving
+      message: Switched music from phone to speakers
+  - service: spotcast.start
+    data:
+      entity_id: media_player.google_home
+      force_playback: false
+  mode: single
+- id: '1667825808931'
+  alias: 'Electric vehicle: check total solar on plugin'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.bizzylectric_charger_sensor
+    to: 'on'
+  condition:
+  - condition: numeric_state
+    entity_id: sensor.p1_meter_active_power
+    below: '-500'
+  - condition: state
+    entity_id: device_tracker.bizzylectric_location_tracker
+    state: home
+  - condition: state
+    entity_id: input_boolean.optimal_electric_vehicle_charging
+    state: 'on'
+  action:
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.bizzylectric_charger_switch
+  - service: automation.turn_on
+    data: {}
+    target:
+      entity_id: automation.electric_vehicle_update_charge_rate_every_minute
+  mode: single
+- id: '1667825817257'
+  alias: 'Electric vehicle: polling interval to 60'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: switch.bizzylectric_charger_switch
+    to: 'on'
+  condition:
+  - condition: state
+    entity_id: device_tracker.bizzylectric_location_tracker
+    state: home
+  action:
+  - service: script.electric_vehicle_polling_interval_to_60
+    data: {}
+  mode: single
+- id: '1667825825124'
+  alias: 'Electric vehicle: polling interval to default'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: switch.bizzylectric_charger_switch
+    to: 'off'
+  condition:
+  - condition: state
+    entity_id: device_tracker.bizzylectric_location_tracker
+    state: home
+  action:
+  - service: script.electric_vehicle_polling_interval_to_default
+    data: {}
+  mode: single
+- id: '1667825834309'
+  alias: 'Electric vehicle: start charging at total solar'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.p1_meter_active_power
+    for:
+      hours: 0
+      minutes: 0
+      seconds: 20
+    below: '-500'
+  condition:
+  - condition: state
+    entity_id: binary_sensor.bizzylectric_charger_sensor
+    state: 'on'
+  - condition: state
+    entity_id: device_tracker.bizzylectric_location_tracker
+    state: home
+  - condition: state
+    entity_id: input_boolean.optimal_electric_vehicle_charging
+    state: 'on'
+  action:
+  - service: switch.turn_on
+    data: {}
+    target:
+      entity_id: switch.bizzylectric_charger_switch
+  - service: automation.turn_on
+    data: {}
+    target:
+      entity_id: automation.electric_vehicle_update_charge_rate_every_minute
+  mode: single
+- id: '1667825841909'
+  alias: 'Electric vehicle: stop charging'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.p1_meter_active_power
+    for:
+      hours: 0
+      minutes: 1
+      seconds: 0
+    above: '5000'
+  - platform: sun
+    event: sunset
+    offset: '0'
+  - platform: numeric_state
+    entity_id: sensor.bizzylectric_range_sensor
+    above: '415'
+  - platform: state
+    entity_id: switch.bizzylectric_charger_switch
+    to: 'off'
+  condition:
+  - condition: state
+    entity_id: device_tracker.bizzylectric_location_tracker
+    state: home
+  - condition: numeric_state
+    entity_id: sensor.bizzylectric_charging_rate_sensor
+    above: '2'
+  - condition: state
+    entity_id: input_boolean.optimal_electric_vehicle_charging
+    state: 'on'
+  action:
+  - service: switch.turn_off
+    data: {}
+    target:
+      entity_id: switch.bizzylectric_charger_switch
+  - service: automation.turn_off
+    data: {}
+    target:
+      entity_id: automation.electric_vehicle_update_charge_rate_every_minute
+  mode: single
+- id: '1667825849521'
+  alias: 'Electric vehicle: update charge rate every minute'
+  description: ''
+  trigger:
+  - platform: time_pattern
+    minutes: /1
+  condition:
+  - condition: time
+    after: 04:00:00
+    before: '23:00:00'
+  - condition: state
+    entity_id: device_tracker.bizzylectric_location_tracker
+    state: home
+  - condition: state
+    entity_id: input_boolean.optimal_electric_vehicle_charging
+    state: 'on'
+  action:
+  - service: script.electric_vehicle_charging_set_amps_link_to_excess_solar
+    data: {}
+  mode: single
+- id: '1667825870992'
+  alias: 'Control switches: back door Aqara Wireless Mini Switch'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_back_door
+  condition: []
+  action:
+  - choose:
+    - conditions: '{{ trigger.event.data.event == 1002 }}'
+      sequence:
+      - service: script.turn_off_everything_non_automatic
+        data: {}
+      - service: script.set_low_temperature
+        data: {}
+    - conditions: '{{ trigger.event.data.event == 1004 }}'
+      sequence:
+      - service: script.arriving
+        data: {}
+    - conditions: '{{ trigger.event.data.event == 1001 }}'
+      sequence:
+      - service: script.arriving
+        data: {}
+      - service: script.start_spotify_playlist_of_nearest_person
+        data:
+          source: Google Home
+          entity_id: media_player.google_home
+  mode: parallel
+- id: '1667825878616'
+  alias: 'Control switches: bathroom wall switch'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: bathroom_wall_switch
+  condition: []
+  action:
+  - choose:
+    - conditions: '{{ trigger.event.data.event == 1000 }}'
+      sequence:
+      - service: "{% if is_state('light.bathroom_lights', 'on') %}\n  light.turn_off\n{%
+          else %}\n  light.turn_on\n{% endif %}\n"
+        data:
+          entity_id: light.bathroom_lights
+          transition: 1
+  mode: parallel
+- id: '1667825887364'
+  alias: 'Control switches: bedroom wall switch'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: bedroom_wall_switch
+  condition: []
+  action:
+  - choose:
+    - conditions: '{{ trigger.event.data.event == 1000 }}'
+      sequence:
+      - service: light.toggle
+        data:
+          entity_id: light.bedroom_lights
+          transition: 1
+  mode: parallel
+- id: '1667825913603'
+  alias: 'Control switches: guest bedroom Aqara Wireless Mini Switch'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_guest_bedroom
+  condition: []
+  action:
+  - choose:
+    - conditions: '{{ trigger.event.data.event == 1002 }}'
+      sequence:
+      - service: light.toggle
+        data:
+          entity_id: light.guest_bedroom_lights
+          transition: 1
+    - conditions: '{{ trigger.event.data.event == 1001 }}'
+      sequence:
+      - service: input_select.select_option
+        entity_id: input_select.sleep_mode
+        data:
+          option: total
+      - service: script.turn_off_everything_non_automatic
+        data: {}
+  mode: parallel
+- id: '1667825921379'
+  alias: 'Control switches: guest bedroom Aqara Wireless Mini Switch 2'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: smart_switch_guest_bedroom_2
+  condition: []
+  action:
+  - choose:
+    - conditions: '{{ trigger.event.data.event == 1002 }}'
+      sequence:
+      - service: light.toggle
+        data:
+          entity_id: light.guest_bedroom_lights
+          transition: 1
+    - conditions: '{{ trigger.event.data.event == 1001 }}'
+      sequence:
+      - service: input_select.select_option
+        entity_id: input_select.sleep_mode
+        data:
+          option: total
+      - service: script.turn_off_everything_non_automatic
+        data: {}
+  mode: parallel
+- id: '1667825929331'
+  alias: 'Control switches: living room Philips Hue dimmer switch'
+  description: ''
+  trigger:
+  - platform: event
+    event_type: deconz_event
+    event_data:
+      id: dimmer_switch_living_room
+  condition: []
+  action:
+  - choose:
+    - conditions: '{{ trigger.event.data.event == 4002 }}'
+      sequence:
+        service: script.next_colors
+        data:
+          input_select: input_select.last_script_living_room
+    - conditions:
+      - '{{ trigger.event.data.event == 1002 }}'
+      sequence:
+      - service: script.white_lights_living_room
+        data: {}
+      - service: light.turn_on
+        entity_id: light.living_room_lights
+        data:
+          brightness: '255'
+    - conditions:
+      - '{{ trigger.event.data.event == 1001 }}'
+      sequence:
+      - service: light.turn_off
+        data:
+          entity_id: light.living_room_lights
+    - conditions: '{{ trigger.event.data.event == 2002 }}'
+      sequence:
+        service: script.increase_brightness
+        data:
+          group: light.living_room_lights
+    - conditions: '{{ trigger.event.data.event == 3002 }}'
+      sequence:
+        service: script.decrease_brightness
+        data:
+          group: light.living_room_lights
+  mode: parallel
+- id: '1667825953356'
+  alias: 'Climate: increase the heating for the afternoon'
+  description: ''
+  trigger:
+  - platform: time
+    at: '11:00'
+  condition:
+  - condition: state
+    entity_id: binary_sensor.no_one_home
+    state: 'off'
+  - condition: state
+    entity_id:
+    - input_boolean.automatic_temperature
+    state: 'on'
+  action:
+  - service: script.set_high_temperature
+    data: {}
+  mode: single
+- id: '1667825960584'
+  alias: 'Climate: turn off the heating at 23:00'
+  description: ''
+  trigger:
+  - platform: time
+    at: '23:00'
+  condition:
+  - condition: state
+    entity_id: input_boolean.automatic_temperature
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.no_one_home
+    state: 'off'
+  - '{{ not is_state_attr(''climate.living_room'', ''temperature'', states(''input_number.temperature_low'')|float(default=0))
+    }}'
+  action:
+  - service: script.set_low_temperature
+    data: {}
+  - service: notify.all_iphones
+    data:
+      message: "Turned off the heating \U0001F976, click to turn it on again?"
+      data:
+        actions:
+        - action: TURN_ON_HEATING
+          title: Turn on heating
+          activationMode: background
+          authenticationRequired: true
+          destructive: true
+  - wait_for_trigger:
+      platform: event
+      event_type: mobile_app_notification_action
+      event_data:
+        action: TURN_ON_HEATING
+    timeout: 00:00:20
+    continue_on_timeout: false
+  - service: script.set_high_temperature
+    data: {}
+  mode: single
+- id: '1667825968169'
+  alias: 'Climate: turn on the heating 30 min before waking up'
+  description: ''
+  trigger:
+  - platform: template
+    value_template: '{{ states("sensor.time")[0:5] == states("sensor.half_hour_before_alarm")
+      }}
+
+      '
+  condition:
+  - condition: state
+    entity_id:
+    - input_boolean.alarm_clock
+    - input_boolean.automatic_temperature
+    state: 'on'
+  action:
+  - service: script.set_moderate_temperature
+    data: {}
+  - service: notify.all_iphones
+    data:
+      title: Climate
+      message: "Automatically turned on the heating \U0001F975℃"
+  mode: single
+- id: '1667825975717'
+  alias: 'Climate: turn on the heating when going home'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: proximity.home
+    below: 6
+    above: 1
+  condition:
+  - condition: state
+    entity_id: input_boolean.automatic_temperature
+    state: 'on'
+  - condition: time
+    after: '16:00:00'
+    before: '23:00:00'
+  - '{{ is_state_attr(''proximity.home'', ''dir_of_travel'', ''towards'') }}'
+  - '{{ not is_state_attr(''climate.living_room'', ''temperature'', states(''input_number.temperature_high''))
+    }}'
+  - condition: state
+    entity_id: binary_sensor.no_one_home
+    state: 'on'
+  action:
+  - service: script.set_high_temperature
+    data: {}
+  - service: notify.all_iphones
+    data:
+      title: Climate
+      message: "Automatically turned on the heating \U0001F975℃"
+  mode: single
+- id: '1667825984108'
+  alias: 'Climate: warning when heating on and back door open'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.openclose_back_door
+    to: 'on'
+    for: 00:05:00
+  condition:
+  - alias: Living room or kitchen above 18°C
+    condition: or
+    conditions:
+    - '{{ state_attr(''climate.living_room'', ''temperature'') >= 18 }}'
+    - '{{ state_attr(''climate.kitchen'', ''temperature'') >= 18 }}'
+  action:
+  - repeat:
+      while:
+      - condition: state
+        entity_id: binary_sensor.openclose_back_door
+        state: 'on'
+      - condition: template
+        value_template: '{{ repeat.index <= 6 }}'
+      sequence:
+      - service: notify.all
+        data:
+          title: Climate
+          message: 'The back door is open and the heating is on! ⚠️ Warning #{{ repeat.index
+            }}!'
+      - delay: 00:05:00
+  - condition: state
+    entity_id: binary_sensor.openclose_back_door
+    state: 'on'
+  - service: notify.all
+    data:
+      title: Climate
+      message: Turning off the heating!
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.living_room
+      setpoint: '{{ states("input_number.temperature_low") }}
+
+        '
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.kitchen
+      setpoint: '{{ states("input_number.temperature_low") }}
+
+        '
+  mode: single
+- id: '1667825992534'
+  alias: 'Climate: warning when heating on and living room door open'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.openclose_living_room_door
+    to: 'on'
+    for: 00:05:00
+  condition:
+  - alias: Living room or kitchen above 18°C
+    condition: or
+    conditions:
+    - '{{ state_attr(''climate.living_room'', ''temperature'') >= 18 }}'
+    - '{{ state_attr(''climate.kitchen'', ''temperature'') >= 18 }}'
+  action:
+  - repeat:
+      while:
+      - condition: state
+        entity_id: binary_sensor.openclose_living_room_door
+        state: 'on'
+      - condition: template
+        value_template: '{{ repeat.index <= 6 }}'
+      sequence:
+      - service: notify.all
+        data:
+          title: Climate
+          message: 'The living room door is open and the heating is on! ⚠️ Warning
+            #{{ repeat.index }}!'
+      - delay: 00:05:00
+  - condition: state
+    entity_id: binary_sensor.openclose_living_room_door
+    state: 'on'
+  - service: notify.all
+    data:
+      title: Climate
+      message: Turning off the heating!
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.living_room
+      setpoint: '{{ states("input_number.temperature_low") }}
+
+        '
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.kitchen
+      setpoint: '{{ states("input_number.temperature_low") }}
+
+        '
+  mode: single
+- id: '1667826000712'
+  alias: 'Climate: warning when heating on and storage door open'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.openclose_storage_door
+    to: 'on'
+    for: 00:05:00
+  condition:
+  - alias: Living room or kitchen above 18°C
+    condition: or
+    conditions:
+    - '{{ state_attr(''climate.living_room'', ''temperature'') >= 18 }}'
+    - '{{ state_attr(''climate.kitchen'', ''temperature'') >= 18 }}'
+  action:
+  - repeat:
+      while:
+      - condition: state
+        entity_id: binary_sensor.openclose_storage_door
+        state: 'on'
+      - condition: template
+        value_template: '{{ repeat.index <= 6 }}'
+      sequence:
+      - service: notify.all
+        data:
+          title: Climate
+          message: 'The storage door is open and the heating is on! ⚠️ Warning #{{
+            repeat.index }}!'
+      - delay: 00:05:00
+  - condition: state
+    entity_id: binary_sensor.openclose_storage_door
+    state: 'on'
+  - service: notify.all
+    data:
+      title: Climate
+      message: Turning off the heating!
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.living_room
+      setpoint: '{{ states("input_number.temperature_low") }}
+
+        '
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.kitchen
+      setpoint: '{{ states("input_number.temperature_low") }}
+
+        '
+  mode: single
