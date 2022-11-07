@@ -567,24 +567,18 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
 <!-- start-automations -->
 # Automations - Table of Content
-1. [Adaptive lighting 🌄🌇](#adaptive-lighting-) (1 automations)
-1. [Alarm clock ⏰](#alarm-clock-) (1 automations)
 1. [Apple Watch ⌚](#apple-watch-) (9 automations)
 1. [Arriving 👞](#arriving-) (1 automations)
-1. [Candy 🍬🍭🍫](#candy-) (2 automations)
 1. [Climate 🔥🥶](#climate-) (7 automations)
 1. [Control switches 🎛](#control-switches-) (6 automations)
 1. [Cube ∛](#cube-) (2 automations)
 1. [Curtains 🪟🪟](#curtains-) (2 automations)
-1. [Doorbell 🚪🔔](#doorbell-) (1 automations)
 1. [Electric vehicle 🚗⚡️](#electric-vehicle-) (6 automations)
 1. [Frontend 👨‍💻](#frontend-) (3 automations)
 1. [Leaving 👞](#leaving-) (3 automations)
 1. [Light 💡](#light-) (24 automations)
 1. [Lovelace 👨‍💻](#lovelace-) (1 automations)
 1. [Medication 💊](#medication-) (6 automations)
-1. [Music 🎵](#music-) (2 automations)
-1. [Plant 🌱](#plant-) (2 automations)
 1. [Security 👮🚨](#security-) (4 automations)
 1. [Night mode 🌕🌑](#night-mode-) (6 automations)
 1. [Solar ☀️](#solar-) (1 automations)
@@ -592,31 +586,9 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 1. [Utilities 🧺👚🍽](#utilities-) (7 automations)
 1. [Vacation mode 🏝](#vacation-mode-) (2 automations)
 1. [Vacuum 🧹](#vacuum-) (12 automations)
-1. [Work 💼](#work-) (3 automations)
 
 
-⚠️ Total number of automations: **118** ⚠️
-
-## [Adaptive lighting 🌄🌇](https://github.com/tmttn/home-assistant-config/blob/f0b7fc351c52d32faa09b8579735e05d87396855/automations/adaptive_lighting.yaml)
-### [Turn on and off switches](https://github.com/tmttn/home-assistant-config/blob/f0b7fc351c52d32faa09b8579735e05d87396855/automations/adaptive_lighting.yaml#L11)
-
-  *which uses:*
-  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-
-[^ toc](#automations---table-of-content)
-
-
-## [Alarm clock ⏰](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/alarm_clock.yaml)
-### [Wake up](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/alarm_clock.yaml#L11)
-
-  *which uses:*
-  - [input_boolean.alarm_clock](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L50)
-  - [input_boolean.wake_up_light](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L67)
-  - [input_select.sleep_mode](https://github.com/tmttn/home-assistant-config/blob/38e456cba91ebfcbb9513c6ebcb6e24b456701ea/includes/input_selects.yaml#L11)
-  - [sensor.ten_minutes_before_alarm](https://github.com/tmttn/home-assistant-config/blob/1ebfe16040e5a001ee204f2ed141a42f975fa396/includes/sensors.yaml#L277)
-
-[^ toc](#automations---table-of-content)
-
+⚠️ Total number of automations: **106** ⚠️
 
 ## [Apple Watch ⌚](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/apple_watch.yaml)
 ### [Minimal lights bedroom](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/apple_watch.yaml#L12)
@@ -673,20 +645,6 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
   *which uses:*
   - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L22)
-
-[^ toc](#automations---table-of-content)
-
-
-## [Candy 🍬🍭🍫](https://github.com/tmttn/home-assistant-config/blob/d8cd2056ebaa27d3f8183af31eb8d38dd9235763/automations/candy.yaml)
-### [Marthe candy button pressed](https://github.com/tmttn/home-assistant-config/blob/d8cd2056ebaa27d3f8183af31eb8d38dd9235763/automations/candy.yaml#L11)
-
-  *which uses:*
-  - [input_boolean.marthe_candy](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L59)
-
-### [Reset input_boolean Marthe candy at midnight](https://github.com/tmttn/home-assistant-config/blob/d8cd2056ebaa27d3f8183af31eb8d38dd9235763/automations/candy.yaml#L75)
-
-  *which uses:*
-  - [input_boolean.marthe_candy](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L59)
 
 [^ toc](#automations---table-of-content)
 
@@ -801,13 +759,6 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
 
 ### [Close the screens](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/curtains.yaml#L28)
-
-
-[^ toc](#automations---table-of-content)
-
-
-## [Doorbell 🚪🔔](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/doorbell.yaml)
-### [The doorbell has been pressed](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/doorbell.yaml#L11)
 
 
 [^ toc](#automations---table-of-content)
@@ -1097,35 +1048,6 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 [^ toc](#automations---table-of-content)
 
 
-## [Music 🎵](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/music.yaml)
-### [Start playlist](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/music.yaml#L11)
-
-  *which uses:*
-  - [input_boolean.start_the_music](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L12)
-  - [script.start_spotify_playlist_of_nearest_person](https://github.com/tmttn/home-assistant-config/blob/6fbc37e4848dd3fd6a15a5a6178e3ad0904f158c/scripts.yaml#L11)
-
-### [Switch music from iPhone to speakers if coming home](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/music.yaml#L27)
-
-  *which uses:*
-  - [input_boolean.guest_mode](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L22)
-
-[^ toc](#automations---table-of-content)
-
-
-## [Plant 🌱](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/plant.yaml)
-### [Problem with Calathea Medaillon](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/plant.yaml#L11)
-
-  *which uses:*
-  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L19)
-
-### [Problem with Peperomia Glabella](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/plant.yaml#L34)
-
-  *which uses:*
-  - [input_boolean.vacation_mode](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L19)
-
-[^ toc](#automations---table-of-content)
-
-
 ## [Security 👮🚨](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/security.yaml)
 ### [Motion detected but we are not home](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/security.yaml#L11)
 
@@ -1343,24 +1265,6 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 
 
 ### [Air filter needs replacing](https://github.com/tmttn/home-assistant-config/blob/ffb7dcf4c9ec7dd5a0873e57120f5fb3f0ad18d7/automations/vacuum.yaml#L230)
-
-
-[^ toc](#automations---table-of-content)
-
-
-## [Work 💼](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/work.yaml)
-### [Go home notification](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/work.yaml#L11)
-
-  *which uses:*
-  - [input_boolean.work_hour_notification_sent](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L47)
-  - [binary_sensor.worked_enough_today](https://github.com/tmttn/home-assistant-config/blob/03cc151436c6eeac42e8a4a327895b09cabda73d/includes/binary_sensors.yaml#L190)
-
-### [Reset input_boolean at midnight](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/work.yaml#L33)
-
-  *which uses:*
-  - [input_boolean.work_hour_notification_sent](https://github.com/tmttn/home-assistant-config/blob/6e36f4589a0ba47491db8d6d3149a76a8638643c/includes/input_booleans.yaml#L47)
-
-### [Tom left work notification for Tanja](https://github.com/tmttn/home-assistant-config/blob/a01261ff225ba473e8ee9a80a4bdcc04fe402662/automations/work.yaml#L46)
 
 
 [^ toc](#automations---table-of-content)
