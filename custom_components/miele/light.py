@@ -1,90 +1,183 @@
+"""Platform for Miele light entity."""
+from __future__ import annotations
+
+from dataclasses import dataclass
 import logging
-from datetime import timedelta
+from typing import Any, Callable, Final, Optional
 
-from homeassistant.components.light import LightEntity
-from homeassistant.helpers.entity import Entity
+import aiohttp
+from homeassistant.components.light import LightEntity, LightEntityDescription
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+)
 
-from custom_components.miele import DATA_CLIENT, DATA_DEVICES
-from custom_components.miele import DOMAIN as MIELE_DOMAIN
-
-PLATFORMS = ["miele"]
+from . import get_coordinator
+from .const import (
+    API,
+    COFFEE_SYSTEM,
+    DOMAIN,
+    HOOD,
+    LIGHT,
+    LIGHT_OFF,
+    LIGHT_ON,
+    MICROWAVE,
+    OVEN,
+    OVEN_MICROWAVE,
+    STEAM_OVEN,
+    STEAM_OVEN_COMBI,
+    STEAM_OVEN_MICRO,
+    WINE_CABINET,
+    WINE_CABINET_FREEZER,
+    WINE_CONDITIONING_UNIT,
+    WINE_STORAGE_CONDITIONING_UNIT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-ALL_DEVICES = []
 
-SUPPORTED_TYPES = [17, 18, 32, 33, 34, 68]
+@dataclass
+class MieleLightDescription(LightEntityDescription):
+    """Class describing Miele light entities."""
 
-
-# pylint: disable=W0612
-def setup_platform(hass, config, add_devices, discovery_info=None):
-    global ALL_DEVICES
-
-    devices = hass.data[MIELE_DOMAIN][DATA_DEVICES]
-    for k, device in devices.items():
-        device_type = device["ident"]["type"]
-
-        light_devices = []
-        if device_type["value_raw"] in SUPPORTED_TYPES:
-            light_devices.append(MieleLight(hass, device))
-
-        add_devices(light_devices)
-        ALL_DEVICES = ALL_DEVICES + light_devices
+    light_tag: str | None = None
+    type_key: str = "ident|type|value_localized"
+    convert: Callable[[Any], Any] | None = None
+    preset_modes: list | None = None
+    supported_features: int = 0
 
 
-def update_device_state():
-    for device in ALL_DEVICES:
-        try:
-            device.async_schedule_update_ha_state(True)
-        except (AssertionError, AttributeError):
-            _LOGGER.debug(
-                "Component most likely is disabled manually, if not please report to developer"
-                "{}".format(device.entity_id)
-            )
+@dataclass
+class MieleLightDefinition:
+    """Class for defining light entities."""
+
+    types: tuple[int, ...]
+    description: MieleLightDescription = None
 
 
-class MieleLight(LightEntity):
-    def __init__(self, hass, device):
-        self._hass = hass
-        self._device = device
-        self._ha_key = "light"
+LIGHT_TYPES: Final[tuple[MieleLightDefinition, ...]] = (
+    MieleLightDefinition(
+        types=[
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            COFFEE_SYSTEM,
+            HOOD,
+            STEAM_OVEN_COMBI,
+            WINE_CABINET,
+            WINE_CONDITIONING_UNIT,
+            WINE_STORAGE_CONDITIONING_UNIT,
+            STEAM_OVEN_MICRO,
+            WINE_CABINET_FREEZER,
+        ],
+        description=MieleLightDescription(
+            key="light",
+            light_tag="state|light",
+            name="Light",
+        ),
+    ),
+)
 
-    @property
-    def device_id(self):
-        """Return the unique ID for this light."""
-        return self._device["ident"]["deviceIdentLabel"]["fabNumber"]
 
-    @property
-    def unique_id(self):
-        """Return the unique ID for this light."""
-        return self.device_id
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigType,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the light platform."""
+    coordinator = await get_coordinator(hass, config_entry)
 
-    @property
-    def name(self):
-        """Return the name of the light."""
-        ident = self._device["ident"]
+    entities = []
+    for idx, ent in enumerate(coordinator.data):
+        for definition in LIGHT_TYPES:
+            if coordinator.data[ent]["ident|type|value_raw"] in definition.types:
+                entities.append(
+                    MieleLight(
+                        coordinator,
+                        idx,
+                        ent,
+                        definition.description,
+                        hass,
+                        config_entry,
+                    )
+                )
 
-        result = ident["deviceName"]
-        if len(result) == 0:
-            return ident["type"]["value_localized"]
-        else:
-            return result
+    async_add_entities(entities)
+
+
+class MieleLight(CoordinatorEntity, LightEntity):
+    """Representation of a Light."""
+
+    entity_description: MieleLightDescription
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        idx,
+        ent,
+        description: MieleLightDescription,
+        hass: HomeAssistant,
+        entry: ConfigType,
+    ):
+        """Initialize the light."""
+        super().__init__(coordinator)
+        self._api = hass.data[DOMAIN][entry.entry_id][API]
+
+        self._idx = idx
+        self._ent = ent
+        self._ed = description
+        _LOGGER.debug("Init light %s", ent)
+        appl_type = self.coordinator.data[self._ent][self._ed.type_key]
+        if appl_type == "":
+            appl_type = self.coordinator.data[self._ent][
+                "ident|deviceIdentLabel|techType"
+            ]
+        self._attr_name = self._ed.name
+        self._attr_has_entity_name = True
+        self._attr_unique_id = f"{self._ed.key}-{self._ent}"
+        self._attr_supported_features = self._ed.supported_features
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, self._ent)},
+            name=appl_type,
+            manufacturer="Miele",
+            model=self.coordinator.data[self._ent]["ident|deviceIdentLabel|techType"],
+        )
 
     @property
     def is_on(self):
-        """Return the state of the light."""
-        return self._device["state"]["light"] == 1
+        """Return current on/off state."""
+        return self.coordinator.data[self._ent][self._ed.light_tag] == LIGHT_ON
 
-    def turn_on(self, **kwargs):
-        service_parameters = {"device_id": self.device_id, "body": {"light": 1}}
-        self._hass.services.call(MIELE_DOMAIN, "action", service_parameters)
+    @property
+    def available(self):
+        """Return the availability of the entity."""
 
-    def turn_off(self, **kwargs):
-        service_parameters = {"device_id": self.device_id, "body": {"light": 2}}
-        self._hass.services.call(MIELE_DOMAIN, "action", service_parameters)
+        if not self.coordinator.last_update_success:
+            return False
 
-    async def async_update(self):
-        if not self.device_id in self._hass.data[MIELE_DOMAIN][DATA_DEVICES]:
-            _LOGGER.debug("Miele device not found: {}".format(self.device_id))
-        else:
-            self._device = self._hass.data[MIELE_DOMAIN][DATA_DEVICES][self.device_id]
+        return self.coordinator.data[self._ent]["state|status|value_raw"] != 255
+
+    async def async_turn_on(
+        self,
+        speed: Optional[str] = None,
+        percentage: Optional[int] = None,
+        preset_mode: Optional[str] = None,
+        **kwargs: Any,
+    ) -> None:
+        """Turn on the light."""
+        try:
+            await self._api.send_action(self._ent, {LIGHT: LIGHT_ON})
+        except aiohttp.ClientResponseError as ex:
+            _LOGGER.error("Turn_on: %s - %s", ex.status, ex.message)
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn the light off."""
+        try:
+            await self._api.send_action(self._ent, {LIGHT: LIGHT_OFF})
+        except aiohttp.ClientResponseError as ex:
+            _LOGGER.error("Turn_off: %s - %s", ex.status, ex.message)

@@ -1,4 +1,4 @@
-"""Support for interface with a ArrisDCX960 Settopbox."""
+"""Support for interface with a LGHorizon Settopbox."""
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_USERNAME
@@ -8,9 +8,13 @@ from .const import (
     API,
     DOMAIN,
 )
+from datetime import timedelta
+import logging
 
+SCAN_INTERVAL = timedelta(hours=1)
+_LOGGER = logging.getLogger(__name__)
 
-from arris_dcx960 import ArrisDCX960
+from lghorizon import LGHorizonApi
 
 
 async def async_setup_entry(
@@ -18,14 +22,19 @@ async def async_setup_entry(
 ) -> None:
     """Setup platform"""
     sensors = []
-    api = hass.data[DOMAIN][entry.entry_id][API]
+    api: LGHorizonApi = hass.data[DOMAIN][entry.entry_id][API]
+    capacity =  await hass.async_add_executor_job(api.get_recording_capacity)
+    if not capacity:
+        _LOGGER.info("No recording capacity available. No sensor added.")
+        return
+ 
     username = hass.data[DOMAIN][entry.entry_id][CONF_USERNAME]
-    sensors.append(ArrisDCX960Sensor(hass, username, api))
+    sensors.append(LGHorizonSensor(hass, username, api))
     async_add_entities(sensors, True)
 
 
-class ArrisDCX960Sensor(SensorEntity):
-    """The Arris DCX960 Sensor."""
+class LGHorizonSensor(SensorEntity):
+    """The LG Horizon Sensor."""
 
     username: str
     hass: HomeAssistantType
@@ -38,7 +47,7 @@ class ArrisDCX960Sensor(SensorEntity):
     @property
     def name(self):
         return f"{self.username} Recording capacity"
-    
+
     @property
     def icon(self):
         return "mdi:percent-outline"
@@ -56,7 +65,7 @@ class ArrisDCX960Sensor(SensorEntity):
         return "total"
 
     def __init__(
-        self, hass: HomeAssistantType, username: str, api: ArrisDCX960
+        self, hass: HomeAssistantType, username: str, api: LGHorizonApi
     ) -> None:
         """Init the media player."""
         self.api = api

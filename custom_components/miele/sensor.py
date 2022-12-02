@@ -1,758 +1,811 @@
+"""Platform for Miele sensor integration."""
+from __future__ import annotations
+
+from dataclasses import dataclass
+from datetime import timedelta
 import logging
-from datetime import datetime, timedelta
+from typing import Any, Callable, Final
 
-from homeassistant.components.sensor import STATE_CLASS_TOTAL_INCREASING, SensorEntity
-from homeassistant.const import DEVICE_CLASS_ENERGY
-from homeassistant.helpers.entity import Entity
-from homeassistant.helpers.entity_registry import async_get_registry
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorEntityDescription,
+    SensorStateClass,
+)
+from homeassistant.const import (
+    ENERGY_KILO_WATT_HOUR,
+    PERCENTAGE,
+    TEMP_CELSIUS,
+    TIME_MINUTES,
+    VOLUME_LITERS,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import DeviceInfo, EntityCategory
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.helpers.update_coordinator import (
+    CoordinatorEntity,
+    DataUpdateCoordinator,
+)
+from homeassistant.util import dt as dt_util
 
-from custom_components.miele import DATA_DEVICES
-from custom_components.miele import DOMAIN as MIELE_DOMAIN
-
-PLATFORMS = ["miele"]
+from . import get_coordinator
+from .const import (
+    COFFEE_SYSTEM,
+    DIALOG_OVEN,
+    DISH_WARMER,
+    DISHWASHER,
+    DOMAIN,
+    FREEZER,
+    FRIDGE,
+    FRIDGE_FREEZER,
+    HOB_HIGHLIGHT,
+    HOB_INDUCT_EXTR,
+    HOB_INDUCTION,
+    HOOD,
+    MICROWAVE,
+    OVEN,
+    OVEN_MICROWAVE,
+    ROBOT_VACUUM_CLEANER,
+    STATE_PROGRAM_ID,
+    STATE_PROGRAM_PHASE,
+    STATE_PROGRAM_TYPE,
+    STATE_STATUS,
+    STEAM_OVEN,
+    STEAM_OVEN_COMBI,
+    STEAM_OVEN_MICRO,
+    TUMBLE_DRYER,
+    WASHER_DRYER,
+    WASHING_MACHINE,
+    WINE_CABINET,
+    WINE_CABINET_FREEZER,
+    WINE_CONDITIONING_UNIT,
+    WINE_STORAGE_CONDITIONING_UNIT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-ALL_DEVICES = []
 
-# https://www.miele.com/developer/swagger-ui/swagger.html#/
-STATUS_OFF = 1
-STATUS_ON = 2
-STATUS_PROGRAMMED = 3
-STATUS_PROGRAMMED_WAITING_TO_START = 4
-STATUS_RUNNING = 5
-STATUS_PAUSE = 6
-STATUS_END_PROGRAMMED = 7
-STATUS_FAILURE = 8
-STATUS_PROGRAMME_INTERRUPTED = 9
-STATUS_IDLE = 10
-STATUS_RINSE_HOLD = 11
-STATUS_SERVICE = 12
-STATUS_SUPERFREEZING = 13
-STATUS_SUPERCOOLING = 14
-STATUS_SUPERHEATING = 15
-STATUS_SUPERCOOLING_SUPERFREEZING = 146
-STATUS_NOT_CONNECTED = 255
+@dataclass
+class MieleSensorDescription(SensorEntityDescription):
+    """Class describing Weatherlink sensor entities."""
+
+    data_tag: str | None = None
+    data_tag1: str | None = None
+    data_tag_loc: str | None = None
+    type_key: str = "ident|type|value_localized"
+    convert: Callable[[Any], Any] | None = None
+    decimals: int = 1
+    extra_attributes: dict[str, Any] | None = None
 
 
-def _map_key(key):
-    if key == "status":
-        return "Status"
-    elif key == "ProgramID":
-        return "Program ID"
-    elif key == "programType":
-        return "Program Type"
-    elif key == "programPhase":
-        return "Program Phase"
-    elif key == "targetTemperature":
-        return "Target Temperature"
-    elif key == "temperature":
-        return "Temperature"
-    elif key == "remainingTime":
-        return "Remaining Time"
-    elif key == "elapsedTime":
-        return "Elapsed Time"
-    elif key == "startTime":
-        return "Start Time"
-    elif key == "energyConsumption":
-        return "Energy"
-    elif key == "waterConsumption":
-        return "Water Consumption"
+@dataclass
+class MieleSensorDefinition:
+    """Class for defining sensor entities."""
+
+    types: tuple[int, ...]
+    description: MieleSensorDescription = None
 
 
-def state_capability(type, state):
-    type_str = str(type)
-    capabilities = {
-        "1": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "targetTemperature",
-            "signalInfo",
-            "signalFailure",
-            "remoteEnable",
-            "elapsedTime",
-            "spinningSpeed",
-            "ecoFeedback",
+SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
+    MieleSensorDefinition(
+        types=[
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            FRIDGE,
+            FREEZER,
+            FRIDGE_FREEZER,
+            STEAM_OVEN_COMBI,
+            WINE_CABINET,
+            WINE_CONDITIONING_UNIT,
+            WINE_STORAGE_CONDITIONING_UNIT,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
+            WINE_CABINET_FREEZER,
         ],
-        "2": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "signalInfo",
-            "signalFailure",
-            "remoteEnable",
-            "elapsedTime",
-            "dryingStep",
-            "ecoFeedback",
+        description=MieleSensorDescription(
+            key="temperature",
+            data_tag="state|temperature|0|value_raw",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            name="Temperature",
+            native_unit_of_measurement=TEMP_CELSIUS,
+            state_class=SensorStateClass.MEASUREMENT,
+            convert=lambda x, t: x / 100.0,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            FRIDGE,
+            FREEZER,
+            FRIDGE_FREEZER,
+            STEAM_OVEN_COMBI,
+            WINE_CABINET,
+            WINE_CONDITIONING_UNIT,
+            WINE_STORAGE_CONDITIONING_UNIT,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
+            WINE_CABINET_FREEZER,
         ],
-        "7": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "signalInfo",
-            "signalFailure",
-            "remoteEnable",
-            "elapsedTime",
-            "ecoFeedback",
+        description=MieleSensorDescription(
+            key="temperature2",
+            data_tag="state|temperature|1|value_raw",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            name="Temperature zone 2",
+            native_unit_of_measurement=TEMP_CELSIUS,
+            state_class=SensorStateClass.MEASUREMENT,
+            convert=lambda x, t: x / 100.0,
+            entity_registry_enabled_default=False,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            FRIDGE,
+            FREEZER,
+            FRIDGE_FREEZER,
+            STEAM_OVEN_COMBI,
+            WINE_CABINET,
+            WINE_CONDITIONING_UNIT,
+            WINE_STORAGE_CONDITIONING_UNIT,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
+            WINE_CABINET_FREEZER,
         ],
-        "12": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
-            "elapsedTime",
+        description=MieleSensorDescription(
+            key="temperature3",
+            data_tag="state|temperature|2|value_raw",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            name="Temperature zone 3",
+            native_unit_of_measurement=TEMP_CELSIUS,
+            state_class=SensorStateClass.MEASUREMENT,
+            convert=lambda x, t: x / 100.0,
+            entity_registry_enabled_default=False,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            FRIDGE,
+            FREEZER,
+            FRIDGE_FREEZER,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            WINE_CABINET,
+            WINE_CONDITIONING_UNIT,
+            WINE_STORAGE_CONDITIONING_UNIT,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
+            WINE_CABINET_FREEZER,
         ],
-        "13": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
-            "elapsedTime",
+        description=MieleSensorDescription(
+            key="targetTemperature",
+            data_tag="state|targetTemperature|0|value_raw",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            name="Target temperature",
+            native_unit_of_measurement=TEMP_CELSIUS,
+            state_class=SensorStateClass.MEASUREMENT,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            convert=lambda x, t: x / 100.0,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            FRIDGE,
+            FREEZER,
+            FRIDGE_FREEZER,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            WINE_CABINET,
+            WINE_CONDITIONING_UNIT,
+            WINE_STORAGE_CONDITIONING_UNIT,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
+            WINE_CABINET_FREEZER,
         ],
-        "14": ["status", "signalFailure", "plateStep"],
-        "15": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
-            "elapsedTime",
+        description=MieleSensorDescription(
+            key="targetTemperature2",
+            data_tag="state|targetTemperature|1|value_raw",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            name="Target temperature zone 2",
+            native_unit_of_measurement=TEMP_CELSIUS,
+            state_class=SensorStateClass.MEASUREMENT,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            convert=lambda x, t: x / 100.0,
+            entity_registry_enabled_default=False,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            FRIDGE,
+            FREEZER,
+            FRIDGE_FREEZER,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            WINE_CABINET,
+            WINE_CONDITIONING_UNIT,
+            WINE_STORAGE_CONDITIONING_UNIT,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
+            WINE_CABINET_FREEZER,
         ],
-        "16": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
-            "elapsedTime",
+        description=MieleSensorDescription(
+            key="targetTemperature3",
+            data_tag="state|targetTemperature|2|value_raw",
+            device_class=SensorDeviceClass.TEMPERATURE,
+            name="Target temperature zone 3",
+            native_unit_of_measurement=TEMP_CELSIUS,
+            state_class=SensorStateClass.MEASUREMENT,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            convert=lambda x, t: x / 100.0,
+            entity_registry_enabled_default=False,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            HOB_HIGHLIGHT,
+            STEAM_OVEN,
+            MICROWAVE,
+            COFFEE_SYSTEM,
+            HOOD,
+            FRIDGE,
+            FREEZER,
+            FRIDGE_FREEZER,
+            ROBOT_VACUUM_CLEANER,
+            WASHER_DRYER,
+            DISH_WARMER,
+            HOB_INDUCTION,
+            STEAM_OVEN_COMBI,
+            WINE_CABINET,
+            WINE_CONDITIONING_UNIT,
+            WINE_STORAGE_CONDITIONING_UNIT,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
+            WINE_CABINET_FREEZER,
+            HOB_INDUCT_EXTR,
         ],
-        "17": [
-            "ProgramID",
-            "status",
-            "programPhase",
-            "signalInfo",
-            "signalFailure",
-            "remoteEnable",
+        description=MieleSensorDescription(
+            key="stateStatus",
+            data_tag="state|status|value_raw",
+            name="Status",
+            device_class="miele__state_status",
+            icon="mdi:state-machine",
+            convert=lambda x, t: STATE_STATUS.get(x, x),
+            extra_attributes={"Serial no": 0, "Raw value": 0},
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            COFFEE_SYSTEM,
+            ROBOT_VACUUM_CLEANER,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
         ],
-        "18": [
-            "status",
-            "signalInfo",
-            "signalFailure",
-            "remoteEnable",
-            "ventilationStep",
+        description=MieleSensorDescription(
+            key="stateProgramId",
+            data_tag="state|ProgramID|value_raw",
+            data_tag_loc="state|ProgramID|value_localized",
+            name="Program",
+            device_class="miele__state_program_id",
+            icon="mdi:state-machine",
+            convert=lambda x, t: STATE_PROGRAM_ID.get(t, {}).get(x, x),
+            extra_attributes={"Raw value": 0},
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            ROBOT_VACUUM_CLEANER,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
         ],
-        "19": [
-            "status",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
+        description=MieleSensorDescription(
+            key="stateProgramType",
+            data_tag="state|programType|value_raw",
+            data_tag_loc="state|programType|value_localized",
+            name="Program type",
+            device_class="miele__state_program_type",
+            icon="mdi:state-machine",
+            convert=lambda x, t: STATE_PROGRAM_TYPE.get(x, x),
+            extra_attributes={"Raw value": 0},
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            COFFEE_SYSTEM,
+            ROBOT_VACUUM_CLEANER,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
         ],
-        "20": [
-            "status",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
+        description=MieleSensorDescription(
+            key="stateProgramPhase",
+            data_tag="state|programPhase|value_raw",
+            data_tag_loc="state|programPhase|value_localized",
+            name="Program phase",
+            device_class="miele__state_program_phase",
+            icon="mdi:state-machine",
+            convert=lambda x, t: STATE_PROGRAM_PHASE.get(x, x),
+            extra_attributes={"Raw value": 0},
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            WASHER_DRYER,
         ],
-        "21": [
-            "status",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
+        description=MieleSensorDescription(
+            key="stateSpinningSpeed",
+            data_tag="state|spinningSpeed|value_raw",
+            name="Spin speed",
+            icon="mdi:sync",
+            native_unit_of_measurement="rpm",
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            ROBOT_VACUUM_CLEANER,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
         ],
-        "23": [
-            "ProgramID",
-            "status",
-            "programType",
-            "signalInfo",
-            "signalFailure",
-            "remoteEnable",
-            "batteryLevel",
+        description=MieleSensorDescription(
+            key="stateRemainingTime",
+            data_tag="state|remainingTime|0",
+            data_tag1="state|remainingTime|1",
+            name="Remaining time",
+            icon="mdi:clock-end",
+            native_unit_of_measurement=TIME_MINUTES,
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
         ],
-        "24": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "signalInfo",
-            "signalFailure",
-            "remoteEnable",
-            "elapsedTime",
-            "spinningSpeed",
-            "dryingStep",
-            "ecoFeedback",
+        description=MieleSensorDescription(
+            key="stateRemainingTimeAbs",
+            data_tag="state|remainingTime|0",
+            data_tag1="state|remainingTime|1",
+            name="Finish at",
+            icon="mdi:clock-end",
+            native_unit_of_measurement="",
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
         ],
-        "25": [
-            "status",
-            "startTime",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "elapsedTime",
+        description=MieleSensorDescription(
+            key="stateStartTime",
+            data_tag="state|startTime|0",
+            data_tag1="state|startTime|1",
+            name="Start time",
+            icon="mdi:clock-start",
+            native_unit_of_measurement=TIME_MINUTES,
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
         ],
-        "27": ["status", "signalFailure", "plateStep"],
-        "31": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
-            "elapsedTime",
+        description=MieleSensorDescription(
+            key="stateStartTimeAbs",
+            data_tag="state|startTime|0",
+            data_tag1="state|startTime|1",
+            name="Start at",
+            icon="mdi:clock-start",
+            native_unit_of_measurement="",
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
         ],
-        "32": [
-            "status",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
+        description=MieleSensorDescription(
+            key="stateElapsedTime",
+            data_tag="state|elapsedTime|0",
+            data_tag1="state|elapsedTime|1",
+            name="Elapsed time",
+            icon="mdi:timer-outline",
+            native_unit_of_measurement=TIME_MINUTES,
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            OVEN,
+            OVEN_MICROWAVE,
+            STEAM_OVEN,
+            MICROWAVE,
+            WASHER_DRYER,
+            STEAM_OVEN_COMBI,
+            STEAM_OVEN_MICRO,
+            DIALOG_OVEN,
         ],
-        "33": [
-            "status",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
+        description=MieleSensorDescription(
+            key="stateElapsedTimeAbs",
+            data_tag="state|elapsedTime|0",
+            data_tag1="state|elapsedTime|1",
+            name="Started at",
+            icon="mdi:timer-outline",
+            native_unit_of_measurement="",
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            DISHWASHER,
+            WASHER_DRYER,
         ],
-        "34": [
-            "status",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
+        description=MieleSensorDescription(
+            key="stateCurrentWaterConsumption",
+            data_tag="state|ecoFeedback|currentWaterConsumption|value",
+            name="Water consumption",
+            device_class=SensorDeviceClass.WATER,
+            state_class=SensorStateClass.TOTAL_INCREASING,
+            native_unit_of_measurement=VOLUME_LITERS,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            WASHER_DRYER,
         ],
-        "45": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
-            "elapsedTime",
+        description=MieleSensorDescription(
+            key="stateCurrentEnergyConsumption",
+            data_tag="state|ecoFeedback|currentEnergyConsumption|value",
+            name="Energy consumption",
+            device_class=SensorDeviceClass.ENERGY,
+            state_class=SensorStateClass.TOTAL_INCREASING,
+            native_unit_of_measurement=ENERGY_KILO_WATT_HOUR,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            DISHWASHER,
+            WASHER_DRYER,
         ],
-        "67": [
-            "ProgramID",
-            "status",
-            "programType",
-            "programPhase",
-            "remainingTime",
-            "startTime",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "signalDoor",
-            "remoteEnable",
-            "elapsedTime",
+        description=MieleSensorDescription(
+            key="stateWaterForecast",
+            data_tag="state|ecoFeedback|waterForecast",
+            name="Water forecast",
+            icon="mdi:water-percent",
+            native_unit_of_measurement=PERCENTAGE,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
+            convert=lambda x, t: x * 100.0,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHING_MACHINE,
+            TUMBLE_DRYER,
+            DISHWASHER,
+            WASHER_DRYER,
         ],
-        "68": [
-            "status",
-            "targetTemperature",
-            "temperature",
-            "signalInfo",
-            "signalFailure",
-            "remoteEnable",
+        description=MieleSensorDescription(
+            key="stateEnergyForecast",
+            data_tag="state|ecoFeedback|energyForecast",
+            name="Energy forecast",
+            icon="mdi:label-percent-outline",
+            native_unit_of_measurement=PERCENTAGE,
+            entity_category=EntityCategory.DIAGNOSTIC,
+            entity_registry_enabled_default=False,
+            convert=lambda x, t: x * 100.0,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            ROBOT_VACUUM_CLEANER,
         ],
-    }
+        description=MieleSensorDescription(
+            key="batteryLevel",
+            data_tag="state|batteryLevel",
+            name="Battery",
+            device_class=SensorDeviceClass.BATTERY,
+            native_unit_of_measurement=PERCENTAGE,
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+)
 
-    if state in capabilities[type_str]:
-        return True
 
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigType,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up the sensor platform."""
+    coordinator = await get_coordinator(hass, config_entry)
 
-def _is_running(device_status):
-    return device_status in [STATUS_RUNNING, STATUS_PAUSE, STATUS_END_PROGRAMMED]
-
-
-def _to_seconds(time_array):
-    if len(time_array) == 3:
-        return time_array[0] * 3600 + time_array[1] * 60 + time_array[2]
-    elif len(time_array) == 2:
-        return time_array[0] * 3600 + time_array[1] * 60
-    else:
-        return 0
-
-
-# pylint: disable=W0612
-def setup_platform(hass, config, add_devices, discovery_info=None):
-    global ALL_DEVICES
-
-    devices = hass.data[MIELE_DOMAIN][DATA_DEVICES]
-    for k, device in devices.items():
-        device_state = device["state"]
-        device_type = device["ident"]["type"]["value_raw"]
-
-        sensors = []
-        if "status" in device_state and state_capability(
-            type=device_type, state="status"
-        ):
-            sensors.append(MieleStatusSensor(hass, device, "status"))
-
-        if "ProgramID" in device_state and state_capability(
-            type=device_type, state="ProgramID"
-        ):
-            sensors.append(MieleTextSensor(hass, device, "ProgramID"))
-
-        if "targetTemperature" in device_state and state_capability(
-            type=device_type, state="targetTemperature"
-        ):
-            for i, val in enumerate(device_state["targetTemperature"]):
-                sensors.append(
-                    MieleTemperatureSensor(hass, device, "targetTemperature", i)
+    entities = []
+    for idx, ent in enumerate(coordinator.data):
+        for definition in SENSOR_TYPES:
+            if coordinator.data[ent]["ident|type|value_raw"] in definition.types:
+                entities.append(
+                    MieleSensor(coordinator, idx, ent, definition.description)
                 )
-        if "temperature" in device_state and state_capability(
-            type=device_type, state="temperature"
-        ):
-            for i, val in enumerate(device_state["temperature"]):
-                sensors.append(MieleTemperatureSensor(hass, device, "temperature", i))
 
-        if "remainingTime" in device_state and state_capability(
-            type=device_type, state="remainingTime"
-        ):
-            sensors.append(MieleTimeSensor(hass, device, "remainingTime"))
-        if "startTime" in device_state and state_capability(
-            type=device_type, state="startTime"
-        ):
-            sensors.append(MieleTimeSensor(hass, device, "startTime"))
-        if "elapsedTime" in device_state and state_capability(
-            type=device_type, state="elapsedTime"
-        ):
-            sensors.append(MieleTimeSensor(hass, device, "elapsedTime"))
+    async_add_entities(entities)
 
-        if "ecoFeedback" in device_state and state_capability(
-            type=device_type, state="ecoFeedback"
-        ):
-            sensors.append(
-                MieleConsumptionSensor(hass, device, "energyConsumption", "kWh")
+
+class MieleSensor(CoordinatorEntity, SensorEntity):
+    """Representation of a Sensor."""
+
+    entity_description: MieleSensorDescription
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        idx,
+        ent,
+        description: MieleSensorDescription,
+    ):
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._idx = idx
+        self._ent = ent
+        self.entity_description = description
+        _LOGGER.debug("init sensor %s", ent)
+        appl_type = self.coordinator.data[self._ent][self.entity_description.type_key]
+        if appl_type == "":
+            appl_type = self.coordinator.data[self._ent][
+                "ident|deviceIdentLabel|techType"
+            ]
+        # self._attr_name = f"{appl_type} {self.entity_description.name}"
+        self._attr_name = self.entity_description.name
+        self._attr_has_entity_name = True
+        self._attr_unique_id = f"{self.entity_description.key}-{self._ent}"
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, self._ent)},
+            name=appl_type,
+            manufacturer="Miele",
+            model=self.coordinator.data[self._ent]["ident|deviceIdentLabel|techType"],
+            hw_version=self.coordinator.data[self._ent]["ident|xkmIdentLabel|techType"],
+            sw_version=self.coordinator.data[self._ent][
+                "ident|xkmIdentLabel|releaseVersion"
+            ],
+        )
+        self._last_started_time_reported = None
+
+    @property
+    def native_value(self):
+        """Return the state of the sensor."""
+        if self.entity_description.key in [
+            "stateRemainingTime",
+            "stateStartTime",
+            "stateElapsedTime",
+        ]:
+            return (
+                self.coordinator.data[self._ent][self.entity_description.data_tag] * 60
+                + self.coordinator.data[self._ent][self.entity_description.data_tag1]
             )
-            sensors.append(
-                MieleConsumptionSensor(hass, device, "waterConsumption", "L")
+
+        if self.entity_description.key in [
+            "stateRemainingTimeAbs",
+            "stateStartTimeAbs",
+        ]:
+            now = dt_util.now()
+            mins = (
+                self.coordinator.data[self._ent][self.entity_description.data_tag] * 60
+                + self.coordinator.data[self._ent][self.entity_description.data_tag1]
             )
+            if mins == 0:
+                return None
+            # _LOGGER.debug("Key:  %s | Dev: %s | Mins: %s | Now: %s | State: %s", self.entity_description.key, self._ent, mins, now, (now + timedelta(minutes=mins)).strftime("%H:%M"))
+            return (now + timedelta(minutes=mins)).strftime("%H:%M")
 
-        add_devices(sensors)
-        ALL_DEVICES = ALL_DEVICES + sensors
-
-
-def update_device_state():
-    for device in ALL_DEVICES:
-        try:
-            device.async_schedule_update_ha_state(True)
-        except (AssertionError, AttributeError):
+        if self.entity_description.key in [
+            "stateElapsedTimeAbs",
+        ]:
+            now = dt_util.now()
+            mins = (
+                self.coordinator.data[self._ent][self.entity_description.data_tag] * 60
+                + self.coordinator.data[self._ent][self.entity_description.data_tag1]
+            )
+            if mins == 0:
+                return None
             _LOGGER.debug(
-                "Component most likely is disabled manually, if not please report to developer"
-                "{}".format(device.entity_id)
+                "Key:  %s | Dev: %s | Mins: %s | Now: %s | State: %s",
+                self.entity_description.key,
+                self._ent,
+                mins,
+                now,
+                (now + timedelta(minutes=mins)).strftime("%H:%M"),
+            )
+            started_time = (now - timedelta(minutes=mins)).strftime("%H:%M")
+            # Don't update sensor if state == program_ended
+            if self.coordinator.data[self._ent]["state|status|value_raw"] == 7:
+                return self._last_started_time_reported
+            self._last_started_time_reported = started_time
+            return started_time
+
+        # Log raw and localized values for programID etc
+        # Active if logger.level is DEBUG or INFO
+        if _LOGGER.getEffectiveLevel() <= logging.INFO:
+            if self.entity_description.key in {
+                "stateProgramPhase",
+                "stateProgramID",
+                "stateProgramType",
+            }:
+                while len(self.hass.data[DOMAIN]["id_log"]) >= 500:
+                    self.hass.data[DOMAIN]["id_log"].pop()
+
+                self.hass.data[DOMAIN]["id_log"].append(
+                    {
+                        "appliance": self.coordinator.data[self._ent][
+                            self.entity_description.type_key
+                        ],
+                        "key": self.entity_description.key,
+                        "raw": self.coordinator.data[self._ent][
+                            self.entity_description.data_tag
+                        ],
+                        "localized": self.coordinator.data[self._ent][
+                            self.entity_description.data_tag_loc
+                        ],
+                    }
+                )
+
+        if (
+            self.coordinator.data[self._ent].get(self.entity_description.data_tag)
+            is None
+            or self.coordinator.data[self._ent][self.entity_description.data_tag]
+            == -32766
+            or self.coordinator.data[self._ent][self.entity_description.data_tag]
+            == -32768
+        ):
+            return None
+
+        if self.entity_description.convert is None:
+            return self.coordinator.data[self._ent][self.entity_description.data_tag]
+        else:
+            return self.entity_description.convert(
+                self.coordinator.data[self._ent][self.entity_description.data_tag],
+                self.coordinator.data[self._ent]["ident|type|value_raw"],
             )
 
-
-class MieleRawSensor(Entity):
-    def __init__(self, hass, device, key):
-        self._hass = hass
-        self._device = device
-        self._key = key
-
     @property
-    def device_id(self):
-        """Return the unique ID for this sensor."""
-        return self._device["ident"]["deviceIdentLabel"]["fabNumber"]
+    def available(self):
+        """Return the availability of the entity."""
 
-    @property
-    def unique_id(self):
-        """Return the unique ID for this sensor."""
-        return self.device_id + "_" + self._key
+        if self.entity_description.key == "stateStatus":
+            return True
 
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        ident = self._device["ident"]
+        if not self.coordinator.last_update_success:
+            return False
 
-        result = ident["deviceName"]
-        if len(result) == 0:
-            return ident["type"]["value_localized"] + " " + _map_key(self._key)
-        else:
-            return result + " " + _map_key(self._key)
-
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-
-        return self._device["state"][self._key]["value_raw"]
-
-    async def async_update(self):
-        if not self.device_id in self._hass.data[MIELE_DOMAIN][DATA_DEVICES]:
-            _LOGGER.debug("Miele device disappeared: {}".format(self.device_id))
-        else:
-            self._device = self._hass.data[MIELE_DOMAIN][DATA_DEVICES][self.device_id]
-
-
-class MieleSensorEntity(SensorEntity):
-    def __init__(self, hass, device, key):
-        self._hass = hass
-        self._device = device
-        self._key = key
-
-    @property
-    def device_id(self):
-        """Return the unique ID for this sensor."""
-        return self._device["ident"]["deviceIdentLabel"]["fabNumber"]
-
-    @property
-    def unique_id(self):
-        """Return the unique ID for this sensor."""
-        return self.device_id + "_" + self._key
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        ident = self._device["ident"]
-
-        result = ident["deviceName"]
-        if len(result) == 0:
-            return ident["type"]["value_localized"] + " " + _map_key(self._key)
-        else:
-            return result + " " + _map_key(self._key)
-
-    async def async_update(self):
-        if not self.device_id in self._hass.data[MIELE_DOMAIN][DATA_DEVICES]:
-            _LOGGER.debug("Miele device disappeared: {}".format(self.device_id))
-        else:
-            self._device = self._hass.data[MIELE_DOMAIN][DATA_DEVICES][self.device_id]
-
-
-class MieleStatusSensor(MieleRawSensor):
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        result = self._device["state"]["status"]["value_localized"]
-        if result == None:
-            result = self._device["state"]["status"]["value_raw"]
-
-        return result
+        return self.coordinator.data[self._ent]["state|status|value_raw"] != 255
 
     @property
     def extra_state_attributes(self):
-        """Attributes."""
-        device_state = self._device["state"]
-
-        attributes = {}
-        if "ProgramID" in device_state:
-            attributes["ProgramID"] = device_state["ProgramID"]["value_localized"]
-            attributes["rawProgramID"] = device_state["ProgramID"]["value_raw"]
-
-        if "programType" in device_state:
-            attributes["programType"] = device_state["programType"]["value_localized"]
-            attributes["rawProgramType"] = device_state["programType"]["value_raw"]
-
-        if "programPhase" in device_state:
-            attributes["programPhase"] = device_state["programPhase"]["value_localized"]
-            attributes["rawProgramPhase"] = device_state["programPhase"]["value_raw"]
-
-        if "dryingStep" in device_state:
-            attributes["dryingStep"] = device_state["dryingStep"]["value_localized"]
-            attributes["rawDryingStep"] = device_state["dryingStep"]["value_raw"]
-
-        if "spinningSpeed" in device_state:
-            attributes["spinningSpeed"] = device_state["spinningSpeed"][
-                "value_localized"
+        if self.entity_description.extra_attributes is None:
+            return
+        attr = self.entity_description.extra_attributes
+        if "Raw value" in self.entity_description.extra_attributes:
+            attr["Raw value"] = self.coordinator.data[self._ent][
+                self.entity_description.data_tag
             ]
-            attributes["rawSpinningSpeed"] = device_state["spinningSpeed"]["value_raw"]
-
-        if "ventilationStep" in device_state:
-            attributes["ventilationStep"] = device_state["ventilationStep"][
-                "value_localized"
+            attr["Localized"] = self.coordinator.data[self._ent][
+                self.entity_description.data_tag.replace("_raw", "_localized")
             ]
-            attributes["rawVentilationStep"] = device_state["ventilationStep"][
-                "value_raw"
-            ]
+        if "Serial no" in self.entity_description.extra_attributes:
+            attr["Serial no"] = self._ent
 
-        if "plateStep" in device_state:
-            plate_steps = 1
-            for plateStep in device_state["plateStep"]:
-                attributes["plateStep" + str(plate_steps)] = plateStep[
-                    "value_localized"
-                ]
-                attributes["rawPlateStep" + str(plate_steps)] = plateStep["value_raw"]
-                plate_steps += 1
-
-        if "ecoFeedback" in device_state and device_state["ecoFeedback"] is not None:
-            if "currentWaterConsumption" in device_state["ecoFeedback"]:
-                attributes["currentWaterConsumption"] = device_state["ecoFeedback"][
-                    "currentWaterConsumption"
-                ]["value"]
-                attributes["currentWaterConsumptionUnit"] = device_state["ecoFeedback"][
-                    "currentWaterConsumption"
-                ]["unit"]
-            if "currentEnergyConsumption" in device_state["ecoFeedback"]:
-                attributes["currentEnergyConsumption"] = device_state["ecoFeedback"][
-                    "currentEnergyConsumption"
-                ]["value"]
-                attributes["currentEnergyConsumptionUnit"] = device_state[
-                    "ecoFeedback"
-                ]["currentEnergyConsumption"]["unit"]
-            if "waterForecast" in device_state["ecoFeedback"]:
-                attributes["waterForecast"] = device_state["ecoFeedback"][
-                    "waterForecast"
-                ]
-            if "energyForecast" in device_state["ecoFeedback"]:
-                attributes["energyForecast"] = device_state["ecoFeedback"][
-                    "energyForecast"
-                ]
-
-        # Programs will only be running of both remainingTime and elapsedTime indicate
-        # a value > 0
-        if "remainingTime" in device_state and "elapsedTime" in device_state:
-            remainingTime = _to_seconds(device_state["remainingTime"])
-            elapsedTime = _to_seconds(device_state["elapsedTime"])
-
-            if "startTime" in device_state:
-                startTime = _to_seconds(device_state["startTime"])
-            else:
-                startTime = 0
-
-            # Calculate progress
-            if (elapsedTime + remainingTime) == 0:
-                attributes["progress"] = None
-            else:
-                attributes["progress"] = round(
-                    elapsedTime / (elapsedTime + remainingTime) * 100, 1
-                )
-
-            # Calculate end time
-            if remainingTime == 0:
-                attributes["finishTime"] = None
-            else:
-                now = datetime.now()
-                attributes["finishTime"] = (
-                    now
-                    + timedelta(seconds=startTime)
-                    + timedelta(seconds=remainingTime)
-                ).strftime("%H:%M")
-
-            # Calculate start time
-            if startTime == 0:
-                now = datetime.now()
-                attributes["kickoffTime"] = (
-                    now - timedelta(seconds=elapsedTime)
-                ).strftime("%H:%M")
-            else:
-                now = datetime.now()
-                attributes["kickoffTime"] = (
-                    now + timedelta(seconds=startTime)
-                ).strftime("%H:%M")
-
-        return attributes
-
-
-class MieleConsumptionSensor(MieleSensorEntity):
-    def __init__(self, hass, device, key, measurement):
-        super().__init__(hass, device, key)
-
-        self._attr_native_unit_of_measurement = measurement
-        self._cached_consumption = -1
-        self._attr_state_class = STATE_CLASS_TOTAL_INCREASING
-
-        if key == "energyConsumption":
-            self._attr_device_class = DEVICE_CLASS_ENERGY
-
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        device_state = self._device["state"]
-        device_status_value = self._device["state"]["status"]["value_raw"]
-
-        if not _is_running(device_status_value):
-            self._cached_consumption = -1
-            return 0
-
-        # Sometimes the Miele API seems to return a null ecoFeedback
-        # object even though the Miele device is running. Or if the the
-        # Miele device has lost the connection to the Miele cloud, the
-        # status is "not connected". Either way, we need to return the
-        # last known value until the API starts returning something
-        # sane again, otherwise the statistics generated from this
-        # sensor would be messed up.
-        if (
-            "ecoFeedback" not in device_state
-            or device_state["ecoFeedback"] is None
-            or device_status_value == STATUS_NOT_CONNECTED
-        ):
-            if self._cached_consumption > 0:
-                return self._cached_consumption
-            else:
-                return 0
-
-        if not _is_running(device_status_value):
-            self._cached_consumption = -1
-            return 0
-
-        consumption = 0
-        if self._key == "energyConsumption":
-            if "currentEnergyConsumption" in device_state["ecoFeedback"]:
-                consumption_container = device_state["ecoFeedback"][
-                    "currentEnergyConsumption"
-                ]
-
-                if consumption_container["unit"] == "kWh":
-                    consumption = consumption_container["value"]
-                elif consumption_container["unit"] == "Wh":
-                    consumption = consumption_container["value"] / 1000.0
-            else:
-                return self._cached_consumption
-
-        elif self._key == "waterConsumption":
-            if "currentWaterConsumption" in device_state["ecoFeedback"]:
-                consumption = device_state["ecoFeedback"]["currentWaterConsumption"][
-                    "value"
-                ]
-            else:
-                return self._cached_consumption
-
-        self._cached_consumption = consumption
-        return consumption
-
-
-class MieleTimeSensor(MieleRawSensor):
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        state_value = self._device["state"][self._key]
-        if len(state_value) != 2:
-            return None
-        else:
-            return "{:02d}:{:02d}".format(state_value[0], state_value[1])
-
-
-class MieleTemperatureSensor(Entity):
-    def __init__(self, hass, device, key, index):
-        self._hass = hass
-        self._device = device
-        self._key = key
-        self._index = index
-
-    @property
-    def device_id(self):
-        """Return the unique ID for this sensor."""
-        return self._device["ident"]["deviceIdentLabel"]["fabNumber"]
-
-    @property
-    def unique_id(self):
-        """Return the unique ID for this sensor."""
-        return self.device_id + "_" + self._key + "_{}".format(self._index)
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        ident = self._device["ident"]
-
-        result = ident["deviceName"]
-        if len(result) == 0:
-            return "{} {} {}".format(
-                ident["type"]["value_localized"], _map_key(self._key), self._index
-            )
-        else:
-            return "{} {} {}".format(result, _map_key(self._key), self._index)
-
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        state_value = self._device["state"][self._key][self._index]["value_raw"]
-        if state_value == -32768:
-            return None
-        else:
-            return state_value / 100
-
-    @property
-    def unit_of_measurement(self):
-        """Return the unit of measurement of this entity, if any."""
-        if self._device["state"][self._key][self._index]["unit"] == "Celsius":
-            return "°C"
-        elif self._device["state"][self._key][self._index]["unit"] == "Fahrenheit":
-            return "°F"
-
-    @property
-    def device_class(self):
-        return "temperature"
-
-    async def async_update(self):
-        if not self.device_id in self._hass.data[MIELE_DOMAIN][DATA_DEVICES]:
-            _LOGGER.debug(" Miele device disappeared: {}".format(self.device_id))
-        else:
-            self._device = self._hass.data[MIELE_DOMAIN][DATA_DEVICES][self.device_id]
-
-
-class MieleTextSensor(MieleRawSensor):
-    @property
-    def state(self):
-        """Return the state of the sensor."""
-        result = self._device["state"][self._key]["value_localized"]
-        if result == "":
-            result = None
-
-        return result
+        return attr

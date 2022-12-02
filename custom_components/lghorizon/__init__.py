@@ -1,4 +1,4 @@
-"""The arrisdcx960 integration."""
+"""The lghorizon integration."""
 from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
@@ -10,12 +10,11 @@ import logging
 from .const import (
     DOMAIN,
     CONF_COUNTRY_CODE,
-    CONF_OMIT_CHANNEL_QUALITY,
     API,
     COUNTRY_CODES,
 )
 
-from arris_dcx960 import ArrisDCX960
+from lghorizon import LGHorizonApi
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -27,7 +26,6 @@ CONFIG_SCHEMA = vol.Schema(
                 vol.Required(CONF_USERNAME): cv.string,
                 vol.Required(CONF_PASSWORD): cv.string,
                 vol.Optional(CONF_COUNTRY_CODE, default="nl"): cv.string,
-                vol.Optional(CONF_OMIT_CHANNEL_QUALITY, default=False): cv.boolean,
             }
         )
     },
@@ -36,8 +34,8 @@ CONFIG_SCHEMA = vol.Schema(
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Set up arrisdcx960 from a config entry."""
-    api = ArrisDCX960(
+    """Set up lghorizon api from a config entry."""
+    api = LGHorizonApi(
         entry.data[CONF_USERNAME],
         entry.data[CONF_PASSWORD],
         COUNTRY_CODES[entry.data[CONF_COUNTRY_CODE]],
@@ -46,7 +44,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {
         API: api,
-        CONF_OMIT_CHANNEL_QUALITY: entry.data[CONF_OMIT_CHANNEL_QUALITY],
         CONF_USERNAME: entry.data[CONF_USERNAME],
     }
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
