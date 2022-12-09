@@ -15,6 +15,7 @@ longitude: !secret longitude_home
 elevation: 60
 unit_system: metric
 legacy_templates: false
+country: BE
 time_zone: Europe/Brussels
 name: Home
 allowlist_external_dirs:
