@@ -16,10 +16,11 @@ from homeassistant.const import (
     PERCENTAGE,
     POWER_WATT,
     POWER_KILO_WATT,
+    PRESSURE_BAR,
+    PRESSURE_PSI,
     SPEED_MILES_PER_HOUR,
     TEMP_CELSIUS,
     TIME_HOURS,
-    UnitOfPressure,
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.icon import icon_for_battery_level
@@ -72,6 +73,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry, async_add_entitie
             entities.append(
                 TeslaCarTpmsPressureSensor(hass, car, coordinator, tpms_sensor)
             )
+        entities.append(TeslaCarArrivalTime(hass, car, coordinator))
+        entities.append(TeslaCarDistanceToArrival(hass, car, coordinator))
 
     for energysite in energysites.values():
         if (
@@ -534,8 +537,8 @@ class TeslaCarTpmsPressureSensor(TeslaCarEntity, SensorEntity):
         self.type = tpms_sensor
         self._attr_device_class = SensorDeviceClass.PRESSURE
         self._attr_state_class = SensorStateClass.MEASUREMENT
-        self._attr_native_unit_of_measurement = UnitOfPressure.BAR
-        self._attr_suggested_unit_of_measurement = UnitOfPressure.PSI
+        self._attr_native_unit_of_measurement = PRESSURE_BAR
+        self._attr_suggested_unit_of_measurement = PRESSURE_PSI
         self._attr_icon = "mdi:gauge-full"
 
     @property
@@ -556,3 +559,86 @@ class TeslaCarTpmsPressureSensor(TeslaCarEntity, SensorEntity):
         return {
             "tpms_last_seen_pressure_timestamp": timestamp,
         }
+
+
+class TeslaCarArrivalTime(TeslaCarEntity, SensorEntity):
+    """Representation of the Tesla car route arrival time."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        car: TeslaCar,
+        coordinator: TeslaDataUpdateCoordinator,
+    ) -> None:
+        """Initialize time charge complete entity."""
+        super().__init__(hass, car, coordinator)
+        self.type = "arrival time"
+        self._attr_device_class = SensorDeviceClass.TIMESTAMP
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_icon = "mdi:timer-sand"
+        self._datetime_value: Optional[datetime] = None
+        self._last_known_value: Optional[int] = None
+        self._last_update_time: Optional[datetime] = None
+
+    @property
+    def native_value(self) -> Optional[datetime]:
+        """Return route arrival time."""
+        if self._car.active_route_minutes_to_arrival is None:
+            return self._datetime_value
+        else:
+            min_duration = round(float(self._car.active_route_minutes_to_arrival), 2)
+
+        if self._last_known_value != min_duration:
+            self._last_known_value = min_duration
+            self._last_update_time = dt.utcnow()
+
+        new_value = (
+            dt.utcnow()
+            + timedelta(minutes=min_duration)
+            - (dt.utcnow() - self._last_update_time)
+        )
+        if (
+            self._datetime_value is None
+            or (new_value - self._datetime_value).total_seconds() >= 60
+        ):
+            self._datetime_value = new_value
+        return self._datetime_value
+
+    @property
+    def extra_state_attributes(self):
+        """Return device state attributes."""
+        if self._car.active_route_traffic_minutes_delay is None:
+            minutes = None
+        else:
+            minutes = round(self._car.active_route_traffic_minutes_delay, 1)
+
+        return {
+            "Energy at arrival": self._car.active_route_energy_at_arrival,
+            "Minutes traffic delay": minutes,
+            "Destination": self._car.active_route_destination,
+        }
+
+
+class TeslaCarDistanceToArrival(TeslaCarEntity, SensorEntity):
+    """Representation of the Tesla distance to arrival."""
+
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        car: TeslaCar,
+        coordinator: TeslaDataUpdateCoordinator,
+    ) -> None:
+        """Initialize distance to arrival entity."""
+        super().__init__(hass, car, coordinator)
+        self.type = "distance to arrival"
+        self._attr_device_class = SensorDeviceClass.DISTANCE
+        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_native_unit_of_measurement = LENGTH_MILES
+        self._attr_icon = "mdi:map-marker-distance"
+
+    @property
+    def native_value(self) -> float:
+        """Return the distance to arrival."""
+        if self._car.active_route_miles_to_arrival is None:
+            return None
+        return round(self._car.active_route_miles_to_arrival, 2)
