@@ -46,19 +46,9 @@
   port: 21065
   mode: accessory
   filter:
-    include_entities: lock.bizzylectric_door_lock
+    include_entities: lock.bizzylectric_doors
 - name: HA Tesla Chargeport Lock
   port: 21066
   mode: accessory
   filter:
-    include_entities: lock.bizzylectric_charger_door_lock
-- name: HA Tesla Trunk Loc
-  port: 21067
-  mode: accessory
-  filter:
-    include_entities: lock.bizzylectric_trunk_lock
-- name: HA Tesla Frunk Lock
-  port: 21068
-  mode: accessory
-  filter:
-    include_entities: lock.bizzylectric_frunk_lock
+    include_entities: lock.bizzylectric_charge_port_latch
