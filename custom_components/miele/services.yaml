@@ -1,0 +1,100 @@
+# Services descriptions for Miele
+
+process_action:
+  name: Execute process action
+  description: Executes process action if preconditions are met.
+  # If the service accepts entity IDs, target allows the user to specify entities by entity, device, or area.
+  # If `target` is specified, `entity_id` should not be defined in the `fields` map.
+  # By default it shows only targets matching entities from the same domain as the service,
+  # but if further customization is required, target supports the entity, device, and area selectors (https://www.home-assistant.io/docs/blueprint/selectors/).
+  # Entity selector parameters will automatically be applied to device and area, and device selector parameters will automatically be applied to area.
+  target:
+    device:
+      integration: "miele"
+
+  fields:
+    action:
+      # Field name as shown in UI
+      name: Action
+      description: processAction
+      required: true
+      advanced: false
+      # Example value that can be passed for this field
+      example: "start"
+      # The default field value
+      default: ""
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        select:
+          options:
+            - "start"
+            - "stop"
+            - "pause"
+            - "start_superfreezing"
+            - "stop_superfreezing"
+            - "start_supercooling"
+            - "stop_supercooling"
+
+generic_action:
+  name: Execute generic action
+  description: Executes one action on a device
+  target:
+    device:
+      integration: "miele"
+  fields:
+    processAction:
+      example: 1
+      description: Set processAction
+    light:
+      description: Set light on or off
+      example: 1
+    startTime:
+      description: Set start time
+      example: "[1, 30]"
+    ventilationStep:
+      description: Select ventilation step
+      example: 1
+    programId:
+      description: Set program
+      example: 24
+    targetTemperature:
+      description: Set target temperature
+      example: '[{ "zone": 1, "value": 5 }]'
+    deviceName:
+      description: Rename device
+      example: "A new name"
+    powerOn:
+      description: Power on appliance
+      example: true
+    powerOff:
+      description: Power off appliance
+      example: true
+    colors:
+      example: "blue"
+      description: Set color of ambient light
+    modes:
+      description: Set mode
+      example: 1
+
+raw:
+  name: Execute raw action
+  description: Execute service with minmal validation.
+  fields:
+    serialno:
+      description: The serial number of the appliance
+      example: "123456"
+    extra:
+      description: A dictionary with parameters
+      example: '{ "targetTemperature": [{"zone": 1, "value": -18 }] }'
+
+set_program:
+  name: Set program
+  description: Set and start program with optional parameters.
+  target:
+    device:
+      integration: "miele"
+  fields:
+    programId:
+      description: Set program Id
+      example: 24
+
