@@ -2583,7 +2583,7 @@
     event: sunset
     offset: '0'
   - platform: numeric_state
-    entity_id: sensor.bizzylectric_range_sensor
+    entity_id: sensor.bizzylectric_range
     above: '415'
   - platform: state
     entity_id: switch.bizzylectric_charger_switch
