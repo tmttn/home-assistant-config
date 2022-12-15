@@ -10,12 +10,20 @@ import logging
 from aiohttp import ClientResponseError
 import async_timeout
 import flatdict
+from homeassistant.components import persistent_notification
+from homeassistant.components.application_credentials import (
+    ClientCredential,
+    async_import_client_credential,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_CLIENT_ID, CONF_CLIENT_SECRET, Platform
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers import aiohttp_client, config_entry_oauth2_flow
+from homeassistant.helpers import aiohttp_client
 from homeassistant.helpers import config_validation as cv
-from homeassistant.helpers.config_entry_oauth2_flow import LocalOAuth2Implementation
+from homeassistant.helpers.config_entry_oauth2_flow import (
+    OAuth2Session,
+    async_get_config_entry_implementation,
+)
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import (
     ConfigEntryAuthFailed,
@@ -23,10 +31,8 @@ from homeassistant.helpers.update_coordinator import (
     DataUpdateCoordinator,
     UpdateFailed,
 )
-from pymiele import OAUTH2_AUTHORIZE, OAUTH2_TOKEN
 import voluptuous as vol
 
-from . import config_flow
 from .api import AsyncConfigEntryAuth
 from .const import ACTIONS, API, API_READ_TIMEOUT, DOMAIN, VERSION
 from .devcap import (  # noqa: F401
@@ -51,9 +57,9 @@ CONFIG_SCHEMA = vol.Schema(
     {
         DOMAIN: vol.Schema(
             {
+                # For compatibility with other integration
                 vol.Required(CONF_CLIENT_ID): cv.string,
                 vol.Required(CONF_CLIENT_SECRET): cv.string,
-                # For compatibility with other integration
                 vol.Optional(CONF_LANG): cv.string,
                 vol.Optional(CONF_LANGUAGE): cv.string,
             }
@@ -75,50 +81,26 @@ PLATFORMS = [
 ]
 
 
-class MieleLocalOAuth2Implementation(LocalOAuth2Implementation):
-    """Local OAuth2 implemenation."""
-
-    def __init__(
-        self,
-        hass: HomeAssistant,
-        domain: str,
-        client_id: str,
-        client_secret: str,
-        authorize_url: str,
-        token_url: str,
-        name: str,
-    ) -> None:
-        """Set up the Local OAuth2 class."""
-
-        super().__init__(
-            hass, domain, client_id, client_secret, authorize_url, token_url
-        )
-        self._name = name
-
-    @property
-    def name(self) -> str:
-        """Name of the implementation."""
-        return self._name
-
-
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Miele component."""
     hass.data[DOMAIN] = {}
-
     if DOMAIN not in config:
         return True
 
-    config_flow.OAuth2FlowHandler.async_register_implementation(
+    persistent_notification.async_create(
         hass,
-        # config_entry_oauth2_flow.LocalOAuth2Implementation(
-        MieleLocalOAuth2Implementation(
-            hass,
-            DOMAIN,
-            config[DOMAIN][CONF_CLIENT_ID],
-            config[DOMAIN][CONF_CLIENT_SECRET],
-            OAUTH2_AUTHORIZE,
-            OAUTH2_TOKEN,
-            "Miele",
+        "Configuration of the Miele platform in YAML is deprecated. "
+        "Your existing configuration has been imported into the UI "
+        "automatically and can be safely removed from your configuration.yaml file",
+        "Miele",
+        "miele_config_import",
+    )
+
+    await async_import_client_credential(
+        hass,
+        DOMAIN,
+        ClientCredential(
+            config[DOMAIN][CONF_CLIENT_ID], config[DOMAIN][CONF_CLIENT_SECRET]
         ),
     )
 
@@ -127,23 +109,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Miele from a config entry."""
-    implementation = (
-        await config_entry_oauth2_flow.async_get_config_entry_implementation(
-            hass, entry
-        )
-    )
+    implementation = await async_get_config_entry_implementation(hass, entry)
 
-    session = config_entry_oauth2_flow.OAuth2Session(hass, entry, implementation)
+    session = OAuth2Session(hass, entry, implementation)
     try:
         await session.async_ensure_token_valid()
     except ClientResponseError as ex:
         _LOGGER.debug("API error: %s (%s)", ex.code, ex.message)
-        if ex.code in (
-            HTTPStatus.BAD_REQUEST,
-            HTTPStatus.UNAUTHORIZED,
-            HTTPStatus.FORBIDDEN,
-        ):
-            raise ConfigEntryAuthFailed("Token not valid, trigger renewal") from ex
+        if ex.code in (HTTPStatus.UNAUTHORIZED,):
+            raise ConfigEntryAuthFailed(
+                f"Token not valid, trigger renewal: {ex}"
+            ) from ex
         raise ConfigEntryNotReady from ex
 
     hass.data[DOMAIN][entry.entry_id] = {}
@@ -275,8 +251,14 @@ async def get_coordinator(
         # result["1223024"] = TEST_DATA_24
         # result["1223074"] = TEST_DATA_74
 
-        for ent in result:
-            flat_result[ent] = dict(flatdict.FlatterDict(result[ent], delimiter="|"))
+        try:
+            for ent in result:
+                flat_result[ent] = dict(
+                    flatdict.FlatterDict(result[ent], delimiter="|")
+                )
+        except TypeError as ex:
+            raise UpdateFailed(ex) from ex
+
         # _LOGGER.debug("Data: %s", flat_result)
         return flat_result
 
