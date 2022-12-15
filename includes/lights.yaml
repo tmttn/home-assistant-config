@@ -48,6 +48,7 @@
     - light.kitchen_lights
     - light.toilet
     - light.outside_lights
+    - light.christmas_lights_inside
 
 - platform: group
   name: Kitchen lights
@@ -107,6 +108,21 @@
     - light.terrace_wall
     - light.terrace_backdoor
 
+- platform: group
+  name: Christmas lights inside
+  unique_id: christmas_lights_inside
+  entities:
+    - light.shelly_plug_s_1
+    - light.shelly_plug_s_2
+
 - platform: switch
   name: Hue plug
   entity_id: switch.hue_plug
+
+- platform: switch
+  name: Shelly Plug S 1
+  entity_id: switch.shelly_plug_s_1
+
+- platform: switch
+  name: Shelly Plug S 2
+  entity_id: switch.shelly_plug_s_2
