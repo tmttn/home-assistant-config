@@ -192,6 +192,7 @@ turn_off_everything_non_automatic:
           - light.bedroom_lights
           - light.bathroom_lights
           - light.guest_bedroom_lights
+          - light.christmas_lights_inside
     - service: media_player.turn_off
       entity_id: media_player.tv
 
@@ -386,6 +387,6 @@ electric_vehicle_charging_set_amps_link_to_excess_solar:
         command: CHARGING_AMPS
         parameters:
           path_vars:
-            vehicle_id: "{{ state_attr('binary_sensor.bizzylectric_online_sensor', 'id') }}"
+            vehicle_id: "{{ state_attr('binary_sensor.bizzylectric_online', 'id') }}"
           charging_amps: "{{ max(((states('sensor.pv_power_a')| float + states('sensor.pv_power_b') | float - 500) / 398.371685741)| int, 1) }}"
   mode: single
