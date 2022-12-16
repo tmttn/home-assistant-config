@@ -3,7 +3,7 @@ Based on Bas Nijholt's config files.
 
 [![GitHub stars](https://img.shields.io/github/stars/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
-[![HA Version](https://img.shields.io/badge/Running%20Home%20Asssistant-2022.12.6%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2022.12.6)
+[![HA Version](https://img.shields.io/badge/Running%20Home%20Assistant-2022.12.6%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2022.12.6)
 [![HA Community](https://img.shields.io/badge/HA%20community-forum-orange)](https://community.home-assistant.io/u/tmttn/summary)
 [![Yaml Lint](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml/badge.svg)](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml)
 
@@ -46,6 +46,12 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td>1</td>
             <td>29.95</td>
             <td>29.95</td>
+        </tr>
+        <tr>
+            <td>Shelly Plug S</td>
+            <td>4</td>
+            <td>4.69</td>
+            <td>18.75</td>
         </tr>
         <tr>
             <td>Philips Hue Dimmer switch</td>
@@ -93,7 +99,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>617.97</td>
+            <td>636.72</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -541,7 +547,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€6085.37</th>
+            <th>€6104.12</th>
         </tr>
     </thead>
 </table>
