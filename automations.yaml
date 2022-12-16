@@ -279,8 +279,7 @@
       state: "off"
     - "{{ is_state_attr('media_player.spotify', 'source', 'bizzyphone') }}"
     - "{{ is_state('media_player.spotify', 'playing') }}"
-    - "{{ as_timestamp(now()) - as_timestamp(states.person.tom.last_changed) < 5 * 60
-      }}"
+    - "{{ as_timestamp(now()) - as_timestamp(states.person.tom.last_changed) < 5 * 60}}"
     - condition: numeric_state
       entity_id: proximity.home
       below: 2
@@ -379,16 +378,6 @@
     - service: input_boolean.turn_off
       entity_id: input_boolean.work_hour_notification_sent
   mode: single
-<<<<<<< HEAD
-- id: '1667823645606'
-  alias: 'Apple Watch: set lights'
-  description: ''
-  trigger:
-  - platform: event
-    event_type: ios.action_fired
-    event_data:
-      actionName: Set lights
-=======
 - id: "1667822612254"
   alias: "Work: Tom left work notification for Tanja"
   description: ""
@@ -474,7 +463,6 @@
       event_type: ios.action_fired
       event_data:
         actionName: Minimal lights bedroom
->>>>>>> 21e116483207f3541c3a5da44f5c3ee39ea97aa3
   condition: []
   action:
     - service: light.turn_on
@@ -764,8 +752,7 @@
   condition: []
   action:
     - variables:
-        iphone:
-          notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-','_') }}
+        iphone: notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-','_') }}
     - service: "{{ iphone }}"
       data:
         message: "Apple Watch: set sleep mode."
@@ -810,8 +797,7 @@
   condition: []
   action:
     - variables:
-        iphone:
-          notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-','_') }}
+        iphone: notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-','_') }}
     - service: "{{ iphone }}"
       data:
         message: "Apple Watch: set temperature"
@@ -880,8 +866,7 @@
   condition: []
   action:
     - variables:
-        iphone:
-          notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-','_') }}
+        iphone: notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-','_') }}
     - service: "{{ iphone }}"
       data:
         title: Temperature
