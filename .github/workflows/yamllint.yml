@@ -2,7 +2,7 @@
 name: Yaml Lint
 on: [push]
 jobs:
-  lintAllTheThings:
+  yamllint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
