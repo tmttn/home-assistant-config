@@ -9,8 +9,8 @@
 # - from github.com/tmttn/home-assistant-config
 
 # Run this script from the main repo root!
-# It updates the table of devices and the list of automations.
-# This code relies on the way I have structeded my files and named my automations.
+# It updates the table of devices.
+# This code relies on the way I have structured my files.
 
 import functools
 import json
@@ -42,118 +42,6 @@ def git_latest_edit_hash(fname):
     )
     return git_output.decode("utf-8").replace("\n", "")
 
-
-def line_number(fname, text, regex_check):
-    assert isinstance(text, str)
-    with fname.open() as f:
-        for i, line in enumerate(f):
-            if text in line:
-                if regex_check and re.search(fr"\b{text}", line) is None:
-                    break
-                return i + 1
-    raise ValueError(f"Text ({text}) doesn't exist in file {fname}.")
-
-
-def permalink(fname):
-    return URL.format(commit_hash=git_latest_edit_hash(fname), fname=fname)
-
-
-def permalink_automation(fname, automation):
-    from_line = line_number(fname, automation["alias"], False)
-    return permalink(fname) + f"#L{from_line}"
-
-
-SKIP_LIST = {"switch.turn_on", "switch.turn_off"}
-
-
-def permalink_entity(x, yaml_fname):
-    if x in SKIP_LIST:
-        raise ValueError("Incorrectly identified entity which is actually a service.")
-    domain, name = x.split(".")
-    fname = Path(yaml_fname or f"includes/{domain}s.yaml")
-    from_line = line_number(fname, f"{name}:", True)
-    return permalink(fname) + f"#L{from_line}"
-
-
-def title_and_summary(automation):
-    title, summary = automation["alias"].split(": ")
-    emoji = get_emoji(title.strip())
-    title = f"{title} {emoji}"
-    summary = summary[0].upper() + summary[1:]
-    return title, summary
-
-
-def automations_as_dict(fname):
-    with fname.open() as f:
-        return yaml.safe_load(f)
-
-
-def find_inputs(s):
-    pattern = "(input_(select|boolean|number|datetime|text)[.][a-z0-9_]+)"
-    return {groups[0] for groups in re.findall(pattern, s)}
-
-
-def find_entities(s, domain):
-    pattern = f"({domain}[.][a-z0-9_]+)"
-    return {groups for groups in re.findall(pattern, s)}
-
-
-def get_dependencies(automation):
-    deps = []
-    inputs = find_inputs(str(automation))
-    for input_entity in sorted(inputs):
-        with suppress(ValueError):
-            url = permalink_entity(input_entity, None)
-            s = f"  - [{input_entity}]({url})"
-            deps.append(s)
-
-    for domain, yaml_file in [
-        ("script", "scripts.yaml"),
-        ("sensor", "includes/sensors.yaml"),
-        ("binary_sensor", "includes/binary_sensors.yaml"),
-        ("switch", "includes/switches.yaml"),
-        ("shell_command", "includes/shell_commands.yaml"),
-        ("group", "includes/groups.yaml"),
-    ]:
-        entities = find_entities(str(automation), domain)
-        for entity in sorted(entities):
-            with suppress(ValueError):
-                url = permalink_entity(entity, yaml_file)
-                s = f"  - [{entity}]({url})"
-                deps.append(s)
-
-    text = "\n".join(deps)
-    if deps:
-        text = "  *which uses:*\n" + text + "\n"
-    return text
-
-
-def toc_entry(automations):
-    title, _ = title_and_summary(automations[0])
-    return f"1. [{title}](#{slugify(title)}) ({len(automations)} automations)"
-
-
-def get_header(fname, automation):
-    title, _ = title_and_summary(automation)
-    return f"## [{title}]({permalink(fname)})"
-
-
-def get_automation_line(fname, automation):
-    _, summary = title_and_summary(automation)
-    return f"### [{summary}]({permalink_automation(fname, automation)})"
-
-
-def slugify(s):
-    return s.lower().strip().replace(" ", "-").encode("ascii", "ignore").decode("ascii")
-
-
-def get_description(automation):
-    if "description" not in automation:
-        return ""
-    desc = automation["description"]
-    return "\n  " + desc + "\n"
-
-
 def remove_text(content, start, end):
     do_append = True
     new = []
@@ -165,44 +53,6 @@ def remove_text(content, start, end):
         if start in line:
             do_append = not do_append
     return new
-
-
-def get_emoji(title):
-    return {
-        "Adaptive lighting": "🌄🌇",
-        "Alarm clock": "⏰",
-        "Apple Watch": "⌚",
-        "Arriving": "👞",
-        "Climate": "🔥🥶",
-        "Control switches": "🎛",
-        "Cube": "∛",
-        "Doorbell": "🚪🔔",
-        "Frontend": "👨‍💻",
-        "KEF DSP": "🔈🎛",
-        "Leaving": "👞",
-        "Light": "💡",
-        "Lovelace": "👨‍💻",
-        "LSX": "🔈",
-        "Media player": "🔈📺",
-        "Music": "🎵",
-        "Night mode": "🌕🌑",
-        "Notifications": "🔔",
-        "Plant": "🌱",
-        "Rhasspy": "🤖",
-        "Security": "👮🚨",
-        "System": "🖥",
-        "Test": "🧪",
-        "Utilities": "🧺👚🍽",
-        "Vacation mode": "🏝",
-        "Vacuum": "🧹",
-        "Work": "💼",
-        "Curtains": "🪟🪟",
-        "Solar": "☀️",
-        "Medication": "💊",
-        "Candy": "🍬🍭🍫",
-        "Electric vehicle": "🚗⚡️"
-    }[title]
-
 
 def modify_lines(to_insert, lines, tag):
     MARKDOWN_COMMENT = "<!-- {} -->"
@@ -216,7 +66,7 @@ def modify_lines(to_insert, lines, tag):
 def modify_version(lines):
     with open(".HA_VERSION") as f:
         version = f.read()
-    msg = f"Running Home Asssistant-{version} -darkblue"
+    msg = f"Running Home Assistant-{version} -darkblue"
     url_part = urllib.parse.quote(msg)
     ha_url = f"https://github.com/home-assistant/core/releases/tag/{version}"
     pattern = "[![HA Version]"
@@ -261,37 +111,7 @@ def get_addon_lines():
     _, addons = zip(*sorted(addons))
     return addons
 
-
-automation_files = sorted(list(Path("automations/").glob("*yaml")))
 text = []
-
-
-# Create TOC
-toc_title = "Automations - Table of Content"
-text.append(f"# {toc_title}")
-total_automations = 0
-for fname in automation_files:
-    automations = automations_as_dict(fname)
-    if automations is None:
-        continue
-    total_automations += len(automations)
-    text.append(toc_entry(automations))
-text.append("\n")
-text.append(f"⚠️ Total number of automations: **{total_automations}** ⚠️\n")
-back_to_toc = f"[^ toc](#{slugify(toc_title)})"
-
-# List automations
-for fname in automation_files:
-    automations = automations_as_dict(fname)
-    if automations is None:
-        continue
-    text.append(get_header(fname, automations[0]))
-    for automation in automations:
-        text.append(get_automation_line(fname, automation))
-        text.append(get_description(automation))
-        text.append(get_dependencies(automation))
-    text.append(back_to_toc)
-    text.append("\n")
 
 # List addons
 addons = get_addon_lines()
@@ -301,7 +121,6 @@ with open("README.md") as f:
     lines = f.readlines()
 
 lines = modify_version(lines)
-lines = modify_lines(text, lines, "automations")
 lines = modify_lines(html_table.split("\n"), lines, "table")
 if addons is not None:
     # Only works when running from the 'SSH & Web Terminal' Add-on
