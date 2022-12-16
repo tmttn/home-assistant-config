@@ -50,8 +50,8 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
         <tr>
             <td>Shelly Plug S</td>
             <td>4</td>
-            <td>4.69</td>
             <td>18.75</td>
+            <td>74.99</td>
         </tr>
         <tr>
             <td>Philips Hue Dimmer switch</td>
@@ -99,7 +99,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <td><i><b>Total</b></i></td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
-            <td>636.72</td>
+            <td>692.96</td>
         </tr>
         <tr>
             <td>&nbsp;</td>
@@ -547,7 +547,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
             <th>Total</th>
             <th></th>
             <th></th>
-            <th>€6104.12</th>
+            <th>€6160.36</th>
         </tr>
     </thead>
 </table>
