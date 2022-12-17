@@ -2682,7 +2682,7 @@
       entity_id: device_tracker.bizzylectric_location_tracker
       state: home
     - condition: numeric_state
-      entity_id: sensor.bizzylectric_charging_rate_sensor
+      entity_id: sensor.bizzylectric_charging_rate
       above: "2"
     - condition: state
       entity_id: input_boolean.optimal_electric_vehicle_charging
