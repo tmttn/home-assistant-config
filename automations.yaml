@@ -393,7 +393,8 @@
   description: ''
   trigger:
   - platform: state
-    entity_id: sensor.lovelace
+    entity_id:
+    - sensor.lovelace_size
   condition: []
   action:
   - service: shell_command.convert_lovelace
