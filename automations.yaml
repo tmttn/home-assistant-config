@@ -2591,7 +2591,7 @@
   trigger:
   - platform: state
     entity_id:
-    - binary_sensor.bizzylectric_charger
+    - switch.bizzylectric_charger
     to: 'off'
   condition:
   - condition: state
@@ -2652,7 +2652,7 @@
     above: '415'
   - platform: state
     entity_id:
-    - binary_sensor.bizzylectric_charger
+    - switch.bizzylectric_charger
     to: 'off'
   condition:
   - condition: state
