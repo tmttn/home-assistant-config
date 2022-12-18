@@ -2563,7 +2563,7 @@
   - service: switch.turn_on
     data: {}
     target:
-      entity_id: switch.bizzylectric_charger_switch
+      entity_id: switch.bizzylectric_charger
   - service: automation.turn_on
     data: {}
     target:
@@ -2575,7 +2575,7 @@
   trigger:
   - platform: state
     entity_id:
-    - switch.bizzylectric_charger
+    - binary_sensor.bizzylectric_charger
     to: 'on'
   condition:
   - condition: state
@@ -2591,7 +2591,7 @@
   trigger:
   - platform: state
     entity_id:
-    - switch.bizzylectric_charger
+    - binary_sensor.bizzylectric_charger
     to: 'off'
   condition:
   - condition: state
