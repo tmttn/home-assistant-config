@@ -110,7 +110,7 @@
   variables:
     sleep_mode: '{{ states(''input_select.sleep_mode'') }}'
 - id: '1667822399597'
-  alias: 'Alarm clock: wake up'
+  alias: 'Alarm clock: wake up with light'
   description: ''
   trigger:
   - platform: template
