@@ -923,27 +923,6 @@
       else %}\n  t_phone\n{% endif %}\n"
     other_person: '{% if phone == ''bizzyphone'' %}Tanja{% else %}Tom{% endif %}'
     device_tracker: device_tracker.{{ other_person }}_iphone
-- id: '1667823714405'
-  alias: 'Frontend: change theme'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: input_select.theme
-  - platform: state
-    entity_id: input_boolean.dark_mode
-  - platform: state
-    entity_id: input_boolean.theme_alternative
-  - platform: homeassistant
-    event: start
-  condition: []
-  action:
-  - service: frontend.set_theme
-    data:
-      name: '{% set which = "dark" if is_state("input_boolean.dark_mode", "on") else
-        "light" -%} {% set name = states("input_select.theme") -%} {% set suffix =
-        "-alternative" if is_state("input_boolean.theme_alternative", "on") else ""
-        -%} ios-{{ which }}-mode-{{ name }}{{ suffix }}'
-  mode: single
 - id: '1667823722171'
   alias: 'Frontend: turn on dark mode'
   description: ''
