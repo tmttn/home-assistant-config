@@ -2520,10 +2520,13 @@
   condition:
   - condition: template
     value_template: '{{ state_attr(''sun.sun'', ''elevation'') < 1 }}'
-  - '{{ is_state_attr(''proximity.home'', ''dir_of_travel'', ''towards'') }}'
   - condition: state
     entity_id: binary_sensor.no_one_home
     state: 'on'
+  - condition: state
+    entity_id: proximity.home
+    attribute: dir_of_travel
+    state: towards
   action:
   - service: light.turn_on
     data:
@@ -2973,6 +2976,13 @@
   - condition: state
     entity_id: binary_sensor.no_one_home
     state: 'on'
+  - condition: state
+    entity_id: proximity.home
+    attribute: dir_of_travel
+    state: towards
+  - condition: template
+    value_template: '{{ not is_state_attr(''climate.living_room'', ''temperature'',
+      states(''input_number.temperature_high'')) }}'
   action:
   - service: script.set_high_temperature
     data: {}
