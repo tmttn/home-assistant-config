@@ -74,7 +74,10 @@
   condition: []
   action:
   - choose:
-    - conditions: '{{ sleep_mode == ''off'' }}'
+    - conditions:
+      - condition: state
+        entity_id: input_select.sleep_mode
+        state: 'off'
       sequence:
       - service: switch.turn_off
         data: {}
@@ -88,7 +91,10 @@
         data: {}
         target:
           entity_id: switch.adaptive_lighting_default
-    - conditions: '{{ sleep_mode == ''half'' }}'
+    - conditions:
+      - condition: state
+        entity_id: input_select.sleep_mode
+        state: half
       sequence:
       - service: switch.turn_off
         data: {}
@@ -103,7 +109,10 @@
           - switch.adaptive_lighting_half_and_dim
           - switch.adaptive_lighting_half_and_full
           - switch.adaptive_lighting_sleep_mode_half_and_dim
-    - conditions: '{{ sleep_mode == ''total'' }}'
+    - conditions:
+      - condition: state
+        entity_id: input_select.sleep_mode
+        state: total
       sequence:
       - service: switch.turn_off
         data: {}
