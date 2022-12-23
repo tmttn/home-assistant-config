@@ -77,14 +77,17 @@
     - conditions: '{{ sleep_mode == ''off'' }}'
       sequence:
       - service: switch.turn_off
-        entity_id:
-        - switch.adaptive_lighting_half_and_dim
-        - switch.adaptive_lighting_half_and_full
-        - switch.adaptive_lighting_sleep_mode_default
-        - switch.adaptive_lighting_sleep_mode_living_room
+        data: {}
+        target:
+          entity_id:
+          - switch.adaptive_lighting_half_and_dim
+          - switch.adaptive_lighting_half_and_full
+          - switch.adaptive_lighting_sleep_mode_default
+          - switch.adaptive_lighting_sleep_mode_living_room
       - service: switch.turn_on
-        entity_id:
-        - switch.adaptive_lighting_default
+        data: {}
+        target:
+          entity_id: switch.adaptive_lighting_default
     - conditions: '{{ sleep_mode == ''half'' }}'
       sequence:
       - service: switch.turn_off
