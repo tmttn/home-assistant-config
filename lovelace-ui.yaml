@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -119,9 +110,6 @@ views:
     - entities:
       - entities:
         - light.terrace_lights
-        - light.outside_switch_1
-        - light.outside_switch_2
-        - light.outside_switch_3
         head:
           entity: light.automatic_lights
           hide_when_off: false
@@ -195,11 +183,30 @@ views:
         name: Automatic
         type: custom:slider-entity-row
       type: custom:fold-entity-row
+    - entities:
+      - entity: light.shelly_plug_s_1
+        icon: mdi:pine-tree
+        name: Christmas tree
+      - entity: light.shelly_plug_s_2
+        icon: mdi:string-lights
+        name: Staircase
+      head:
+        entity: light.christmas_lights_inside
+        icon: mdi:string-lights
+      icon: mdi:string-lights
+      type: custom:fold-entity-row
     show_header_toggle: false
     title: Lights
     type: entities
   - entities:
-    - entity: weather.buienradar
+    - custom:
+      - temp: sensor.bunderhome_weerstation_ws_2902c_temp
+      - humidity: sensor.bunderhome_weerstation_ws_2902c_humidity
+      - precipitation: sensor.bunderhome_weerstation_ws_2902c_daily_rain
+      - wind-bearing: sensor.bunderhome_weerstation_ws_2902c_wind_dir
+      - wind-speed: sensor.bunderhome_weerstation_ws_2902c_wind_speed
+      - pressure: sensor.bunderhome_weerstation_ws_2902c_rel_pressure
+      entity: weather.buienradar
       name: Bilzen
       style: "ha-card {\n  background: none;\n  border: none;\n  box-shadow: none;\n\
         \  padding-left: none;\n}\n"
@@ -210,77 +217,59 @@ views:
       name: Take out the trash
     show_header_toggle: false
     state_color: false
+    style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
   - cards:
-    - artwork: cover
-      background: /local/tv.jpg
-      entity: media_player.shield
-      hide:
-        controls: true
-        mute: false
-        play_stop: true
-        volume: false
-      icon: mdi:television
-      name: Nvidia Shield
-      type: custom:mini-media-player
-    - artwork: cover
-      entity: media_player.telenettvbox
-      hide:
-        controls: true
-        mute: false
-        play_stop: true
-        volume: false
-      icon: mdi:television
-      name: Telenet TV Box
-      type: custom:mini-media-player
     - cards:
-      - artwork: cover
-        background: /local/google-home.jpg
-        entity: media_player.google_home
+      - entity: media_player.shield
+        hide:
+          controls: true
+          mute: false
+          play_stop: true
+          volume: false
+        icon: mdi:television
+        name: Nvidia Shield
+        type: custom:mini-media-player
+      - entity: media_player.google_home
         hide:
           icon: true
           mute: true
           power_state: false
         info: short
         type: custom:mini-media-player
-      - artwork: cover
-        background: /local/google-hub-max.jpg
-        entity: media_player.kitchen_display
+      - entity: media_player.kitchen_display
         hide:
           icon: true
           mute: true
           power_state: false
         info: short
         type: custom:mini-media-player
-      type: horizontal-stack
-    - cards:
-      - artwork: cover
-        background: /local/google-home-mini.png
-        entity: media_player.google_home_mini
+      - entity: media_player.google_home_mini
         hide:
           icon: true
           mute: true
           power_state: false
         info: short
         type: custom:mini-media-player
-      - artwork: cover
-        background: /local/google-nest-wifi.jpg
-        entity: media_player.bathroom_wifi
+      - entity: media_player.guest_bedroom_wifi
         hide:
           icon: true
           mute: true
           power_state: false
         info: short
         type: custom:mini-media-player
-      type: horizontal-stack
-    - artwork: cover
-      entity: media_player.spotify
-      hide:
-        power_state: false
-        source: true
-        volume: true
-      icon: mdi:spotify
-      type: custom:mini-media-player
+      - entity: media_player.spotify
+        hide:
+          power_state: false
+          source: true
+          volume: true
+        icon: mdi:spotify
+        type: custom:mini-media-player
+      parameters:
+        autoplay:
+          delay: 5000
+        speed: 2000
+      type: custom:swipe-card
     - cards:
       - icon: mdi:sofa
         name: Play music in living room
@@ -309,6 +298,23 @@ views:
             entity_id: media_player.google_home_mini
         type: custom:button-card
       type: horizontal-stack
+    - card:
+        type: custom:timer-bar-card
+      filter:
+        exclude:
+        - state: unavailable
+        - state: ''
+        - state: idle
+        include:
+        - attributes:
+            integration: google_home
+          domain: sensor
+          entity_id: sensor.*_timer
+      show_empty: false
+      sort:
+        ignore_case: true
+        method: name
+      type: custom:auto-entities
     style: "ha-card {\n  --mini-media-player-base-color: red;\n  --mini-media-player-icon-color:\
       \ red;\n  --mini-media-player-background-opacity: 0.1;\n  --mini-media-player-overlay-color:\
       \ red;\n}\n"
@@ -317,14 +323,8 @@ views:
     - entity: input_boolean.alarm_clock
     - entity: input_datetime.alarm_clock
     - entity: input_select.sleep_mode
-    - entities:
-      - input_select.theme
-      - input_boolean.theme_alternative
-      head:
-        entity: input_boolean.dark_mode
-        name: Dark mode
-      type: custom:fold-entity-row
     show_header_toggle: false
+    style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
   - cards:
     - entities:
@@ -342,22 +342,145 @@ views:
       - entity: input_boolean.cleaned_today
       - entity: binary_sensor.vacuum_day
       show_header_toggle: false
+      style: ".card-content {\n  padding-top: 16px;\n}\nha-card {\n  border-radius:\
+        \ var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0\
+        \ 0;\n  background: transparent;\n}\n"
       type: entities
-    - calibration_source:
-        camera: true
-      entity: vacuum.robot_vacuum
-      map_locked: true
-      map_source:
-        camera: camera.xiaomi_cloud_map_extractor
-      two_finger_pan: false
-      type: custom:xiaomi-vacuum-map-card
-      vacuum_platform: KrzysztofHajdamowicz/miio2
-    type: vertical-stack
+    - cards:
+      - calibration_source:
+          camera: true
+        entity: vacuum.robot_vacuum
+        icons: []
+        map_locked: true
+        map_modes:
+        - template: vacuum_clean_zone
+        - template: vacuum_goto
+        - predefined_selections:
+          - icon:
+              name: mdi:stairs
+              x: 17750
+              y: 31500
+            id: '1'
+            label:
+              offset_y: 35
+              text: Hall
+              x: 17750
+              y: 31500
+            outline:
+            - - 16200
+              - 30200
+            - - 21900
+              - 30200
+            - - 21900
+              - 33750
+            - - 16200
+              - 33750
+          - icon:
+              name: mdi:cupboard
+              x: 23975
+              y: 35000
+            id: '16'
+            label:
+              offset_y: 35
+              text: Storage
+              x: 23975
+              y: 35000
+            outline:
+            - - 22000
+              - 33800
+            - - 25950
+              - 33800
+            - - 25950
+              - 35950
+            - - 22000
+              - 35950
+          - icon:
+              name: mdi:sofa
+              x: 21500
+              y: 28025
+            id: '17'
+            label:
+              offset_y: 35
+              text: Living room
+              x: 21500
+              y: 28025
+            outline:
+            - - 16350
+              - 25100
+            - - 26150
+              - 25100
+            - - 26150
+              - 28450
+            - - 24500
+              - 28450
+            - - 23800
+              - 29200
+            - - 23800
+              - 30200
+            - - 16350
+              - 30200
+          - icon:
+              name: mdi:pot-mix
+              x: 24025
+              y: 32525
+            id: '18'
+            label:
+              offset_y: 35
+              text: Kitchen
+              x: 24025
+              y: 32525
+            outline:
+            - - 21900
+              - 30200
+            - - 23800
+              - 30200
+            - - 23800
+              - 29200
+            - - 24500
+              - 28450
+            - - 26150
+              - 28450
+            - - 26150
+              - 30200
+            - - 25500
+              - 30200
+            - - 25500
+              - 33800
+            - - 21900
+              - 33800
+          template: vacuum_clean_segment
+        map_source:
+          camera: camera.xiaomi_cloud_map_extractor
+        style: "ha-card {\n  border-radius: 0 0 var(--ha-card-border-radius, 12px)\
+          \ var(--ha-card-border-radius, 12px);\n}\n"
+        tiles: []
+        two_finger_pan: false
+        type: custom:xiaomi-vacuum-map-card
+      style: "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
+        \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
+        }\n"
+      title: Vacuum map
+      type: custom:collapsable-cards
+    - cards:
+      - entity: vacuum.robot_vacuum
+        image: null
+        name: false
+        type: custom:xiaomi-vacuum-card
+        vendor: xiaomi
+      style: "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
+        \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
+        }\n"
+      title: Vacuum maintenance
+      type: custom:collapsable-cards
+    mode: vertical
+    type: custom:stack-in-card
   - entities:
     - entity: input_boolean.vacation_mode
     - entity: input_boolean.guest_mode
     - entity: input_boolean.automatic_temperature
+    - entity: input_boolean.optimal_electric_vehicle_charging
     show_header_toggle: false
+    style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
   - entities:
     - entities:
@@ -383,8 +506,8 @@ views:
       type: custom:fold-entity-row
     - entities:
       - icon: mdi:currency-eur
-        name: '{% set kwh = states("sensor.washing_machine_daily_energy") | float(default=0)
-          %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+        name: '{% set kwh = states("sensor.washing_machine_today_s_consumption") |
+          float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
           * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
 
           '
@@ -398,8 +521,8 @@ views:
           \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
           \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
         state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
-          \ states(\"sensor.washing_machine_energy\")|float(3) * 1000 }} Watt\n{%\
-          \ else %}\n  Off\n{% endif %}\n"
+          \ states(\"sensor.washing_machine_energy\")|float(3) }} KWh\n{% else %}\n\
+          \  Off\n{% endif %}\n"
         type: custom:template-entity-row
       type: custom:fold-entity-row
     - entities:
@@ -445,58 +568,50 @@ views:
         type: custom:template-entity-row
       type: custom:fold-entity-row
     - entities:
-      - icon: mdi:currency-eur
+      - icon: mdi:trending-up
         name: 'Today''s usage statistics '
         type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.daily_power")|round(2) }} kWh power → €{{ states("sensor.daily_power_cost")|float(default=0)|round(2)
-          }}. '
+      - name: '{{ states("sensor.daily_power")|float(default=0)|round(2) }} kWh power
+          → €{{ states("sensor.daily_power_cost")|float(default=0)|round(2) }}. '
         type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.daily_gas")|round(2) }} m³ gas → €{{ states("sensor.daily_gas_cost")|float(default=0)|round(2)
-          }}. '
+      - name: '{{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³ gas →
+          €{{ states("sensor.daily_gas_cost")|float(default=0)|round(2) }}. '
         type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '€{{ states("sensor.daily_energy_fixed_cost")|float(default=0)|round(2)
-          }} (fixed) + €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)|round(2)}}
+      - name: '€{{ states("sensor.daily_energy_fixed_cost")|float(default=0)|round(2)
+          }} (fixed) + €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0))|round(2)}}
           = €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
           + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }}. '
         type: custom:template-entity-row
       - type: divider
-      - icon: mdi:currency-eur
+      - icon: mdi:trending-up
         name: '{{ as_timestamp(now()) | timestamp_custom("%B") }}''s usage statistics '
         type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.monthly_power")|round(2) }} kWh power → €{{ states("sensor.monthly_power_cost")|float(default=0)|round(2)
+      - name: '{{ states("sensor.monthly_power")|float(default=0)|round(2) }} kWh
+          power → €{{ states("sensor.monthly_power_cost")|float(default=0)|round(2)
           }}. '
         type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.monthly_gas")|round(2) }} m³ gas → €{{ states("sensor.monthly_gas_cost")|float(default=0)|round(2)
-          }}. '
+      - name: '{{ states("sensor.monthly_gas")|float(default=0)|round(2) }} m³ gas
+          → €{{ states("sensor.monthly_gas_cost")|float(default=0)|round(2) }}. '
         type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '€{{ states("sensor.monthly_energy_fixed_cost")|float(default=0)|round(2)
+      - name: '€{{ states("sensor.monthly_energy_fixed_cost")|float(default=0)|round(2)
           }} (fixed) + €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0))|round(2)}}
           = €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0)
           + states("sensor.monthly_energy_fixed_cost")|float(default=0))|round(2)
           }}. '
         type: custom:template-entity-row
       - type: divider
-      - icon: mdi:currency-eur
+      - icon: mdi:trending-up
         name: 'Last month''s usage statistics '
         type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ states("sensor.monthly_power_last_period")|round(2) }} kWh power
-          → €{{ states("sensor.monthly_power_cost_last_period")|float(default=0)|round(2)
+      - name: '{{ states("sensor.monthly_power_last_period")|float(default=0)|round(2)
+          }} kWh power → €{{ states("sensor.monthly_power_cost_last_period")|float(default=0)|round(2)
           }}. '
         type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '{{ state_attr("sensor.monthly_gas", "last_period")|round(2) }} m³ gas
-          → €{{ states("sensor.monthly_gas_cost_last_period")|float(default=0)|round(2)
+      - name: '{{ state_attr("sensor.monthly_gas", "last_period")|float(default=0)|round(2)
+          }} m³ gas → €{{ states("sensor.monthly_gas_cost_last_period")|float(default=0)|round(2)
           }}. '
         type: custom:template-entity-row
-      - icon: mdi:currency-eur
-        name: '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0)|round(2)
+      - name: '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0)|round(2)
           }} (fixed) + €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0)
           + states("sensor.monthly_power_cost_last_period")|float(default=0))|round(2)}}
           = €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0) +
@@ -506,8 +621,9 @@ views:
       head:
         entity: sensor.daily_gas
         name: Energy usage
-        secondary: 'Today {{ states("sensor.daily_power")|round(2) }} kWh and {{ states("sensor.daily_gas")|round(2)
-          }} m³ gas. '
+        secondary: 'Today {{ states("sensor.daily_power")|float(default=0)|round(2)
+          }} kWh and {{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³
+          gas. '
         state: '€{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
           + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }} '
         type: custom:template-entity-row
@@ -515,246 +631,6 @@ views:
     show_header_toggle: false
     title: Utilities
     type: entities
-  - cards:
-    - cards:
-      - cards:
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.temperature_living_room
-            name: Living room
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.temperature_bathroom
-            name: Bathroom
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        type: horizontal-stack
-      - cards:
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.temperature_bedroom
-            name: Bedroom
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.temperature_kitchen
-            name: Kitchen
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        type: horizontal-stack
-      - cards:
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.temperature_storage
-            name: Storage
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.temperature_bedroom_marthe
-            name: Bedroom Marthe
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        type: horizontal-stack
-      - cards:
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.temperature_guest_bedroom
-            name: Guest bedroom
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        - color_thresholds_transition: smooth
-          entities:
-          - entity: sensor.temperature_hall
-            name: Hallway
-          font_size: 100
-          group: false
-          hour24: true
-          line_width: 6
-          points_per_hour: 1
-          show:
-            extrema: false
-            fill: fade
-            labels: false
-            name: true
-            state: true
-          type: custom:mini-graph-card
-        type: horizontal-stack
-      type: vertical-stack
-    - cards:
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.humidity_bathroom
-          name: Bathroom
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.humidity_storage
-          name: Storage
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.humidity_marthe_bedroom
-          name: Bedroom Marthe
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      type: horizontal-stack
-    - cards:
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.pressure_bathroom
-          name: Bathroom
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.pressure_storage
-          name: Storage
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.pressure_marthe_bedroom
-          name: Bedroom Marthe
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      type: horizontal-stack
-    type: custom:swipe-card
   - cards:
     - cards:
       - color_thresholds_transition: smooth
@@ -830,189 +706,136 @@ views:
       speed: 2000
     type: custom:swipe-card
   - cards:
-    - cards:
-      - color: auto
-        icon: mdi:weather-sunset-up
-        name: Wake up
-        styles:
-          card:
-          - font-size: 12px
-          - font-weight: bold
-          - height: 70px
-        tap_action:
-          action: call-service
-          haptic: success
-          service: input_select.select_option
-          service_data:
-            entity_id: input_select.sleep_mode
-            option: 'off'
-        type: custom:button-card
-      - color: auto
-        entity: input_select.sleep_mode
-        icon: mdi:weather-night
-        name: '[[[ if (entity.state != "off") return "Sleep mode on"; else return  "Go
-          to sleep" ]]]'
-        styles:
-          card:
-          - font-size: 12px
-          - font-weight: bold
-          - height: 70px
-        tap_action:
-          action: call-service
-          haptic: success
-          service: script.going_to_sleep
-        type: custom:button-card
-      type: horizontal-stack
-    - cards:
-      - color: auto
-        icon: mdi:home-map-marker
-        name: Arrive Home
-        styles:
-          card:
-          - font-size: 12px
-          - font-weight: bold
-          - height: 70px
-        tap_action:
-          action: call-service
-          haptic: success
-          service: script.arriving
-        type: custom:button-card
-      - color: auto
-        icon: mdi:home-export-outline
-        name: Leave Home
-        styles:
-          card:
-          - font-size: 12px
-          - font-weight: bold
-          - height: 70px
-        tap_action:
-          action: call-service
-          haptic: success
-          service: script.leaving
-        type: custom:button-card
-      type: horizontal-stack
-    type: vertical-stack
+    - color: auto
+      icon: mdi:weather-sunset-up
+      name: Wake up
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: input_select.select_option
+        service_data:
+          entity_id: input_select.sleep_mode
+          option: 'off'
+      type: custom:button-card
+    - color: auto
+      entity: input_select.sleep_mode
+      icon: mdi:weather-night
+      name: '[[[ if (entity.state != "off") return "Sleep mode on"; else return  "Go
+        to sleep" ]]]'
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.going_to_sleep
+      type: custom:button-card
+    - color: auto
+      icon: mdi:home-map-marker
+      name: Arrive Home
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.arriving
+      type: custom:button-card
+    - color: auto
+      icon: mdi:home-export-outline
+      name: Leave Home
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.leaving
+      type: custom:button-card
+    type: horizontal-stack
   - cards:
     - cards:
-      - control: false
-        entity: climate.living_room
-        hide:
-          state: true
-          temperature: true
-        icon: true
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
-          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
-          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
-          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.bathroom
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
-          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
-          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
-          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.bedroom
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
-          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
-          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
-          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.guest_bedroom
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
-          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
-          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
-          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
-        type: custom:simple-thermostat
-      type: horizontal-stack
+      - entity: climate.living_room
+        icon_type: none
+        layout: horizontal
+        show_temperature_control: true
+        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
+          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
+          }\n"
+        type: custom:mushroom-climate-card
+      - entity: climate.bathroom
+        icon_type: none
+        layout: horizontal
+        show_temperature_control: true
+        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
+          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
+          }\n"
+        type: custom:mushroom-climate-card
+      - entity: climate.bedroom
+        icon_type: none
+        layout: horizontal
+        show_temperature_control: true
+        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
+          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
+          }\n"
+        type: custom:mushroom-climate-card
+      - entity: climate.guest_bedroom
+        icon_type: none
+        layout: horizontal
+        show_temperature_control: true
+        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
+          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
+          }\n"
+        type: custom:mushroom-climate-card
+      type: vertical-stack
     - cards:
-      - control: false
-        entity: climate.kitchen
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
-          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
-          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
-          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.storage
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
-          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
-          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
-          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.bedroom_marthe
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
-          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
-          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
-          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
-        type: custom:simple-thermostat
-      - control: false
-        entity: climate.hall
-        hide:
-          state: true
-          temperature: true
-        icon: false
-        name: false
-        step_size: '0.5'
-        style: "ha-card {\n  --st-font-size-title: 12px;\n  --st-font-size-xl: 24px;\n\
-          \  --ha-icon-display: none;\n  justify-content: space-between\n}\n\nha-icon\
-          \ {\n  --ha-icon-display: flex;\n}\n\nha-card header {\n  padding-bottom:\
-          \ 0px;\n}\n\n.header__title {\n  align-self: center;\n}\n"
-        type: custom:simple-thermostat
-      type: horizontal-stack
-    type: vertical-stack
-  - cards:
-    - entity: plant.calathea_medaillon
-      type: plant-status
-    - entity: plant.euphorbia_pulcherrima
-      type: plant-status
-    parameters:
-      autoplay:
-        delay: 5000
-        disableOnInteraction: false
-      speed: 2000
-    type: custom:swipe-card
+      - entity: climate.kitchen
+        icon_type: none
+        layout: horizontal
+        show_temperature_control: true
+        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
+          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
+          }\n"
+        type: custom:mushroom-climate-card
+      - entity: climate.storage
+        icon_type: none
+        layout: horizontal
+        show_temperature_control: true
+        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
+          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
+          }\n"
+        type: custom:mushroom-climate-card
+      - entity: climate.bedroom_marthe
+        icon_type: none
+        layout: horizontal
+        show_temperature_control: true
+        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
+          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
+          }\n"
+        type: custom:mushroom-climate-card
+      - entity: climate.hall
+        icon_type: none
+        layout: horizontal
+        show_temperature_control: true
+        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
+          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
+          }\n"
+        type: custom:mushroom-climate-card
+      type: vertical-stack
+    type: horizontal-stack
+  - entity: plant.peperomia_glabella
+    type: plant-status
   - entities:
     - entities:
       - align: center
@@ -1216,58 +1039,25 @@ views:
         type: custom:template-entity-row
       type: custom:fold-entity-row
     show_header_toggle: false
+    style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
-  - cards:
-    - content: '# Quarantine-o-meter
-
-
-        The gauge meters display the amount of time spent at home in the last 14 days.
-        Where Tom left the house (on average) {{ (states("sensor.quarantine_meter_tom_times_left")|int(default=0)
-        / 14) | round(1, default=0) }} times per day and is outside {{ states("sensor.hours_outside_per_day_tom")
-        }} h/d and Tanja {{ (states("sensor.quarantine_meter_tanja_times_left")|int(default=0)
-        / 14) | round(1, default=0) }} times per day and is outside for {{ states("sensor.hours_outside_per_day_tanja")
-        }} h/d.
-
-        '
-      type: markdown
-    - cards:
-      - entity: sensor.quarantine_meter_tanja
-        max: 100
-        min: 0
-        name: Tanja
-        severity:
-          green: 95
-          red: 0
-          yellow: 80
-        theme: Backend-selected
-        type: gauge
-      - entity: sensor.quarantine_meter_tom
-        max: 100
-        min: 0
-        name: Tom
-        severity:
-          green: 95
-          red: 0
-          yellow: 80
-        theme: default
-        type: gauge
-      type: horizontal-stack
-    type: vertical-stack
   icon: mdi:home
   path: default_view
+  theme: Backend-selected
   title: Home
 - cards:
   - cards:
     - entities:
-      - entity: sensor.installed_version
+      - entity: sensor.current_version
         icon: mdi:home-assistant
         name: Hassio Installed Version
-      - entity: sensor.latest_available_version
+      - entity: sensor.home_assistant_versions
         icon: mdi:home-assistant
         name: Hassio Current Version
       - entity: sensor.hacs
         icon: mdi:update
         name: Community Store
+      - entity: binary_sensor.backups_stale
       - type: divider
       - entity: sensor.last_boot
         icon: mdi:calendar
@@ -1332,7 +1122,6 @@ views:
       - type: divider
       - entity: sensor.myip
         icon: mdi:ip-network
-        name: IP address
       show_header_toggle: false
       title: System
       type: entities
@@ -1592,10 +1381,10 @@ views:
     - entity: sensor.mi_flora_calathea_medaillon_conductivity
     - entity: sensor.mi_flora_calathea_medaillon_light_intensity
     - type: divider
-    - entity: sensor.mi_flora_euphorbia_pulcherrima_moisture
-    - entity: sensor.mi_flora_euphorbia_pulcherrima_temperature
-    - entity: sensor.mi_flora_euphorbia_pulcherrima_conductivity
-    - entity: sensor.mi_flora_euphorbia_pulcherrima_light_intensity
+    - entity: sensor.mi_flora_peperomia_glabella_moisture
+    - entity: sensor.mi_flora_peperomia_glabella_temperature
+    - entity: sensor.mi_flora_peperomia_glabella_conductivity
+    - entity: sensor.mi_flora_peperomia_glabella_light_intensity
     show_header_toggle: false
     title: Plant sensors
     type: entities
@@ -1781,7 +1570,9 @@ views:
     type: entities
   icon: mdi:motion-sensor
   path: sensors
+  theme: Backend-selected
   title: Sensors
+  visible: []
 - badges: []
   cards:
   - entities:
@@ -1994,45 +1785,6 @@ views:
     - entity: input_boolean.test
     - entity: sensor.average_sleep_time
     - entity: input_select.sleep_mode
-    type: entities
-  - entities:
-    - animation: 'off'
-      entity: sensor.quarantine_meter_tom
-      entity_row: true
-      height: 30px
-      indicator: 'off'
-      severity:
-      - color: red
-        from: 0
-        to: 60
-      - color: orange
-        from: 60
-        to: 95
-      - color: green
-        from: 95
-        to: 100
-      style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-        \ 0, 0)';\n}\n"
-      type: custom:bar-card
-    - animation: 'off'
-      entity: sensor.quarantine_meter_tanja
-      entity_row: true
-      height: 30px
-      indicator: 'off'
-      severity:
-      - color: red
-        from: 0
-        to: 60
-      - color: orange
-        from: 60
-        to: 95
-      - color: green
-        from: 95
-        to: 100
-      style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-        \ 0, 0)';\n}\n"
-      type: custom:bar-card
-    title: Quarantine metrics
     type: entities
   - cards:
     - cards:
@@ -2307,7 +2059,9 @@ views:
     type: entities
   icon: mdi:test-tube
   path: tests
+  theme: Backend-selected
   title: Tests
+  visible: []
 - badges: []
   cards:
   - card:
@@ -2342,8 +2096,13 @@ views:
       - entity_id: automation.vacuum_*
       - entity_id: automation.work*
       - entity_id: automation.curtains_*
+      - entity_id: automation.solar_*
+      - entity_id: automation.medication_*
+      - entity_id: automation.candy_*
+      - entity_id: automation.electric_vehicle_*
       include:
       - domain: automation
+    show_empty: false
     sort: entity_id
     type: custom:auto-entities
   - template: automation_template
@@ -2461,6 +2220,26 @@ views:
     variables:
     - name: Control Switches
     - slug: control_switches_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Solar
+    - slug: solar
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Medication
+    - slug: medication
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Candy
+    - slug: candy
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Electric vehicle
+    - slug: electric_vehicle
   icon: mdi:robot
   path: automations
   title: Automations
