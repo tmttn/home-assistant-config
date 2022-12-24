@@ -923,34 +923,6 @@
       else %}\n  t_phone\n{% endif %}\n"
     other_person: '{% if phone == ''bizzyphone'' %}Tanja{% else %}Tom{% endif %}'
     device_tracker: device_tracker.{{ other_person }}_iphone
-- id: '1667823722171'
-  alias: 'Frontend: turn on dark mode'
-  description: ''
-  trigger:
-  - platform: time
-    at: '20:00'
-  - platform: sun
-    event: sunset
-  condition:
-  - '{{ is_state(''input_boolean.dark_mode'', ''off'') }}'
-  action:
-  - entity_id: input_boolean.dark_mode
-    service: input_boolean.turn_on
-  mode: single
-- id: '1667823729554'
-  alias: 'Frontend: turn on light mode'
-  description: ''
-  trigger:
-  - platform: time
-    at: 06:00
-  - platform: sun
-    event: sunrise
-  condition:
-  - '{{ is_state(''input_boolean.dark_mode'', ''on'') }}'
-  action:
-  - entity_id: input_boolean.dark_mode
-    service: input_boolean.turn_off
-  mode: single
 - id: '1667823770989'
   alias: 'Medication: Marthe vitamin button pressed'
   description: ''
