@@ -16,6 +16,7 @@
 #   |_|\___|_| |_| |_| .__/|_|\__,_|\__\___|  |___/\___|_| |_|___/\___/|_|  |___/
 #                    |_|
 
+- platform: websocket_api
 - platform: template
   sensors:
     count_automations:
