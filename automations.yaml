@@ -2753,16 +2753,18 @@
   alias: 'Control switches: guest bedroom smart switches single press'
   description: ''
   trigger:
-  - device_id: 16781a92800eca385b171d2c49caa81e
-    domain: deconz
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_on
-  - device_id: 043820af087e536344b0aa5bafc3631b
-    domain: deconz
-    platform: device
-    type: remote_button_short_press
-    subtype: turn_on
+  - platform: device
+    domain: mqtt
+    device_id: 489427482b98a991234648ba15ff3829
+    type: action
+    subtype: single
+    discovery_id: 0x00158d0007b7fa65 action_single
+  - platform: device
+    domain: mqtt
+    device_id: ac7e9e8ab3dbdc09e0ec8d3a6a5caa2f
+    type: action
+    subtype: single
+    discovery_id: 0x00158d0007b7f85d action_single
   condition: []
   action:
   - service: light.toggle
@@ -2774,16 +2776,18 @@
   alias: 'Control switches: guest bedroom smart switches long press'
   description: ''
   trigger:
-  - device_id: 16781a92800eca385b171d2c49caa81e
-    domain: deconz
-    platform: device
-    type: remote_button_long_release
-    subtype: turn_on
-  - device_id: 043820af087e536344b0aa5bafc3631b
-    domain: deconz
-    platform: device
-    type: remote_button_long_release
-    subtype: turn_on
+  - platform: device
+    domain: mqtt
+    device_id: 489427482b98a991234648ba15ff3829
+    type: action
+    subtype: release
+    discovery_id: 0x00158d0007b7fa65 action_release
+  - platform: device
+    domain: mqtt
+    device_id: ac7e9e8ab3dbdc09e0ec8d3a6a5caa2f
+    type: action
+    subtype: release
+    discovery_id: 0x00158d0007b7f85d action_release
   condition: []
   action:
   - service: script.going_to_sleep
