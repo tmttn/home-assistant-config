@@ -2712,20 +2712,24 @@
   alias: 'Control switches: bathroom wall switch'
   description: ''
   trigger:
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: bathroom_wall_switch
+  - platform: device
+    domain: mqtt
+    device_id: dca50e5cf0fefbc38184bfaa23da067f
+    type: action
+    subtype: left_press
+    discovery_id: 0x001788010b011991 action_left_press
+  - platform: device
+    domain: mqtt
+    device_id: dca50e5cf0fefbc38184bfaa23da067f
+    type: action
+    subtype: left_press_release
+    discovery_id: 0x001788010b011991 action_left_press_release
   condition: []
   action:
-  - choose:
-    - conditions: '{{ trigger.event.data.event == 1000 }}'
-      sequence:
-      - service: "{% if is_state('light.bathroom_lights', 'on') %}\n  light.turn_off\n{%
-          else %}\n  light.turn_on\n{% endif %}\n"
-        data:
-          entity_id: light.bathroom_lights
-          transition: 1
+  - service: light.toggle
+    data: {}
+    target:
+      entity_id: light.bathroom_lights
   mode: parallel
 - id: '1667825887364'
   alias: 'Control switches: bedroom wall switch'
