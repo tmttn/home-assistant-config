@@ -2746,56 +2746,44 @@
           transition: 1
   mode: parallel
 - id: '1667825913603'
-  alias: 'Control switches: guest bedroom Aqara Wireless Mini Switch'
+  alias: 'Control switches: guest bedroom smart switches single press'
   description: ''
   trigger:
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_guest_bedroom
+  - device_id: 16781a92800eca385b171d2c49caa81e
+    domain: deconz
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
+  - device_id: 043820af087e536344b0aa5bafc3631b
+    domain: deconz
+    platform: device
+    type: remote_button_short_press
+    subtype: turn_on
   condition: []
   action:
-  - choose:
-    - conditions: '{{ trigger.event.data.event == 1002 }}'
-      sequence:
-      - service: light.toggle
-        data:
-          entity_id: light.guest_bedroom_lights
-          transition: 1
-    - conditions: '{{ trigger.event.data.event == 1001 }}'
-      sequence:
-      - service: input_select.select_option
-        entity_id: input_select.sleep_mode
-        data:
-          option: total
-      - service: script.turn_off_everything_non_automatic
-        data: {}
+  - service: light.toggle
+    data: {}
+    target:
+      entity_id: light.guest_bedroom_lights
   mode: parallel
 - id: '1667825921379'
-  alias: 'Control switches: guest bedroom Aqara Wireless Mini Switch 2'
+  alias: 'Control switches: guest bedroom smart switches long press'
   description: ''
   trigger:
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_guest_bedroom_2
+  - device_id: 16781a92800eca385b171d2c49caa81e
+    domain: deconz
+    platform: device
+    type: remote_button_long_release
+    subtype: turn_on
+  - device_id: 043820af087e536344b0aa5bafc3631b
+    domain: deconz
+    platform: device
+    type: remote_button_long_release
+    subtype: turn_on
   condition: []
   action:
-  - choose:
-    - conditions: '{{ trigger.event.data.event == 1002 }}'
-      sequence:
-      - service: light.toggle
-        data:
-          entity_id: light.guest_bedroom_lights
-          transition: 1
-    - conditions: '{{ trigger.event.data.event == 1001 }}'
-      sequence:
-      - service: input_select.select_option
-        entity_id: input_select.sleep_mode
-        data:
-          option: total
-      - service: script.turn_off_everything_non_automatic
-        data: {}
+  - service: script.going_to_sleep
+    data: {}
   mode: parallel
 - id: '1667825929331'
   alias: 'Control switches: living room Philips Hue dimmer switch'
