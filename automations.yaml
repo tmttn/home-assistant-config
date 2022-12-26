@@ -156,10 +156,12 @@
   alias: 'Candy: Marthe candy button pressed'
   description: ''
   trigger:
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_kitchen_candy
+  - platform: device
+    domain: mqtt
+    device_id: a10043a4a270fac7f21e2970d8f74af9
+    type: action
+    subtype: single
+    discovery_id: 0x00158d0007c58a07 action_single
   condition:
   - '{{ trigger.event.data.event == 1002 }}'
   action:
@@ -2679,34 +2681,19 @@
     data: {}
   mode: single
 - id: '1667825870992'
-  alias: 'Control switches: back door Aqara Wireless Mini Switch'
+  alias: 'Control switches: back door smart switch double press'
   description: ''
   trigger:
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_back_door
+  - platform: device
+    domain: mqtt
+    device_id: a193eeeff67086f9aecbf8cd7682a111
+    type: action
+    subtype: double
+    discovery_id: 0x00158d0007c586ef action_double
   condition: []
   action:
-  - choose:
-    - conditions: '{{ trigger.event.data.event == 1002 }}'
-      sequence:
-      - service: script.turn_off_everything_non_automatic
-        data: {}
-      - service: script.set_low_temperature
-        data: {}
-    - conditions: '{{ trigger.event.data.event == 1004 }}'
-      sequence:
-      - service: script.arriving
-        data: {}
-    - conditions: '{{ trigger.event.data.event == 1001 }}'
-      sequence:
-      - service: script.arriving
-        data: {}
-      - service: script.start_spotify_playlist_of_nearest_person
-        data:
-          source: Google Home
-          entity_id: media_player.google_home
+  - service: script.arriving
+    data: {}
   mode: parallel
 - id: '1667825878616'
   alias: 'Control switches: bathroom wall switch'
@@ -3090,3 +3077,36 @@
       entity_id: climate.kitchen
       setpoint: '{{ states("input_number.temperature_low") }}'
   mode: single
+- id: '1672097899656'
+  alias: 'Control switches: back door smart switch single press'
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: a193eeeff67086f9aecbf8cd7682a111
+    type: action
+    subtype: single
+    discovery_id: 0x00158d0007c586ef action_single
+  condition: []
+  action:
+  - service: script.leaving
+    data: {}
+  mode: single
+- id: '1672098103382'
+  alias: 'Control switches: back door smart switch long press'
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: a193eeeff67086f9aecbf8cd7682a111
+    type: action
+    subtype: release
+    discovery_id: 0x00158d0007c586ef action_release
+  condition: []
+  action:
+  - service: script.arriving
+    data: {}
+  - service: script.start_spotify_playlist_of_nearest_person
+    data:
+      entity_id: media_player.google_home
+  mode: parallel
