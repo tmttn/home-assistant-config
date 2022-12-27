@@ -2966,3 +2966,30 @@
     data:
       entity_id: media_player.google_home
   mode: parallel
+- id: '1672142816999'
+  alias: 'Control switches: living room dimmer switch hue pressed'
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: c8c08de8009dd9e17fd5e5e18ce13fa3
+    type: action
+    subtype: off_press
+    discovery_id: 0x0017880109a4fcb5 action_off_press
+  condition: []
+  action:
+  - service: input_select.select_next
+    data: {}
+    target:
+      entity_id: input_select.living_room_dimmer_mode
+  - service: media_player.volume_set
+    data:
+      volume_level: 0.6
+    target:
+      entity_id: media_player.google_home
+  - service: tts.google_translate_say
+    data:
+      entity_id: media_player.google_home
+      message: '{{ states(''input_select.living_room_dimmer_mode'')}} lights'
+      language: en
+  mode: single
