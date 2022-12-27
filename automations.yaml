@@ -2034,15 +2034,19 @@
   - platform: state
     entity_id: binary_sensor.activity_in_kitchen
   condition:
-  - alias: Light is already on, or the light is off and light level is below dark
-    condition: or
+  - condition: or
     conditions:
-    - '{{ is_state(''light.kitchen_lights'', ''on'') }}'
+    - condition: state
+      entity_id: light.kitchen_lights
+      state: 'on'
     - condition: and
       conditions:
-      - '{{ is_state(''light.kitchen_lights'', ''off'') }}'
-      - '{{ states(''sensor.motion_sensor_kitchen_light_level'')|int(default=0) <
-        50 }}'
+      - condition: state
+        entity_id: light.kitchen_lights
+        state: 'off'
+      - condition: numeric_state
+        entity_id: sensor.motion_sensor_kitchen_illuminance_lux
+        below: 50
   action:
   - service: light.turn_{{ trigger.to_state.state }}
     data:
