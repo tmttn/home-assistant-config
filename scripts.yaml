@@ -19,21 +19,21 @@ change_the_colors_of_lights:
       description: The input select that lists script names.
       example: input_select.last_script_living_room
   max: 10
-electric_vehicle_polling_interval_to_60_2:
+electric_vehicle_polling_interval_to_60:
   alias: Electric vehicle polling interval to 60
   sequence:
   - service: tesla_custom.polling_interval
     data:
       scan_interval: 60
   mode: single
-electric_vehicle_polling_interval_to_default_2:
+electric_vehicle_polling_interval_to_default:
   alias: Electric vehicle polling interval to default
   sequence:
   - service: tesla_custom.polling_interval
     data:
       scan_interval: 660
   mode: single
-going_to_sleep_2:
+going_to_sleep:
   alias: Going to sleep
   sequence:
   - entity_id: input_select.sleep_mode
@@ -76,7 +76,7 @@ reset_manual_control:
       entity_id: switch.adaptive_lighting_outside
       manual_control: false
   mode: single
-set_high_temperature_2:
+set_high_temperature:
   alias: Set high temperature
   sequence:
   - service: evohome.set_zone_override
@@ -92,7 +92,7 @@ set_high_temperature_2:
 
         '
   mode: single
-set_low_temperature_2:
+set_low_temperature:
   alias: Set low temperature
   sequence:
   - service: evohome.set_zone_override
@@ -108,7 +108,7 @@ set_low_temperature_2:
 
         '
   mode: single
-set_moderate_temperature_2:
+set_moderate_temperature:
   alias: Set moderate temperature
   sequence:
   - service: evohome.set_zone_override
@@ -143,7 +143,7 @@ start_spotify:
       description: entity_id of the speaker
       example: media_player.google_home
   mode: single
-turn_off_everything_2:
+turn_off_everything:
   alias: Turn off everything
   sequence:
   - service: light.turn_off
