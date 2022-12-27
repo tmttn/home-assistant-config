@@ -2993,3 +2993,56 @@
       message: '{{ states(''input_select.living_room_dimmer_mode'')}} lights'
       language: en
   mode: single
+- id: '1672143421571'
+  alias: 'Control switches: living room dimmer switch power pressed'
+  description: ''
+  trigger:
+  - platform: device
+    domain: mqtt
+    device_id: c8c08de8009dd9e17fd5e5e18ce13fa3
+    type: action
+    subtype: on_press
+    discovery_id: 0x0017880109a4fcb5 action_on_press
+  condition: []
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: input_select.living_room_dimmer_mode
+        state: Dining table
+      sequence:
+      - service: light.toggle
+        data:
+          transition: 1
+        target:
+          entity_id: light.living_room_dining_table_lights
+    - conditions:
+      - condition: state
+        entity_id: input_select.living_room_dimmer_mode
+        state: Middle
+      sequence:
+      - service: light.toggle
+        data:
+          transition: 1
+        target:
+          entity_id: light.living_room_middle_lights
+    - conditions:
+      - condition: state
+        entity_id: input_select.living_room_dimmer_mode
+        state: TV led
+      sequence:
+      - service: light.toggle
+        data:
+          transition: 1
+        target:
+          entity_id: light.tv_led
+    - conditions:
+      - condition: state
+        entity_id: input_select.living_room_dimmer_mode
+        state: Reading
+      sequence:
+      - service: light.toggle
+        data: {}
+        target:
+          entity_id: light.hue_plug
+  mode: single
