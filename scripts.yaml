@@ -1,12 +1,3 @@
-#-
-#                _       _
-#  ___  ___ _ __(_)_ __ | |_ ___
-# / __|/ __| '__| | '_ \| __/ __|
-# \__ \ (__| |  | | |_) | |_\__ \
-# |___/\___|_|  |_| .__/ \__|___/
-#                 |_|
-#
-#- from github.com/tmttn/home-assistant-config
 arriving_home:
   alias: Arriving home
   sequence:
@@ -61,3 +52,150 @@ leaving_the_house:
   - service: script.turn_off_everything
     data: {}
   mode: single
+reset_manual_control:
+  alias: Reset 'manual control'
+  sequence:
+  - service: adaptive_lighting.set_manual_control
+    data:
+      entity_id: switch.adaptive_lighting_default
+      manual_control: false
+  - service: adaptive_lighting.set_manual_control
+    data:
+      entity_id: switch.adaptive_lighting_half_and_dim
+      manual_control: false
+  - service: adaptive_lighting.set_manual_control
+    data:
+      entity_id: switch.adaptive_lighting_half_and_full
+      manual_control: false
+  - service: adaptive_lighting.set_manual_control
+    data:
+      entity_id: switch.adaptive_lighting_living_room
+      manual_control: false
+  - service: adaptive_lighting.set_manual_control
+    data:
+      entity_id: switch.adaptive_lighting_outside
+      manual_control: false
+  mode: single
+set_high_temperature_2:
+  alias: Set high temperature
+  sequence:
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.living_room
+      setpoint: '{{ states("input_number.temperature_high") }}
+
+        '
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.kitchen
+      setpoint: '{{ states("input_number.temperature_high") }}
+
+        '
+  mode: single
+set_low_temperature_2:
+  alias: Set low temperature
+  sequence:
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.living_room
+      setpoint: '{{ states("input_number.temperature_low") }}
+
+        '
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.kitchen
+      setpoint: '{{ states("input_number.temperature_low") }}
+
+        '
+  mode: single
+set_moderate_temperature_2:
+  alias: Set moderate temperature
+  sequence:
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.living_room
+      setpoint: '{{ states("input_number.temperature_moderate") }}
+
+        '
+  - service: evohome.set_zone_override
+    data:
+      entity_id: climate.kitchen
+      setpoint: '{{ states("input_number.temperature_moderate") }}
+
+        '
+  mode: single
+start_spotify:
+  alias: Start Spotify
+  sequence:
+  - data:
+      uri: 'spotify:playlist:{{ states("sensor.favorite_playlist_of_nearest_person")
+        }}
+
+        '
+      random_song: true
+      shuffle: true
+      start_volume: 35
+      entity_id: '{{ entity_id }}'
+    service: spotcast.start
+  description: Start a Spotify playlist on Google Home speakers
+  fields:
+    entity_id:
+      description: entity_id of the speaker
+      example: media_player.google_home
+  mode: single
+turn_off_everything_2:
+  alias: Turn off everything
+  sequence:
+  - service: light.turn_off
+    data:
+      transition: 4
+      entity_id:
+      - light.living_room_lights
+      - light.bedroom_lights
+      - light.bathroom_lights
+      - light.guest_bedroom_lights
+      - light.christmas_lights_inside
+  - service: media_player.turn_off
+    entity_id: media_player.tv
+  mode: parallel
+  max: 10
+'1672139014801':
+  alias: ''
+  sequence:
+  - variables:
+      start_time: '{{ as_timestamp(now()) }}'
+      start_kwh: '{{ states(energy_sensor) }}'
+  - wait_for_trigger:
+      platform: template
+      value_template: '{{ is_state(binary_sensor, ''off'') }}'
+    timeout: 04:00:00
+    continue_on_timeout: false
+  - variables:
+      end_time: '{{ as_timestamp(now()) }}'
+      end_kwh: '{{ states(energy_sensor) }}'
+  - variables:
+      total_time: '{{ (end_time - start_time) }}'
+      total_kwh: '{{ end_kwh - start_kwh }}'
+  - variables:
+      minutes: '{{ (total_time / 60) | round(0) }}'
+      total_kwh_rounded: '{{ (total_kwh) | round(2) }}'
+      price: '{{ (states(''sensor.electricity_price_peak'')|float(default=0) * total_kwh)
+        | round(2) }}'
+  - service: '{{ states(''sensor.nearest_iphone_notify'') }}'
+    data:
+      title: Utilities
+      message: '{{ friendly_name }} is done after {{ minutes }} minutes and it used
+        {{ total_kwh_rounded }} kWh (€{{ price }}) {{ emojis }}'
+  mode: parallel
+  max: 20
+  fields:
+    name:
+      description: name
+      example: washing_machine
+    emojis:
+      description: emojis
+      example: "\U0001F45A\U0001F455"
+  variables:
+    binary_sensor: '{{ ''binary_sensor.{}''.format(name) }}'
+    friendly_name: '{{ name.capitalize().replace(''_'', '' '') }}'
+    energy_sensor: '{{ ''sensor.{}_energy''.format(name) }}'
