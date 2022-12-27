@@ -1,191 +1,296 @@
-arriving_home:
-  alias: Arriving home
-  sequence:
-  - service: script.set_high_temperature
-    data: {}
-  - service: script.cozy_lights_living_room
-    data: {}
-  mode: single
-change_the_colors_of_lights:
-  alias: Change the colors of lights
-  sequence:
-  - service: input_select.select_next
-    data:
-      entity_id: '{{ input_select }}'
-  - service: '{{ states(input_select) }}'
-  mode: parallel
-  fields:
-    input_select:
-      description: The input select that lists script names.
-      example: input_select.last_script_living_room
-  max: 10
-electric_vehicle_polling_interval_to_60:
-  alias: Electric vehicle polling interval to 60
-  sequence:
-  - service: tesla_custom.polling_interval
-    data:
-      scan_interval: 60
-  mode: single
-electric_vehicle_polling_interval_to_default:
-  alias: Electric vehicle polling interval to default
-  sequence:
-  - service: tesla_custom.polling_interval
-    data:
-      scan_interval: 660
-  mode: single
-going_to_sleep:
-  alias: Going to sleep
-  sequence:
-  - entity_id: input_select.sleep_mode
-    service: input_select.select_option
-    data:
-      option: total
-  - service: script.turn_off_everything_non_automatic
-    data: {}
-  mode: parallel
-  max: 10
-leaving_the_house:
-  alias: Leaving the house
-  sequence:
-  - service: script.set_low_temperature
-    data: {}
-  - service: script.turn_off_everything
-    data: {}
-  mode: single
-reset_manual_control:
-  alias: Reset 'manual control'
-  sequence:
-  - service: adaptive_lighting.set_manual_control
-    data:
-      entity_id: switch.adaptive_lighting_default
-      manual_control: false
-  - service: adaptive_lighting.set_manual_control
-    data:
-      entity_id: switch.adaptive_lighting_half_and_dim
-      manual_control: false
-  - service: adaptive_lighting.set_manual_control
-    data:
-      entity_id: switch.adaptive_lighting_half_and_full
-      manual_control: false
-  - service: adaptive_lighting.set_manual_control
-    data:
-      entity_id: switch.adaptive_lighting_living_room
-      manual_control: false
-  - service: adaptive_lighting.set_manual_control
-    data:
-      entity_id: switch.adaptive_lighting_outside
-      manual_control: false
-  mode: single
-set_high_temperature:
-  alias: Set high temperature
-  sequence:
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.living_room
-      setpoint: '{{ states("input_number.temperature_high") }}
-
-        '
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.kitchen
-      setpoint: '{{ states("input_number.temperature_high") }}
-
-        '
-  mode: single
-set_low_temperature:
-  alias: Set low temperature
-  sequence:
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.living_room
-      setpoint: '{{ states("input_number.temperature_low") }}
-
-        '
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.kitchen
-      setpoint: '{{ states("input_number.temperature_low") }}
-
-        '
-  mode: single
-set_moderate_temperature:
-  alias: Set moderate temperature
-  sequence:
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.living_room
-      setpoint: '{{ states("input_number.temperature_moderate") }}
-
-        '
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.kitchen
-      setpoint: '{{ states("input_number.temperature_moderate") }}
-
-        '
-  mode: single
-start_spotify:
+---
+#-
+#                _       _
+#  ___  ___ _ __(_)_ __ | |_ ___
+# / __|/ __| '__| | '_ \| __/ __|
+# \__ \ (__| |  | | |_) | |_\__ \
+# |___/\___|_|  |_| .__/ \__|___/
+#                 |_|
+#
+#- from github.com/tmttn/home-assistant-config
+start_spotify_playlist_of_nearest_person:
   alias: Start Spotify
-  sequence:
-  - data:
-      uri: 'spotify:playlist:{{ states("sensor.favorite_playlist_of_nearest_person")
-        }}
-
-        '
-      random_song: true
-      shuffle: true
-      start_volume: 35
-      entity_id: '{{ entity_id }}'
-    service: spotcast.start
   description: Start a Spotify playlist on Google Home speakers
   fields:
     entity_id:
       description: entity_id of the speaker
       example: media_player.google_home
-  mode: single
+  sequence:
+    - data:
+        uri: >
+          spotify:playlist:{{ states("sensor.favorite_playlist_of_nearest_person") }}
+        random_song: true
+        shuffle: true
+        start_volume: 35
+        entity_id: "{{ entity_id }}"
+      service: spotcast.start
+
+cozy_lights_living_room:
+  alias: Set cozy lights in the living room
+  mode: parallel
+  sequence:
+    - data:
+        entity_id: light.living_room_middle_lights
+      service: light.turn_off
+    - data:
+        entity_id: light.living_room_dining_table_lights
+      service: light.turn_off
+    - data:
+        entity_id: light.hue_plug
+        hs_color:
+          - 26.667
+          - 88.235
+      service: light.turn_on
+    - data:
+        entity_id: light.tv_led
+        hs_color:
+          - 26.725
+          - 89.804
+      service: light.turn_on
+    - service: input_select.select_option
+      entity_id: input_select.last_script_living_room
+      data:
+        option: script.cozy_lights_living_room
+
+cozy_lights_bedroom:
+  alias: Set cozy lights in the bedroom
+  mode: parallel
+  sequence:
+    - data:
+        entity_id: light.bed_reading
+        hs_color:
+          - 26.725
+          - 89.804
+      service: light.turn_on
+    - data:
+        entity_id: light.bedroom_ceiling_lights
+        hs_color:
+          - 22
+          - 100
+      service: light.turn_on
+    - service: input_select.select_option
+      entity_id: input_select.last_script_bedroom
+      data:
+        option: script.cozy_lights_bedroom
+
+cozy_lights_guest_bedroom:
+  alias: Set cozy lights in the guest bedroom
+  mode: parallel
+  sequence:
+    - data:
+        entity_id: light.guest_bedroom_bed_reading
+        hs_color:
+          - 26.725
+          - 89.804
+      service: light.turn_on
+    - data:
+        entity_id: light.guest_bedroom_lights
+        hs_color:
+          - 22
+          - 100
+      service: light.turn_on
+    - service: input_select.select_option
+      entity_id: input_select.last_script_guest_bedroom
+      data:
+        option: script.cozy_lights_guest_bedroom
+
+white_lights_living_room:
+  alias: Set white lights in the living room
+  mode: parallel
+  sequence:
+    - service: light.turn_on
+      data:
+        entity_id:
+          - light.living_room_lights
+        color_temp: 366
+    - service: input_select.select_option
+      entity_id: input_select.last_script_living_room
+      data:
+        option: script.white_lights_living_room
+
+white_lights_bedroom:
+  alias: Set white lights in the bedroom
+  mode: parallel
+  sequence:
+    - data:
+        color_temp: 366
+        entity_id:
+          - light.bedroom_lights
+      service: light.turn_on
+    - service: input_select.select_option
+      entity_id: input_select.last_script_bedroom
+      data:
+        option: script.white_lights_bedroom
+
+white_lights_guest_bedroom:
+  alias: Set white lights in the guest bedroom
+  mode: parallel
+  sequence:
+    - data:
+        color_temp: 366
+        entity_id:
+          - light.guest_bedroom_lights
+      service: light.turn_on
+    - service: input_select.select_option
+      entity_id: input_select.last_script_guest_bedroom
+      data:
+        option: script.white_lights_guest_bedroom
+
+increase_brightness:
+  alias: Increase the brightness of a group of lights
+  mode: parallel
+  fields:
+    group:
+      description: The group to apply the light increase to.
+      example: light.living_room_lights
+  sequence:
+    - service: light.turn_on
+      data:
+        entity_id: "{{ group }}"
+        brightness: >
+          {% set b = state_attr(group, 'brightness') %}
+          {% if b == None or b == 0 %}
+            10
+          {% elif b < 20 %}
+            128
+          {% else %}
+            255
+          {% endif %}
+
+decrease_brightness:
+  alias: Decrease the brightness of a group of lights
+  mode: parallel
+  fields:
+    group:
+      description: The group to apply the light decrease to.
+      example: light.living_room_lights
+  sequence:
+    - service: light.turn_on
+      data:
+        entity_id: "{{ group }}"
+        brightness: >
+          {% set b = state_attr(group, 'brightness') %}
+          {% if b == None %}
+            0
+          {% elif b > 140 %}
+            128
+          {% elif b > 20 %}
+            10
+          {% else %}
+            0
+          {% endif %}
+
+turn_off_everything_non_automatic:
+  alias: Turn off everything
+  mode: parallel
+  sequence:
+    - service: light.turn_off
+      data:
+        transition: 4
+        entity_id:
+          - light.living_room_lights
+          - light.bedroom_lights
+          - light.bathroom_lights
+          - light.guest_bedroom_lights
+          - light.christmas_lights_inside
+    - service: media_player.turn_off
+      entity_id: media_player.tv
+
 turn_off_everything:
   alias: Turn off everything
-  sequence:
-  - service: light.turn_off
-    data:
-      transition: 4
-      entity_id:
-      - light.living_room_lights
-      - light.bedroom_lights
-      - light.bathroom_lights
-      - light.guest_bedroom_lights
-      - light.christmas_lights_inside
-  - service: media_player.turn_off
-    entity_id: media_player.tv
   mode: parallel
-  max: 10
-'1672139014801':
-  alias: ''
   sequence:
-  - variables:
-      start_time: '{{ as_timestamp(now()) }}'
-      start_kwh: '{{ states(energy_sensor) }}'
-  - wait_for_trigger:
-      platform: template
-      value_template: '{{ is_state(binary_sensor, ''off'') }}'
-    timeout: 04:00:00
-    continue_on_timeout: false
-  - variables:
-      end_time: '{{ as_timestamp(now()) }}'
-      end_kwh: '{{ states(energy_sensor) }}'
-  - variables:
-      total_time: '{{ (end_time - start_time) }}'
-      total_kwh: '{{ end_kwh - start_kwh }}'
-  - variables:
-      minutes: '{{ (total_time / 60) | round(0) }}'
-      total_kwh_rounded: '{{ (total_kwh) | round(2) }}'
-      price: '{{ (states(''sensor.electricity_price_peak'')|float(default=0) * total_kwh)
-        | round(2) }}'
-  - service: '{{ states(''sensor.nearest_iphone_notify'') }}'
-    data:
-      title: Utilities
-      message: '{{ friendly_name }} is done after {{ minutes }} minutes and it used
-        {{ total_kwh_rounded }} kWh (€{{ price }}) {{ emojis }}'
+    - service: script.turn_off_everything_non_automatic
+    - service: light.turn_off
+      entity_id: all
+
+going_to_sleep:
+  alias: Going to sleep
+  mode: parallel
+  sequence:
+    - entity_id: input_select.sleep_mode
+      service: input_select.select_option
+      data:
+        option: "total"
+    - service: script.turn_off_everything_non_automatic
+
+next_colors:
+  alias: Change the colors of lights
+  mode: parallel
+  fields:
+    input_select:
+      description: The input select that lists script names.
+      example: input_select.last_script_living_room
+  sequence:
+    - service: input_select.select_next
+      data:
+        entity_id: "{{ input_select }}"
+    - service: "{{ states(input_select) }}"
+
+set_low_temperature:
+  alias: Set low temperature
+  sequence:
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.living_room
+        setpoint: >
+          {{ states("input_number.temperature_low") }}
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.kitchen
+        setpoint: >
+          {{ states("input_number.temperature_low") }}
+
+set_moderate_temperature:
+  alias: Set moderate temperature
+  sequence:
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.living_room
+        setpoint: >
+          {{ states("input_number.temperature_moderate") }}
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.kitchen
+        setpoint: >
+          {{ states("input_number.temperature_moderate") }}
+
+set_high_temperature:
+  alias: Set high temperature
+  sequence:
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.living_room
+        setpoint: >
+          {{ states("input_number.temperature_high") }}
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.kitchen
+        setpoint: >
+          {{ states("input_number.temperature_high") }}
+
+leaving:
+  alias: Leaving the house
+  sequence:
+    - service: script.set_low_temperature
+    - service: script.turn_off_everything
+
+arriving:
+  alias: Arriving home
+  sequence:
+    - service: script.set_high_temperature
+    - service: script.cozy_lights_living_room
+
+update_dns:
+  alias: Update DNS record
+  sequence:
+    - service: shell_command.update_dns
+      data:
+        api: !secret gandi_api_key
+        domain: !secret domain
+        subdomain: !secret subdomain
+
+utility_notification:
   mode: parallel
   max: 20
   fields:
@@ -194,8 +299,94 @@ turn_off_everything:
       example: washing_machine
     emojis:
       description: emojis
-      example: "\U0001F45A\U0001F455"
+      example: "👚👕"
   variables:
-    binary_sensor: '{{ ''binary_sensor.{}''.format(name) }}'
-    friendly_name: '{{ name.capitalize().replace(''_'', '' '') }}'
-    energy_sensor: '{{ ''sensor.{}_energy''.format(name) }}'
+    binary_sensor: "{{ 'binary_sensor.{}'.format(name) }}"
+    friendly_name: "{{ name.capitalize().replace('_', ' ') }}"
+    energy_sensor: "{{ 'sensor.{}_energy'.format(name) }}"
+  sequence:
+    - variables:
+        start_time: "{{ as_timestamp(now()) }}"
+        start_kwh: "{{ states(energy_sensor) }}"
+    - wait_for_trigger:
+        platform: template
+        value_template: "{{ is_state(binary_sensor, 'off') }}"
+      timeout: "04:00:00"
+      continue_on_timeout: false
+    - variables:
+        end_time: "{{ as_timestamp(now()) }}"
+        end_kwh: "{{ states(energy_sensor) }}"
+    - variables:
+        total_time: "{{ (end_time - start_time) }}"
+        total_kwh: "{{ end_kwh - start_kwh }}"
+    - variables:
+        minutes: "{{ (total_time / 60) | round(0) }}"
+        total_kwh_rounded: "{{ (total_kwh) | round(2) }}"
+        price: "{{ (states('sensor.electricity_price_peak')|float(default=0) * total_kwh) | round(2) }}"
+    - service: "{{ states('sensor.nearest_iphone_notify') }}"
+      data:
+        title: "Utilities"
+        message: "{{ friendly_name }} is done after {{ minutes }} minutes and it used {{ total_kwh_rounded }} kWh (€{{ price }}) {{ emojis }}"
+
+turn_on_lights:
+  alias: Turn on lights with Adaptive Lighting
+  icon: mdi:lamp
+  fields:
+    entity_id:
+      description: entity_id of light
+      example: light.bedroom_lights
+  sequence:
+    service: adaptive_lighting.apply
+    data:
+      entity_id: switch.adaptive_lighting_living_room
+      lights: "{{ entity_id }}"
+      turn_on_lights: true
+
+reset_adaptive_lighting:
+  alias: Reset 'manual control'
+  sequence:
+    - service: adaptive_lighting.set_manual_control
+      data:
+        entity_id: switch.adaptive_lighting_default
+        manual_control: false
+    - service: adaptive_lighting.set_manual_control
+      data:
+        entity_id: switch.adaptive_lighting_half_and_dim
+        manual_control: false
+    - service: adaptive_lighting.set_manual_control
+      data:
+        entity_id: switch.adaptive_lighting_half_and_full
+        manual_control: false
+    - service: adaptive_lighting.set_manual_control
+      data:
+        entity_id: switch.adaptive_lighting_living_room
+        manual_control: false
+
+electric_vehicle_polling_interval_to_60:
+  alias: Electric vehicle polling interval to 60
+  sequence:
+    - service: tesla_custom.polling_interval
+      data:
+        scan_interval: 60
+  mode: single
+
+electric_vehicle_polling_interval_to_default:
+  alias: Electric vehicle polling interval to default
+  sequence:
+    - service: tesla_custom.polling_interval
+      data:
+        scan_interval: 660
+  mode: single
+
+electric_vehicle_charging_set_amps_link_to_excess_solar:
+  alias: Electric vehicle charging set amps link to excess solar
+  sequence:
+    - service: tesla_custom.api
+      data:
+        email: !secret tesla_email
+        command: CHARGING_AMPS
+        parameters:
+          path_vars:
+            vehicle_id: "{{ state_attr('binary_sensor.bizzylectric_online', 'id') }}"
+          charging_amps: "{{ max(((states('sensor.pv_power_a')| float + states('sensor.pv_power_b') | float - 500) / 398.371685741)| int, 2) }}"
+  mode: single
