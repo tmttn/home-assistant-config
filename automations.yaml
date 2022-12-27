@@ -306,31 +306,6 @@
       entity_id: media_player.google_home
       force_playback: false
   mode: single
-- id: '1667822559671'
-  alias: 'Plant: problem with Calathea Medaillon'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: plant.calathea_medaillon
-    to: problem
-  - platform: time
-    at: '20:00'
-  condition:
-  - condition: state
-    entity_id: plant.calathea_medaillon
-    state: problem
-  - condition: state
-    entity_id: input_boolean.vacation_mode
-    state: 'off'
-  - '{{ state_attr(''plant.calathea_medaillon'', ''moisture'') | int(default=-1) >=
-    0}}'
-  action:
-  - service: notify.all_iphones
-    data:
-      title: Plant in trouble! ⚠️☢️☠️
-      message: "You need to give the Calathea Medaillon \U0001FAB4 attention and love:
-        {{ state_attr(\"plant.calathea_medaillon\", \"problem\") }}!\n"
-  mode: single
 - id: '1667822568415'
   alias: 'Plant: problem with Peperomia Glabella'
   description: ''
