@@ -31,8 +31,9 @@ device_tracker: !include includes/device_trackers.yaml
 
 # Managed via UI
 scene: !include scenes.yaml
-automation: !include automations.yaml
-script: !include scripts-with-secrets.yaml
+automation ui: !include automations.yaml
+script ui: !include scripts.yaml
+script manual: !include scripts-with-secrets.yaml
 
 # Others
 person: !include includes/persons.yaml
