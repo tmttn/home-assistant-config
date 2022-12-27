@@ -20,26 +20,3 @@ time_zone: Europe/Brussels
 name: Home
 allowlist_external_dirs:
   - /config/
-customize:
-  switch.vacuum_mode:
-    friendly_name: Vacuum
-  sensor.temperature_mean:
-    icon: mdi:temperature-celsius
-  light.automatic_lights:
-    icon: mdi:robot
-  light.living_room_lights:
-    icon: mdi:sofa
-  light.bedroom_lights:
-    icon: mdi:bed-king
-  light.guest_bedroom_lights:
-    icon: mdi:bed-queen
-  light.toilet:
-    icon: mdi:emoticon-poop
-  light.outside:
-    icon: mdi:patio-heater
-  light.bathroom_lights:
-    icon: mdi:shower
-  plant.calathea_medaillon:
-    friendly_name: Calathea Medaillon
-  plant.peperomia_glabella:
-    friendly_name: Peperomia Glabella

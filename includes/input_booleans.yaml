@@ -11,7 +11,7 @@
 # Automations
 start_the_music:
   name: Start speakers and music
-  initial: "off"
+  initial: false
   icon: mdi:music
 cleaned_today:
   name: Vacuum cleaned today
@@ -25,11 +25,11 @@ guest_mode:
 bedroom_lights_automatically_turned_on:
   name: Will automatically turn off
   icon: mdi:ceiling-light
-  initial: "off"
+  initial: false
 guest_bedroom_lights_automatically_turned_on:
   name: Will automatically turn off
   icon: mdi:ceiling-light
-  initial: "off"
+  initial: false
 automatic_bedroom_lights:
   name: Automatic bedroom lights
   icon: mdi:lamp
@@ -61,9 +61,9 @@ optimal_electric_vehicle_charging:
 # Apps
 wake_up_light:
   name: Start wake up light
-  initial: "off"
+  initial: false
   icon: mdi:weather-sunset-up
 demo_wake_up_light:
   name: Demo - Start wake up light
-  initial: "off"
+  initial: false
   icon: mdi:weather-sunset-up
