@@ -1,3 +1,12 @@
+#-
+#                _       _
+#  ___  ___ _ __(_)_ __ | |_ ___
+# / __|/ __| '__| | '_ \| __/ __|
+# \__ \ (__| |  | | |_) | |_\__ \
+# |___/\___|_|  |_| .__/ \__|___/
+#                 |_|
+#
+#- from github.com/tmttn/home-assistant-config
 arriving_home:
   alias: Arriving home
   sequence:
@@ -19,3 +28,36 @@ change_the_colors_of_lights:
       description: The input select that lists script names.
       example: input_select.last_script_living_room
   max: 10
+electric_vehicle_polling_interval_to_60_2:
+  alias: Electric vehicle polling interval to 60
+  sequence:
+  - service: tesla_custom.polling_interval
+    data:
+      scan_interval: 60
+  mode: single
+electric_vehicle_polling_interval_to_default_2:
+  alias: Electric vehicle polling interval to default
+  sequence:
+  - service: tesla_custom.polling_interval
+    data:
+      scan_interval: 660
+  mode: single
+going_to_sleep_2:
+  alias: Going to sleep
+  sequence:
+  - entity_id: input_select.sleep_mode
+    service: input_select.select_option
+    data:
+      option: total
+  - service: script.turn_off_everything_non_automatic
+    data: {}
+  mode: parallel
+  max: 10
+leaving_the_house:
+  alias: Leaving the house
+  sequence:
+  - service: script.set_low_temperature
+    data: {}
+  - service: script.turn_off_everything
+    data: {}
+  mode: single
