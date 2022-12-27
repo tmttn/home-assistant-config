@@ -1,0 +1,21 @@
+arriving_home:
+  alias: Arriving home
+  sequence:
+  - service: script.set_high_temperature
+    data: {}
+  - service: script.cozy_lights_living_room
+    data: {}
+  mode: single
+change_the_colors_of_lights:
+  alias: Change the colors of lights
+  sequence:
+  - service: input_select.select_next
+    data:
+      entity_id: '{{ input_select }}'
+  - service: '{{ states(input_select) }}'
+  mode: parallel
+  fields:
+    input_select:
+      description: The input select that lists script names.
+      example: input_select.last_script_living_room
+  max: 10
