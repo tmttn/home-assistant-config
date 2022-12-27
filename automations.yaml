@@ -929,10 +929,12 @@
   alias: 'Medication: Marthe vitamin button pressed'
   description: ''
   trigger:
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_kitchen_meds_tom
+  - platform: device
+    domain: mqtt
+    device_id: 3f61695ca7fe49821e99fccf111bd034
+    type: action
+    subtype: single
+    discovery_id: 0x00158d0007c587f1 action_single
   condition:
   - '{{ trigger.event.data.event == 1002 }}'
   action:
@@ -1021,10 +1023,12 @@
   alias: 'Medication: Tom medication button pressed'
   description: ''
   trigger:
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_kitchen_meds_tom
+  - platform: device
+    domain: mqtt
+    device_id: 3f61695ca7fe49821e99fccf111bd034
+    type: action
+    subtype: double
+    discovery_id: 0x00158d0007c587f1 action_double
   condition:
   - '{{ trigger.event.data.event == 1004 }}'
   action:
@@ -1579,13 +1583,15 @@
       emojis: "☕️\U0001F964"
   mode: single
 - id: '1667824376670'
-  alias: 'Utilities: toggle espresso machine on/off'
+  alias: 'Control switches: kitchen corner smart switch long press'
   description: ''
   trigger:
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_kitchen_meds_tom
+  - platform: device
+    domain: mqtt
+    device_id: 3f61695ca7fe49821e99fccf111bd034
+    type: action
+    subtype: release
+    discovery_id: 0x00158d0007c587f1 action_release
   condition:
   - '{{ trigger.event.data.event == 1001 }}'
   action:
