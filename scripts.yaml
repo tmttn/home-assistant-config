@@ -181,7 +181,7 @@ decrease_brightness:
           {% endif %}
 
 turn_off_everything_non_automatic:
-  alias: Turn off everything
+  alias: Turn off everything non automatic
   mode: parallel
   sequence:
     - service: light.turn_off
@@ -281,15 +281,6 @@ arriving:
     - service: script.set_high_temperature
     - service: script.cozy_lights_living_room
 
-update_dns:
-  alias: Update DNS record
-  sequence:
-    - service: shell_command.update_dns
-      data:
-        api: !secret gandi_api_key
-        domain: !secret domain
-        subdomain: !secret subdomain
-
 utility_notification:
   mode: parallel
   max: 20
@@ -376,17 +367,4 @@ electric_vehicle_polling_interval_to_default:
     - service: tesla_custom.polling_interval
       data:
         scan_interval: 660
-  mode: single
-
-electric_vehicle_charging_set_amps_link_to_excess_solar:
-  alias: Electric vehicle charging set amps link to excess solar
-  sequence:
-    - service: tesla_custom.api
-      data:
-        email: !secret tesla_email
-        command: CHARGING_AMPS
-        parameters:
-          path_vars:
-            vehicle_id: "{{ state_attr('binary_sensor.bizzylectric_online', 'id') }}"
-          charging_amps: "{{ max(((states('sensor.pv_power_a')| float + states('sensor.pv_power_b') | float - 500) / 398.371685741)| int, 2) }}"
   mode: single
