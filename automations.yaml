@@ -2060,15 +2060,19 @@
   - platform: state
     entity_id: binary_sensor.activity_in_toilet
   condition:
-  - alias: Light is already on, or the light is off and light level is below dark
-    condition: or
+  - condition: or
     conditions:
-    - '{{ is_state(''light.toilet'', ''on'') }}'
+    - condition: state
+      entity_id: light.toilet
+      state: 'on'
     - condition: and
       conditions:
-      - '{{ is_state(''light.toilet'', ''off'') }}'
-      - '{{ states(''sensor.motion_sensor_toilet_light_level'')|int(default=0) < 150
-        }}'
+      - condition: state
+        entity_id: light.toilet
+        state: 'off'
+      - condition: numeric_state
+        entity_id: sensor.motion_sensor_toilet_illuminance_lux
+        below: 150
   action:
   - service: light.turn_{{ trigger.to_state.state }}
     data:
