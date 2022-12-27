@@ -15,10 +15,6 @@ demo_wake_up_light:
     - light.guest_bedroom_lights
   input_boolean: input_boolean.demo_wake_up_light
 
-cube:
-  module: xiaomi_aqara_cube_action
-  class: CubeControl
-
 battery_monitor:
   module: battery_monitor
   class: BatteryMonitor
