@@ -8,20 +8,6 @@
 # |_|
 #
 #- from github.com/tmttn/home-assistant-config
-calathea_medaillon:
-  sensors:
-    moisture: sensor.mi_flora_calathea_medaillon_moisture
-    temperature: sensor.mi_flora_calathea_medaillon_temperature
-    conductivity: sensor.mi_flora_calathea_medaillon_conductivity
-    brightness: sensor.mi_flora_calathea_medaillon_light_intensity
-  min_moisture: 15
-  max_moisture: 65
-  min_conductivity: 350
-  max_conductivity: 1000
-  min_brightness: 0
-  max_brightness: 20000
-  min_temperature: 12
-  max_temperature: 32
 
 peperomia_glabella:
   sensors:

@@ -48,9 +48,7 @@ light: !include includes/lights.yaml
 wake_on_lan:
 proximity: !include includes/proximity.yaml
 utility_meter: !include includes/utility_meter.yaml
-timer: !include includes/timers.yaml
 ios: !include includes/ios.yaml
-discovery: !include includes/discovery.yaml
 camera: !include includes/camera.yaml
 intent:
 intent_script: !include includes/intent_script.yaml
