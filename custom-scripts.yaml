@@ -136,50 +136,6 @@ white_lights_guest_bedroom:
       data:
         option: script.white_lights_guest_bedroom
 
-increase_brightness:
-  alias: Increase the brightness of a group of lights
-  mode: parallel
-  fields:
-    group:
-      description: The group to apply the light increase to.
-      example: light.living_room_lights
-  sequence:
-    - service: light.turn_on
-      data:
-        entity_id: "{{ group }}"
-        brightness: >
-          {% set b = state_attr(group, 'brightness') %}
-          {% if b == None or b == 0 %}
-            10
-          {% elif b < 20 %}
-            128
-          {% else %}
-            255
-          {% endif %}
-
-decrease_brightness:
-  alias: Decrease the brightness of a group of lights
-  mode: parallel
-  fields:
-    group:
-      description: The group to apply the light decrease to.
-      example: light.living_room_lights
-  sequence:
-    - service: light.turn_on
-      data:
-        entity_id: "{{ group }}"
-        brightness: >
-          {% set b = state_attr(group, 'brightness') %}
-          {% if b == None %}
-            0
-          {% elif b > 140 %}
-            128
-          {% elif b > 20 %}
-            10
-          {% else %}
-            0
-          {% endif %}
-
 turn_off_everything_non_automatic:
   alias: Turn off everything
   mode: parallel
@@ -213,19 +169,6 @@ going_to_sleep:
       data:
         option: "total"
     - service: script.turn_off_everything_non_automatic
-
-next_colors:
-  alias: Change the colors of lights
-  mode: parallel
-  fields:
-    input_select:
-      description: The input select that lists script names.
-      example: input_select.last_script_living_room
-  sequence:
-    - service: input_select.select_next
-      data:
-        entity_id: "{{ input_select }}"
-    - service: "{{ states(input_select) }}"
 
 set_low_temperature:
   alias: Set low temperature
@@ -274,12 +217,6 @@ leaving:
   sequence:
     - service: script.set_low_temperature
     - service: script.turn_off_everything
-
-arriving:
-  alias: Arriving home
-  sequence:
-    - service: script.set_high_temperature
-    - service: script.cozy_lights_living_room
 
 update_dns:
   alias: Update DNS record
