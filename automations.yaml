@@ -3047,7 +3047,7 @@
           entity_id: light.hue_plug
   mode: single
 - id: '1672144644649'
-  alias: 'Control switches: living room dimmer switch brightness up held'
+  alias: 'Control switches: living room dimmer switch brightness up'
   description: ''
   trigger:
   - platform: device
@@ -3056,6 +3056,12 @@
     type: action
     subtype: up_hold
     discovery_id: 0x0017880109a4fcb5 action_up_hold
+  - platform: device
+    domain: mqtt
+    device_id: c8c08de8009dd9e17fd5e5e18ce13fa3
+    type: action
+    subtype: up_press
+    discovery_id: 0x0017880109a4fcb5 action_up_press
   condition: []
   action:
   - choose:
@@ -3066,8 +3072,7 @@
       sequence:
       - service: light.turn_on
         data:
-          brightness_step_pct: 20
-          transition: 1
+          brightness_step_pct: 10
         target:
           entity_id: light.living_room_dining_table_lights
     - conditions:
@@ -3077,8 +3082,7 @@
       sequence:
       - service: light.turn_on
         data:
-          brightness_step_pct: 20
-          transition: 1
+          brightness_step_pct: 10
         target:
           entity_id: light.living_room_middle_lights
     - conditions:
@@ -3088,13 +3092,12 @@
       sequence:
       - service: light.turn_on
         data:
-          brightness_step_pct: 20
-          transition: 1
+          brightness_step_pct: 10
         target:
           entity_id: light.tv_led
   mode: single
 - id: '1672144707454'
-  alias: 'Control switches: living room dimmer switch brightness down held'
+  alias: 'Control switches: living room dimmer switch brightness down'
   description: ''
   trigger:
   - platform: device
@@ -3103,6 +3106,12 @@
     type: action
     subtype: down_hold
     discovery_id: 0x0017880109a4fcb5 action_down_hold
+  - platform: device
+    domain: mqtt
+    device_id: c8c08de8009dd9e17fd5e5e18ce13fa3
+    type: action
+    subtype: down_press
+    discovery_id: 0x0017880109a4fcb5 action_down_press
   condition: []
   action:
   - choose:
@@ -3113,8 +3122,7 @@
       sequence:
       - service: light.turn_on
         data:
-          brightness_step_pct: -20
-          transition: 1
+          brightness_step_pct: -10
         target:
           entity_id: light.living_room_dining_table_lights
     - conditions:
@@ -3124,8 +3132,7 @@
       sequence:
       - service: light.turn_on
         data:
-          brightness_step_pct: -20
-          transition: 1
+          brightness_step_pct: -10
         target:
           entity_id: light.living_room_middle_lights
     - conditions:
@@ -3135,8 +3142,7 @@
       sequence:
       - service: light.turn_on
         data:
-          brightness_step_pct: -20
-          transition: 1
+          brightness_step_pct: -10
         target:
           entity_id: light.tv_led
   mode: single
