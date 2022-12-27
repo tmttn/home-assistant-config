@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -228,57 +219,117 @@ views:
     state_color: false
     style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
+  - entities:
+    - entity: input_boolean.alarm_clock
+    - entity: input_datetime.alarm_clock
+    - entity: input_select.sleep_mode
+    show_header_toggle: false
+    style: ".card-content {\n  padding-top: 16px;\n}\n"
+    type: entities
   - cards:
-    - cards:
-      - entity: media_player.shield
-        hide:
-          controls: true
-          mute: false
-          play_stop: true
-          volume: false
-        icon: mdi:television
-        name: Nvidia Shield
-        type: custom:mini-media-player
-      - entity: media_player.google_home
-        hide:
-          icon: true
-          mute: true
-          power_state: false
-        info: short
-        type: custom:mini-media-player
-      - entity: media_player.kitchen_display
-        hide:
-          icon: true
-          mute: true
-          power_state: false
-        info: short
-        type: custom:mini-media-player
-      - entity: media_player.google_home_mini
-        hide:
-          icon: true
-          mute: true
-          power_state: false
-        info: short
-        type: custom:mini-media-player
-      - entity: media_player.guest_bedroom_wifi
-        hide:
-          icon: true
-          mute: true
-          power_state: false
-        info: short
-        type: custom:mini-media-player
-      - entity: media_player.spotify
-        hide:
-          power_state: false
-          source: true
-          volume: true
-        icon: mdi:spotify
-        type: custom:mini-media-player
-      parameters:
-        autoplay:
-          delay: 5000
-        speed: 2000
-      type: custom:swipe-card
+    - color: auto
+      icon: mdi:weather-sunset-up
+      name: Wake up
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: input_select.select_option
+        service_data:
+          entity_id: input_select.sleep_mode
+          option: 'off'
+      type: custom:button-card
+    - color: auto
+      entity: input_select.sleep_mode
+      icon: mdi:weather-night
+      name: '[[[ if (entity.state != "off") return "Sleep mode on"; else return  "Go
+        to sleep" ]]]'
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.going_to_sleep
+      type: custom:button-card
+    - color: auto
+      icon: mdi:home-map-marker
+      name: Arrive Home
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.arriving
+      type: custom:button-card
+    - color: auto
+      icon: mdi:home-export-outline
+      name: Leave Home
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.leaving
+      type: custom:button-card
+    mode: horizontal
+    type: custom:stack-in-card
+  - cards:
+    - entity: climate.living_room
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.bathroom
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.bedroom
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.guest_bedroom
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.kitchen
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.storage
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.bedroom_marthe
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.hall
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    mode: vertical
+    type: custom:stack-in-card
+  - cards:
     - cards:
       - icon: mdi:sofa
         name: Play music in living room
@@ -328,13 +379,6 @@ views:
       \ red;\n  --mini-media-player-background-opacity: 0.1;\n  --mini-media-player-overlay-color:\
       \ red;\n}\n"
     type: vertical-stack
-  - entities:
-    - entity: input_boolean.alarm_clock
-    - entity: input_datetime.alarm_clock
-    - entity: input_select.sleep_mode
-    show_header_toggle: false
-    style: ".card-content {\n  padding-top: 16px;\n}\n"
-    type: entities
   - cards:
     - entities:
       - entity: vacuum.robot_vacuum
@@ -491,6 +535,8 @@ views:
     show_header_toggle: false
     style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
+  - entity: plant.peperomia_glabella
+    type: plant-status
   - entities:
     - entities:
       - icon: mdi:currency-eur
@@ -714,137 +760,6 @@ views:
         delay: 5000
       speed: 2000
     type: custom:swipe-card
-  - cards:
-    - color: auto
-      icon: mdi:weather-sunset-up
-      name: Wake up
-      styles:
-        card:
-        - font-size: 12px
-        - font-weight: bold
-        - height: 70px
-      tap_action:
-        action: call-service
-        haptic: success
-        service: input_select.select_option
-        service_data:
-          entity_id: input_select.sleep_mode
-          option: 'off'
-      type: custom:button-card
-    - color: auto
-      entity: input_select.sleep_mode
-      icon: mdi:weather-night
-      name: '[[[ if (entity.state != "off") return "Sleep mode on"; else return  "Go
-        to sleep" ]]]'
-      styles:
-        card:
-        - font-size: 12px
-        - font-weight: bold
-        - height: 70px
-      tap_action:
-        action: call-service
-        haptic: success
-        service: script.going_to_sleep
-      type: custom:button-card
-    - color: auto
-      icon: mdi:home-map-marker
-      name: Arrive Home
-      styles:
-        card:
-        - font-size: 12px
-        - font-weight: bold
-        - height: 70px
-      tap_action:
-        action: call-service
-        haptic: success
-        service: script.arriving
-      type: custom:button-card
-    - color: auto
-      icon: mdi:home-export-outline
-      name: Leave Home
-      styles:
-        card:
-        - font-size: 12px
-        - font-weight: bold
-        - height: 70px
-      tap_action:
-        action: call-service
-        haptic: success
-        service: script.leaving
-      type: custom:button-card
-    type: horizontal-stack
-  - cards:
-    - cards:
-      - entity: climate.living_room
-        icon_type: none
-        layout: horizontal
-        show_temperature_control: true
-        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
-          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
-          }\n"
-        type: custom:mushroom-climate-card
-      - entity: climate.bathroom
-        icon_type: none
-        layout: horizontal
-        show_temperature_control: true
-        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
-          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
-          }\n"
-        type: custom:mushroom-climate-card
-      - entity: climate.bedroom
-        icon_type: none
-        layout: horizontal
-        show_temperature_control: true
-        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
-          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
-          }\n"
-        type: custom:mushroom-climate-card
-      - entity: climate.guest_bedroom
-        icon_type: none
-        layout: horizontal
-        show_temperature_control: true
-        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
-          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
-          }\n"
-        type: custom:mushroom-climate-card
-      type: vertical-stack
-    - cards:
-      - entity: climate.kitchen
-        icon_type: none
-        layout: horizontal
-        show_temperature_control: true
-        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
-          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
-          }\n"
-        type: custom:mushroom-climate-card
-      - entity: climate.storage
-        icon_type: none
-        layout: horizontal
-        show_temperature_control: true
-        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
-          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
-          }\n"
-        type: custom:mushroom-climate-card
-      - entity: climate.bedroom_marthe
-        icon_type: none
-        layout: horizontal
-        show_temperature_control: true
-        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
-          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
-          }\n"
-        type: custom:mushroom-climate-card
-      - entity: climate.hall
-        icon_type: none
-        layout: horizontal
-        show_temperature_control: true
-        style: "mushroom-state-item {\n  margin-right: 0;\n}\n.container {\n  padding:\
-          \ 0;\n}\n.button ha-icon {\n  font-size: calc(var(--control-height) * .8);\n\
-          }\n"
-        type: custom:mushroom-climate-card
-      type: vertical-stack
-    type: horizontal-stack
-  - entity: plant.peperomia_glabella
-    type: plant-status
   - entities:
     - entities:
       - align: center
@@ -1052,9 +967,10 @@ views:
     type: entities
   icon: mdi:home
   path: default_view
-  theme: Backend-selected
+  theme: ios-dark-mode-blue-red
   title: Home
-- cards:
+- badges: []
+  cards:
   - cards:
     - entities:
       - entity: sensor.current_version
@@ -1263,6 +1179,7 @@ views:
     type: glance
   icon: mdi:home-assistant
   path: system
+  theme: ios-dark-mode-blue-red
   title: System Information
 - badges: []
   cards:
@@ -1579,7 +1496,7 @@ views:
     type: entities
   icon: mdi:motion-sensor
   path: sensors
-  theme: Backend-selected
+  theme: ios-dark-mode-blue-red
   title: Sensors
   visible: []
 - badges: []
@@ -2068,7 +1985,7 @@ views:
     type: entities
   icon: mdi:test-tube
   path: tests
-  theme: Backend-selected
+  theme: ios-dark-mode-blue-red
   title: Tests
   visible: []
 - badges: []
@@ -2251,4 +2168,5 @@ views:
     - slug: electric_vehicle
   icon: mdi:robot
   path: automations
+  theme: ios-dark-mode-blue-red
   title: Automations
