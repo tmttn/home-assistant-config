@@ -30,11 +30,15 @@ cozy_lights_living_room:
   mode: parallel
   sequence:
   - data:
+      transition: 1
+    service: light.turn_off
+    target:
       entity_id: light.living_room_middle_lights
-    service: light.turn_off
   - data:
-      entity_id: light.living_room_dining_table_lights
+      transition: 1
     service: light.turn_off
+    target:
+      entity_id: light.living_room_dining_table_lights
   - data:
       entity_id: light.hue_plug
       hs_color:
@@ -42,11 +46,13 @@ cozy_lights_living_room:
       - 88.235
     service: light.turn_on
   - data:
-      entity_id: light.tv_led
       hs_color:
       - 26.725
       - 89.804
+      transition: 1
     service: light.turn_on
+    target:
+      entity_id: light.tv_led
   - service: input_select.select_option
     entity_id: input_select.last_script_living_room
     data:
