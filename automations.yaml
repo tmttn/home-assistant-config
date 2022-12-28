@@ -2951,7 +2951,7 @@
       entity_id: input_select.living_room_dimmer_mode
   - service: media_player.volume_set
     data:
-      volume_level: 0.6
+      volume_level: 0.4
     target:
       entity_id: media_player.google_home
   - service: tts.google_translate_say
