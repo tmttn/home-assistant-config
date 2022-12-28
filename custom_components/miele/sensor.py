@@ -47,10 +47,18 @@ from .const import (
     OVEN,
     OVEN_MICROWAVE,
     ROBOT_VACUUM_CLEANER,
+    STATE_DRYING_STEP,
     STATE_PROGRAM_ID,
     STATE_PROGRAM_PHASE,
     STATE_PROGRAM_TYPE,
     STATE_STATUS,
+    STATE_STATUS_IDLE,
+    STATE_STATUS_NOT_CONNECTED,
+    STATE_STATUS_OFF,
+    STATE_STATUS_ON,
+    STATE_STATUS_PROGRAMMED,
+    STATE_STATUS_SERVICE,
+    STATE_STATUS_WAITING_TO_START,
     STEAM_OVEN,
     STEAM_OVEN_COMBI,
     STEAM_OVEN_MICRO,
@@ -68,14 +76,13 @@ _LOGGER = logging.getLogger(__name__)
 
 @dataclass
 class MieleSensorDescription(SensorEntityDescription):
-    """Class describing Weatherlink sensor entities."""
+    """Class describing Miele sensor entities."""
 
     data_tag: str | None = None
     data_tag1: str | None = None
     data_tag_loc: str | None = None
     type_key: str = "ident|type|value_localized"
     convert: Callable[[Any], Any] | None = None
-    decimals: int = 1
     extra_attributes: dict[str, Any] | None = None
 
 
@@ -196,9 +203,8 @@ SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
             device_class=SensorDeviceClass.TEMPERATURE,
             name="Target temperature",
             native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            state_class=SensorStateClass.MEASUREMENT,
             entity_category=EntityCategory.DIAGNOSTIC,
-            convert=lambda x, t: x / 100.0,
+            convert=lambda x, t: int(x / 100.0),
         ),
     ),
     MieleSensorDefinition(
@@ -226,9 +232,8 @@ SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
             device_class=SensorDeviceClass.TEMPERATURE,
             name="Target temperature zone 2",
             native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            state_class=SensorStateClass.MEASUREMENT,
             entity_category=EntityCategory.DIAGNOSTIC,
-            convert=lambda x, t: x / 100.0,
+            convert=lambda x, t: int(x / 100.0),
             entity_registry_enabled_default=False,
         ),
     ),
@@ -257,9 +262,8 @@ SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
             device_class=SensorDeviceClass.TEMPERATURE,
             name="Target temperature zone 3",
             native_unit_of_measurement=UnitOfTemperature.CELSIUS,
-            state_class=SensorStateClass.MEASUREMENT,
             entity_category=EntityCategory.DIAGNOSTIC,
-            convert=lambda x, t: x / 100.0,
+            convert=lambda x, t: int(x / 100.0),
             entity_registry_enabled_default=False,
         ),
     ),
@@ -393,6 +397,23 @@ SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
             name="Spin speed",
             icon="mdi:sync",
             native_unit_of_measurement="rpm",
+            entity_category=EntityCategory.DIAGNOSTIC,
+        ),
+    ),
+    MieleSensorDefinition(
+        types=[
+            WASHER_DRYER,
+            TUMBLE_DRYER,
+        ],
+        description=MieleSensorDescription(
+            key="stateDryingStep",
+            data_tag="state|dryingStep|value_raw",
+            data_tag_loc="state|dryingStep|value_localized",
+            name="Drying step",
+            device_class="miele__state_drying_step",
+            icon="mdi:water-outline",
+            convert=lambda x, t: STATE_DRYING_STEP.get(x, x),
+            extra_attributes={"Raw value": 0},
             entity_category=EntityCategory.DIAGNOSTIC,
         ),
     ),
@@ -774,7 +795,7 @@ class MieleSensor(CoordinatorEntity, SensorEntity):
         if _LOGGER.getEffectiveLevel() <= logging.INFO:
             if self.entity_description.key in {
                 "stateProgramPhase",
-                "stateProgramID",
+                "stateProgramId",
                 "stateProgramType",
             }:
                 while len(self.hass.data[DOMAIN]["id_log"]) >= 500:
@@ -794,6 +815,24 @@ class MieleSensor(CoordinatorEntity, SensorEntity):
                         ],
                     }
                 )
+
+        # Show 0 consumption when the appliance is not running,
+        # to correctly reset utility meter cycle. Ignore this when
+        # appliance is not connected (it may disconnect while a program
+        # is running causing problems in energy stats).
+        state = self.coordinator.data[self._ent]["state|status|value_raw"]
+        if self.entity_description.key in [
+            "stateCurrentEnergyConsumption",
+            "stateCurrentWaterConsumption",
+        ] and state in [
+            STATE_STATUS_ON,
+            STATE_STATUS_OFF,
+            STATE_STATUS_PROGRAMMED,
+            STATE_STATUS_WAITING_TO_START,
+            STATE_STATUS_IDLE,
+            STATE_STATUS_SERVICE,
+        ]:
+            return 0
 
         if (
             self.coordinator.data[self._ent].get(self.entity_description.data_tag)
@@ -825,7 +864,10 @@ class MieleSensor(CoordinatorEntity, SensorEntity):
         if not self.coordinator.last_update_success:
             return False
 
-        return self.coordinator.data[self._ent]["state|status|value_raw"] != 255
+        return (
+            self.coordinator.data[self._ent]["state|status|value_raw"]
+            != STATE_STATUS_NOT_CONNECTED
+        )
 
     @property
     def extra_state_attributes(self):
