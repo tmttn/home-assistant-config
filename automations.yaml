@@ -162,8 +162,6 @@
     type: action
     subtype: single
     discovery_id: 0x00158d0007c58a07 action_single
-  condition:
-  - '{{ trigger.event.data.event == 1002 }}'
   action:
   - service: media_player.volume_set
     entity_id: media_player.kitchen_display
@@ -910,8 +908,6 @@
     type: action
     subtype: single
     discovery_id: 0x00158d0007c587f1 action_single
-  condition:
-  - '{{ trigger.event.data.event == 1002 }}'
   action:
   - service: media_player.volume_set
     entity_id: media_player.kitchen_display
@@ -1004,8 +1000,6 @@
     type: action
     subtype: double
     discovery_id: 0x00158d0007c587f1 action_double
-  condition:
-  - '{{ trigger.event.data.event == 1004 }}'
   action:
   - service: media_player.volume_set
     entity_id: media_player.kitchen_display
@@ -1567,8 +1561,6 @@
     type: action
     subtype: release
     discovery_id: 0x00158d0007c587f1 action_release
-  condition:
-  - '{{ trigger.event.data.event == 1001 }}'
   action:
   - service: switch.toggle
     entity_id: switch.espresso_machine
