@@ -2400,9 +2400,6 @@
     - binary_sensor.bizzylectric_charger
     to: 'on'
   condition:
-  - condition: numeric_state
-    entity_id: sensor.p1_meter_active_power
-    below: '-500'
   - condition: state
     entity_id: device_tracker.bizzylectric_location_tracker
     state: home
