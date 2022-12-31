@@ -1198,16 +1198,10 @@
   alias: 'Vacuum: cleanup if nobody is home'
   description: ''
   trigger:
-  - platform: time
-    at: 08:30
   - platform: state
     entity_id: group.persons
     from: home
     to: not_home
-  - platform: state
-    entity_id: binary_sensor.openclose_guest_bedroom
-    from: 'off'
-    to: 'on'
   condition:
   - condition: time
     after: 07:00:00
