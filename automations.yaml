@@ -2319,8 +2319,10 @@
   action:
   - service: light.turn_on
     data:
-      entity_id: light.outside_lights
       transition: 1
+    target:
+      entity_id:
+      - light.terrace_lights
   mode: single
 - id: '1667825677223'
   alias: 'Light: turn on the outside lights when arriving'
@@ -3103,4 +3105,19 @@
           brightness_step_pct: -10
         target:
           entity_id: light.tv_led
+  mode: single
+- id: '1672842099894'
+  alias: 'Light: turn on outside christmas lights'
+  description: ''
+  trigger:
+  - platform: numeric_state
+    entity_id: sun.sun
+    attribute: elevation
+    below: 1
+  condition: []
+  action:
+  - service: light.turn_on
+    data: {}
+    target:
+      entity_id: light.outside_christmas_lights
   mode: single
