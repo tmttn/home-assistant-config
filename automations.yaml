@@ -1999,9 +1999,11 @@
     domain: binary_sensor
   condition: []
   action:
-  - service: script.turn_on_lights
+  - service: light.turn_on
     data:
-      entity_id: automation.light_toggle_kitchen_ceiling
+      transition: 1
+    target:
+      entity_id: light.kitchen_lights
   - service: timer.start
     data:
       duration: '5'
@@ -2186,21 +2188,34 @@
     entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
   mode: parallel
 - id: '1667825591656'
-  alias: 'Light: turn off kitchen (extra check)'
-  description: In case the other automation failed
+  alias: 'Light: turn off kitchen ceiling'
+  description: ''
   trigger:
-  - platform: time_pattern
-    minutes: /10
+  - platform: state
+    entity_id:
+    - timer.kitchen_ceiling_lights_on
+    from: active
+    to: idle
+  - type: no_motion
+    platform: device
+    device_id: 36c9dd750502dd843b34eb46c8e92827
+    entity_id: binary_sensor.motion_sensor_kitchen
+    domain: binary_sensor
   condition:
   - condition: state
-    entity_id: binary_sensor.activity_in_kitchen
-    state: 'off'
-  - condition: state
-    entity_id: light.kitchen_lights
-    state: 'on'
+    entity_id: timer.kitchen_ceiling_lights_on
+    state: idle
+  - type: is_no_motion
+    condition: device
+    device_id: 36c9dd750502dd843b34eb46c8e92827
+    entity_id: binary_sensor.motion_sensor_kitchen
+    domain: binary_sensor
   action:
   - service: light.turn_off
-    entity_id: light.kitchen_lights
+    data:
+      transition: 1
+    target:
+      entity_id: light.kitchen_lights
   mode: single
 - id: '1667825599556'
   alias: 'Light: turn off living room'
