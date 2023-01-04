@@ -2237,18 +2237,28 @@
       transition: 1
   mode: single
 - id: '1667825617439'
-  alias: 'Light: turn off toilet (extra check)'
-  description: In case the other automation failed
+  alias: 'Light: turn off toilet'
+  description: ''
   trigger:
-  - platform: time_pattern
-    minutes: /10
+  - type: no_motion
+    platform: device
+    device_id: a1e62ac31f7598ff24bc0d008de76a90
+    entity_id: binary_sensor.motion_sensor_toilet
+    domain: binary_sensor
+  - platform: state
+    entity_id:
+    - timer.toilet_light_on
+    from: active
+    to: idle
   condition:
   - condition: state
-    entity_id: binary_sensor.activity_in_toilet
-    state: 'off'
-  - condition: state
-    entity_id: light.toilet
-    state: 'on'
+    entity_id: timer.toilet_light_on
+    state: idle
+  - type: is_no_motion
+    condition: device
+    device_id: a1e62ac31f7598ff24bc0d008de76a90
+    entity_id: binary_sensor.motion_sensor_toilet
+    domain: binary_sensor
   action:
   - service: light.turn_off
     entity_id: light.toilet
