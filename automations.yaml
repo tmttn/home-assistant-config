@@ -2008,30 +2008,23 @@
       entity_id: timer.kitchen_ceiling_lights_on
   mode: single
 - id: '1667825504387'
-  alias: 'Light: toggle toilet'
+  alias: 'Light: turn on toilet'
   description: ''
   trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_toilet
-  condition:
-  - condition: or
-    conditions:
-    - condition: state
-      entity_id: light.toilet
-      state: 'on'
-    - condition: and
-      conditions:
-      - condition: state
-        entity_id: light.toilet
-        state: 'off'
-      - condition: numeric_state
-        entity_id: sensor.motion_sensor_toilet_illuminance_lux
-        below: 150
+  - type: motion
+    platform: device
+    device_id: a1e62ac31f7598ff24bc0d008de76a90
+    entity_id: binary_sensor.motion_sensor_toilet
+    domain: binary_sensor
+  condition: []
   action:
-  - service: light.turn_{{ trigger.to_state.state }}
+  - service: script.turn_on_lights
     data:
       entity_id: light.toilet
-      transition: 1
+  - service: timer.start
+    data: {}
+    target:
+      entity_id: timer.toilet_light_on
   mode: single
 - id: '1667825512579'
   alias: 'Light: turn off bathroom (extra check)'
