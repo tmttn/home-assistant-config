@@ -1999,10 +1999,8 @@
     domain: binary_sensor
   condition: []
   action:
-  - service: light.turn_on
+  - service: script.turn_on_lights
     data:
-      transition: 1
-    target:
       entity_id: light.kitchen_lights
   - service: timer.start
     data: {}
