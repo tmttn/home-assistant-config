@@ -1,0 +1,16 @@
+{
+  "codeowners": ["@sopelj"],
+  "config_flow": true,
+  "documentation": "https://github.com/sopelj/hass_ember_mug",
+  "issue_tracker": "https://github.com/sopelj/hass_ember_mug/issues",
+  "domain": "ember_mug",
+  "name": "Ember Mug",
+  "version": "0.4.0",
+  "iot_class": "local_polling",
+  "dependencies": ["bluetooth"],
+  "requirements": ["python-ember-mug==0.4.1"],
+  "bluetooth": [
+    { "local_name": "Ember Ceramic Mug" },
+    { "service_uuid": "fc543622-236c-4c94-8fa9-944a3e5353fa" }
+  ]
+}
