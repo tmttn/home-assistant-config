@@ -2484,7 +2484,7 @@
     for:
       hours: 0
       minutes: 0
-      seconds: 2
+      seconds: 20
     below: 1000
   condition:
   - condition: state
@@ -2517,7 +2517,7 @@
       hours: 0
       minutes: 1
       seconds: 0
-    above: '5000'
+    above: 4000
   - platform: sun
     event: sunset
     offset: '0'
