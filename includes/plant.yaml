@@ -14,7 +14,7 @@ peperomia_glabella:
     moisture: sensor.mi_flora_peperomia_glabella_moisture
     temperature: sensor.mi_flora_peperomia_glabella_temperature
     conductivity: sensor.mi_flora_peperomia_glabella_conductivity
-    brightness: sensor.mi_flora_peperomia_glabella_light_intensity
+    brightness: sensor.mi_flora_peperomia_glabella_illuminance
   min_moisture: 15
   max_moisture: 60
   min_conductivity: 350
