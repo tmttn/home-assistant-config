@@ -2484,8 +2484,8 @@
     for:
       hours: 0
       minutes: 0
-      seconds: 20
-    below: '-500'
+      seconds: 15
+    below: 700
   condition:
   - condition: state
     entity_id: binary_sensor.bizzylectric_charger
