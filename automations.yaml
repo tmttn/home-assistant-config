@@ -967,14 +967,13 @@
   description: ''
   trigger:
   - platform: time
-    at: 00:00
-  condition:
-  - condition: state
-    entity_id: input_boolean.marthe_vitamins
-    state: 'on'
+    at: 00:00:00
+  condition: []
   action:
   - service: input_boolean.turn_off
-    entity_id: input_boolean.marthe_vitamins
+    data: {}
+    target:
+      entity_id: input_boolean.marthe_vitamins
   mode: single
 - id: '1667823799424'
   alias: 'Medication: reset input_boolean Tom medication at midnight'
