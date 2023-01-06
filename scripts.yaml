@@ -221,11 +221,12 @@ turn_on_lights:
       description: entity_id of light
       example: light.bedroom_lights
   sequence:
-    service: adaptive_lighting.apply
+  - service: adaptive_lighting.apply
     data:
-      entity_id: switch.adaptive_lighting_living_room
+      entity_id: switch.adaptive_lighting_default
       lights: '{{ entity_id }}'
       turn_on_lights: true
+  mode: single
 reset_adaptive_lighting:
   alias: Reset 'manual control'
   sequence:
