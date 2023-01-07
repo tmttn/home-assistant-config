@@ -1693,46 +1693,6 @@
   - service: script.set_low_temperature
     data: {}
   mode: single
-- id: '1667824461865'
-  alias: 'Night mode: set sleeping mode in the living room'
-  description: 'Set the living room lights to sleep mode only when no-one is there
-    anymore.
-
-    '
-  trigger:
-  - platform: state
-    entity_id: input_select.sleep_mode
-    to: total
-  condition: []
-  action:
-  - choose:
-    - conditions: '{{ is_state(''binary_sensor.activity_in_living_room'', ''on'')
-        }}'
-      sequence:
-      - wait_for_trigger:
-          platform: state
-          entity_id: binary_sensor.activity_in_living_room
-          from: 'on'
-          to: 'off'
-        timeout: 06:00:00
-        continue_on_timeout: false
-      - condition: state
-        entity_id: input_select.sleep_mode
-        state: total
-      - service: switch.turn_on
-        data: {}
-        target:
-          entity_id:
-          - switch.adaptive_lighting_sleep_mode_living_room
-    - conditions: '{{ is_state(''binary_sensor.activity_in_living_room'', ''off'')
-        }}'
-      sequence:
-        service: switch.turn_on
-        data: {}
-        target:
-          entity_id:
-          - switch.adaptive_lighting_sleep_mode_living_room
-  mode: single
 - id: '1667824473454'
   alias: 'Night mode: turn off automatic bedroom lights'
   description: ''
