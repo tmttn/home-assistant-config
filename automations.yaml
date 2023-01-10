@@ -3110,3 +3110,45 @@
     target:
       entity_id: light.outside_christmas_lights
   mode: single
+- id: '1673373153837'
+  alias: 'Light: extend kitchen ceiling timer'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - timer.kitchen_ceiling_lights_on
+    from: active
+    to: idle
+  condition:
+  - type: is_motion
+    condition: device
+    device_id: 36c9dd750502dd843b34eb46c8e92827
+    entity_id: binary_sensor.motion_sensor_kitchen
+    domain: binary_sensor
+  action:
+  - service: timer.start
+    data: {}
+    target:
+      entity_id: timer.kitchen_ceiling_lights_on
+  mode: single
+- id: '1673373285075'
+  alias: 'Light: extend toilet timer'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - timer.toilet_light_on
+    from: active
+    to: idle
+  condition:
+  - type: is_motion
+    condition: device
+    device_id: a1e62ac31f7598ff24bc0d008de76a90
+    entity_id: binary_sensor.motion_sensor_toilet
+    domain: binary_sensor
+  action:
+  - service: timer.start
+    data: {}
+    target:
+      entity_id: timer.toilet_light_on
+  mode: single
