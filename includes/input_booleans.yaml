@@ -30,12 +30,6 @@ guest_bedroom_lights_automatically_turned_on:
   name: Will automatically turn off
   icon: mdi:ceiling-light
   initial: false
-automatic_bedroom_lights:
-  name: Automatic bedroom lights
-  icon: mdi:lamp
-automatic_guest_bedroom_lights:
-  name: Automatic guest bedroom lights
-  icon: mdi:lamp
 automatic_temperature:
   name: Automatic temperature
   icon: mdi:thermometer
