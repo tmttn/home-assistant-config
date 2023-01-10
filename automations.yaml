@@ -1705,18 +1705,6 @@
   - service: input_boolean.turn_off
     entity_id: input_boolean.automatic_bedroom_lights
   mode: single
-- id: '1667824481173'
-  alias: 'Night mode: turn off automatic guest bedroom lights'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: input_select.sleep_mode
-    from: 'off'
-  condition: []
-  action:
-  - service: input_boolean.turn_off
-    entity_id: input_boolean.automatic_guest_bedroom_lights
-  mode: single
 - id: '1667824514805'
   alias: 'Security: back door has been open for more than 5 minutes'
   description: ''
@@ -1847,31 +1835,6 @@
       transition: 10
   mode: single
   initial_state: true
-- id: '1667825464005'
-  alias: 'Light: automatically turn off the guest bedroom'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_guest_bedroom
-    to: 'off'
-    for: 00:08:00
-  condition:
-  - condition: state
-    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
-    state: 'on'
-  - condition: state
-    entity_id: light.guest_bedroom_lights
-    state: 'on'
-  - condition: state
-    entity_id: input_boolean.automatic_guest_bedroom_lights
-    state: 'on'
-  action:
-  - service: light.turn_off
-    entity_id: light.guest_bedroom_lights
-    data:
-      transition: 10
-  mode: single
-  initial_state: true
 - id: '1667825471613'
   alias: 'Light: automatically turn on the bedroom'
   description: ''
@@ -1900,36 +1863,6 @@
   mode: single
   variables:
     off_lights: "{{ expand(state_attr(\"light.bedroom_lights\", \"entity_id\"))\n
-      \   | selectattr(\"state\", \"eq\", \"off\")\n    | map(attribute=\"entity_id\")\n
-      \   | list }}\n"
-- id: '1667825482217'
-  alias: 'Light: automatically turn on the guest bedroom'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_guest_bedroom
-    to: 'on'
-  condition:
-  - '{{ (off_lights | length) > 0 }}'
-  - condition: state
-    entity_id: input_select.sleep_mode
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.automatic_guest_bedroom_lights
-    state: 'on'
-  action:
-  - alias: Turn on lights that are off
-    repeat:
-      count: '{{ off_lights | length }}'
-      sequence:
-        service: script.turn_on_lights
-        data:
-          entity_id: '{{ off_lights[repeat.index - 1] }}'
-  - service: input_boolean.turn_on
-    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
-  mode: single
-  variables:
-    off_lights: "{{ expand(state_attr(\"light.guest_bedroom_lights\", \"entity_id\"))\n
       \   | selectattr(\"state\", \"eq\", \"off\")\n    | map(attribute=\"entity_id\")\n
       \   | list }}\n"
 - id: '1667825490219'
@@ -2091,71 +2024,6 @@
   action:
   - service: input_boolean.turn_off
     entity_id: input_boolean.bedroom_lights_automatically_turned_on
-  mode: parallel
-- id: '1667825551422'
-  alias: 'Light: turn off guest bedroom (extra check)'
-  description: In case the other automation failed
-  trigger:
-  - platform: time_pattern
-    minutes: /30
-  condition:
-  - condition: state
-    entity_id: binary_sensor.activity_in_guest_bedroom
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.automatic_guest_bedroom_lights
-    state: 'on'
-  - condition: state
-    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
-    state: 'on'
-  action:
-  - service: light.turn_off
-    entity_id: light.guest_bedroom_lights
-  - service: light.turn_off
-    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
-  mode: single
-- id: '1667825572757'
-  alias: 'Light: turn off guest bedroom after 2 hours of inactivity'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_guest_bedroom
-    from: 'on'
-    to: 'off'
-    for: 02:00:00
-  condition:
-  - '{{ is_state(''light.guest_bedroom_lights'', ''on'') }}'
-  action:
-  - service: light.turn_off
-    data:
-      entity_id: light.guest_bedroom_lights
-  mode: single
-- id: '1667825581074'
-  alias: 'Light: turn off guest bedroom lights auto switch'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: light.guest_bedroom_lights
-    to: 'off'
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: dimmer_switch_guest_bedroom
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_guest_bedroom
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: guest_bedroom_wall_switch
-  condition:
-  - condition: state
-    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
-    state: 'on'
-  action:
-  - service: input_boolean.turn_off
-    entity_id: input_boolean.guest_bedroom_lights_automatically_turned_on
   mode: parallel
 - id: '1667825591656'
   alias: 'Light: turn off kitchen ceiling'
@@ -3151,4 +3019,87 @@
     data: {}
     target:
       entity_id: timer.toilet_light_on
+  mode: single
+- id: '1673373959415'
+  alias: 'Light: extend guest bedroom lights timer'
+  description: ''
+  trigger:
+  - platform: state
+    entity_id:
+    - timer.guest_bedroom_lights_on
+    from: active
+    to: idle
+  condition:
+  - type: is_motion
+    condition: device
+    device_id: 1790ee9b27fb8a6cd6f207afd1ba3f91
+    entity_id: binary_sensor.motion_sensor_guest_bedroom
+    domain: binary_sensor
+  action:
+  - service: timer.start
+    data: {}
+    target:
+      entity_id: timer.guest_bedroom_lights_on
+  mode: single
+- id: '1673374204541'
+  alias: 'Light: turn on guest bedroom'
+  description: ''
+  trigger:
+  - type: motion
+    platform: device
+    device_id: 1790ee9b27fb8a6cd6f207afd1ba3f91
+    entity_id: binary_sensor.motion_sensor_guest_bedroom
+    domain: binary_sensor
+  condition:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: timer.guest_bedroom_lights_on
+      state: active
+    - type: is_illuminance
+      condition: device
+      device_id: 1790ee9b27fb8a6cd6f207afd1ba3f91
+      entity_id: sensor.motion_sensor_guest_bedroom_illuminance_lux
+      domain: sensor
+      above: 50
+  - condition: state
+    entity_id: input_select.sleep_mode
+    state: 'off'
+  action:
+  - service: script.turn_on_lights
+    data:
+      entity_id: light.guest_bedroom_lights
+  - service: timer.start
+    data: {}
+    target:
+      entity_id: timer.guest_bedroom_lights_on
+  mode: single
+- id: '1673374397263'
+  alias: 'Light: turn off guest bedroom'
+  description: ''
+  trigger:
+  - type: no_motion
+    platform: device
+    device_id: 1790ee9b27fb8a6cd6f207afd1ba3f91
+    entity_id: binary_sensor.motion_sensor_guest_bedroom
+    domain: binary_sensor
+  - platform: state
+    entity_id:
+    - timer.guest_bedroom_lights_on
+    from: active
+    to: idle
+  condition:
+  - condition: state
+    entity_id: timer.guest_bedroom_lights_on
+    state: idle
+  - type: is_no_motion
+    condition: device
+    device_id: 1790ee9b27fb8a6cd6f207afd1ba3f91
+    entity_id: binary_sensor.motion_sensor_guest_bedroom
+    domain: binary_sensor
+  action:
+  - service: light.turn_off
+    data: {}
+    target:
+      entity_id: light.guest_bedroom_lights
   mode: single
