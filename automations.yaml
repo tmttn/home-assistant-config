@@ -2122,17 +2122,6 @@
   - entity_id: input_boolean.automatic_bedroom_lights
     service: input_boolean.turn_on
   mode: single
-- id: '1667825645381'
-  alias: 'Light: turn on automatic_guest_bedroom_lights switch'
-  description: ''
-  trigger:
-  - platform: time
-    at: '12:00'
-  condition: []
-  action:
-  - entity_id: input_boolean.automatic_guest_bedroom_lights
-    service: input_boolean.turn_on
-  mode: single
 - id: '1667825653475'
   alias: 'Light: turn on cozy lights at sunset'
   description: ''
