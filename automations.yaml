@@ -3061,7 +3061,7 @@
       device_id: 1790ee9b27fb8a6cd6f207afd1ba3f91
       entity_id: sensor.motion_sensor_guest_bedroom_illuminance_lux
       domain: sensor
-      above: 50
+      below: 50
   - condition: state
     entity_id: input_select.sleep_mode
     state: 'off'
