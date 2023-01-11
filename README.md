@@ -19,7 +19,6 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
 
 - [Sunrise emulator app](appdaemon/apps/wake_up_light.py) 🌅
 - [Wake up with Spotify app](appdaemon/apps/wake_up_with_spotify.py) that slowly ramps the volume 📢
-- [Low Battery level notifications 🔋](appdaemon/apps/battery_monitor.py)
 
 ## My devices
 
