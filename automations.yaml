@@ -751,6 +751,7 @@
       message: Grid export is above 0.7kWh, please increase self-consumption. ⚡
   - delay: 00:30:00
   mode: single
+  max_exceeded: silent
 - id: '1667823903150'
   alias: 'Leaving: ask to turn off everything'
   description: ''
@@ -1089,14 +1090,14 @@
           }}'
       - condition: template
         value_template: '{{ 0 < (states(current) | float(default=0)) < (min_battery_level
-          | float(default=50) ) }}'
+          | float(default=20) ) }}'
       - service: '{{ notify_service }}'
         data:
           title: System
           message: 'Battery level low of {{ current }}: {{ states(current) }}%! ⚠️'
   mode: single
   variables:
-    min_battery_level: 50
+    min_battery_level: 20
     notify_service: notify.mobile_app_bizzyphone
     battery_ids: ''
     current: ''
