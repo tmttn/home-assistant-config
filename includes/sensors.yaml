@@ -127,7 +127,13 @@
       unique_id: n_days_last_month
       value_template: >
         {% set start_of_month = now().replace(day=1) %}
-        {% set start_of_last_month = start_of_month.replace(month=now().month-1) %}
+        {% set last_month = now().month - 1 %}
+        {% set last_month_year = now().year %}
+        {% if last_month == 0 %}
+          {% set last_month = 12 %}
+          {% set last_month_year = now().year - 1 %}
+        {% endif %}
+        {% set start_of_last_month = start_of_month.replace(month=last_month, year=last_month_year) %}
         {{ ((start_of_month - start_of_last_month).total_seconds() / 86400) | round }}
 
     daily_power:
