@@ -48,7 +48,6 @@ utility_meter: !include includes/utility_meter.yaml
 ios: !include includes/ios.yaml
 camera: !include includes/camera.yaml
 intent:
-intent_script: !include includes/intent_script.yaml
 evohome: !include includes/evohome.yaml
 tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
