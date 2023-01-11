@@ -1826,6 +1826,7 @@
     target:
       entity_id: automation.electric_vehicle_update_charge_rate_every_minute
   mode: single
+  max_exceeded: silent
 - id: '1667825849521'
   alias: 'Electric vehicle: update charge rate every minute'
   description: ''
