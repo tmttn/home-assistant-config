@@ -1810,75 +1810,6 @@
 
         '
   mode: single
-- id: '1667825456773'
-  alias: 'Light: automatically turn off the bedroom'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_bedroom
-    to: 'off'
-    for: 00:08:00
-  condition:
-  - condition: state
-    entity_id: input_boolean.bedroom_lights_automatically_turned_on
-    state: 'on'
-  - condition: state
-    entity_id: light.bedroom_lights
-    state: 'on'
-  - condition: state
-    entity_id: input_boolean.automatic_bedroom_lights
-    state: 'on'
-  action:
-  - service: light.turn_off
-    entity_id: light.bedroom_lights
-    data:
-      transition: 10
-  mode: single
-  initial_state: true
-- id: '1667825471613'
-  alias: 'Light: automatically turn on the bedroom'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_bedroom
-    to: 'on'
-  condition:
-  - '{{ (off_lights | length) > 0 }}'
-  - condition: state
-    entity_id: input_select.sleep_mode
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.automatic_bedroom_lights
-    state: 'on'
-  action:
-  - alias: Turn on lights that are off
-    repeat:
-      count: '{{ off_lights | length }}'
-      sequence:
-        service: script.turn_on_lights
-        data:
-          entity_id: '{{ off_lights[repeat.index - 1] }}'
-  - service: input_boolean.turn_on
-    entity_id: input_boolean.bedroom_lights_automatically_turned_on
-  mode: single
-  variables:
-    off_lights: "{{ expand(state_attr(\"light.bedroom_lights\", \"entity_id\"))\n
-      \   | selectattr(\"state\", \"eq\", \"off\")\n    | map(attribute=\"entity_id\")\n
-      \   | list }}\n"
-- id: '1667825490219'
-  alias: 'Light: toggle bathroom'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_bathroom
-  condition:
-  - '{{ not is_state(''light.bathroom_lights'', trigger.to_state.state) }}'
-  action:
-  - service: light.turn_{{ trigger.to_state.state }}
-    data:
-      entity_id: light.bathroom_lights
-      transition: 1
-  mode: single
 - id: '1667825497384'
   alias: 'Light: turn on kitchen ceiling'
   description: ''
@@ -1939,92 +1870,6 @@
     target:
       entity_id: timer.toilet_light_on
   mode: single
-- id: '1667825512579'
-  alias: 'Light: turn off bathroom (extra check)'
-  description: In case the other automation failed
-  trigger:
-  - platform: time_pattern
-    minutes: /10
-  condition:
-  - condition: state
-    entity_id: binary_sensor.activity_in_bathroom
-    state: 'off'
-  - condition: state
-    entity_id: light.bathroom_lights
-    state: 'on'
-  action:
-  - service: light.turn_off
-    entity_id: light.bathroom_lights
-  mode: single
-- id: '1667825521896'
-  alias: 'Light: turn off bedroom (extra check)'
-  description: In case the other automation failed
-  trigger:
-  - platform: time_pattern
-    minutes: /30
-  condition:
-  - condition: state
-    entity_id: binary_sensor.activity_in_bedroom
-    state: 'off'
-  - condition: state
-    entity_id: input_boolean.automatic_bedroom_lights
-    state: 'on'
-  - condition: state
-    entity_id: input_boolean.bedroom_lights_automatically_turned_on
-    state: 'on'
-  action:
-  - service: light.turn_off
-    entity_id: light.bedroom_lights
-  - service: light.turn_off
-    entity_id: input_boolean.bedroom_lights_automatically_turned_on
-  mode: single
-- id: '1667825530088'
-  alias: 'Light: turn off bedroom after 2 hours of inactivity'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_bedroom
-    from: 'on'
-    to: 'off'
-    for: 02:00:00
-  condition:
-  - '{{ is_state(''light.bedroom_lights'', ''on'') }}'
-  action:
-  - service: light.turn_off
-    data:
-      entity_id: light.bedroom_lights
-  mode: single
-- id: '1667825538989'
-  alias: 'Light: turn off bedroom lights auto switch'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: light.bedroom_lights
-    to: 'off'
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: dimmer_switch_bedroom
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_bedroom_tom
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: smart_switch_bedroom_tanja
-  - platform: event
-    event_type: deconz_event
-    event_data:
-      id: bedroom_wall_switch
-  condition:
-  - condition: state
-    entity_id: input_boolean.bedroom_lights_automatically_turned_on
-    state: 'on'
-  action:
-  - service: input_boolean.turn_off
-    entity_id: input_boolean.bedroom_lights_automatically_turned_on
-  mode: parallel
 - id: '1667825591656'
   alias: 'Light: turn off kitchen ceiling'
   description: ''
@@ -2054,18 +1899,6 @@
       transition: 1
     target:
       entity_id: light.kitchen_lights
-  mode: single
-- id: '1667825599556'
-  alias: 'Light: turn off living room'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_living_room
-    to: 'off'
-  condition: []
-  action:
-  - service: light.turn_off
-    entity_id: light.living_room_lights
   mode: single
 - id: '1667825609122'
   alias: 'Light: turn off outside lights'
@@ -2137,18 +1970,6 @@
   action:
   - service: script.cozy_lights_living_room
     data: {}
-  mode: single
-- id: '1667825661217'
-  alias: 'Light: turn on living room'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.activity_in_living_room
-    to: 'on'
-  condition: []
-  action:
-  - service: light.turn_on
-    entity_id: light.living_room_lights
   mode: single
 - id: '1667825668872'
   alias: 'Light: turn on outside lights'
