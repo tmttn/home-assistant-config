@@ -33,7 +33,7 @@ iphone_tom:
 
 iphone_tanja:
   - sensor.tanja_iphone_activity
-  - sensor.tanja_iphone_average_active
+  - sensor.tanja_iphone_average_active_pace
   - sensor.tanja_iphone_bssid
   - sensor.tanja_iphone_battery_level
   - sensor.tanja_iphone_battery_state
