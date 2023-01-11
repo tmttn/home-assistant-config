@@ -57,7 +57,3 @@ wake_up_light:
   name: Start wake up light
   initial: false
   icon: mdi:weather-sunset-up
-demo_wake_up_light:
-  name: Demo - Start wake up light
-  initial: false
-  icon: mdi:weather-sunset-up
