@@ -30,7 +30,6 @@ iphone_tom:
   - sensor.tom_iphone_ssid
   - sensor.tom_iphone_steps
   - device_tracker.tom_iphone
-  - device_tracker.tom_iphone_router
 
 iphone_tanja:
   - sensor.tanja_iphone_activity
