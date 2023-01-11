@@ -24,7 +24,6 @@ input_boolean: !include includes/input_booleans.yaml
 input_datetime: !include includes/input_datetimes.yaml
 
 # Logging and history
-logger: !include includes/logger.yaml
 recorder: !include includes/recorder.yaml
 device_tracker: !include includes/device_trackers.yaml
 
