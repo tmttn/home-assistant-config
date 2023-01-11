@@ -443,23 +443,6 @@
       message: No one at home for 24 hours, switching on vacation mode.
   mode: single
   initial_state: true
-- id: '1667823588355'
-  alias: 'Apple Watch: minimal lights bedroom'
-  description: ''
-  trigger:
-  - platform: event
-    event_type: ios.action_fired
-    event_data:
-      actionName: Minimal lights bedroom
-  condition: []
-  action:
-  - service: light.turn_on
-    data:
-      entity_id:
-      - light.bed_led
-      brightness: 1
-      color_name: red
-  mode: single
 - id: '1667823597022'
   alias: 'Apple Watch: movie time'
   description: ''
@@ -541,76 +524,6 @@
       entity_id: input_select.sleep_mode
       option: '{{ event }}'
   mode: parallel
-- id: '1667823665764'
-  alias: 'Apple Watch: set temperature'
-  description: ''
-  trigger:
-  - platform: event
-    event_type: ios.action_fired
-    event_data:
-      actionName: Set temperature
-  condition: []
-  action:
-  - variables:
-      iphone: notify.mobile_app_{{ trigger.event.data.sourceDeviceName.replace('-','_')
-        }}
-  - service: '{{ iphone }}'
-    data:
-      message: 'Apple Watch: set temperature'
-      data:
-        actions:
-        - action: T15
-          title: '15'
-        - action: T16
-          title: '16'
-        - action: T17
-          title: '17'
-        - action: T18
-          title: '18'
-        - action: T19
-          title: '19'
-        - action: T20
-          title: '20'
-        - action: T21
-          title: '21'
-  - wait_for_trigger:
-    - platform: event
-      event_type: mobile_app_notification_action
-      event_data:
-        action: T15
-    - platform: event
-      event_type: mobile_app_notification_action
-      event_data:
-        action: T16
-    - platform: event
-      event_type: mobile_app_notification_action
-      event_data:
-        action: T17
-    - platform: event
-      event_type: mobile_app_notification_action
-      event_data:
-        action: T18
-    - platform: event
-      event_type: mobile_app_notification_action
-      event_data:
-        action: T19
-    - platform: event
-      event_type: mobile_app_notification_action
-      event_data:
-        action: T20
-    - platform: event
-      event_type: mobile_app_notification_action
-      event_data:
-        action: T21
-    timeout: 00:00:20
-    continue_on_timeout: false
-  - variables:
-      temperature: '{{ wait.trigger.event.data.action.split(''T'')[1] | int }}'
-  - service: climate.set_temperature
-    data:
-      entity_id: climate.thermostat
-      temperature: '{{ temperature }}'
-  mode: parallel
 - id: '1667823676604'
   alias: 'Apple Watch: temperature report'
   description: ''
@@ -631,8 +544,7 @@
         {{ states(''sensor.temperature_bathroom'') }}°C Bedroom: {{ states(''sensor.temperature_bedroom'')
         }}°C Kitchen: {{ states(''sensor.temperature_kitchen'') }}°C Storage: {{ states(''sensor.temperature_storage'')
         }}°C Bedroom Marthe: {{ states(''sensor.temperature_bedroom_marthe'') }}°C
-        Outside: {{ state_attr(''weather.buienradar'', ''temperature'') }}°C and it''s
-        {{ states(''weather.buienradar'') }}
+        Outside: {{ states(''sensor.bunderhome_weerstation_ws_2902c_temp'') }}°C
 
         '
   mode: parallel
