@@ -38,7 +38,6 @@
             or is_state("binary_sensor.activity_in_hall", "on")
             or is_state("binary_sensor.activity_in_toilet", "on")
             or is_state("binary_sensor.activity_in_bathroom", "on")
-            or is_state("binary_sensor.activity_in_bedroom", "on")
             or is_state("binary_sensor.activity_in_guest_bedroom", "on") }}
 
     motion_detected_in_last_hour:
