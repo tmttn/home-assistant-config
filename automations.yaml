@@ -947,21 +947,6 @@
     entity_id: input_boolean.cleaned_today
   mode: single
   initial_state: true
-- id: '1667824176380'
-  alias: 'Vacuum: reset to standard mode'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id:
-    - vacuum.robot_vacuum
-    to: docked
-  condition: []
-  action:
-  - service: vacuum.set_fan_speed
-    entity_id: vacuum.robot_vacuum
-    data:
-      fan_speed: Standard
-  mode: single
 - id: '1667824188262'
   alias: 'Vacuum: sensors need cleaning'
   description: ''
