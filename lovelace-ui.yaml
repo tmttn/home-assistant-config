@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -751,8 +742,8 @@ views:
       type: custom:fold-entity-row
     - entities:
       - icon: mdi:currency-eur
-        name: '{% set kwh = states("sensor.washing_machine_energy") | float(default=0)
-          %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+        name: '{% set kwh = states("sensor.washing_machine_today_s_consumption") |
+          float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
           * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
 
           '
@@ -766,8 +757,8 @@ views:
           \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
           \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
         state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
-          \ states(\"sensor.washing_machine_energy\")|float(3) }} KWh\n{% else %}\n\
-          \  Off\n{% endif %}\n"
+          \ states(\"sensor.washing_machine_energy_consumption\")|float(3) }} KWh\n\
+          {% else %}\n  Off\n{% endif %}\n"
         type: custom:template-entity-row
       type: custom:fold-entity-row
     - entities:
