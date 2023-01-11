@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -33,6 +24,9 @@ views:
       - light.living_room_middle_lights
       - switch.hue_plug
       - light.tv_led
+      - entity: light.shelly_plug_s_1
+        icon: mdi:pine-tree
+        name: Christmas tree
       - entity: script.cozy_lights_living_room
         icon_height: 20px
         name: Cozy lights
@@ -87,6 +81,8 @@ views:
     - entities:
       - entities:
         - light.terrace_lights
+        - entity: light.outside_christmas_lights
+          icon: mdi:string-lights
         head:
           entity: light.automatic_lights
           hide_when_off: false
@@ -106,53 +102,9 @@ views:
             {% endif %}\n"
           type: custom:template-entity-row
         - entity: script.reset_adaptive_lighting
-        - type: divider
-        - entity: switch.adaptive_lighting_default
-          name: default
-        - entity: switch.adaptive_lighting_sleep_mode_default
-          name: Sleep mode
-        - entity: switch.adaptive_lighting_adapt_brightness_default
-          name: Adapt brightness
-        - entity: switch.adaptive_lighting_adapt_color_default
-          name: Adapt color
-        - type: divider
-        - entity: switch.adaptive_lighting_living_room
-          name: living_room
-        - entity: switch.adaptive_lighting_sleep_mode_living_room
-          name: Sleep mode
-        - entity: switch.adaptive_lighting_adapt_brightness_living_room
-          name: Adapt brightness
-        - entity: switch.adaptive_lighting_adapt_color_living_room
-          name: Adapt color
-        - type: divider
-        - entity: switch.adaptive_lighting_half_and_full
-          name: half_and_full
-        - entity: switch.adaptive_lighting_sleep_mode_half_and_full
-          name: Sleep mode
-        - entity: switch.adaptive_lighting_adapt_brightness_half_and_full
-          name: Adapt brightness
-        - entity: switch.adaptive_lighting_adapt_color_half_and_full
-          name: Adapt color
-        - type: divider
-        - entity: switch.adaptive_lighting_half_and_dim
-          name: half_and_dim
-        - entity: switch.adaptive_lighting_sleep_mode_half_and_dim
-          name: Sleep mode
-        - entity: switch.adaptive_lighting_adapt_brightness_half_and_dim
-          name: Adapt brightness
-        - entity: switch.adaptive_lighting_adapt_color_half_and_dim
-          name: Adapt color
-        - type: divider
-        - entity: switch.adaptive_lighting_outside
-          name: outside
-        - entity: switch.adaptive_lighting_sleep_mode_outside
-          name: Sleep mode
-        - entity: switch.adaptive_lighting_adapt_brightness_outside
-          name: Adapt brightness
-        - entity: switch.adaptive_lighting_adapt_color_outside
-          name: Adapt color
         head:
-          entity: switch.adaptive_lighting_default
+          label: Adaptive lighting
+          type: section
         type: custom:fold-entity-row
       head:
         entity: light.automatic_lights
@@ -160,48 +112,14 @@ views:
         name: Automatic
         type: custom:slider-entity-row
       type: custom:fold-entity-row
-    - entities:
-      - entity: light.shelly_plug_s_1
-        icon: mdi:pine-tree
-        name: Christmas tree
-      - entity: light.shelly_plug_s_2
-        icon: mdi:string-lights
-        name: Staircase
-      head:
-        entity: light.christmas_lights_inside
-        icon: mdi:string-lights
-      icon: mdi:string-lights
-      type: custom:fold-entity-row
     show_header_toggle: false
     title: Lights
     type: entities
   - entities:
-    - custom:
-      - temp: sensor.bunderhome_weerstation_ws_2902c_temp
-      - humidity: sensor.bunderhome_weerstation_ws_2902c_humidity
-      - precipitation: sensor.bunderhome_weerstation_ws_2902c_daily_rain
-      - wind-bearing: sensor.bunderhome_weerstation_ws_2902c_wind_dir
-      - wind-speed: sensor.bunderhome_weerstation_ws_2902c_wind_speed
-      - pressure: sensor.bunderhome_weerstation_ws_2902c_rel_pressure
-      entity: weather.buienradar
-      name: Bilzen
-      style: "ha-card {\n  background: none;\n  border: none;\n  box-shadow: none;\n\
-        \  padding-left: none;\n}\n"
-      type: custom:simple-weather-card
-    - type: divider
     - entity: sensor.limburg_net_morgen
       icon: mdi:trash-can
       name: Take out the trash
-    show_header_toggle: false
     state_color: false
-    style: ".card-content {\n  padding-top: 16px;\n}\n"
-    type: entities
-  - entities:
-    - entity: input_boolean.alarm_clock
-    - entity: input_datetime.alarm_clock
-    - entity: input_select.sleep_mode
-    show_header_toggle: false
-    style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
   - cards:
     - color: auto
@@ -263,6 +181,13 @@ views:
       type: custom:button-card
     mode: horizontal
     type: custom:stack-in-card
+  - entities:
+    - entity: input_boolean.alarm_clock
+    - entity: input_datetime.alarm_clock
+    - entity: input_select.sleep_mode
+    show_header_toggle: false
+    style: ".card-content {\n  padding-top: 16px;\n}\n"
+    type: entities
   - cards:
     - entity: climate.living_room
       icon_type: none
@@ -347,6 +272,10 @@ views:
             integration: google_home
           domain: sensor
           entity_id: sensor.*_timer
+        - attributes:
+            integration: google_home
+          domain: sensor
+          entity_id: sensor.*_timers
       show_empty: false
       sort:
         ignore_case: true
@@ -512,157 +441,6 @@ views:
     show_header_toggle: false
     style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
-  - entity: plant.peperomia_glabella
-    type: plant-status
-  - entities:
-    - entities:
-      - icon: mdi:currency-eur
-        name: '{% set kwh = states("sensor.dishwasher_today_s_consumption") | float(default=0)
-          %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
-          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
-
-          '
-        type: custom:template-entity-row
-      head:
-        entity: binary_sensor.dishwasher
-        name: Dishwasher
-        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.dishwasher_on\"\
-          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.dishwasher_off\"\
-          )) %} {% if states(\"binary_sensor.dishwasher\") == \"on\" %}\n  Has been\
-          \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
-          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-        state: "{% if is_state(\"binary_sensor.dishwasher\", \"on\") %}\n  {{ states(\"\
-          sensor.dishwasher_current_consumption\") }} Watt\n{% else %}\n  Off\n{%\
-          \ endif %}\n"
-        type: custom:template-entity-row
-      type: custom:fold-entity-row
-    - entities:
-      - icon: mdi:currency-eur
-        name: '{% set kwh = states("sensor.washing_machine_today_s_consumption") |
-          float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
-          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
-
-          '
-        type: custom:template-entity-row
-      head:
-        entity: binary_sensor.washing_machine
-        name: Washing machine
-        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_on\"\
-          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_off\"\
-          )) %} {% if states(\"binary_sensor.washing_machine\") == \"on\" %}\n  Has\
-          \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
-          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-        state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
-          \ states(\"sensor.washing_machine_energy\")|float(3) }} KWh\n{% else %}\n\
-          \  Off\n{% endif %}\n"
-        type: custom:template-entity-row
-      type: custom:fold-entity-row
-    - entities:
-      - icon: mdi:currency-eur
-        name: '{% set kwh = states("sensor.tumble_dryer_today_s_consumption") | float(default=0)
-          %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
-          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
-
-          '
-        type: custom:template-entity-row
-      head:
-        entity: binary_sensor.tumble_dryer
-        name: Tumble dryer
-        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_on\"\
-          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_off\"\
-          )) %} {% if states(\"binary_sensor.tumble_dryer\") == \"on\" %}\n  Has been\
-          \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
-          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-        state: "{% if is_state(\"binary_sensor.tumble_dryer\", \"on\") %}\n  {{ states(\"\
-          sensor.tumble_dryer_current_consumption\") }} Watt\n{% else %}\n  Off\n\
-          {% endif %}\n"
-        type: custom:template-entity-row
-      type: custom:fold-entity-row
-    - entities:
-      - icon: mdi:currency-eur
-        name: '{% set kwh = states("sensor.espresso_machine_today_s_consumption")
-          | float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
-          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
-
-          '
-        type: custom:template-entity-row
-      head:
-        entity: binary_sensor.espresso_machine
-        name: Espresso machine
-        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_on\"\
-          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_off\"\
-          )) %} {% if states(\"binary_sensor.espresso_machine\") == \"on\" %}\n  Has\
-          \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
-          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-        state: "{% if is_state(\"binary_sensor.espresso_machine\", \"on\") %}\n  {{\
-          \ states(\"sensor.espresso_machine_current_consumption\") }} Watt\n{% else\
-          \ %}\n  Off\n{% endif %}\n"
-        type: custom:template-entity-row
-      type: custom:fold-entity-row
-    - entities:
-      - icon: mdi:trending-up
-        name: 'Today''s usage statistics '
-        type: custom:template-entity-row
-      - name: '{{ states("sensor.daily_power")|float(default=0)|round(2) }} kWh power
-          → €{{ states("sensor.daily_power_cost")|float(default=0)|round(2) }}. '
-        type: custom:template-entity-row
-      - name: '{{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³ gas →
-          €{{ states("sensor.daily_gas_cost")|float(default=0)|round(2) }}. '
-        type: custom:template-entity-row
-      - name: '€{{ states("sensor.daily_energy_fixed_cost")|float(default=0)|round(2)
-          }} (fixed) + €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0))|round(2)}}
-          = €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
-          + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }}. '
-        type: custom:template-entity-row
-      - type: divider
-      - icon: mdi:trending-up
-        name: '{{ as_timestamp(now()) | timestamp_custom("%B") }}''s usage statistics '
-        type: custom:template-entity-row
-      - name: '{{ states("sensor.monthly_power")|float(default=0)|round(2) }} kWh
-          power → €{{ states("sensor.monthly_power_cost")|float(default=0)|round(2)
-          }}. '
-        type: custom:template-entity-row
-      - name: '{{ states("sensor.monthly_gas")|float(default=0)|round(2) }} m³ gas
-          → €{{ states("sensor.monthly_gas_cost")|float(default=0)|round(2) }}. '
-        type: custom:template-entity-row
-      - name: '€{{ states("sensor.monthly_energy_fixed_cost")|float(default=0)|round(2)
-          }} (fixed) + €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0))|round(2)}}
-          = €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0)
-          + states("sensor.monthly_energy_fixed_cost")|float(default=0))|round(2)
-          }}. '
-        type: custom:template-entity-row
-      - type: divider
-      - icon: mdi:trending-up
-        name: 'Last month''s usage statistics '
-        type: custom:template-entity-row
-      - name: '{{ states("sensor.monthly_power_last_period")|float(default=0)|round(2)
-          }} kWh power → €{{ states("sensor.monthly_power_cost_last_period")|float(default=0)|round(2)
-          }}. '
-        type: custom:template-entity-row
-      - name: '{{ state_attr("sensor.monthly_gas", "last_period")|float(default=0)|round(2)
-          }} m³ gas → €{{ states("sensor.monthly_gas_cost_last_period")|float(default=0)|round(2)
-          }}. '
-        type: custom:template-entity-row
-      - name: '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0)|round(2)
-          }} (fixed) + €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0)
-          + states("sensor.monthly_power_cost_last_period")|float(default=0))|round(2)}}
-          = €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0) +
-          states("sensor.monthly_power_cost_last_period")|float(default=0) + states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0))|round(2)
-          }}. '
-        type: custom:template-entity-row
-      head:
-        entity: sensor.daily_gas
-        name: Energy usage
-        secondary: 'Today {{ states("sensor.daily_power")|float(default=0)|round(2)
-          }} kWh and {{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³
-          gas. '
-        state: '€{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
-          + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }} '
-        type: custom:template-entity-row
-      type: custom:fold-entity-row
-    show_header_toggle: false
-    title: Utilities
-    type: entities
   - cards:
     - cards:
       - color_thresholds_transition: smooth
@@ -736,7 +514,10 @@ views:
       autoplay:
         delay: 5000
       speed: 2000
-    type: custom:swipe-card
+    type: vertical-stack
+  - entity: plant.peperomia_glabella
+    name: Peperomia Glabella
+    type: plant-status
   - entities:
     - entities:
       - align: center
@@ -942,9 +723,158 @@ views:
     show_header_toggle: false
     style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
+  - entities:
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.dishwasher_today_s_consumption") | float(default=0)
+          %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      head:
+        entity: binary_sensor.dishwasher
+        name: Dishwasher
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.dishwasher_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.dishwasher_off\"\
+          )) %} {% if states(\"binary_sensor.dishwasher\") == \"on\" %}\n  Has been\
+          \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
+          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.dishwasher\", \"on\") %}\n  {{ states(\"\
+          sensor.dishwasher_current_consumption\") }} Watt\n{% else %}\n  Off\n{%\
+          \ endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.washing_machine_today_s_consumption") |
+          float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      head:
+        entity: binary_sensor.washing_machine
+        name: Washing machine
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_off\"\
+          )) %} {% if states(\"binary_sensor.washing_machine\") == \"on\" %}\n  Has\
+          \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
+          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
+          \ states(\"sensor.washing_machine_energy\")|float(3) }} KWh\n{% else %}\n\
+          \  Off\n{% endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.tumble_dryer_today_s_consumption") | float(default=0)
+          %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      head:
+        entity: binary_sensor.tumble_dryer
+        name: Tumble dryer
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_off\"\
+          )) %} {% if states(\"binary_sensor.tumble_dryer\") == \"on\" %}\n  Has been\
+          \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
+          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.tumble_dryer\", \"on\") %}\n  {{ states(\"\
+          sensor.tumble_dryer_current_consumption\") }} Watt\n{% else %}\n  Off\n\
+          {% endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.espresso_machine_today_s_consumption")
+          | float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      head:
+        entity: binary_sensor.espresso_machine
+        name: Espresso machine
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_off\"\
+          )) %} {% if states(\"binary_sensor.espresso_machine\") == \"on\" %}\n  Has\
+          \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
+          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.espresso_machine\", \"on\") %}\n  {{\
+          \ states(\"sensor.espresso_machine_current_consumption\") }} Watt\n{% else\
+          \ %}\n  Off\n{% endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:trending-up
+        name: 'Today''s usage statistics '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.daily_power")|float(default=0)|round(2) }} kWh power
+          → €{{ states("sensor.daily_power_cost")|float(default=0)|round(2) }}. '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³ gas →
+          €{{ states("sensor.daily_gas_cost")|float(default=0)|round(2) }}. '
+        type: custom:template-entity-row
+      - name: '€{{ states("sensor.daily_energy_fixed_cost")|float(default=0)|round(2)
+          }} (fixed) + €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0))|round(2)}}
+          = €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
+          + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }}. '
+        type: custom:template-entity-row
+      - type: divider
+      - icon: mdi:trending-up
+        name: '{{ as_timestamp(now()) | timestamp_custom("%B") }}''s usage statistics '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.monthly_power")|float(default=0)|round(2) }} kWh
+          power → €{{ states("sensor.monthly_power_cost")|float(default=0)|round(2)
+          }}. '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.monthly_gas")|float(default=0)|round(2) }} m³ gas
+          → €{{ states("sensor.monthly_gas_cost")|float(default=0)|round(2) }}. '
+        type: custom:template-entity-row
+      - name: '€{{ states("sensor.monthly_energy_fixed_cost")|float(default=0)|round(2)
+          }} (fixed) + €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0))|round(2)}}
+          = €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0)
+          + states("sensor.monthly_energy_fixed_cost")|float(default=0))|round(2)
+          }}. '
+        type: custom:template-entity-row
+      - type: divider
+      - icon: mdi:trending-up
+        name: 'Last month''s usage statistics '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.monthly_power_last_period")|float(default=0)|round(2)
+          }} kWh power → €{{ states("sensor.monthly_power_cost_last_period")|float(default=0)|round(2)
+          }}. '
+        type: custom:template-entity-row
+      - name: '{{ state_attr("sensor.monthly_gas", "last_period")|float(default=0)|round(2)
+          }} m³ gas → €{{ states("sensor.monthly_gas_cost_last_period")|float(default=0)|round(2)
+          }}. '
+        type: custom:template-entity-row
+      - name: '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0)|round(2)
+          }} (fixed) + €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0)
+          + states("sensor.monthly_power_cost_last_period")|float(default=0))|round(2)}}
+          = €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0) +
+          states("sensor.monthly_power_cost_last_period")|float(default=0) + states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0))|round(2)
+          }}. '
+        type: custom:template-entity-row
+      head:
+        entity: sensor.daily_gas
+        name: Energy usage
+        secondary: 'Today {{ states("sensor.daily_power")|float(default=0)|round(2)
+          }} kWh and {{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³
+          gas. '
+        state: '€{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
+          + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }} '
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    show_header_toggle: false
+    title: Utilities
+    type: entities
   icon: mdi:home
   path: default_view
-  theme: ios-dark-mode-blue-red
+  theme: ios-dark-mode-blue-red-alternative
   title: Home
 - badges: []
   cards:
@@ -1296,11 +1226,6 @@ views:
     variables:
     - name: Music
     - slug: music_
-  - template: automation_template
-    type: custom:decluttering-card
-    variables:
-    - name: Cube
-    - slug: cube_
   - template: automation_template
     type: custom:decluttering-card
     variables:
