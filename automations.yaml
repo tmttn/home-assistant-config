@@ -952,7 +952,8 @@
   description: ''
   trigger:
   - platform: state
-    entity_id: vacuum.living_room
+    entity_id:
+    - vacuum.robot_vacuum
     to: docked
   condition: []
   action:
@@ -1370,18 +1371,6 @@
   - service: script.set_low_temperature
     data: {}
   mode: single
-- id: '1667824473454'
-  alias: 'Night mode: turn off automatic bedroom lights'
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: input_select.sleep_mode
-    from: 'off'
-  condition: []
-  action:
-  - service: input_boolean.turn_off
-    entity_id: input_boolean.automatic_bedroom_lights
-  mode: single
 - id: '1667824514805'
   alias: 'Security: back door has been open for more than 5 minutes'
   description: ''
@@ -1620,17 +1609,6 @@
   action:
   - service: light.turn_off
     entity_id: light.toilet
-  mode: single
-- id: '1667825627092'
-  alias: 'Light: turn on automatic_bedroom_lights switch'
-  description: ''
-  trigger:
-  - platform: time
-    at: '12:00'
-  condition: []
-  action:
-  - entity_id: input_boolean.automatic_bedroom_lights
-    service: input_boolean.turn_on
   mode: single
 - id: '1667825653475'
   alias: 'Light: turn on cozy lights at sunset'
