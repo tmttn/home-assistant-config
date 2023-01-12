@@ -764,13 +764,14 @@
     from: home
   condition:
   - condition: state
-    entity_id:
-    - binary_sensor.no_one_home
-    - binary_sensor.anything_on
-    state: 'on'
-  - condition: state
     entity_id: input_boolean.guest_mode
     state: 'off'
+  - condition: state
+    entity_id: binary_sensor.no_one_home
+    state: 'on'
+  - condition: state
+    entity_id: binary_sensor.anything_on
+    state: 'on'
   action:
   - delay: 00:05:00
   - condition: state
