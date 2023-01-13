@@ -141,3 +141,4 @@ themes/ios-*
 *.code-workspace
 zigbee.db
 zigbee2mqtt/
+watchman_report.txt
