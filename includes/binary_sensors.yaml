@@ -226,6 +226,6 @@
       max_samples: 3
 
     humidity_storage_trend:
-      entity_id: sensor.humidity_bathroom_storage
+      entity_id: sensor.multi_sensor_storage_humidity
       sample_duration: 300
       max_samples: 3
