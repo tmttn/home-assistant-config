@@ -377,7 +377,7 @@
     hours: 24
 
 - platform: derivative
-  source: sensor.humidity_bathroom
+  source: sensor.multi_sensor_bathroom_humidity
   name: Humidity bathroom derivative
   unit_time: min
   time_window: "00:10:00"
