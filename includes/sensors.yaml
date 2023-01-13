@@ -385,7 +385,7 @@
 - platform: statistics
   name: Humidity storage stats
   unique_id: humidity_storage_stats
-  entity_id: sensor.humidity_storage
+  entity_id: sensor.multi_sensor_storage_humidity
   state_characteristic: mean
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
   max_age:

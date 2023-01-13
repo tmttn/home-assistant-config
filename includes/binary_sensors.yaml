@@ -24,7 +24,7 @@
       unique_id: someone_showing_storage
       friendly_name: Someone is showering in the storage
       value_template: >
-        {% set humidity = states("sensor.humidity_storage") | float(0) %}
+        {% set humidity = states("sensor.multi_sensor_storage_humidity") | float(0) %}
         {% set treshold = 1.05 * state_attr("sensor.humidity_storage_stats", "median") | float(0) %}
         {% set derivative = states("sensor.humidity_storage_derivative") | float(0) %}
         {{ humidity > treshold and derivative > 0.25 }}
