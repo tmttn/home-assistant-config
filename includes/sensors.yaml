@@ -370,7 +370,7 @@
 - platform: statistics
   name: Humidity bathroom stats
   unique_id: humidity_bathroom_stats
-  entity_id: sensor.humidity_bathroom
+  entity_id: sensor.multi_sensor_bathroom_humidity
   state_characteristic: mean
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
   max_age:

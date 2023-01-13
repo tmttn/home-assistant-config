@@ -15,7 +15,7 @@
       unique_id: someone_showing
       friendly_name: Someone is showering or taking a bath
       value_template: >
-        {% set humidity = states("sensor.humidity_bathroom") | float(0) %}
+        {% set humidity = states("sensor.multi_sensor_bathroom_humidity") | float(0) %}
         {% set treshold = 1.05 * state_attr("sensor.humidity_bathroom_stats", "median") | float(0) %}
         {% set derivative = states("sensor.humidity_bathroom_derivative") | float(0) %}
         {{ humidity > treshold and derivative > 0.25 }}
@@ -221,7 +221,7 @@
 - platform: trend
   sensors:
     humidity_bathroom_trend:
-      entity_id: sensor.humidity_bathroom
+      entity_id: sensor.multi_sensor_bathroom_humidity
       sample_duration: 300
       max_samples: 3
 
