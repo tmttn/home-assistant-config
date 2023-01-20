@@ -2556,3 +2556,12 @@
     target:
       entity_id: light.guest_bedroom_lights
   mode: single
+- id: '1674219890989'
+  alias: 'AI: Siri webhook request received'
+  description: ''
+  trigger:
+  - platform: webhook
+    webhook_id: -tciJDixsGcKWhD02huVZKK1Y
+  condition: []
+  action: []
+  mode: single
