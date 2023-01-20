@@ -2580,5 +2580,5 @@
       - service: evohome.set_zone_override
         data:
           entity_id: climate.{{ trigger.json.location|replace(" ","_") }}
-          setpoint: trigger.json.value
+          setpoint: '{{ trigger.json.value }}'
   mode: single
