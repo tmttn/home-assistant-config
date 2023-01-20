@@ -2563,5 +2563,22 @@
   - platform: webhook
     webhook_id: -tciJDixsGcKWhD02huVZKK1Y
   condition: []
-  action: []
+  action:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.json.target == "lights" }}'
+      sequence:
+      - service: light.turn_{{ trigger.json.value}}
+        data:
+          entity_id: light.{{ trigger.json.location|replace(" ","_")}}_{{ trigger.json.target
+            }}
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.json.target == "climate" }}'
+      sequence:
+      - service: evohome.set_zone_override
+        data:
+          entity_id: climate.{{ trigger.json.location|replace(" ","_") }}
+          setpoint: trigger.json.value
   mode: single
