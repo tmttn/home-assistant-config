@@ -51,7 +51,6 @@ intent:
 evohome: !include includes/evohome.yaml
 tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
-spotcast: !include includes/spotcast.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
