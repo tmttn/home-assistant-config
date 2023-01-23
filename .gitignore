@@ -142,3 +142,5 @@ themes/ios-*
 zigbee.db
 zigbee2mqtt/
 watchman_report.txt
+
+automations.yaml
