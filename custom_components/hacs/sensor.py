@@ -1,6 +1,9 @@
 """Sensor platform for HACS."""
 from __future__ import annotations
+<<<<<<< HEAD
 
+=======
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 from typing import TYPE_CHECKING
 
 from homeassistant.components.sensor import SensorEntity

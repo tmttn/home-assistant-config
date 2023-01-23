@@ -25,7 +25,10 @@ import voluptuous as vol
 
 from .base import HacsBase
 from .const import DOMAIN, MINIMUM_HA_VERSION, STARTUP
+<<<<<<< HEAD
 from .data_client import HacsDataClient
+=======
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 from .enums import ConfigurationType, HacsDisabledReason, HacsStage, LovelaceMode
 from .frontend import async_register_frontend
 from .utils.configuration_schema import hacs_config_combined
@@ -88,10 +91,13 @@ async def async_initialize_integration(
     hacs.hass = hass
     hacs.queue = QueueManager(hass=hass)
     hacs.data = HacsData(hacs=hacs)
+<<<<<<< HEAD
     hacs.data_client = HacsDataClient(
         session=clientsession,
         client_name=f"HACS/{integration.version}",
     )
+=======
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     hacs.system.running = True
     hacs.session = clientsession
 
@@ -158,9 +164,14 @@ async def async_initialize_integration(
             hacs.disable_hacs(HacsDisabledReason.RESTORE)
             return False
 
+<<<<<<< HEAD
         if not hacs.configuration.experimental:
             can_update = await hacs.async_can_update()
             hacs.log.debug("Can update %s repositories", can_update)
+=======
+        can_update = await hacs.async_can_update()
+        hacs.log.debug("Can update %s repositories", can_update)
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 
         hacs.set_active_categories()
 

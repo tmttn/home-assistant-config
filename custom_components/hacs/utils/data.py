@@ -1,45 +1,72 @@
 """Data handler for HACS."""
+<<<<<<< HEAD
 from __future__ import annotations
 
 import asyncio
 from datetime import datetime
 from typing import Any
+=======
+import asyncio
+from datetime import datetime
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 
 from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.util import json as json_util
 
 from ..base import HacsBase
+<<<<<<< HEAD
 from ..const import HACS_REPOSITORY_ID
 from ..enums import HacsDisabledReason, HacsDispatchEvent
+=======
+from ..enums import HacsDisabledReason, HacsDispatchEvent, HacsGitHubRepo
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 from ..repositories.base import TOPIC_FILTER, HacsManifest, HacsRepository
 from .logger import LOGGER
 from .path import is_safe
 from .store import async_load_from_store, async_save_to_store
 
+<<<<<<< HEAD
 EXPORTED_BASE_DATA = (
     ("new", False),
     ("full_name", ""),
 )
 
 EXPORTED_REPOSITORY_DATA = EXPORTED_BASE_DATA + (
+=======
+DEFAULT_BASE_REPOSITORY_DATA = (
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     ("authors", []),
     ("category", ""),
     ("description", ""),
     ("domain", None),
     ("downloads", 0),
     ("etag_repository", None),
+<<<<<<< HEAD
     ("hide", False),
     ("last_updated", 0),
+=======
+    ("full_name", ""),
+    ("last_updated", 0),
+    ("hide", False),
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     ("new", False),
     ("stargazers_count", 0),
     ("topics", []),
 )
 
+<<<<<<< HEAD
 EXPORTED_DOWNLOADED_REPOSITORY_DATA = EXPORTED_REPOSITORY_DATA + (
     ("archived", False),
     ("config_flow", False),
     ("default_branch", None),
+=======
+DEFAULT_EXTENDED_REPOSITORY_DATA = (
+    ("archived", False),
+    ("config_flow", False),
+    ("default_branch", None),
+    ("description", ""),
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     ("first_install", False),
     ("installed_commit", None),
     ("installed", False),
@@ -48,9 +75,18 @@ EXPORTED_DOWNLOADED_REPOSITORY_DATA = EXPORTED_REPOSITORY_DATA + (
     ("manifest_name", None),
     ("open_issues", 0),
     ("published_tags", []),
+<<<<<<< HEAD
     ("releases", False),
     ("selected_tag", None),
     ("show_beta", False),
+=======
+    ("pushed_at", ""),
+    ("releases", False),
+    ("selected_tag", None),
+    ("show_beta", False),
+    ("stargazers_count", 0),
+    ("topics", []),
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 )
 
 
@@ -84,8 +120,11 @@ class HacsData:
                 "ignored_repositories": self.hacs.common.ignored_repositories,
             },
         )
+<<<<<<< HEAD
         if self.hacs.configuration.experimental:
             await self._async_store_experimental_content_and_repos()
+=======
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         await self._async_store_content_and_repos()
 
     async def _async_store_content_and_repos(self, _=None):  # bb: ignore
@@ -100,6 +139,7 @@ class HacsData:
         for event in (HacsDispatchEvent.REPOSITORY, HacsDispatchEvent.CONFIG):
             self.hacs.async_dispatch(event, {})
 
+<<<<<<< HEAD
     async def _async_store_experimental_content_and_repos(self, _=None):  # bb: ignore
         """Store the main repos file and each repo that is out of date."""
         # Repositories
@@ -110,11 +150,14 @@ class HacsData:
 
         await async_save_to_store(self.hacs.hass, "data", {"repositories": self.content})
 
+=======
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     @callback
     def async_store_repository_data(self, repository: HacsRepository) -> dict:
         """Store the repository data."""
         data = {"repository_manifest": repository.repository_manifest.manifest}
 
+<<<<<<< HEAD
         for key, default in (
             EXPORTED_DOWNLOADED_REPOSITORY_DATA
             if repository.data.installed
@@ -125,11 +168,24 @@ class HacsData:
 
         if repository.data.installed_version:
             data["version_installed"] = repository.data.installed_version
+=======
+        for key, default_value in DEFAULT_BASE_REPOSITORY_DATA:
+            if (value := repository.data.__getattribute__(key)) != default_value:
+                data[key] = value
+
+        if repository.data.installed:
+            for key, default_value in DEFAULT_EXTENDED_REPOSITORY_DATA:
+                if (value := repository.data.__getattribute__(key)) != default_value:
+                    data[key] = value
+            data["version_installed"] = repository.data.installed_version
+
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         if repository.data.last_fetched:
             data["last_fetched"] = repository.data.last_fetched.timestamp()
 
         self.content[str(repository.data.id)] = data
 
+<<<<<<< HEAD
     @callback
     def async_store_experimental_repository_data(self, repository: HacsRepository) -> None:
         """Store the experimental repository data for non downloaded repositories."""
@@ -188,6 +244,22 @@ class HacsData:
                     if self.hacs.configuration.experimental
                     else ".storage/hacs.repositories"
                 ),
+=======
+    async def restore(self):
+        """Restore saved data."""
+        self.hacs.status.new = False
+        try:
+            hacs = await async_load_from_store(self.hacs.hass, "hacs") or {}
+        except HomeAssistantError:
+            hacs = {}
+
+        try:
+            repositories = await async_load_from_store(self.hacs.hass, "repositories") or {}
+        except HomeAssistantError as exception:
+            self.hacs.log.error(
+                "Could not read %s, restore the file from a backup - %s",
+                self.hacs.hass.config.path(".storage/hacs.repositories"),
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
                 exception,
             )
             self.hacs.disable_hacs(HacsDisabledReason.RESTORE)
@@ -196,8 +268,11 @@ class HacsData:
         if not hacs and not repositories:
             # Assume new install
             self.hacs.status.new = True
+<<<<<<< HEAD
             if self.hacs.configuration.experimental:
                 return True
+=======
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
             self.logger.info("<HacsData restore> Loading base repository information")
             repositories = await self.hacs.hass.async_add_executor_job(
                 json_util.load_json,
@@ -248,24 +323,37 @@ class HacsData:
             return False
         return True
 
+<<<<<<< HEAD
     async def register_unknown_repositories(self, repositories, category: str | None = None):
+=======
+    async def register_unknown_repositories(self, repositories):
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         """Registry any unknown repositories."""
         register_tasks = [
             self.hacs.async_register_repository(
                 repository_full_name=repo_data["full_name"],
+<<<<<<< HEAD
                 category=repo_data.get("category", category),
+=======
+                category=repo_data["category"],
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
                 check=False,
                 repository_id=entry,
             )
             for entry, repo_data in repositories.items()
+<<<<<<< HEAD
             if entry != "0"
             and not self.hacs.repositories.is_registered(repository_id=entry)
             and repo_data.get("category", category) is not None
+=======
+            if entry != "0" and not self.hacs.repositories.is_registered(repository_id=entry)
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         ]
         if register_tasks:
             await asyncio.gather(*register_tasks)
 
     @callback
+<<<<<<< HEAD
     def async_restore_repository(self, entry: str, repository_data: dict[str, Any]):
         """Restore repository."""
         repository: HacsRepository | None = None
@@ -276,6 +364,14 @@ class HacsData:
         if not repository:
             return
 
+=======
+    def async_restore_repository(self, entry, repository_data):
+        """Restore repository."""
+        full_name = repository_data["full_name"]
+        if not (repository := self.hacs.repositories.get_by_full_name(full_name)):
+            self.logger.error("<HacsData restore> Did not find %s (%s)", full_name, entry)
+            return
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         # Restore repository attributes
         self.hacs.repositories.set_repository_id(repository, entry)
         repository.data.authors = repository_data.get("authors", [])
@@ -306,7 +402,11 @@ class HacsData:
             repository.data.last_fetched = datetime.fromtimestamp(last_fetched)
 
         repository.repository_manifest = HacsManifest.from_dict(
+<<<<<<< HEAD
             repository_data.get("manifest") or repository_data.get("repository_manifest") or {}
+=======
+            repository_data.get("repository_manifest", {})
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         )
 
         if repository.localpath is not None and is_safe(self.hacs, repository.localpath):
@@ -316,6 +416,10 @@ class HacsData:
         if repository.data.installed:
             repository.data.first_install = False
 
+<<<<<<< HEAD
         if entry == HACS_REPOSITORY_ID:
+=======
+        if full_name == HacsGitHubRepo.INTEGRATION:
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
             repository.data.installed_version = self.hacs.version
             repository.data.installed = True

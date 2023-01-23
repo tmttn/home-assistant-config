@@ -304,7 +304,11 @@ SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
             key="stateStatus",
             data_tag="state|status|value_raw",
             name="Status",
+<<<<<<< HEAD
             translation_key="status",
+=======
+            device_class="miele__state_status",
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
             convert=lambda x, t: STATE_STATUS.get(x, x),
             convert_icon=lambda t: APPLIANCE_ICONS.get(t, "mdi:state-machine"),
             extra_attributes={"Serial no": 0, "Raw value": 0},
@@ -331,7 +335,11 @@ SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
             data_tag="state|ProgramID|value_raw",
             data_tag_loc="state|ProgramID|value_localized",
             name="Program",
+<<<<<<< HEAD
             translation_key="program_id",
+=======
+            device_class="miele__state_program_id",
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
             icon="mdi:selection-ellipse-arrow-inside",
             convert=lambda x, t: STATE_PROGRAM_ID.get(t, {}).get(x, x),
             extra_attributes={"Raw value": 0},
@@ -358,7 +366,11 @@ SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
             data_tag="state|programType|value_raw",
             data_tag_loc="state|programType|value_localized",
             name="Program type",
+<<<<<<< HEAD
             translation_key="program_type",
+=======
+            device_class="miele__state_program_type",
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
             icon="mdi:state-machine",
             convert=lambda x, t: STATE_PROGRAM_TYPE.get(x, x),
             extra_attributes={"Raw value": 0},
@@ -386,7 +398,11 @@ SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
             data_tag="state|programPhase|value_raw",
             data_tag_loc="state|programPhase|value_localized",
             name="Program phase",
+<<<<<<< HEAD
             translation_key="program_phase",
+=======
+            device_class="miele__state_program_phase",
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
             icon="mdi:tray-full",
             convert=lambda x, t: STATE_PROGRAM_PHASE.get(x, x),
             extra_attributes={"Raw value": 0},
@@ -416,7 +432,11 @@ SENSOR_TYPES: Final[tuple[MieleSensorDefinition, ...]] = (
             data_tag="state|dryingStep|value_raw",
             data_tag_loc="state|dryingStep|value_localized",
             name="Drying step",
+<<<<<<< HEAD
             translation_key="drying_step",
+=======
+            device_class="miele__state_drying_step",
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
             icon="mdi:water-outline",
             convert=lambda x, t: STATE_DRYING_STEP.get(x, x),
             extra_attributes={"Raw value": 0},

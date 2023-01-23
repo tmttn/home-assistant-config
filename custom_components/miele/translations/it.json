@@ -22,6 +22,7 @@
             }
         }
     },
+<<<<<<< HEAD
     "entity": {
         "sensor": {
             "status": {
@@ -242,6 +243,13 @@
         "info": {
             "reach_miele_cloud": "Raggiunto il cloud Miele",
             "component_version": "Versione"
+=======
+    "system_health": {
+        "info": {
+            "reach_miele_cloud": "Raggiunto il cloud Miele",
+            "component_version": "Versione",
+            "connected2stream": "Connesso a signalr"
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         }
     }
 }

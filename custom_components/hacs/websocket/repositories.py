@@ -66,9 +66,14 @@ async def hacs_repositories_list(
                     "topics": repo.data.topics,
                 }
                 for repo in hacs.repositories.list_all
+<<<<<<< HEAD
                 if repo.data.category in msg.get("categories", hacs.common.categories)
                 and not repo.ignored_by_country_configuration
                 and (not hacs.configuration.experimental or repo.data.last_fetched)
+=======
+                if repo.data.category in (msg.get("categories") or hacs.common.categories)
+                and not repo.ignored_by_country_configuration
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
             ],
         )
     )
@@ -202,6 +207,11 @@ async def hacs_repositories_remove(
 ):
     """Remove custom repositoriy."""
     hacs: HacsBase = hass.data.get(DOMAIN)
+<<<<<<< HEAD
+=======
+    hacs.log.warning(connection.context)
+    hacs.log.warning(msg)
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     repository = hacs.repositories.get_by_id(msg["repository"])
 
     repository.remove()

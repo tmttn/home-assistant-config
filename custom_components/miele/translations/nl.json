@@ -17,6 +17,7 @@
                 "title": "Kies een authenticatie methode"
             },
             "reauth_confirm": {
+<<<<<<< HEAD
                 "title": "Her-authenticatie Integratie",
                 "description": "De Miele integratie moet uw account {account} opnieuw authenticeren."
             }
@@ -245,3 +246,18 @@
         }
     }
 }
+=======
+              "title": "Her-authenticatie Integratie",
+              "description": "De Miele integratie moet uw account {account} opnieuw authenticeren."
+            }
+        }
+    }    ,
+    "system_health": {
+      "info": {
+        "reach_miele_cloud": "Bereikbaarheid Miele Cloud",
+        "component_version": "Versie",
+        "connected2stream": "Verbonden met signalr"
+      }
+    }
+  }
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
