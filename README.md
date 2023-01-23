@@ -4,9 +4,19 @@ Based on Bas Nijholt's config files.
 [![GitHub stars](https://img.shields.io/github/stars/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/stargazers)
 [![GitHub last commit](https://img.shields.io/github/last-commit/tmttn/home-assistant-config.svg?style=plasticr)](https://github.com/tmttn/home-assistant-config/commits/master)
 <<<<<<< HEAD
-[![HA Version](https://img.shields.io/badge/Running%20Home%20Assistant-2023.1.7%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2023.1.7)
+[![HA Version](https://img.shields.io/badge/Running%20Home%20Assistant-%3C%3C%3C%3C%3C%3C%3C%20HEAD%0A2023.1.7%0A%3D%3D%3D%3D%3D%3D%3D%0A2023.1.4%0A%3E%3E%3E%3E%3E%3E%3E%208661dc7bc552e0277cdac0c47816c9100703b232%0A%20-darkblue)](https://github.com/home-assistant/core/releases/tag/<<<<<<< HEAD
+2023.1.7
 =======
-[![HA Version](https://img.shields.io/badge/Running%20Home%20Assistant-2023.1.4%20-darkblue)](https://github.com/home-assistant/core/releases/tag/2023.1.4)
+2023.1.4
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
+)
+=======
+[![HA Version](https://img.shields.io/badge/Running%20Home%20Assistant-%3C%3C%3C%3C%3C%3C%3C%20HEAD%0A2023.1.7%0A%3D%3D%3D%3D%3D%3D%3D%0A2023.1.4%0A%3E%3E%3E%3E%3E%3E%3E%208661dc7bc552e0277cdac0c47816c9100703b232%0A%20-darkblue)](https://github.com/home-assistant/core/releases/tag/<<<<<<< HEAD
+2023.1.7
+=======
+2023.1.4
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
+)
 >>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 [![HA Community](https://img.shields.io/badge/HA%20community-forum-orange)](https://community.home-assistant.io/u/tmttn/summary)
 [![Yaml Lint](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml/badge.svg)](https://github.com/tmttn/home-assistant-config/actions/workflows/yamllint.yml)
