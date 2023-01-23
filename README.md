@@ -569,11 +569,3 @@ I run a [Supervised install](https://www.home-assistant.io/getting-started/) wit
 - [Let's Encrypt](https://github.com/home-assistant/hassio-addons/tree/master/letsencrypt) version 4.12.0 by @home-assistant
 - [MariaDB](https://github.com/home-assistant/hassio-addons/tree/master/mariadb) version 2.4.0 by @home-assistant
 <!-- end-addons -->
-
-<!-- start-automations -->
-# Automations - Table of Content
-
-
-⚠️ Total number of automations: **0** ⚠️
-
-<!-- end-automations -->
