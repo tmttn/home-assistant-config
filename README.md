@@ -226,6 +226,11 @@ Based on Bas Nijholt's config files.
 2023.1.4
 >>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 )
+2023.1.7
+=======
+2023.1.4
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
+)
 =======
 [![HA Version](https://img.shields.io/badge/Running%20Home%20Assistant-%3C%3C%3C%3C%3C%3C%3C%20HEAD%0A2023.1.7%0A%3D%3D%3D%3D%3D%3D%3D%0A2023.1.4%0A%3E%3E%3E%3E%3E%3E%3E%208661dc7bc552e0277cdac0c47816c9100703b232%0A%20-darkblue)](https://github.com/home-assistant/core/releases/tag/<<<<<<< HEAD
 2023.1.7
@@ -448,9 +453,19 @@ Based on Bas Nijholt's config files.
 2023.1.4
 >>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 )
+2023.1.7
+=======
+2023.1.4
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
+)
 >>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 =======
 [![HA Version](https://img.shields.io/badge/Running%20Home%20Assistant-%3C%3C%3C%3C%3C%3C%3C%20HEAD%0A2023.1.7%0A%3D%3D%3D%3D%3D%3D%3D%0A2023.1.4%0A%3E%3E%3E%3E%3E%3E%3E%208661dc7bc552e0277cdac0c47816c9100703b232%0A%20-darkblue)](https://github.com/home-assistant/core/releases/tag/<<<<<<< HEAD
+2023.1.7
+=======
+2023.1.4
+>>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
+)
 2023.1.7
 =======
 2023.1.4
