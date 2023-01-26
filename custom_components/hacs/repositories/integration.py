@@ -3,11 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-<<<<<<< HEAD
 from homeassistant.helpers.issue_registry import IssueSeverity, async_create_issue
-=======
-from homeassistant.helpers.issue_registry import async_create_issue, IssueSeverity
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 from homeassistant.loader import async_get_custom_components
 
 from ..const import DOMAIN

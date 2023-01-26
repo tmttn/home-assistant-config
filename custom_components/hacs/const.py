@@ -17,11 +17,8 @@ PACKAGE_NAME = "custom_components.hacs"
 DEFAULT_CONCURRENT_TASKS = 15
 DEFAULT_CONCURRENT_BACKOFF_TIME = 1
 
-<<<<<<< HEAD
 HACS_REPOSITORY_ID = "172733314"
 
-=======
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 HACS_ACTION_GITHUB_API_HEADERS = {
     "User-Agent": "HACS/action",
     "Accept": ACCEPT_HEADERS["preview"],

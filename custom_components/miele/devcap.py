@@ -257,7 +257,6 @@ TEST_DATA_7 = {
     },
 }
 
-<<<<<<< HEAD
 TEST_DATA_12 = {
     "ident": {
         "type": {
@@ -342,8 +341,6 @@ TEST_DATA_12 = {
     },
 }
 
-=======
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 TEST_DATA_17_CM = {
     "ident": {
         "type": {

@@ -40,10 +40,7 @@ from .devcap import (  # noqa: F401
     TEST_ACTION_23,
     TEST_DATA_1,
     TEST_DATA_7,
-<<<<<<< HEAD
     TEST_DATA_12,
-=======
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     TEST_DATA_17_CM,
     TEST_DATA_17_CVA,
     TEST_DATA_18,
@@ -174,10 +171,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         # data["1223001"] = TEST_DATA_1
         # data["1223007"] = TEST_DATA_7
-<<<<<<< HEAD
         # data["1223012"] = TEST_DATA_12
-=======
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         # data["122A017"] = TEST_DATA_17_CM
         # data["122B017"] = TEST_DATA_17_CVA
         # data["1223018"] = TEST_DATA_18
@@ -257,10 +251,7 @@ async def get_coordinator(
         flat_result: dict = {}
         # result["1223001"] = TEST_DATA_1
         # result["1223007"] = TEST_DATA_7
-<<<<<<< HEAD
         # result["1223012"] = TEST_DATA_12
-=======
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         # result["122A017"] = TEST_DATA_17_CM
         # result["122B017"] = TEST_DATA_17_CVA
         # result["1223018"] = TEST_DATA_18

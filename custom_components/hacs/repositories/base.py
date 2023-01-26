@@ -50,7 +50,6 @@ if TYPE_CHECKING:
 
 
 TOPIC_FILTER = (
-<<<<<<< HEAD
     "add-on",
     "addon",
     "app",
@@ -58,16 +57,12 @@ TOPIC_FILTER = (
     "appdaemon",
     "custom-card",
     "custom-cards",
-=======
-    "custom-card",
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     "custom-component",
     "custom-components",
     "customcomponents",
     "hacktoberfest",
     "hacs-default",
     "hacs-integration",
-<<<<<<< HEAD
     "hacs-repository",
     "hacs",
     "hass",
@@ -76,11 +71,6 @@ TOPIC_FILTER = (
     "home-assistant-frontend",
     "home-assistant-hacs",
     "home-assistant-sensor",
-=======
-    "hacs",
-    "hass",
-    "hassio",
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     "home-assistant",
     "home-automation",
     "homeassistant-components",
@@ -89,7 +79,6 @@ TOPIC_FILTER = (
     "homeassistant",
     "homeautomation",
     "integration",
-<<<<<<< HEAD
     "lovelace-ui",
     "lovelace",
     "media-player",
@@ -129,18 +118,6 @@ HACS_MANIFEST_KEYS_TO_EXPORT = (
     # If keys are added, the action need to be re-run with force
     ("country", []),
     ("name", None),
-=======
-    "lovelace",
-    "python",
-    "sensor",
-    "theme",
-    "themes",
-    "custom-cards",
-    "home-assistant-frontend",
-    "home-assistant-hacs",
-    "home-assistant-custom",
-    "lovelace-ui",
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 )
 
 
@@ -183,10 +160,6 @@ class RepositoryData:
     new: bool = True
     open_issues: int = 0
     published_tags: list[str] = []
-<<<<<<< HEAD
-=======
-    pushed_at: str = ""
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
     releases: bool = False
     selected_tag: str = None
     show_beta: bool = False
@@ -213,7 +186,6 @@ class RepositoryData:
 
     def update_data(self, data: dict, action: bool = False) -> None:
         """Update data of the repository."""
-<<<<<<< HEAD
         for key, value in data.items():
             if key not in self.__dict__:
                 continue
@@ -232,34 +204,6 @@ class RepositoryData:
 
             else:
                 setattr(self, key, value)
-=======
-        for key in data:
-            if key not in self.__dict__:
-                continue
-            if key == "pushed_at":
-                if data[key] == "":
-                    continue
-                if "Z" in data[key]:
-                    setattr(
-                        self,
-                        key,
-                        datetime.strptime(data[key], "%Y-%m-%dT%H:%M:%SZ"),
-                    )
-                else:
-                    setattr(self, key, datetime.strptime(data[key], "%Y-%m-%dT%H:%M:%S"))
-            elif key == "id":
-                setattr(self, key, str(data[key]))
-            elif key == "country":
-                if isinstance(data[key], str):
-                    setattr(self, key, [data[key]])
-                else:
-                    setattr(self, key, data[key])
-            elif key == "topics" and not action:
-                setattr(self, key, [topic for topic in data[key] if topic not in TOPIC_FILTER])
-
-            else:
-                setattr(self, key, data[key])
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 
 
 @attr.s(auto_attribs=True)
@@ -302,7 +246,6 @@ class HacsManifest:
                 setattr(manifest_data, key, value)
         return manifest_data
 
-<<<<<<< HEAD
     def update_data(self, data: dict) -> None:
         """Update the manifest data."""
         for key, value in data.items():
@@ -317,8 +260,6 @@ class HacsManifest:
             else:
                 setattr(self, key, value)
 
-=======
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 
 class RepositoryReleases:
     """RepositoyReleases."""
@@ -553,13 +494,10 @@ class HacsRepository:
                 self.logger.debug("%s Did not update, content was not modified", self.string)
                 return
 
-<<<<<<< HEAD
         if self.repository_object:
             self.data.last_updated = self.repository_object.attributes.get("pushed_at", 0)
             self.data.last_fetched = datetime.utcnow()
 
-=======
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
         # Set topics
         self.data.topics = self.data.topics
 
@@ -608,11 +546,7 @@ class HacsRepository:
         self.additional_info = await self.async_get_info_file_contents()
 
         # Set last fetch attribute
-<<<<<<< HEAD
         self.data.last_fetched = datetime.utcnow()
-=======
-        self.data.last_fetched = datetime.now()
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 
         return True
 
@@ -1126,15 +1060,11 @@ class HacsRepository:
                 self.hacs.common.renamed_repositories[
                     self.data.full_name
                 ] = repository_object.full_name
-<<<<<<< HEAD
                 if not self.hacs.system.generator:
                     raise HacsRepositoryExistException
                 self.logger.error(
                     "%s Repository has been renamed - %s", self.string, repository_object.full_name
                 )
-=======
-                raise HacsRepositoryExistException
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
             self.data.update_data(
                 repository_object.attributes,
                 action=self.hacs.system.action,

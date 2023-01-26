@@ -17,7 +17,6 @@
                 "title": "Välj metod för autentisering"
             },
             "reauth_confirm": {
-<<<<<<< HEAD
                 "title": "Förnya autentisering",
                 "description": "Miele-integrationen behöver förnyad autentisering för kontot: {account}"
             }
@@ -246,18 +245,3 @@
         }
     }
 }
-=======
-              "title": "Förnya autentisering",
-              "description": "Miele-integrationen behöver förnyad autentisering för kontot: {account}"
-            }
-        }
-    }    ,
-    "system_health": {
-      "info": {
-        "reach_miele_cloud": "Kan nå Miele cloud",
-        "component_version": "Version",
-        "connected2stream": "Ansluten till signalr"
-      }
-    }
-  }
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232

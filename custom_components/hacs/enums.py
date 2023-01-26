@@ -4,11 +4,7 @@ import sys
 
 if sys.version_info.minor >= 11:
     # Needs Python 3.11
-<<<<<<< HEAD
     from enum import StrEnum  # # pylint: disable=no-name-in-module
-=======
-    from enum import StrEnum  ## pylint: disable=no-name-in-module
->>>>>>> 8661dc7bc552e0277cdac0c47816c9100703b232
 else:
     try:
         # https://github.com/home-assistant/core/blob/dev/homeassistant/backports/enum.py
