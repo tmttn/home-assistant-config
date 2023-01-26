@@ -29,6 +29,13 @@ cozy_lights_living_room:
   alias: Set cozy lights in the living room
   mode: parallel
   sequence:
+  - service: light.turn_off
+    data:
+      transition: 1
+    target:
+      entity_id:
+      - light.living_room_dining_table_lights
+      - light.living_room_middle_lights
   - data:
       entity_id: light.hue_plug
       hs_color:
