@@ -105,7 +105,14 @@ going_to_sleep:
     service: input_select.select_option
     data:
       option: total
+  - delay:
+      hours: 0
+      minutes: 0
+      seconds: 5
+      milliseconds: 0
   - service: script.turn_off_everything_non_automatic
+    data: {}
+  max: 10
 set_low_temperature:
   alias: Set low temperature
   sequence:
@@ -206,7 +213,7 @@ utility_notification:
   alias: Utility notification
 turn_on_lights:
   alias: Turn on lights with Adaptive Lighting
-  icon: mdi:lamp
+  icon: mdi:script-text
   fields:
     entity_id:
       description: entity_id of light
