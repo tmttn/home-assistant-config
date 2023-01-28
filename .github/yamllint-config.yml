@@ -25,5 +25,5 @@ ignore: |
   scenes.yaml
   blueprints/
   dwains-dashboard
-  mushroom/
+  themes/
   scripts.yaml
