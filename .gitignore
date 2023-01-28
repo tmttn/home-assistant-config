@@ -137,7 +137,7 @@ tts/
 webostv.conf
 notebooks/
 airsonos.xml
-themes/ios-*
+themes/*
 *.code-workspace
 zigbee.db
 zigbee2mqtt/
