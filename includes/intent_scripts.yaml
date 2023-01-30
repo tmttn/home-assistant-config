@@ -11,7 +11,7 @@ Cooking:
 BedTime:
   async_action: true
   speech:
-    text: Ok, slaap lekker. Ik zet alles uit.
+    text: Ok, slaap lekker. Binnen 10 minuten zet ik alles uit.
   action:
-    - delay: 00:15:00
+    - delay: 00:10:00
     - service: script.going_to_sleep
