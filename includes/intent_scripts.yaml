@@ -16,3 +16,11 @@ Cooking:
     - service: timer.start
       data:
         entity_id: timer.kitchen_ceiling_lights_turned_on_manually
+
+BedTime:
+  async_action: true
+  speech:
+    text: Ok, slaap lekker. Ik zet alles uit.
+  action:
+    - delay: 00:02:00
+    - service: script.going_to_sleep
