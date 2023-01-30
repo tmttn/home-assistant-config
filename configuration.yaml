@@ -47,10 +47,10 @@ proximity: !include includes/proximity.yaml
 utility_meter: !include includes/utility_meter.yaml
 ios: !include includes/ios.yaml
 camera: !include includes/camera.yaml
-intent:
 evohome: !include includes/evohome.yaml
 tts: !include includes/tts.yaml
 plant: !include includes/plant.yaml
+intent_script: !include includes/intent_scripts.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml

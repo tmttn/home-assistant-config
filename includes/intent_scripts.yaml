@@ -1,0 +1,9 @@
+---
+- Cooking:
+    async_action: true
+    speech:
+      text: Ok, ik zal het licht aanhouden.
+    action:
+      - service: timer.start
+        data:
+          entity_id: timer.kitchen_ceiling_lights_turned_on_manually
