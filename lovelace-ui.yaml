@@ -117,80 +117,6 @@ views:
         type: custom:slider-entity-row
       type: custom:fold-entity-row
     show_header_toggle: false
-    title: Lights
-    type: entities
-  - entities:
-    - entity: sensor.limburg_net_morgen
-      icon: mdi:trash-can
-      name: Take out the trash
-    state_color: false
-    type: entities
-  - cards:
-    - color: auto
-      icon: mdi:weather-sunset-up
-      name: Wake up
-      styles:
-        card:
-        - font-size: 12px
-        - font-weight: bold
-        - height: 70px
-      tap_action:
-        action: call-service
-        haptic: success
-        service: input_select.select_option
-        service_data:
-          entity_id: input_select.sleep_mode
-          option: 'off'
-      type: custom:button-card
-    - color: auto
-      entity: input_select.sleep_mode
-      icon: mdi:weather-night
-      name: '[[[ if (entity.state != "off") return "Sleep mode on"; else return  "Go
-        to sleep" ]]]'
-      styles:
-        card:
-        - font-size: 12px
-        - font-weight: bold
-        - height: 70px
-      tap_action:
-        action: call-service
-        haptic: success
-        service: script.going_to_sleep
-      type: custom:button-card
-    - color: auto
-      icon: mdi:home-map-marker
-      name: Arrive Home
-      styles:
-        card:
-        - font-size: 12px
-        - font-weight: bold
-        - height: 70px
-      tap_action:
-        action: call-service
-        haptic: success
-        service: script.arriving
-      type: custom:button-card
-    - color: auto
-      icon: mdi:home-export-outline
-      name: Leave Home
-      styles:
-        card:
-        - font-size: 12px
-        - font-weight: bold
-        - height: 70px
-      tap_action:
-        action: call-service
-        haptic: success
-        service: script.leaving
-      type: custom:button-card
-    mode: horizontal
-    type: custom:stack-in-card
-  - entities:
-    - entity: input_boolean.alarm_clock
-    - entity: input_datetime.alarm_clock
-    - entity: input_select.sleep_mode
-    show_header_toggle: false
-    style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
   - cards:
     - entity: climate.living_room
@@ -235,208 +161,7 @@ views:
       type: custom:mushroom-climate-card
     mode: vertical
     type: custom:stack-in-card
-  - cards:
-    - cards:
-      - icon: mdi:sofa
-        name: Play music in living room
-        styles:
-          card:
-          - font-size: 12px
-          - font-weight: bold
-          - height: 70px
-        tap_action:
-          action: call-service
-          service: script.start_spotify_playlist_of_nearest_person
-          service_data:
-            entity_id: media_player.google_home
-        type: custom:button-card
-      - icon: mdi:bed-king
-        name: Play music in bedroom
-        styles:
-          card:
-          - font-size: 12px
-          - font-weight: bold
-          - height: 70px
-        tap_action:
-          action: call-service
-          service: script.start_spotify_playlist_of_nearest_person
-          service_data:
-            entity_id: media_player.google_home_mini
-        type: custom:button-card
-      type: horizontal-stack
-    - card:
-        type: custom:timer-bar-card
-      filter:
-        exclude:
-        - state: unavailable
-        - state: ''
-        - state: idle
-        include:
-        - attributes:
-            integration: google_home
-          domain: sensor
-          entity_id: sensor.*_timer
-        - attributes:
-            integration: google_home
-          domain: sensor
-          entity_id: sensor.*_timers
-      show_empty: false
-      sort:
-        ignore_case: true
-        method: name
-      type: custom:auto-entities
-    style: "ha-card {\n  --mini-media-player-base-color: red;\n  --mini-media-player-icon-color:\
-      \ red;\n  --mini-media-player-background-opacity: 0.1;\n  --mini-media-player-overlay-color:\
-      \ red;\n}\n"
-    type: vertical-stack
-  - cards:
-    - entities:
-      - entity: vacuum.robot_vacuum
-        name: Vacuum cleaner
-        primary:
-          entity: binary_sensor.vacuum_day
-          name: Vacuum day
-        secondary:
-          attribute: battery_level
-          name: Battery
-          unit: '%'
-        type: custom:multiple-entity-row
-      - entity: switch.vacuum_mode
-      - entity: input_boolean.cleaned_today
-      - entity: binary_sensor.vacuum_day
-      show_header_toggle: false
-      style: ".card-content {\n  padding-top: 16px;\n}\nha-card {\n  border-radius:\
-        \ var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0\
-        \ 0;\n  background: transparent;\n}\n"
-      type: entities
-    - cards:
-      - calibration_source:
-          camera: true
-        entity: vacuum.robot_vacuum
-        icons: []
-        map_locked: true
-        map_modes:
-        - template: vacuum_clean_zone
-        - template: vacuum_goto
-        - predefined_selections:
-          - icon:
-              name: mdi:stairs
-              x: 17750
-              y: 31500
-            id: '1'
-            label:
-              offset_y: 35
-              text: Hall
-              x: 17750
-              y: 31500
-            outline:
-            - - 16200
-              - 30200
-            - - 21900
-              - 30200
-            - - 21900
-              - 33750
-            - - 16200
-              - 33750
-          - icon:
-              name: mdi:cupboard
-              x: 23975
-              y: 35000
-            id: '16'
-            label:
-              offset_y: 35
-              text: Storage
-              x: 23975
-              y: 35000
-            outline:
-            - - 22000
-              - 33800
-            - - 25950
-              - 33800
-            - - 25950
-              - 35950
-            - - 22000
-              - 35950
-          - icon:
-              name: mdi:sofa
-              x: 21500
-              y: 28025
-            id: '17'
-            label:
-              offset_y: 35
-              text: Living room
-              x: 21500
-              y: 28025
-            outline:
-            - - 16350
-              - 25100
-            - - 26150
-              - 25100
-            - - 26150
-              - 28450
-            - - 24500
-              - 28450
-            - - 23800
-              - 29200
-            - - 23800
-              - 30200
-            - - 16350
-              - 30200
-          - icon:
-              name: mdi:pot-mix
-              x: 24025
-              y: 32525
-            id: '18'
-            label:
-              offset_y: 35
-              text: Kitchen
-              x: 24025
-              y: 32525
-            outline:
-            - - 21900
-              - 30200
-            - - 23800
-              - 30200
-            - - 23800
-              - 29200
-            - - 24500
-              - 28450
-            - - 26150
-              - 28450
-            - - 26150
-              - 30200
-            - - 25500
-              - 30200
-            - - 25500
-              - 33800
-            - - 21900
-              - 33800
-          template: vacuum_clean_segment
-        map_source:
-          camera: camera.xiaomi_cloud_map_extractor
-        style: "ha-card {\n  border-radius: 0 0 var(--ha-card-border-radius, 12px)\
-          \ var(--ha-card-border-radius, 12px);\n}\n"
-        tiles: []
-        two_finger_pan: false
-        type: custom:xiaomi-vacuum-map-card
-      style: "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
-        \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
-        }\n"
-      title: Vacuum map
-      type: custom:collapsable-cards
-    - cards:
-      - entity: vacuum.robot_vacuum
-        image: null
-        name: false
-        type: custom:xiaomi-vacuum-card
-        vendor: xiaomi
-      style: "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
-        \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
-        }\n"
-      title: Vacuum maintenance
-      type: custom:collapsable-cards
-    mode: vertical
-    type: custom:stack-in-card
+  - type: custom:layout-break
   - entities:
     - entity: input_boolean.vacation_mode
     - entity: input_boolean.guest_mode
@@ -445,83 +170,6 @@ views:
     show_header_toggle: false
     style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
-  - cards:
-    - cards:
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.p1_meter_active_power
-          name: Power consumption
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.daily_gas
-          name: Gas consumption
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      type: horizontal-stack
-    - cards:
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.daily_power_cost
-          name: Power cost
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      - color_thresholds_transition: smooth
-        entities:
-        - entity: sensor.daily_gas_cost
-          name: Gas cost
-        font_size: 100
-        group: false
-        hour24: true
-        line_width: 6
-        points_per_hour: 1
-        show:
-          extrema: false
-          fill: fade
-          labels: false
-          name: true
-          state: true
-        type: custom:mini-graph-card
-      type: horizontal-stack
-    parameters:
-      autoplay:
-        delay: 5000
-      speed: 2000
-    type: vertical-stack
-  - entity: plant.peperomia_glabella
-    name: Peperomia Glabella
-    type: plant-status
   - entities:
     - entities:
       - align: center
@@ -728,6 +376,306 @@ views:
     style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
   - entities:
+    - entity: input_boolean.alarm_clock
+    - entity: input_datetime.alarm_clock
+    - entity: input_select.sleep_mode
+    show_header_toggle: false
+    style: ".card-content {\n  padding-top: 16px;\n}\n"
+    type: entities
+  - cards:
+    - color: auto
+      icon: mdi:weather-sunset-up
+      name: Wake up
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: input_select.select_option
+        service_data:
+          entity_id: input_select.sleep_mode
+          option: 'off'
+      type: custom:button-card
+    - color: auto
+      entity: input_select.sleep_mode
+      icon: mdi:weather-night
+      name: '[[[ if (entity.state != "off") return "Sleep mode on"; else return  "Go
+        to sleep" ]]]'
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.going_to_sleep
+      type: custom:button-card
+    - color: auto
+      icon: mdi:home-map-marker
+      name: Arrive Home
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.arriving
+      type: custom:button-card
+    - color: auto
+      icon: mdi:home-export-outline
+      name: Leave Home
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.leaving
+      type: custom:button-card
+    mode: horizontal
+    type: custom:stack-in-card
+  - entity: plant.peperomia_glabella
+    name: Peperomia Glabella
+    type: plant-status
+  - type: custom:layout-break
+  - entities:
+    - entity: sensor.limburg_net_morgen
+      icon: mdi:trash-can
+      name: Take out the trash
+    state_color: false
+    type: entities
+  - cards:
+    - entities:
+      - entity: vacuum.robot_vacuum
+        name: Vacuum cleaner
+        primary:
+          entity: binary_sensor.vacuum_day
+          name: Vacuum day
+        secondary:
+          attribute: battery_level
+          name: Battery
+          unit: '%'
+        type: custom:multiple-entity-row
+      - entity: switch.vacuum_mode
+      - entity: input_boolean.cleaned_today
+      - entity: binary_sensor.vacuum_day
+      show_header_toggle: false
+      style: ".card-content {\n  padding-top: 16px;\n}\nha-card {\n  border-radius:\
+        \ var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0\
+        \ 0;\n  background: transparent;\n}\n"
+      type: entities
+    - cards:
+      - calibration_source:
+          camera: true
+        entity: vacuum.robot_vacuum
+        icons: []
+        map_locked: true
+        map_modes:
+        - template: vacuum_clean_zone
+        - template: vacuum_goto
+        - predefined_selections:
+          - icon:
+              name: mdi:stairs
+              x: 17750
+              y: 31500
+            id: '1'
+            label:
+              offset_y: 35
+              text: Hall
+              x: 17750
+              y: 31500
+            outline:
+            - - 16200
+              - 30200
+            - - 21900
+              - 30200
+            - - 21900
+              - 33750
+            - - 16200
+              - 33750
+          - icon:
+              name: mdi:cupboard
+              x: 23975
+              y: 35000
+            id: '16'
+            label:
+              offset_y: 35
+              text: Storage
+              x: 23975
+              y: 35000
+            outline:
+            - - 22000
+              - 33800
+            - - 25950
+              - 33800
+            - - 25950
+              - 35950
+            - - 22000
+              - 35950
+          - icon:
+              name: mdi:sofa
+              x: 21500
+              y: 28025
+            id: '17'
+            label:
+              offset_y: 35
+              text: Living room
+              x: 21500
+              y: 28025
+            outline:
+            - - 16350
+              - 25100
+            - - 26150
+              - 25100
+            - - 26150
+              - 28450
+            - - 24500
+              - 28450
+            - - 23800
+              - 29200
+            - - 23800
+              - 30200
+            - - 16350
+              - 30200
+          - icon:
+              name: mdi:pot-mix
+              x: 24025
+              y: 32525
+            id: '18'
+            label:
+              offset_y: 35
+              text: Kitchen
+              x: 24025
+              y: 32525
+            outline:
+            - - 21900
+              - 30200
+            - - 23800
+              - 30200
+            - - 23800
+              - 29200
+            - - 24500
+              - 28450
+            - - 26150
+              - 28450
+            - - 26150
+              - 30200
+            - - 25500
+              - 30200
+            - - 25500
+              - 33800
+            - - 21900
+              - 33800
+          template: vacuum_clean_segment
+        map_source:
+          camera: camera.xiaomi_cloud_map_extractor
+        style: "ha-card {\n  border-radius: 0 0 var(--ha-card-border-radius, 12px)\
+          \ var(--ha-card-border-radius, 12px);\n}\n"
+        tiles: []
+        two_finger_pan: false
+        type: custom:xiaomi-vacuum-map-card
+      style: "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
+        \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
+        }\n"
+      title: Vacuum map
+      type: custom:collapsable-cards
+    - cards:
+      - entity: vacuum.robot_vacuum
+        image: null
+        name: false
+        type: custom:xiaomi-vacuum-card
+        vendor: xiaomi
+      style: "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
+        \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
+        }\n"
+      title: Vacuum maintenance
+      type: custom:collapsable-cards
+    mode: vertical
+    type: custom:stack-in-card
+  - cards:
+    - cards:
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.p1_meter_active_power
+          name: Power consumption
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.daily_gas
+          name: Gas consumption
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      type: horizontal-stack
+    - cards:
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.daily_power_cost
+          name: Power cost
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.daily_gas_cost
+          name: Gas cost
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      type: horizontal-stack
+    parameters:
+      autoplay:
+        delay: 5000
+      speed: 2000
+    type: vertical-stack
+  - type: custom:layout-break
+  - entities:
     - entities:
       - icon: mdi:currency-eur
         name: '{% set kwh = states("sensor.dishwasher_today_s_consumption") | float(default=0)
@@ -877,9 +825,12 @@ views:
     title: Utilities
     type: entities
   icon: mdi:home
+  layout:
+    width: 300
   path: default_view
   theme: ios-dark-mode-blue-red-alternative
   title: Home
+  type: custom:vertical-layout
 - badges: []
   cards:
   - cards:
@@ -1130,6 +1081,7 @@ views:
       - entity_id: automation.medication_*
       - entity_id: automation.candy_*
       - entity_id: automation.electric_vehicle_*
+      - entity_id: automation.ai_*
       include:
       - domain: automation
     show_empty: false
@@ -1260,7 +1212,15 @@ views:
     variables:
     - name: Electric vehicle
     - slug: electric_vehicle
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: AI
+    - slug: ai
   icon: mdi:robot
+  layout:
+    max_cols: 7
   path: automations
   theme: ios-dark-mode-blue-red
   title: Automations
+  type: custom:masonry-layout
