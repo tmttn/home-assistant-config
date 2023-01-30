@@ -13,5 +13,5 @@ BedTime:
   speech:
     text: Ok, slaap lekker. Ik zet alles uit.
   action:
-    - delay: 00:02:00
+    - delay: 00:15:00
     - service: script.going_to_sleep
