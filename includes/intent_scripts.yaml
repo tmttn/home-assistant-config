@@ -1,5 +1,5 @@
 ---
-- intent: Cooking
+Cooking:
   async_action: true
   speech:
     text: Ok, ik zal het licht aanhouden.
