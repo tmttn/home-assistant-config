@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -33,9 +24,6 @@ views:
       - light.living_room_middle_lights
       - switch.hue_plug
       - light.tv_led
-      - entity: light.shelly_plug_s_1
-        icon: mdi:pine-tree
-        name: Christmas tree
       - entity: script.cozy_lights_living_room
         icon_height: 20px
         name: Cozy lights
@@ -162,226 +150,17 @@ views:
     mode: vertical
     type: custom:stack-in-card
   - type: custom:layout-break
-  - entities:
-    - entity: input_boolean.vacation_mode
-    - entity: input_boolean.guest_mode
-    - entity: input_boolean.automatic_temperature
-    - entity: input_boolean.optimal_electric_vehicle_charging
-    show_header_toggle: false
-    style: ".card-content {\n  padding-top: 16px;\n}\n"
-    type: entities
-  - entities:
-    - entities:
-      - align: center
-        color: '#0279ff'
-        entity: sensor.time_at_work_this_week
-        entity_row: true
-        height: 30px
-        max: 50
-        min: 0
-        severity:
-        - color: '#ff3c31'
-          from: 0
-          to: 30
-        - color: '#ffcc01'
-          from: 30
-          to: 38
-        - color: '#34c758'
-          from: 38
-          to: 42
-        - color: '#ff3c31'
-          from: 42
-          to: 50
-        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-          \ 0, 0)';\n}\n"
-        target: 40
-        type: custom:bar-card
-      - align: center
-        entity: sensor.time_at_work_prognosis
-        entity_row: true
-        height: 30px
-        max: 50
-        min: 0
-        severity:
-        - color: '#ff3c31'
-          from: 0
-          to: 30
-        - color: '#ffcc01'
-          from: 30
-          to: 38
-        - color: '#34c758'
-          from: 38
-          to: 42
-        - color: '#ff3c31'
-          from: 42
-          to: 50
-        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-          \ 0, 0)';\n}\n"
-        target: 40
-        type: custom:bar-card
-      - type: divider
-      - align: center
-        entity: sensor.time_at_work_on_monday
-        entity_row: true
-        height: 30px
-        max: 12
-        min: 0
-        severity:
-        - color: '#ff3c31'
-          from: 0
-          to: 6
-        - color: '#ffcc01'
-          from: 6
-          to: 8
-        - color: '#34c758'
-          from: 8
-          to: 9
-        - color: '#ff3c31'
-          from: 9
-          to: 10
-        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-          \ 0, 0)';\n}\n"
-        target: 8
-        type: custom:bar-card
-      - align: center
-        entity: sensor.time_at_work_on_tuesday
-        entity_row: true
-        height: 30px
-        max: 12
-        min: 0
-        severity:
-        - color: '#ff3c31'
-          from: 0
-          to: 6
-        - color: '#ffcc01'
-          from: 6
-          to: 8
-        - color: '#34c758'
-          from: 8
-          to: 9
-        - color: '#ff3c31'
-          from: 9
-          to: 10
-        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-          \ 0, 0)';\n}\n"
-        target: 8
-        type: custom:bar-card
-      - align: center
-        entity: sensor.time_at_work_on_wednessday
-        entity_row: true
-        height: 30px
-        max: 12
-        min: 0
-        severity:
-        - color: '#ff3c31'
-          from: 0
-          to: 6
-        - color: '#ffcc01'
-          from: 6
-          to: 8
-        - color: '#34c758'
-          from: 8
-          to: 9
-        - color: '#ff3c31'
-          from: 9
-          to: 10
-        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-          \ 0, 0)';\n}\n"
-        target: 8
-        type: custom:bar-card
-      - align: center
-        entity: sensor.time_at_work_on_thursday
-        entity_row: true
-        height: 30px
-        max: 12
-        min: 0
-        severity:
-        - color: '#ff3c31'
-          from: 0
-          to: 6
-        - color: '#ffcc01'
-          from: 6
-          to: 8
-        - color: '#34c758'
-          from: 8
-          to: 9
-        - color: '#ff3c31'
-          from: 9
-          to: 10
-        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-          \ 0, 0)';\n}\n"
-        target: 8
-        type: custom:bar-card
-      - align: center
-        entity: sensor.time_at_work_on_friday
-        entity_row: true
-        height: 30px
-        max: 12
-        min: 0
-        severity:
-        - color: '#ff3c31'
-          from: 0
-          to: 6
-        - color: '#ffcc01'
-          from: 6
-          to: 8
-        - color: '#34c758'
-          from: 8
-          to: 9
-        - color: '#ff3c31'
-          from: 9
-          to: 10
-        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-          \ 0, 0)';\n}\n"
-        target: 8
-        type: custom:bar-card
-      - card:
-          show_header_toggle: false
-          title: Tom
-          type: entities
-        filter:
-          include:
-          - group: group.iphone_tom
-        type: custom:auto-entities
-      head:
-        entity: person.tom
-        name: 'Tom
-
-          '
-        state: '{{ states(''person.tom'').replace(''_'', '' '').capitalize() }}
-
-          '
-        type: custom:template-entity-row
-      type: custom:fold-entity-row
-    - entities:
-      - card:
-          show_header_toggle: false
-          title: Tanja
-          type: entities
-        filter:
-          include:
-          - group: group.iphone_tanja
-        type: custom:auto-entities
-      head:
-        entity: person.tanja
-        name: 'Tanja
-
-          '
-        state: '{{ states(''person.tanja'').replace(''_'', '' '').capitalize() }}
-
-          '
-        type: custom:template-entity-row
-      type: custom:fold-entity-row
-    show_header_toggle: false
-    style: ".card-content {\n  padding-top: 16px;\n}\n"
-    type: entities
-  - entities:
-    - entity: input_boolean.alarm_clock
-    - entity: input_datetime.alarm_clock
-    - entity: input_select.sleep_mode
-    show_header_toggle: false
-    style: ".card-content {\n  padding-top: 16px;\n}\n"
-    type: entities
+  - cards:
+    - entity: person.tom
+      icon_type: entity-picture
+      type: custom:mushroom-person-card
+    - entity: person.tanja
+      fill_container: false
+      icon_type: entity-picture
+      type: custom:mushroom-person-card
+    columns: 2
+    square: false
+    type: grid
   - cards:
     - color: auto
       icon: mdi:weather-sunset-up
@@ -442,16 +221,38 @@ views:
       type: custom:button-card
     mode: horizontal
     type: custom:stack-in-card
+  - entities:
+    - entity: input_boolean.vacation_mode
+    - entity: input_boolean.guest_mode
+    - entity: input_boolean.automatic_temperature
+    - entity: input_boolean.optimal_electric_vehicle_charging
+    show_header_toggle: false
+    style: ".card-content {\n  padding-top: 16px;\n}\n"
+    type: entities
+  - entities:
+    - entity: input_boolean.alarm_clock
+    - entity: input_datetime.alarm_clock
+    - entity: input_select.sleep_mode
+    show_header_toggle: false
+    style: ".card-content {\n  padding-top: 16px;\n}\n"
+    type: entities
   - entity: plant.peperomia_glabella
     name: Peperomia Glabella
     type: plant-status
   - type: custom:layout-break
-  - entities:
-    - entity: sensor.limburg_net_morgen
-      icon: mdi:trash-can
-      name: Take out the trash
-    state_color: false
-    type: entities
+  - double_tap_action:
+      action: none
+    entity: sensor.limburg_net_morgen
+    hold_action:
+      action: none
+    icon: mdi:trash-can
+    icon_color: white
+    primary: 'Take out the following trash: {% if is_state(entity, "Geen") %} nothing
+      {% else %}{{states(entity)}}{%endif%}'
+    secondary: ''
+    tap_action:
+      action: none
+    type: custom:mushroom-template-card
   - cards:
     - entities:
       - entity: vacuum.robot_vacuum
@@ -1077,7 +878,7 @@ views:
       - entity_id: automation.vacuum_*
       - entity_id: automation.work*
       - entity_id: automation.curtains_*
-      - entity_id: automation.solar_*
+      - entity_id: automation.energy_*
       - entity_id: automation.medication_*
       - entity_id: automation.candy_*
       - entity_id: automation.electric_vehicle_*
@@ -1195,8 +996,8 @@ views:
   - template: automation_template
     type: custom:decluttering-card
     variables:
-    - name: Solar
-    - slug: solar
+    - name: Energy
+    - slug: energy
   - template: automation_template
     type: custom:decluttering-card
     variables:
