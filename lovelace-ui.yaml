@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -230,20 +221,48 @@ views:
       type: custom:button-card
     mode: horizontal
     type: custom:stack-in-card
-  - entities:
+  - cards:
     - entity: input_boolean.vacation_mode
+      layout: vertical
+      type: custom:mushroom-entity-card
     - entity: input_boolean.guest_mode
+      layout: vertical
+      type: custom:mushroom-entity-card
     - entity: input_boolean.automatic_temperature
+      layout: vertical
+      type: custom:mushroom-entity-card
     - entity: input_boolean.optimal_electric_vehicle_charging
-    show_header_toggle: false
-    style: ".card-content {\n  padding-top: 16px;\n}\n"
-    type: entities
+      layout: vertical
+      type: custom:mushroom-entity-card
+    columns: 2
+    square: false
+    type: grid
+  - cards:
+    - double_tap_action:
+        action: none
+      entity: input_select.sleep_mode
+      hold_action:
+        action: none
+      name: Sleep mode
+      secondary_info: none
+      tap_action:
+        action: none
+      type: custom:mushroom-select-card
+    - double_tap_action:
+        action: none
+      entity: input_boolean.alarm_clock
+      hold_action:
+        action: none
+      layout: vertical
+      name: Alarm clock
+      tap_action:
+        action: toggle
+      type: custom:mushroom-entity-card
+    columns: 2
+    square: false
+    type: grid
   - entities:
-    - entity: input_boolean.alarm_clock
     - entity: input_datetime.alarm_clock
-    - entity: input_select.sleep_mode
-    show_header_toggle: false
-    style: ".card-content {\n  padding-top: 16px;\n}\n"
     type: entities
   - entity: plant.peperomia_glabella
     name: Peperomia Glabella
@@ -638,7 +657,7 @@ views:
   layout:
     width: 300
   path: default_view
-  theme: ios-dark-mode-blue-red-alternative
+  theme: Fluent Blue
   title: Home
   type: custom:vertical-layout
 - badges: []
