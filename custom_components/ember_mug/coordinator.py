@@ -1,113 +1,140 @@
 """Coordinator for all the sensors."""
 from __future__ import annotations
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 import logging
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any
 
-from homeassistant.core import HomeAssistant
+from bleak_retry_connector import close_stale_connections
+from ember_mug import EmberMug
+from ember_mug.data import MugData
+from home_assistant_bluetooth import BluetoothServiceInfoBleak
+from homeassistant.components.bluetooth import BluetoothChange
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.device_registry import CONNECTION_BLUETOOTH
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import DOMAIN
-
-if TYPE_CHECKING:
-    from bleak.backends.device import BLEDevice
-    from ember_mug import EmberMug
-
+from .const import MANUFACTURER
 
 _LOGGER = logging.getLogger(__name__)
 
 
-class MugDataUpdateCoordinator(DataUpdateCoordinator):
-    """Class to manage Mug update data."""
+class MugDataUpdateCoordinator(DataUpdateCoordinator[MugData]):
+    """Class to manage fetching Mug data."""
 
     def __init__(
         self,
         hass: HomeAssistant,
         logger: logging.Logger,
-        ble_device: BLEDevice,
         mug: EmberMug,
-        entry_id: str,
+        base_unique_id: str,
+        device_name: str,
     ) -> None:
-        """Initialize Mug updater coordinator."""
+        """Initialize global Mug data updater."""
         super().__init__(
-            hass,
-            logger,
-            name=f"ember-mug-{entry_id}",
+            hass=hass,
+            logger=logger,
+            name=f"ember-mug-{base_unique_id}",
             update_interval=timedelta(seconds=15),
         )
-        self.ble_device = ble_device
+        self.device_name = device_name
+        self.base_unique_id = base_unique_id
         self.mug = mug
-        self._entry_id = entry_id
-        self.connection = self.mug.connection()
-        self.data: dict[str, Any] = {}
-        self.available = True
+        self.data = self.mug.data
+        self.available = False
+        self._initial_update = True
+        self.last_updated: datetime | None = None
         self._last_refresh_was_full = False
-
+        self._cancel_callback = self.mug.register_callback(
+            self._async_handle_callback,
+        )
         _LOGGER.info(f"Ember Mug {self.name} Setup")
-        # Default Data
-        self.data = {
-            "mug_id": None,
-            "serial_number": None,
-            "sw_version": None,
-            "mug_name": "Ember Mug",
-            "model": "Ember Mug",
-        }
 
-    async def _process_queued(self) -> None:
-        """Process queued changes."""
-        try:
-            await self.connection.ensure_connection()
-            changed = await self.connection.update_queued_attributes()
-            self.available = True
-        except Exception as e:
-            _LOGGER.error(e)
-            raise UpdateFailed(f"An error occurred updating mug: {e=}")
-
-        if changed:
-            _LOGGER.debug(f"Changed: {changed}")
-            self.async_update_listeners()
-
-    async def _async_update_data(self) -> dict[str, Any]:
-        """Update the data of the coordinator."""
+    async def _async_update_data(self) -> MugData:
+        """Poll the device."""
         _LOGGER.debug("Updating")
+        full_update = not self._last_refresh_was_full
         try:
-            await self.connection.ensure_connection()
             changed = []
+            if self._initial_update is True:
+                changed = await self.mug.update_initial()
+                self._initial_update = False
             if self._last_refresh_was_full is False:
                 # Only fully poll all data every other call to limit time
-                _LOGGER.debug("Full Update")
-                changed = await self.connection.update_all()
-            _LOGGER.debug("Updating queued attributes")
-            changed += await self.connection.update_queued_attributes()
+                changed += await self.mug.update_all()
+            else:
+                changed += await self.mug.update_queued_attributes()
             self._last_refresh_was_full = not self._last_refresh_was_full
             self.available = True
+            self.last_updated = datetime.now()
         except Exception as e:
-            _LOGGER.error(e)
+            _LOGGER.error("An error occurred whilst updating the mug: %s", e)
             self.available = False
             raise UpdateFailed(f"An error occurred updating mug: {e=}")
-        _LOGGER.debug(f"Changed: {changed}")
-        _LOGGER.debug("Update done")
-        return {
-            "serial_number": getattr(self.mug.meta, "serial_number", ""),
-            "hw_version": getattr(self.mug.firmware, "hardware", ""),
-            "sw_version": getattr(self.mug.firmware, "version", ""),
-            "mug_name": self.mug.name,
-            "model": self.mug.model,
-        }
+
+        _LOGGER.debug(
+            "[%s Update] Changed: %s",
+            "Full" if full_update else "Partial",
+            changed,
+        )
+        return self.mug.data
+
+    @callback
+    def handle_unavailable(
+        self,
+        service_info: BluetoothServiceInfoBleak,
+    ) -> None:
+        """Handle the device going unavailable."""
+        _LOGGER.warning("Mug is unavailable")
+        self.available = False
+        self.async_update_listeners()
+
+    @callback
+    def handle_bluetooth_event(
+        self,
+        service_info: BluetoothServiceInfoBleak,
+        change: BluetoothChange,
+    ) -> None:
+        """Handle a Bluetooth event."""
+        _LOGGER.debug(
+            "Bluetooth event. Service Info: %s, change: %s",
+            service_info,
+            change,
+        )
+        self.mug.set_device(service_info.device)
+        # Register or update callback
+        self._cancel_callback = self.mug.register_callback(
+            self._async_handle_callback,
+        )
+        self.hass.loop.create_task(close_stale_connections(service_info.device))
+
+    @callback
+    def _async_handle_callback(self, mug_data: MugData) -> None:
+        """Handle a Bluetooth event."""
+        _LOGGER.debug("Callback called in Home Assistant")
+        self.async_set_updated_data(mug_data)
+
+    def get_mug_attr(self, mug_attr: str) -> Any:
+        """Get a mug attribute by name (recursively) or return None."""
+        value = self.data
+        for attr in mug_attr.split("."):
+            try:
+                value = getattr(value, attr)
+            except AttributeError:
+                return None
+        return value
 
     @property
     def device_info(self) -> DeviceInfo:
         """Return information about the mug."""
+        firmware = self.data.firmware
         return DeviceInfo(
-            identifiers={(DOMAIN, cast(str, self._entry_id))},
-            connections={(CONNECTION_BLUETOOTH, self.ble_device.address)},
-            name=self.data["mug_name"],
-            model=self.data["model"],
+            connections={(CONNECTION_BLUETOOTH, self.mug.device.address)},
+            name=name if (name := self.data.name) != "EMBER" else self.device_name,
+            model=self.data.model,
             suggested_area="Kitchen",
-            hw_version=str(self.data.get("hw_version")),
-            sw_version=str(self.data.get("sw_version")),
-            manufacturer="Ember",
+            hw_version=str(firmware.hardware) if firmware else None,
+            sw_version=str(firmware.version) if firmware else None,
+            manufacturer=MANUFACTURER,
         )

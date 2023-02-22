@@ -14,14 +14,14 @@ from homeassistant.const import (
     CONF_ADDRESS,
     CONF_NAME,
     CONF_TEMPERATURE_UNIT,
-    TEMP_CELSIUS,
-    TEMP_FAHRENHEIT,
+    UnitOfTemperature,
 )
 from homeassistant.data_entry_flow import FlowResult
+from homeassistant.helpers import config_validation as cv
 import voluptuous as vol
 
 from . import _LOGGER
-from .const import DOMAIN
+from .const import CONF_INCLUDE_EXTRA, DOMAIN
 
 
 class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -92,7 +92,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 self._discovery_info = discovery_info
                 break
             else:
-                return self.async_abort(reason="no_unconfigured_devices")
+                return self.async_abort(reason="no_new_devices")
 
         data_schema = vol.Schema(
             {
@@ -102,9 +102,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                 ),
                 vol.Required(CONF_NAME, default=self._discovery_info.name): str,
-                vol.Required(CONF_TEMPERATURE_UNIT, default=TEMP_CELSIUS): vol.In(
-                    [TEMP_CELSIUS, TEMP_FAHRENHEIT],
+                vol.Required(
+                    CONF_TEMPERATURE_UNIT,
+                    default=UnitOfTemperature.CELSIUS,
+                ): vol.In(
+                    [UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT],
                 ),
+                vol.Optional(CONF_INCLUDE_EXTRA, default=False): cv.boolean,
             },
         )
         return self.async_show_form(

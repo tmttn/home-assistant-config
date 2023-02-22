@@ -1,71 +1,79 @@
 """Binary Sensor Entity for Ember Mug."""
 from __future__ import annotations
 
-from typing import Any, Mapping
+import logging
 
+from ember_mug.consts import LiquidState
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
     BinarySensorEntity,
+    BinarySensorEntityDescription,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity import DeviceInfo
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from . import MugDataUpdateCoordinator
 from .const import DOMAIN
+from .coordinator import MugDataUpdateCoordinator
+from .entity import BaseMugEntity
+from .models import HassMugData
+
+_LOGGER = logging.getLogger(__name__)
+
+SENSOR_TYPES = {
+    "battery.on_charging_base": BinarySensorEntityDescription(
+        key="power",
+        name="Power",
+        device_class=BinarySensorDeviceClass.PLUG,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    "battery.percent": BinarySensorEntityDescription(
+        key="low_battery",
+        name="Low battery",
+        device_class=BinarySensorDeviceClass.BATTERY,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+}
 
 
-class EmberMugBinarySensorBase(CoordinatorEntity, BinarySensorEntity):
-    """Base Mug Sensor."""
+class MugBinarySensor(BaseMugEntity, BinarySensorEntity):
+    """Base Entity for Mug Binary Sensors."""
 
-    coordinator: MugDataUpdateCoordinator
-    _sensor_type: str | None = None
+    _domain = "binary_sensor"
 
-    def __init__(self, coordinator: MugDataUpdateCoordinator, entry_id: str) -> None:
-        """Init set names for attributes."""
-        super().__init__(coordinator)
-        self._device = coordinator.ble_device
-        self._entry_id = entry_id
-        self._last_run_success: bool | None = None
-        self._address = coordinator.ble_device.address
-        self._attr_name = f"Mug {self._sensor_type or ''}".strip()
-        self._attr_unique_id = f"ember_mug_{self._sensor_type or ''}_{entry_id}"
-        self.data = coordinator.data or {}
-
-    @property
-    def device_info(self) -> DeviceInfo:
-        """Pass device information."""
-        return self.coordinator.device_info
-
-    @property
-    def available(self) -> bool:
-        """Return if entity is available."""
-        return self.coordinator.available
-
-    @property
-    def extra_state_attributes(self) -> Mapping[Any, Any]:
-        """Return the state attributes."""
-        return {"last_run_success": self._last_run_success}
-
-    @callback
-    def _handle_coordinator_update(self, *args: Any) -> None:
-        """Handle data update."""
-        self.data = self.coordinator.data
-        self.async_write_ha_state()
-
-
-class EmberMugChargingBinarySensor(EmberMugBinarySensorBase):
-    """Mug Battery Sensor."""
-
-    _sensor_type = "on charging base"
-    _attr_device_class = BinarySensorDeviceClass.PLUG
+    def __init__(
+        self,
+        coordinator: MugDataUpdateCoordinator,
+        mug_attr: str,
+    ) -> None:
+        """Initialize the Mug sensor."""
+        self.entity_description = SENSOR_TYPES[mug_attr]
+        super().__init__(coordinator, mug_attr)
 
     @property
-    def is_on(self) -> bool:
-        """Return "True" if placed on the charging base."""
-        return self.coordinator.mug.battery.on_charging_base
+    def is_on(self) -> bool | None:
+        """Return mug attribute as binary state."""
+        return self.coordinator.get_mug_attr(self._mug_attr)
+
+
+class MugLowBatteryBinarySensor(MugBinarySensor):
+    """Warn about low battery."""
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return "on" if battery is low."""
+        battery_percent = self.coordinator.get_mug_attr(self._mug_attr)
+        if battery_percent is None:
+            return None
+        if battery_percent > 25:
+            # Even if heating, it is not low yet.
+            return False
+        state = self.coordinator.get_mug_attr("liquid_state")
+        # If heating or at target temperature the battery will discharge faster.
+        if state in (LiquidState.HEATING, LiquidState.TARGET_TEMPERATURE):
+            return True
+        return bool(battery_percent < 15)
 
 
 async def async_setup_entry(
@@ -73,11 +81,12 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up Entities."""
-    coordinator: MugDataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id]
-    entry_id = entry.entry_id
-    assert entry_id is not None
-    entities: list[BinarySensorEntity] = [
-        EmberMugChargingBinarySensor(coordinator, entry_id),
-    ]
-    async_add_entities(entities)
+    """Set up Binary Sensor Entities."""
+    assert entry.entry_id is not None
+    data: HassMugData = hass.data[DOMAIN][entry.entry_id]
+    async_add_entities(
+        [
+            MugBinarySensor(data.coordinator, "battery.on_charging_base"),
+            MugLowBatteryBinarySensor(data.coordinator, "battery.percent"),
+        ],
+    )

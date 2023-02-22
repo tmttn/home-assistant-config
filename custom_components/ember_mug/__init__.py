@@ -1,28 +1,41 @@
 """Ember Mug Custom Integration."""
-from asyncio import Event
-import contextlib
+from __future__ import annotations
+
+import asyncio
 import logging
 
 import async_timeout
-from bleak import BleakError, BleakScanner
+from bleak import BleakError
 from ember_mug import EmberMug
 from homeassistant.components import bluetooth
-from homeassistant.components.bluetooth.match import ADDRESS, BluetoothCallbackMatcher
+from homeassistant.components.bluetooth import (
+    BluetoothCallbackMatcher,
+    BluetoothScanningMode,
+)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     CONF_ADDRESS,
+    CONF_NAME,
     CONF_TEMPERATURE_UNIT,
     EVENT_HOMEASSISTANT_STOP,
-    TEMP_CELSIUS,
     Platform,
+    UnitOfTemperature,
 )
-from homeassistant.core import HomeAssistant, callback
+from homeassistant.core import Event, HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 
-from .const import DOMAIN
+from .const import CONF_INCLUDE_EXTRA, DOMAIN
 from .coordinator import MugDataUpdateCoordinator
+from .models import HassMugData
 
-PLATFORMS = [Platform.BINARY_SENSOR, Platform.SENSOR]
+PLATFORMS = [
+    Platform.BINARY_SENSOR,
+    Platform.LIGHT,
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.TEXT,
+]
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -31,10 +44,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     if DOMAIN not in hass.data:
         hass.data[DOMAIN] = {}
 
-    ble_device = bluetooth.async_ble_device_from_address(
-        hass,
-        entry.data[CONF_ADDRESS].upper(),
-    )
+    address: str = entry.data[CONF_ADDRESS].upper()
+    ble_device = bluetooth.async_ble_device_from_address(hass, address)
     if not ble_device:
         raise ConfigEntryNotReady(
             f"Could not find Ember Mug with address {entry.data[CONF_ADDRESS]}",
@@ -42,39 +53,28 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     ember_mug = EmberMug(
         ble_device,
-        entry.data[CONF_TEMPERATURE_UNIT] == TEMP_CELSIUS,
+        include_extra=entry.data.get(CONF_INCLUDE_EXTRA, False),
     )
-    hass.data[DOMAIN][entry.entry_id] = mug_coordinator = MugDataUpdateCoordinator(
+    mug_coordinator = MugDataUpdateCoordinator(
         hass,
         _LOGGER,
-        ble_device,
         ember_mug,
-        entry.entry_id,
+        entry.unique_id,
+        entry.data.get(CONF_NAME, entry.title),
     )
-    # Hack: Force active scan to try and wake scanner
-    with contextlib.suppress(BleakError):
-        await BleakScanner.discover(timeout=1)
-        logging.debug("Mug test scan")
 
-    @callback
-    def _async_update_ble(
-        service_info: bluetooth.BluetoothServiceInfoBleak,
-        change: bluetooth.BluetoothChange,
-    ) -> None:
-        """Update from a ble callback."""
-        mug_coordinator.connection.set_device(service_info.device)
+    startup_event = asyncio.Event()
+    cancel_first_update = mug_coordinator.mug.register_callback(
+        lambda *_: startup_event.set(),
+    )
 
     entry.async_on_unload(
         bluetooth.async_register_callback(
             hass,
-            _async_update_ble,
-            BluetoothCallbackMatcher({ADDRESS: entry.data[CONF_ADDRESS]}),
-            bluetooth.BluetoothScanningMode.ACTIVE,
+            mug_coordinator.handle_bluetooth_event,
+            BluetoothCallbackMatcher(address=address),
+            BluetoothScanningMode.ACTIVE,
         ),
-    )
-    startup_event = Event()
-    cancel_first_update = mug_coordinator.connection.register_callback(
-        lambda *_: startup_event.set(),
     )
 
     try:
@@ -89,21 +89,52 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     except TimeoutError as ex:
         raise ConfigEntryNotReady(
             "Unable to communicate with the device; "
-            f"Try moving the Bluetooth adapter closer to {ember_mug.name}",
+            f"Try moving the Bluetooth adapter closer to {mug_coordinator.data.name}",
         ) from ex
     finally:
         cancel_first_update()
 
+    entry.async_on_unload(
+        bluetooth.async_track_unavailable(
+            hass,
+            mug_coordinator.handle_unavailable,
+            address,
+        ),
+    )
+
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = HassMugData(
+        ember_mug,
+        mug_coordinator,
+    )
+
+    await set_temperature_unit(mug_coordinator, entry.data[CONF_TEMPERATURE_UNIT])
+    entry.async_on_unload(entry.add_update_listener(async_update_listener))
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     async def _async_stop(event: Event) -> None:
         """Close the connection."""
-        await mug_coordinator.connection.disconnect()
+        await mug_coordinator.mug.disconnect()
 
     entry.async_on_unload(
         hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_stop),
     )
+
     return True
+
+
+async def set_temperature_unit(
+    mug_coordinator: MugDataUpdateCoordinator,
+    unit: UnitOfTemperature,
+) -> None:
+    """Try to set Mug Unit if different from current one."""
+    if mug_coordinator.data.temperature_unit == unit:
+        # No need
+        return
+    try:
+        async with async_timeout.timeout(10):
+            await mug_coordinator.mug.set_temperature_unit(unit)
+    except (BleakError, TimeoutError, EOFError) as e:
+        _LOGGER.warning("Unable to set temperature unit to %s: %s.", unit, e)
 
 
 async def async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
@@ -115,6 +146,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        mug_coordinator = hass.data[DOMAIN].pop(entry.entry_id)
-        await mug_coordinator.connection.disconnect()
+        hass_mug_data: HassMugData = hass.data[DOMAIN].pop(entry.entry_id)
+        await hass_mug_data.coordinator.mug.disconnect()
+
+        if not hass.config_entries.async_entries(DOMAIN):
+            hass.data.pop(DOMAIN)
+
     return unload_ok
