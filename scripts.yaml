@@ -185,6 +185,7 @@ utility_notification:
     binary_sensor: '{{ ''binary_sensor.{}''.format(name) }}'
     friendly_name: '{{ name.capitalize().replace(''_'', '' '') }}'
     energy_sensor: '{{ ''sensor.{}_energy''.format(name) }}'
+    interruption_level: passive
   sequence:
   - variables:
       start_time: '{{ as_timestamp(now()) }}'
@@ -210,6 +211,10 @@ utility_notification:
       title: Utilities
       message: '{{ friendly_name }} is done after {{ minutes }} minutes and it used
         {{ total_kwh_rounded }} kWh (€{{ price }}) {{ emojis }}'
+      data:
+        push:
+          interruption-level:
+            '[object Object]':
   alias: Utility notification
 turn_on_lights:
   alias: Turn on lights with Adaptive Lighting
