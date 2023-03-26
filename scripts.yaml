@@ -213,8 +213,7 @@ utility_notification:
         {{ total_kwh_rounded }} kWh (€{{ price }}) {{ emojis }}'
       data:
         push:
-          interruption-level:
-            '[object Object]':
+          interruption-level: '{{ interruption_level }}'
   alias: Utility notification
 turn_on_lights:
   alias: Turn on lights with Adaptive Lighting
