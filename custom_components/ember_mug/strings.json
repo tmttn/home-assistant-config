@@ -18,8 +18,35 @@
     }
   },
   "entity": {
+    "binary_sensor": {
+      "low_battery": { "name": "Low battery" },
+      "power": { "name": "Power" }
+    },
+    "light": {
+      "led": { "name": "LED" }
+    },
+    "number": {
+      "target_temp": { "name": "Target temperature" }
+    },
+    "select": {
+      "temperature_unit": { "name": "Temperature unit" }
+    },
     "sensor": {
-      "liquid_state": {
+      "battery_percent": {
+        "name": "Battery",
+        "state_attributes": {
+          "battery_voltage": { "name": "Battery voltage" }
+        }
+      },
+      "current_temp": { "name": "Current temperature" },
+      "liquid_level": {
+        "name": "Liquid level",
+        "state_attributes": {
+          "raw_liquid_level": { "name": "Raw liquid level" }
+        }
+      },
+      "state": {
+        "name": "Liquid state",
         "state": {
           "unknown": "Unknown",
           "empty": "Empty",
@@ -29,21 +56,18 @@
           "heating": "Heating",
           "perfect": "Perfect",
           "warm_no_control": "Warm (No control)"
+        },
+        "state_attributes": {
+          "date_time_zone": { "name": "Date and Timezone" },
+          "dsk": { "name": "DSK" },
+          "firmware_info": { "name": "Firmware info"},
+          "raw_state": { "name": "Raw state" },
+          "udsk": { "name": "UDSK" }
         }
       }
-    }
-  },
-  "state_attributes": {
-    "_": {
-      "date_time_zone": { "name": "Date and Timezone" },
-      "firmware_info": { "name": "Firmware info"},
-      "udsk": { "name": "UDSK" },
-      "dsk": { "name": "DSK" },
-      "raw_state": { "name": "Raw state" },
-      "raw_liquid_level": { "name": "Raw liquid level" },
-      "battery_voltage": { "name": "Battery voltage" },
-      "battery_charging": { "name": "Mug on charging base" },
-      "last_updated": { "name": "Last update" }
+    },
+    "text": {
+      "name": { "name": "Name" }
     }
   }
 }
