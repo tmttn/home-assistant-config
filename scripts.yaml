@@ -182,32 +182,32 @@ utility_notification:
       description: emojis
       example: "\U0001F45A\U0001F455"
   variables:
-    binary_sensor: '{{ ''binary_sensor.{}''.format(name) }}'
-    friendly_name: '{{ name.capitalize().replace(''_'', '' '') }}'
-    energy_sensor: '{{ ''sensor.{}_energy''.format(name) }}'
-    interruption_level: '{{ ''time_sensitive'' if is_state(''input_select.sleep_mode'',''off'')
-      else ''passive''}}'
+    binary_sensor: '{{ "binary_sensor.{}".format(name) }}'
+    friendly_name: '{{ name.capitalize().replace("_", " ") }}'
+    energy_sensor: '{{ "sensor.{}_energy".format(name) }}'
+    interruption_level: '{{ "time_sensitive" if is_state("input_select.sleep_mode","off")
+      else "passive"}}'
   sequence:
   - variables:
       start_time: '{{ as_timestamp(now()) }}'
       start_kwh: '{{ states(energy_sensor) }}'
   - wait_for_trigger:
       platform: template
-      value_template: '{{ is_state(binary_sensor, ''off'') }}'
+      value_template: '{{ is_state(binary_sensor, "off") }}'
     timeout: 04:00:00
     continue_on_timeout: false
   - variables:
       end_time: '{{ as_timestamp(now()) }}'
-      end_kwh: '{{ states(energy_sensor) }}'
+      end_kwh: "{{ states(energy_sensor) }}"
   - variables:
       total_time: '{{ (end_time - start_time) }}'
       total_kwh: '{{ end_kwh - start_kwh }}'
   - variables:
       minutes: '{{ (total_time / 60) | round(0) }}'
       total_kwh_rounded: '{{ (total_kwh) | round(2) }}'
-      price: '{{ (states(''sensor.electricity_price_peak'')|float(default=0) * total_kwh)
+      price: '{{ (states("sensor.electricity_price_peak")|float(default=0) * total_kwh)
         | round(2) }}'
-  - service: '{{ states(''sensor.nearest_iphone_notify'') }}'
+  - service: '{{ states("sensor.nearest_iphone_notify") }}'
     data:
       title: Utilities
       message: '{{ friendly_name }} is done after {{ minutes }} minutes and it used
