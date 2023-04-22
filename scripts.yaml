@@ -185,7 +185,8 @@ utility_notification:
     binary_sensor: '{{ ''binary_sensor.{}''.format(name) }}'
     friendly_name: '{{ name.capitalize().replace(''_'', '' '') }}'
     energy_sensor: '{{ ''sensor.{}_energy''.format(name) }}'
-    interruption_level: passive
+    interruption_level: '{{ ''time_sensitive'' if is_state(''input_select.sleep_mode'',''off'')
+      else ''passive''}}'
   sequence:
   - variables:
       start_time: '{{ as_timestamp(now()) }}'
