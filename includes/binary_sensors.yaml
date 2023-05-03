@@ -215,9 +215,6 @@
         {{ not is_state("person.tom", "home")
             and not is_state("person.tanja", "home") }}
 
-- platform: workday
-  country: BE
-
 - platform: trend
   sensors:
     humidity_bathroom_trend:
