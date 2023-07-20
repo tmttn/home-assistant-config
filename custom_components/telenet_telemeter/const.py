@@ -1,1 +1,0 @@
-DOMAIN = "telenet_telemeter"
