@@ -54,3 +54,8 @@ intent_script: !include includes/intent_scripts.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
+
+logger:
+  logs:
+    homeassistant.components.xiaomi_miio: debug
+    miio.miioprotocol: debug
