@@ -15,51 +15,52 @@ start_spotify_playlist_of_nearest_person:
       description: entity_id of the speaker
       example: media_player.google_home
   sequence:
-  - data:
-      uri: 'spotify:playlist:{{ states("sensor.favorite_playlist_of_nearest_person")
-        }}
+    - data:
+        uri:
+          'spotify:playlist:{{ states("sensor.favorite_playlist_of_nearest_person")
+          }}
 
-        '
-      random_song: true
-      shuffle: true
-      start_volume: 35
-      entity_id: '{{ entity_id }}'
-    service: spotcast.start
+          '
+        random_song: true
+        shuffle: true
+        start_volume: 35
+        entity_id: "{{ entity_id }}"
+      service: spotcast.start
 cozy_lights_living_room:
   alias: Set cozy lights in the living room
   mode: parallel
   sequence:
-  - service: light.turn_off
-    data:
-      transition: 1
-    target:
-      entity_id:
-      - light.living_room_dining_table_lights
-      - light.living_room_middle_lights
-  - data:
-      entity_id: light.hue_plug
-      hs_color:
-      - 26.667
-      - 88.235
-    service: light.turn_on
-  - data:
-      hs_color:
-      - 26.725
-      - 89.804
-      transition: 1
-    service: light.turn_on
-    target:
-      entity_id: light.tv_led
+    - service: light.turn_off
+      data:
+        transition: 1
+      target:
+        entity_id:
+          - light.living_room_dining_table_lights
+          - light.living_room_middle_lights
+    - data:
+        entity_id: light.hue_plug
+        hs_color:
+          - 26.667
+          - 88.235
+      service: light.turn_on
+    - data:
+        hs_color:
+          - 26.725
+          - 89.804
+        transition: 1
+      service: light.turn_on
+      target:
+        entity_id: light.tv_led
   max: 10
 white_lights_living_room:
   alias: Set white lights in the living room
   mode: parallel
   sequence:
-  - service: light.turn_on
-    data:
-      entity_id:
-      - light.living_room_lights
-      color_temp: 366
+    - service: light.turn_on
+      data:
+        entity_id:
+          - light.living_room_lights
+        color_temp: 366
   max: 10
 increase_brightness:
   alias: Increase the brightness of a group of lights
@@ -69,107 +70,108 @@ increase_brightness:
       description: The group to apply the light increase to.
       example: light.living_room_lights
   sequence:
-  - service: light.turn_on
-    data:
-      entity_id: '{{ group }}'
-      brightness: "{% set b = state_attr(group, 'brightness') %} {% if b == None or
-        b == 0 %}\n  10\n{% elif b < 20 %}\n  128\n{% else %}\n  255\n{% endif %}\n"
+    - service: light.turn_on
+      data:
+        entity_id: "{{ group }}"
+        brightness:
+          "{% set b = state_attr(group, 'brightness') %} {% if b == None or
+          b == 0 %}\n  10\n{% elif b < 20 %}\n  128\n{% else %}\n  255\n{% endif %}\n"
 turn_off_everything_non_automatic:
   alias: Turn off everything non automatic
   mode: parallel
   sequence:
-  - service: light.turn_off
-    data:
-      transition: 4
-    target:
-      entity_id:
-      - light.living_room_lights
-      - light.bedroom_lights
-      - light.bathroom_lights
-      - light.guest_bedroom_lights
-  - service: media_player.turn_off
-    entity_id: media_player.tv
+    - service: light.turn_off
+      data:
+        transition: 4
+      target:
+        entity_id:
+          - light.living_room_lights
+          - light.bedroom_lights
+          - light.bathroom_lights
+          - light.guest_bedroom_lights
+    - service: media_player.turn_off
+      entity_id: media_player.tv
   max: 10
 turn_off_everything:
   alias: Turn off everything
   mode: parallel
   sequence:
-  - service: script.turn_off_everything_non_automatic
-  - service: light.turn_off
-    entity_id: all
+    - service: script.turn_off_everything_non_automatic
+    - service: light.turn_off
+      entity_id: all
 going_to_sleep:
   alias: Going to sleep
   mode: parallel
   sequence:
-  - entity_id: input_select.sleep_mode
-    service: input_select.select_option
-    data:
-      option: total
-  - delay:
-      hours: 0
-      minutes: 0
-      seconds: 5
-      milliseconds: 0
-  - service: script.turn_off_everything_non_automatic
-    data: {}
+    - entity_id: input_select.sleep_mode
+      service: input_select.select_option
+      data:
+        option: total
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 5
+        milliseconds: 0
+    - service: script.turn_off_everything_non_automatic
+      data: {}
   max: 10
 set_low_temperature:
   alias: Set low temperature
   sequence:
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.living_room
-      setpoint: '{{ states("input_number.temperature_low") }}
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.living_room
+        setpoint: '{{ states("input_number.temperature_low") }}
 
-        '
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.kitchen
-      setpoint: '{{ states("input_number.temperature_low") }}
+          '
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.kitchen
+        setpoint: '{{ states("input_number.temperature_low") }}
 
-        '
+          '
 set_moderate_temperature:
   alias: Set moderate temperature
   sequence:
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.living_room
-      setpoint: '{{ states("input_number.temperature_moderate") }}
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.living_room
+        setpoint: '{{ states("input_number.temperature_moderate") }}
 
-        '
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.kitchen
-      setpoint: '{{ states("input_number.temperature_moderate") }}
+          '
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.kitchen
+        setpoint: '{{ states("input_number.temperature_moderate") }}
 
-        '
+          '
 set_high_temperature:
   alias: Set high temperature
   sequence:
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.living_room
-      setpoint: '{{ states("input_number.temperature_high") }}
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.living_room
+        setpoint: '{{ states("input_number.temperature_high") }}
 
-        '
-  - service: evohome.set_zone_override
-    data:
-      entity_id: climate.kitchen
-      setpoint: '{{ states("input_number.temperature_high") }}
+          '
+    - service: evohome.set_zone_override
+      data:
+        entity_id: climate.kitchen
+        setpoint: '{{ states("input_number.temperature_high") }}
 
-        '
+          '
 leaving:
   alias: Leaving the house
   sequence:
-  - service: script.set_low_temperature
-  - service: script.turn_off_everything
+    - service: script.set_low_temperature
+    - service: script.turn_off_everything
 arriving:
   alias: Arriving home
   sequence:
-  - service: script.set_high_temperature
-    data: {}
-  - service: script.cozy_lights_living_room
-    data: {}
+    - service: script.set_high_temperature
+      data: {}
+    - service: script.cozy_lights_living_room
+      data: {}
   mode: single
 utility_notification:
   mode: parallel
@@ -185,36 +187,39 @@ utility_notification:
     binary_sensor: '{{ "binary_sensor.{}".format(name) }}'
     friendly_name: '{{ name.capitalize().replace("_", " ") }}'
     energy_sensor: '{{ "sensor.{}_energy".format(name) }}'
-    interruption_level: '{{ "time_sensitive" if is_state("input_select.sleep_mode","off")
+    interruption_level:
+      '{{ "time_sensitive" if is_state("input_select.sleep_mode","off")
       else "passive"}}'
   sequence:
-  - variables:
-      start_time: '{{ as_timestamp(now()) }}'
-      start_kwh: '{{ states(energy_sensor) }}'
-  - wait_for_trigger:
-      platform: template
-      value_template: '{{ is_state(binary_sensor, "off") }}'
-    timeout: 04:00:00
-    continue_on_timeout: false
-  - variables:
-      end_time: '{{ as_timestamp(now()) }}'
-      end_kwh: '{{ states(energy_sensor) }}'
-  - variables:
-      total_time: '{{ (end_time - start_time) }}'
-      total_kwh: '{{ end_kwh - start_kwh }}'
-  - variables:
-      minutes: '{{ (total_time / 60) | round(0) }}'
-      total_kwh_rounded: '{{ (total_kwh) | round(2) }}'
-      price: '{{ (states("sensor.electricity_price_peak")|float(default=0) * total_kwh)
-        | round(2) }}'
-  - service: '{{ states("sensor.nearest_iphone_notify") }}'
-    data:
-      title: Utilities
-      message: '{{ friendly_name }} is done after {{ minutes }} minutes and it used
-        {{ total_kwh_rounded }} kWh (€{{ price }}) {{ emojis }}'
+    - variables:
+        start_time: "{{ as_timestamp(now()) }}"
+        start_kwh: "{{ states(energy_sensor) }}"
+    - wait_for_trigger:
+        platform: template
+        value_template: '{{ is_state(binary_sensor, "off") }}'
+      timeout: 04:00:00
+      continue_on_timeout: false
+    - variables:
+        end_time: "{{ as_timestamp(now()) }}"
+        end_kwh: "{{ states(energy_sensor) }}"
+    - variables:
+        total_time: "{{ (end_time - start_time) }}"
+        total_kwh: "{{ end_kwh - start_kwh }}"
+    - variables:
+        minutes: "{{ (total_time / 60) | round(0) }}"
+        total_kwh_rounded: "{{ (total_kwh) | round(2) }}"
+        price:
+          '{{ (states("sensor.electricity_price_peak")|float(default=0) * total_kwh)
+          | round(2) }}'
+    - service: '{{ states("sensor.nearest_iphone_notify") }}'
       data:
-        push:
-          interruption-level: '{{ interruption_level }}'
+        title: Utilities
+        message:
+          "{{ friendly_name }} is done after {{ minutes }} minutes and it used
+          {{ total_kwh_rounded }} kWh (€{{ price }}) {{ emojis }}"
+        data:
+          push:
+            interruption-level: "{{ interruption_level }}"
   alias: Utility notification
 turn_on_lights:
   alias: Turn on lights with Adaptive Lighting
@@ -224,81 +229,43 @@ turn_on_lights:
       description: entity_id of light
       example: light.bedroom_lights
   sequence:
-  - service: adaptive_lighting.apply
-    data:
-      entity_id: switch.adaptive_lighting_default
-      lights: '{{ entity_id }}'
-      turn_on_lights: true
+    - service: adaptive_lighting.apply
+      data:
+        entity_id: switch.adaptive_lighting_default
+        lights: "{{ entity_id }}"
+        turn_on_lights: true
   mode: single
 reset_adaptive_lighting:
   alias: Reset 'manual control'
   sequence:
-  - service: adaptive_lighting.set_manual_control
-    data:
-      entity_id: switch.adaptive_lighting_default
-      manual_control: false
-  - service: adaptive_lighting.set_manual_control
-    data:
-      entity_id: switch.adaptive_lighting_half_and_dim
-      manual_control: false
-  - service: adaptive_lighting.set_manual_control
-    data:
-      entity_id: switch.adaptive_lighting_half_and_full
-      manual_control: false
-  - service: adaptive_lighting.set_manual_control
-    data:
-      entity_id: switch.adaptive_lighting_outside
-      manual_control: false
+    - service: adaptive_lighting.set_manual_control
+      data:
+        entity_id: switch.adaptive_lighting_default
+        manual_control: false
+    - service: adaptive_lighting.set_manual_control
+      data:
+        entity_id: switch.adaptive_lighting_half_and_dim
+        manual_control: false
+    - service: adaptive_lighting.set_manual_control
+      data:
+        entity_id: switch.adaptive_lighting_half_and_full
+        manual_control: false
+    - service: adaptive_lighting.set_manual_control
+      data:
+        entity_id: switch.adaptive_lighting_outside
+        manual_control: false
   mode: single
 electric_vehicle_polling_interval_to_60:
   alias: Electric vehicle polling interval to 60
   sequence:
-  - service: tesla_custom.polling_interval
-    data:
-      scan_interval: 60
+    - service: tesla_custom.polling_interval
+      data:
+        scan_interval: 60
   mode: single
 electric_vehicle_polling_interval_to_default:
   alias: Electric vehicle polling interval to default
   sequence:
-  - service: tesla_custom.polling_interval
-    data:
-      scan_interval: 660
+    - service: tesla_custom.polling_interval
+      data:
+        scan_interval: 660
   mode: single
-new_script:
-  alias: Wake Up
-  icon: mdi:party-popper
-  description: Turns on the bedroom lights and then the living room lights after a
-    delay
-  variables:
-    turn_on_entity: group.living_room
-  fields:
-    minutes:
-      name: Minutes
-      description: The amount of time to wait before turning on the living room lights
-      selector:
-        number:
-          min: 0
-          max: 60
-          step: 1
-          unit_of_measurement: minutes
-          mode: slider
-  mode: restart
-  sequence:
-  - event: LOGBOOK_ENTRY
-    event_data:
-      name: Paulus
-      message: is waking up
-      entity_id: device_tracker.paulus
-      domain: light
-  - alias: Bedroom lights on
-    service: light.turn_on
-    target:
-      entity_id: group.bedroom
-    data:
-      brightness: 100
-  - delay:
-      minutes: '{{ minutes }}'
-  - alias: Living room lights on
-    service: light.turn_on
-    target:
-      entity_id: '{{ turn_on_entity }}'
