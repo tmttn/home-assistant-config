@@ -126,7 +126,6 @@ BINARY_SENSOR_TYPES: Final[tuple[MieleBinarySensorDefinition, ...]] = (
             STEAM_OVEN_MICRO,
             DIALOG_OVEN,
             WINE_CABINET_FREEZER,
-            HOB_INDUCT_EXTR,
         ],
         description=MieleBinarySensorDescription(
             key="info",
@@ -327,6 +326,7 @@ class MieleBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self._attr_unique_id = f"{self.entity_description.key}-{self._ent}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._ent)},
+            serial_number=self._ent,
             name=appl_type,
             manufacturer=MANUFACTURER,
             model=self.coordinator.data[self._ent]["ident|deviceIdentLabel|techType"],
