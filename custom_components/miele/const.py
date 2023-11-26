@@ -1,7 +1,7 @@
 """Constants for the Miele integration."""
 
 DOMAIN = "miele"
-VERSION = "0.1.17"
+VERSION = "0.1.19"
 API_READ_TIMEOUT = 20
 MANUFACTURER = "Miele"
 
@@ -43,6 +43,7 @@ WINE_STORAGE_CONDITIONING_UNIT = 34
 STEAM_OVEN_MICRO = 45
 DIALOG_OVEN = 67
 WINE_CABINET_FREEZER = 68
+STEAM_OVEN_MK2 = 73
 HOB_INDUCT_EXTR = 74
 
 APPLIANCE_TYPES = {
@@ -76,6 +77,7 @@ APPLIANCE_TYPES = {
     STEAM_OVEN_MICRO: "steam_oven_micro",
     DIALOG_OVEN: "dialog_oven",
     WINE_CABINET_FREEZER: "wine_cabinet_freezer",
+    STEAM_OVEN_MK2: "steam_oven",
     HOB_INDUCT_EXTR: "hob_induct_extr",
 }
 
@@ -371,10 +373,22 @@ OVEN_PROGRAM_ID = {
     25: "top_heat",
     29: "fan_grill",
     31: "bottom_heat",
+    35: "moisture_plus_auto_roast",
+    40: "moisture_plus_fan_plus",
+    74: "moisture_plus_intensive_bake",
+    76: "moisture_plus_conventional_heat",
     49: "moisture_plus_fan_plus",
+    356: "defrost",
+    357: "drying",
+    358: "heat_crockery",
+    361: "steam_cooking",
+    362: "keeping_warm",
     512: "1_tray",
     513: "2_trays",
     529: "baking_tray",
+    621: "prove_15_min",
+    622: "prove_30_min",
+    623: "prove_45_min",
     "unmapped_1": "steam_bake",
     17003: "no_program",
 }
@@ -567,6 +581,10 @@ STATE_PROGRAM_ID = {
     DISHWASHER: DISHWASHER_PROGRAM_ID,
     OVEN: OVEN_PROGRAM_ID,
     OVEN_MICROWAVE: OVEN_PROGRAM_ID,
+    STEAM_OVEN_MK2: OVEN_PROGRAM_ID,
+    STEAM_OVEN: OVEN_PROGRAM_ID,
+    STEAM_OVEN_COMBI: OVEN_PROGRAM_ID,
+    STEAM_OVEN_MICRO: OVEN_PROGRAM_ID,
     WASHER_DRYER: WASHING_MACHINE_PROGRAM_ID,
     ROBOT_VACUUM_CLEANER: ROBOT_VACUUM_CLEANER_PROGRAM_ID,
     COFFEE_SYSTEM: COFFEE_SYSTEM_PROGRAM_ID,

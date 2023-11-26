@@ -10,6 +10,9 @@
       "missing_configuration": "Komponenten kunde inte konfigureras. Vänligen följ dokumentationen",
       "no_url_available": "Ingen URL tillgänglig. För information om detta fel, [se hjälpavsnittet]({docs_url})",
       "oauth_error": "Tog emot ogiltiga token-data",
+      "oauth_failed": "Fel vid hämtning av åtkomsttoken.",
+      "oauth_timeout": "Timeout vid hämtning av OAuth-token.",
+      "oauth_unauthorized": "OAuth-auktoriseringsfel vid hämtning av åtkomsttoken.",
       "reauth_successful": "Omautentiseringen lyckades"
     },
     "create_entry": {
@@ -24,7 +27,7 @@
         "title": "Förnya autentisering"
       },
       "zeroconf_confirm": {
-        "description": "Du kommer lägga till `{name}` och eventuella ytterligare Miele-enheter i Home Assistant.\\n\\n**För att fullfölja behöver du ange dina behörighets- och inloggningsuppgifter.**",
+        "description": "Du kommer lägga till `{name}` och eventuella ytterligare Miele-enheter i Home Assistant.\n\n**För att fullfölja behöver du ange dina behörighets- och inloggningsuppgifter.**",
         "title": "Bekräfta att du vill lägga till integration för Miele"
       }
     }
@@ -45,8 +48,8 @@
       "service": "{entity_name} i serviceläge",
       "supercooling": "{entity_name} i läge snabbkylning",
       "supercooling_superfreezing": "{entity_name} i läge snabbkylning/snabbinfrysning",
-      "superfreezing": "{entity_name} i snabbfrysning",
-      "superheating": "{entity_name} i snabbvärmning",
+      "superfreezing": "{entity_name} i läge snabbfrysning",
+      "superheating": "{entity_name} i läge snabbvärmning",
       "waiting_to_start": "{entity_name} väntar på start"
     },
     "trigger_type": {
@@ -238,6 +241,7 @@
           "gentle_smoothing": "Skonsam utslätning",
           "glasses_warm": "Glas",
           "green_tea": "Grönt te",
+          "heat_crockery": "Värma porslin",
           "herbal_tea": "Örtte",
           "hot_milk": "Varm mjölk",
           "hot_water": "Varmt vatten",
@@ -245,6 +249,7 @@
           "intensive": "Intensiv",
           "intensive_bake": "Intensivbakning",
           "japanese_tea": "Japanskt te",
+          "keeping_warm": "Varmhållning",
           "latte_macchiato": "Latte macchiato",
           "long_coffee": "Long coffee",
           "maintenance": "Underhållsprogram",
@@ -253,12 +258,18 @@
           "milk_pipework_clean": "Rengör mjölkrör",
           "milk_pipework_rinse": "Sköljer mjölkrör",
           "minimum_iron": "Strykfri tvätt",
-          "moisture_plus_fan_plus": "Moisture Plus + Fan Plus",
+          "moisture_plus_auto_roast": "Kombitillagning + Stekautomatik",
+          "moisture_plus_conventional_heat": "Kombitillagning + Över-/undervärme",
+          "moisture_plus_fan_plus": "Kombitillagning + Varmluft plus",
+          "moisture_plus_intensive_bake": "Kombitillagning + Intensivbakning",
           "no_program": "Inget program",
           "normal": "Normal",
           "outerwear": "Ytterkläder",
           "pillows": "Kuddar",
           "proofing": "Impregnering",
+          "prove_15_min": "15 min jäsning",
+          "prove_30_min": "30 min jäsning",
+          "prove_45_min": "45 min jäsning",
           "quick_power_wash": "Snabb powertvätt",
           "rinse": "Sköljning",
           "rinse_out_lint": "Spola ut ludd",
@@ -479,6 +490,12 @@
           }
         }
       }
+    }
+  },
+  "issues": {
+    "hob_not_supported": {
+      "description": "Apparattypen {tech_type} stöds inte fullt ut av Miele-integrationen. Därför kan vissa entiteter saknas eller inte fungera. \n\nRapportera problemet till [den ansvarige på Github]({issue_url})",
+      "title": "Enheten {tech_type} stöds inte fullt ut"
     }
   },
   "selector": {

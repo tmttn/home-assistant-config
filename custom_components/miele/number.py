@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
-from typing import Any, Final
+from typing import Any
 
 from homeassistant.components.number import (
     NumberEntity,
@@ -12,6 +12,8 @@ from homeassistant.components.number import (
     NumberMode,
 )
 from homeassistant.core import HomeAssistant
+
+# from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType
@@ -21,9 +23,18 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 from . import get_coordinator
-from .const import API, DOMAIN, HOB_INDUCT_EXTR, HOB_INDUCTION, MANUFACTURER
+from .const import (
+    API,
+    DOMAIN,
+    HOB_HIGHLIGHT,
+    HOB_INDUCT_EXTR,
+    HOB_INDUCTION,
+    MANUFACTURER,
+)
 
 _LOGGER = logging.getLogger(__name__)
+
+HOB_TYPES = (HOB_INDUCT_EXTR, HOB_HIGHLIGHT, HOB_INDUCTION)
 
 PLATE_MAP = {
     0: 0,
@@ -49,7 +60,28 @@ PLATE_MAP = {
     18: 9.5,
     117: 10,
     118: 10,
+    217: 110,
 }
+
+DEFAULT_PLATE_COUNT = 4
+
+PLATE_COUNT = {
+    "KM7678": 6,
+    "KM7697": 6,
+    "KM7878": 6,
+    "KM7897": 6,
+    "KMDA7633": 5,
+    "KMDA7634": 5,
+}
+
+
+def get_plate_count(tech_type):
+    """Get number of zones."""
+    stripped = tech_type.replace(" ", "")
+    for prefix, plates in PLATE_COUNT.items():
+        if stripped.startswith(prefix):
+            return plates
+    return DEFAULT_PLATE_COUNT
 
 
 @dataclass
@@ -77,175 +109,6 @@ class MieleNumberDefinition:
     description: MieleNumberDescription = None
 
 
-NUMBER_TYPES: Final[tuple[MieleNumberDefinition, ...]] = (
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCT_EXTR,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|0|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_1",
-            zone=0,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCT_EXTR,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|1|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_2",
-            zone=1,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCT_EXTR,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|2|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_3",
-            zone=2,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCT_EXTR,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|3|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_4",
-            zone=3,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCT_EXTR,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|4|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_5",
-            zone=4,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCTION,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|0|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_1",
-            zone=0,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCTION,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|1|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_2",
-            zone=1,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCTION,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|2|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_3",
-            zone=2,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCTION,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|3|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_4",
-            zone=3,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCTION,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|4|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_5",
-            zone=4,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-    MieleNumberDefinition(
-        types=[
-            HOB_INDUCTION,
-        ],
-        description=MieleNumberDescription(
-            key="plate",
-            data_tag="state|plateStep|5|value_raw",
-            icon="mdi:stove",
-            translation_key="plate_6",
-            zone=5,
-            native_min_value=0.0,
-            native_max_value=10.0,
-            native_step=0.5,
-        ),
-    ),
-)
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigType,
@@ -256,19 +119,56 @@ async def async_setup_entry(
 
     entities = []
     for idx, ent in enumerate(coordinator.data):
-        for definition in NUMBER_TYPES:
-            if coordinator.data[ent]["ident|type|value_raw"] in definition.types and (
-                coordinator.data[ent].get(definition.description.data_tag) is not None
-            ):
+        # if (
+        #     coordinator.data[ent]["ident|type|value_raw"] in HOB_TYPES
+        #     and coordinator.data[ent]["ident|deviceIdentLabel|techType"]
+        #     not in PLATE_COUNT
+        # ):
+        #     ir.async_create_issue(
+        #         hass,
+        #         DOMAIN,
+        #         "hob_not_supported",
+        #         is_fixable=False,
+        #         severity=ir.IssueSeverity.WARNING,
+        #         translation_key="hob_not_supported",
+        #         translation_placeholders={
+        #             "tech_type": coordinator.data[ent][
+        #                 "ident|deviceIdentLabel|techType"
+        #             ],
+        #             "issue_url": "https://github.com/astrandb/miele/issues",
+        #         },
+        #     )
+
+        if coordinator.data[ent]["ident|type|value_raw"] in HOB_TYPES:
+            tech_type = coordinator.data[ent]["ident|deviceIdentLabel|techType"]
+            api_plates = 0
+            for i in range(8):
+                if f"state|plateStep|{i}|value_raw" in coordinator.data[ent]:
+                    api_plates = i
+            if api_plates == 0:
+                plates = get_plate_count(tech_type)
+            else:
+                plates = api_plates + 1
+
+            if plates < api_plates + 1:
+                _LOGGER.warning(
+                    "Inconsistent number of zones - API %s reports %s zones",
+                    tech_type,
+                    api_plates + 1,
+                )
+            for plate_no in range(plates):
+                description = MieleNumberDescription(
+                    key="plate",
+                    data_tag=f"state|plateStep|{plate_no}|value_raw",
+                    icon="mdi:stove",
+                    translation_key=f"plate_{plate_no+1}",
+                    zone=plate_no,
+                    native_min_value=0.0,
+                    native_max_value=10.0,
+                    native_step=0.5,
+                )
                 entities.append(
-                    MieleNumber(
-                        coordinator,
-                        idx,
-                        ent,
-                        definition.description,
-                        hass,
-                        config_entry,
-                    )
+                    MieleNumber(coordinator, idx, ent, description, hass, config_entry)
                 )
 
     async_add_entities(entities)
@@ -298,10 +198,9 @@ class MieleNumber(CoordinatorEntity, NumberEntity):
         self._ed = description
         _LOGGER.debug("Init number %s", ent)
         appl_type = self.coordinator.data[self._ent][self._ed.type_key]
+        tech_type = self.coordinator.data[self._ent]["ident|deviceIdentLabel|techType"]
         if appl_type == "":
-            appl_type = self.coordinator.data[self._ent][
-                "ident|deviceIdentLabel|techType"
-            ]
+            appl_type = tech_type
         self._attr_has_entity_name = True
         self._attr_unique_id = f"{self._ed.key}-{self._ed.zone}{self._ent}"
         self._attr_mode = NumberMode.SLIDER
@@ -317,7 +216,7 @@ class MieleNumber(CoordinatorEntity, NumberEntity):
     def native_value(self):
         """Return native value."""
         if self.coordinator.data[self._ent].get(self._ed.data_tag) is None:
-            return
+            return 0
         return PLATE_MAP[self.coordinator.data[self._ent][self._ed.data_tag]]
 
     @property
@@ -325,6 +224,9 @@ class MieleNumber(CoordinatorEntity, NumberEntity):
         """Return the availability of the entity."""
 
         if not self.coordinator.last_update_success:
+            return False
+
+        if self.coordinator.data[self._ent].get(self._ed.data_tag) is None:
             return False
 
         return self.coordinator.data[self._ent]["state|status|value_raw"] != 255
