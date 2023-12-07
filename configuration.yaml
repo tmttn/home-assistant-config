@@ -25,7 +25,6 @@ input_datetime: !include includes/input_datetimes.yaml
 
 # Logging and history
 recorder: !include includes/recorder.yaml
-device_tracker: !include includes/device_trackers.yaml
 
 # Managed via UI
 scene: !include scenes.yaml
@@ -51,8 +50,6 @@ evohome: !include includes/evohome.yaml
 tts: !include includes/tts.yaml
 intent_script: !include includes/intent_scripts.yaml
 spotcast: !include includes/spotcast.yaml
-
-
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
