@@ -127,7 +127,7 @@
       unique_id: washing_machine
       friendly_name: Washing machine
       value_template: >
-        {{ not is_state("sensor.washing_machine_status", "off") }}
+        {{ is_state("sensor.washing_machine_status", "running") }}
       delay_off: "00:01:00"
       icon_template: >
         {% if is_state("binary_sensor.washing_machine", "on") %}
