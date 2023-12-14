@@ -44,7 +44,6 @@ notify: !include includes/notify.yaml
 wake_on_lan:
 proximity: !include includes/proximity.yaml
 utility_meter: !include includes/utility_meter.yaml
-ios: !include includes/ios.yaml
 camera: !include includes/camera.yaml
 evohome: !include includes/evohome.yaml
 tts: !include includes/tts.yaml
