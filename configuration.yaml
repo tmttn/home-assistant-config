@@ -47,7 +47,6 @@ utility_meter: !include includes/utility_meter.yaml
 camera: !include includes/camera.yaml
 evohome: !include includes/evohome.yaml
 tts: !include includes/tts.yaml
-intent_script: !include includes/intent_scripts.yaml
 spotcast: !include includes/spotcast.yaml
 
 # Custom components
