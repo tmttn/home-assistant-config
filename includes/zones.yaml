@@ -8,19 +8,19 @@
 #
 #
 #- from github.com/tmttn/home-assistant-config
-- name: Home coded
+- name: Home
   latitude: !secret latitude_home
   longitude: !secret longitude_home
   radius: 50
   icon: mdi:home
 
-- name: Work coded
+- name: Work
   latitude: !secret latitude_work
   longitude: !secret longitude_work
   radius: 300
   icon: mdi:work
 
-- name: Work Tanja coded
+- name: Work Tanja
   latitude: !secret latitude_work_tanja
   longitude: !secret longitude_work_tanja
   radius: 300
