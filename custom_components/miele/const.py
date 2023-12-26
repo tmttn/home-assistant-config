@@ -1,7 +1,7 @@
 """Constants for the Miele integration."""
 
 DOMAIN = "miele"
-VERSION = "0.1.19"
+VERSION = "0.1.20"
 API_READ_TIMEOUT = 20
 MANUFACTURER = "Miele"
 
@@ -357,6 +357,7 @@ TUMBLE_DRYER_PROGRAM_ID = {
     "unmapped_2": "bed_linen",
     "unmapped_3": "cottons_eco",
     "unmapped_4": "shirts",
+    "unmapped_5": "large_pillows",
 }
 OVEN_PROGRAM_ID = {
     -1: "no_program",  # Extrapolated from other device types.
