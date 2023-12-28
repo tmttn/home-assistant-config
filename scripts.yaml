@@ -43,14 +43,6 @@ cozy_lights_living_room:
           - 26.667
           - 88.235
       service: light.turn_on
-    - data:
-        hs_color:
-          - 26.725
-          - 89.804
-        transition: 1
-      service: light.turn_on
-      target:
-        entity_id: light.tv_led
   max: 10
 white_lights_living_room:
   alias: Set white lights in the living room
