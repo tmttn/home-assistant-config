@@ -309,42 +309,42 @@
 
     temperature_living_room:
       unique_id: temperature_living_room
-      unit_of_measurement: '°C'
+      unit_of_measurement: "°C"
       value_template: '{{state_attr("climate.living_room", "current_temperature")}}'
 
     temperature_bedroom:
       unique_id: temperature_bedroom
-      unit_of_measurement: '°C'
+      unit_of_measurement: "°C"
       value_template: '{{state_attr("climate.bedroom", "current_temperature")}}'
 
     temperature_bathroom:
       unique_id: temperature_bathroom
-      unit_of_measurement: '°C'
+      unit_of_measurement: "°C"
       value_template: '{{state_attr("climate.bathroom", "current_temperature")}}'
 
     temperature_kitchen:
       unique_id: temperature_kitchen
-      unit_of_measurement: '°C'
+      unit_of_measurement: "°C"
       value_template: '{{state_attr("climate.kitchen", "current_temperature")}}'
 
     temperature_bedroom_marthe:
       unique_id: temperature_bedroom_marthe
-      unit_of_measurement: '°C'
+      unit_of_measurement: "°C"
       value_template: '{{state_attr("climate.bedroom_marthe", "current_temperature")}}'
 
     temperature_storage:
       unique_id: temperature_storage
-      unit_of_measurement: '°C'
+      unit_of_measurement: "°C"
       value_template: '{{state_attr("climate.storage", "current_temperature")}}'
 
     temperature_hall:
       unique_id: temperature_hall
-      unit_of_measurement: '°C'
+      unit_of_measurement: "°C"
       value_template: '{{state_attr("climate.hall", "current_temperature")}}'
 
     temperature_guest_bedroom:
       unique_id: temperature_guest_bedroom
-      unit_of_measurement: '°C'
+      unit_of_measurement: "°C"
       value_template: '{{state_attr("climate.guest_bedroom", "current_temperature")}}'
 
     total_grid_export:
@@ -412,18 +412,6 @@
   display_options:
     - date
     - time
-
-- platform: systemmonitor
-  resources:
-    - type: disk_use_percent
-      arg: "/"
-    - type: memory_use_percent
-    - type: network_in
-      arg: eth0
-    - type: network_out
-      arg: eth0
-    - type: processor_use
-    - type: last_boot
 
 - platform: integration
   source: sensor.hombli_smart_outdoor_socket_1_power

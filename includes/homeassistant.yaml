@@ -14,7 +14,6 @@ longitude: !secret longitude_home
 # external_url:  # XXX: take from .storage config
 elevation: 60
 unit_system: metric
-legacy_templates: false
 country: BE
 time_zone: Europe/Brussels
 name: Home
