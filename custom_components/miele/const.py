@@ -1,7 +1,7 @@
 """Constants for the Miele integration."""
 
 DOMAIN = "miele"
-VERSION = "0.1.21"
+VERSION = "2024.1.0"
 API_READ_TIMEOUT = 20
 MANUFACTURER = "Miele"
 
@@ -524,6 +524,8 @@ COFFEE_SYSTEM_PROGRAM_ID = {
     24148: "green_tea",
     24149: "white_tea",
     24150: "japanese_tea",
+    # special programs
+    24400: "coffee_pot",
     24407: "barista_assistant",
     # machine settings menu
     24500: "appliance_settings",  # total dispensed
