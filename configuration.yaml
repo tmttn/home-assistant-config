@@ -42,7 +42,6 @@ binary_sensor: !include includes/binary_sensors.yaml
 shell_command: !include includes/shell_commands.yaml
 notify: !include includes/notify.yaml
 wake_on_lan:
-proximity: !include includes/proximity.yaml
 utility_meter: !include includes/utility_meter.yaml
 camera: !include includes/camera.yaml
 evohome: !include includes/evohome.yaml
