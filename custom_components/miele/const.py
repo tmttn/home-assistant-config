@@ -1,7 +1,7 @@
 """Constants for the Miele integration."""
 
 DOMAIN = "miele"
-VERSION = "2024.1.0"
+VERSION = "2024.3.0"
 API_READ_TIMEOUT = 20
 MANUFACTURER = "Miele"
 
@@ -222,10 +222,14 @@ STATE_PROGRAM_PHASE = {
     1800: "finished",
     1801: "pre_dishwash",
     # Oven
-    3073: "heating",  # in common with coffee system
+    3073: "heating-up",  # in common with coffee system and warming drawer
     3074: "process_running",
     3078: "process_finished",
     3084: "energy_save",
+    # Warming drawer
+    3075: "door_open",
+    3094: "keeping_warm",
+    3088: "cooling_down",
     # Microwave
     3329: "heating",
     3330: "process_running",
@@ -392,6 +396,14 @@ OVEN_PROGRAM_ID = {
     623: "prove_45_min",
     "unmapped_1": "steam_bake",
     17003: "no_program",
+}
+DISH_WARMER_PROGRAM_ID = {
+    -1: "no_program",
+    0: "no_program",
+    1: "warm_cups_glasses",
+    2: "warm_dishes_plates",
+    3: "keep_warm",
+    4: "slow_roasting",
 }
 ROBOT_VACUUM_CLEANER_PROGRAM_ID = {
     -1: "no_program",  # Extrapolated from other device types
@@ -582,6 +594,7 @@ STATE_PROGRAM_ID = {
     WASHING_MACHINE: WASHING_MACHINE_PROGRAM_ID,
     TUMBLE_DRYER: TUMBLE_DRYER_PROGRAM_ID,
     DISHWASHER: DISHWASHER_PROGRAM_ID,
+    DISH_WARMER: DISH_WARMER_PROGRAM_ID,
     OVEN: OVEN_PROGRAM_ID,
     OVEN_MICROWAVE: OVEN_PROGRAM_ID,
     STEAM_OVEN_MK2: OVEN_PROGRAM_ID,
