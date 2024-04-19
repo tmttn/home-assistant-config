@@ -15,20 +15,20 @@ persons:
     - person.tanja
 
 iphone_tom:
-  - sensor.tom_iphone_activity
-  - sensor.tom_iphone_average_active_pace
-  - sensor.tom_iphone_bssid
-  - sensor.tom_iphone_battery_level
-  - sensor.tom_iphone_battery_state
-  - sensor.tom_iphone_connection_type
-  - sensor.tom_iphone_distance
-  - sensor.tom_iphone_floors_ascended
-  - sensor.tom_iphone_floors_descended
-  - sensor.tom_iphone_geocoded_location
-  - sensor.tom_iphone_last_update_trigger
-  - sensor.tom_iphone_sim_1
-  - sensor.tom_iphone_ssid
-  - sensor.tom_iphone_steps
+  - sensor.bizzyphone_activity
+  - sensor.bizzyphone_average_active_pace
+  - sensor.bizzyphone_bssid
+  - sensor.bizzyphone_battery_level
+  - sensor.bizzyphone_battery_state
+  - sensor.bizzyphone_connection_type
+  - sensor.bizzyphone_distance
+  - sensor.bizzyphone_floors_ascended
+  - sensor.bizzyphone_floors_descended
+  - sensor.bizzyphone_geocoded_location
+  - sensor.bizzyphone_last_update_trigger
+  - sensor.bizzyphone_sim_1
+  - sensor.bizzyphone_ssid
+  - sensor.bizzyphone_steps
   - device_tracker.tom_iphone
 
 iphone_tanja:
