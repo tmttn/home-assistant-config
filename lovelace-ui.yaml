@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -63,14 +54,12 @@ views:
         entity: light.living_room_lights
         hide_when_off: false
         name: Living
-        type: custom:slider-entity-row
       type: custom:fold-entity-row
     - entity: light.upper_hall_lights
       name: Hall
     - entity: light.bathroom_lights
       hide_when_off: false
       name: Bathroom
-      type: custom:slider-entity-row
     - entities:
       - light.bedroom_ceiling_lights
       - light.bedroom_bedside_tom
@@ -78,7 +67,6 @@ views:
         entity: light.bedroom_lights
         hide_when_off: false
         name: Bedroom
-        type: custom:slider-entity-row
       name: Bed
       type: custom:fold-entity-row
     - entities:
@@ -87,7 +75,6 @@ views:
         entity: light.guest_bedroom_lights
         hide_when_off: false
         name: Guest Bedroom
-        type: custom:slider-entity-row
       name: Bed
       type: custom:fold-entity-row
     - entities:
@@ -97,7 +84,6 @@ views:
           entity: light.automatic_lights
           hide_when_off: false
           name: Outside lights
-          type: custom:slider-entity-row
         type: custom:fold-entity-row
       - light.kitchen_lights
       - light.toilet
@@ -119,7 +105,6 @@ views:
         entity: light.automatic_lights
         hide_when_off: false
         name: Automatic
-        type: custom:slider-entity-row
       type: custom:fold-entity-row
     show_header_toggle: false
     type: entities
@@ -437,6 +422,16 @@ views:
     type: custom:stack-in-card
   - type: custom:layout-break
   - entities:
+    - entity: sensor.limburg_net_gft
+    - entity: sensor.limburg_net_pmd
+    - entity: sensor.limburg_net_restafval
+    - entity: sensor.limburg_net_papier
+    show_icon: true
+    show_name: false
+    show_state: true
+    state_color: false
+    type: glance
+  - entities:
     - entities:
       - icon: mdi:currency-eur
         name: '{% set kwh = states("sensor.dishwasher_today_s_consumption") | float(default=0)
@@ -679,7 +674,6 @@ views:
       - entity: sensor.hacs
         icon: mdi:update
         name: Community Store
-      - entity: binary_sensor.backups_stale
       - type: divider
       - entity: sensor.last_boot
         icon: mdi:calendar
