@@ -1,0 +1,92 @@
+input_boolean.cleaned_today:
+  disabled: false
+media_player.shield:
+  disabled: false
+media_player.google_home:
+  disabled: false
+sensor.shield_device:
+  disabled: false
+sensor.google_home_device:
+  disabled: false
+sensor.google_home_alarms:
+  disabled: false
+sensor.google_home_timers:
+  disabled: false
+switch.google_home_do_not_disturb:
+  disabled: false
+number.google_home_alarm_volume:
+  disabled: false
+automation.vacuum_disable_vacuum_camera_update_when_docked:
+  disabled: false
+climate.living_room:
+  disabled: false
+binary_sensor.motion_sensor_living_room:
+  disabled: false
+sensor.motion_sensor_living_room_info:
+  disabled: false
+binary_sensor.motion_sensor_living_room_tamper:
+  disabled: false
+sensor.motion_sensor_living_room_battery_level:
+  disabled: false
+counter.vacuum_bin_counter:
+  disabled: false
+script.cozy_lights_living_room:
+  disabled: false
+script.white_lights_living_room:
+  disabled: false
+select.woonkamer_bypass_mode:
+  disabled: false
+binary_sensor.activity_in_living_room:
+  disabled: false
+binary_sensor.vacuum_day:
+  disabled: false
+sensor.tv_volume:
+  disabled: false
+sensor.temperature_living_room:
+  disabled: false
+media_player.tv:
+  disabled: false
+remote.shield:
+  disabled: false
+remote.samsung:
+  disabled: false
+media_player.shield_2:
+  disabled: false
+sensor.robot_vacuum_current_clean_area:
+  disabled: false
+sensor.robot_vacuum_current_clean_duration:
+  disabled: false
+sensor.robot_vacuum_filter_left:
+  disabled: false
+sensor.robot_vacuum_last_clean_area:
+  disabled: false
+sensor.robot_vacuum_last_clean_duration:
+  disabled: false
+sensor.robot_vacuum_last_clean_end:
+  disabled: false
+sensor.robot_vacuum_last_clean_start:
+  disabled: false
+sensor.robot_vacuum_main_brush_left:
+  disabled: false
+binary_sensor.robot_vacuum_mop_attached:
+  disabled: false
+button.robot_vacuum_reset_filter:
+  disabled: false
+button.robot_vacuum_reset_main_brush:
+  disabled: false
+button.robot_vacuum_reset_sensor_dirty:
+  disabled: false
+button.robot_vacuum_reset_side_brush:
+  disabled: false
+sensor.robot_vacuum_sensor_dirty_left:
+  disabled: false
+sensor.robot_vacuum_side_brush_left:
+  disabled: false
+binary_sensor.robot_vacuum_water_box_attached:
+  disabled: false
+binary_sensor.robot_vacuum_water_shortage:
+  disabled: false
+vacuum.robot_vacuum:
+  disabled: false
+select.motion_sensor_living_room_chirp_tone:
+  disabled: false
