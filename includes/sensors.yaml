@@ -695,5 +695,5 @@
   cityname: !secret city_name
   streetnumber: !secret street_number
   upcomingsensor: 1
-  builtinicons: 1
+  builtiniconsnew: 1
   dutch: 1
