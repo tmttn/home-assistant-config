@@ -1,1100 +1,1052 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
     card:
       card:
         show_header_toggle: false
-        title: "[[name]] automations"
+        title: '[[name]] automations'
         type: entities
       filter:
         include:
-          - entity_id: automation.[[slug]]*
+        - entity_id: automation.[[slug]]*
       sort: entity_id
       type: custom:auto-entities
 title: Huis
 views:
-  - badges:
-      - entity: person.tom
-      - entity: person.tanja
-    cards:
-      - cards:
-          - entity: person.tom
-            icon_type: entity-picture
-            type: custom:mushroom-person-card
-          - entity: person.tanja
-            fill_container: false
-            icon_type: entity-picture
-            type: custom:mushroom-person-card
-        columns: 2
-        square: false
-        type: grid
-      - entities:
-          - entities:
-              - light.living_room_dining_table_lights
-              - light.living_room_middle_lights
-              - switch.hue_plug
-              - entity: script.cozy_lights_living_room
-                icon_height: 20px
-                name: Cozy lights
-                show_icon: false
-                show_name: true
-                tap_action:
-                  action: call-service
-                  service: script.cozy_lights_living_room
-              - entity: script.white_lights_living_room
-                icon_height: 20px
-                name: White lights
-                show_icon: false
-                show_name: true
-                tap_action:
-                  action: call-service
-                  service: script.white_lights_living_room
-            head:
-              color_picker: true
-              entity: light.living_room_lights
-              hide_when_off: false
-              name: Living
-              type: custom:slider-entity-row
-            type: custom:fold-entity-row
-          - entity: light.upper_hall_lights
-            name: Hall
-          - color_picker: true
-            entity: light.bathroom_lights
-            hide_when_off: false
-            name: Bathroom
-            type: custom:slider-entity-row
-          - entities:
-              - light.bedroom_ceiling_lights
-              - light.bedroom_bedside_tom
-            head:
-              entity: light.bedroom_lights
-              hide_when_off: false
-              name: Bedroom
-              type: custom:slider-entity-row
-            name: Bed
-            type: custom:fold-entity-row
-          - entities:
-              - light.guest_bedroom_bedside
-            head:
-              entity: light.guest_bedroom_lights
-              hide_when_off: false
-              name: Guest Bedroom
-              type: custom:slider-entity-row
-            name: Bed
-            type: custom:fold-entity-row
-          - entities:
-              - entities:
-                  - light.terrace_lights
-                head:
-                  entity: light.automatic_lights
-                  hide_when_off: false
-                  name: Outside lights
-                  type: custom:slider-entity-row
-                type: custom:fold-entity-row
-              - light.kitchen_lights
-              - light.toilet
-              - entities:
-                  - icon: mdi:human-edit
-                    name:
-                      "{% set manual_control = (\n    (state_attr('switch.adaptive_lighting_default',\
-                      \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_half_and_full',\
-                      \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_half_and_dim',\
-                      \ 'manual_control') or [])\n) %} {% if manual_control %}\n  {{ manual_control\
-                      \ | join(\", \") }}.\n{% else %}\n  Nothing is manually controlled.\n\
-                      {% endif %}\n"
-                    type: custom:template-entity-row
-                  - entity: script.reset_adaptive_lighting
-                head:
-                  label: Adaptive lighting
-                  type: section
-                type: custom:fold-entity-row
-            head:
-              entity: light.automatic_lights
-              hide_when_off: false
-              name: Automatic
-              type: custom:slider-entity-row
-            type: custom:fold-entity-row
-        show_header_toggle: false
-        type: entities
-      - entities:
-          - entity: input_datetime.alarm_clock
-        type: entities
-      - cards:
-          - double_tap_action:
-              action: none
-            entity: input_select.sleep_mode
-            fill_container: false
-            hold_action:
-              action: none
-            name: Sleep mode
-            secondary_info: none
-            tap_action:
-              action: none
-            type: custom:mushroom-select-card
-          - double_tap_action:
-              action: none
-            entity: input_boolean.alarm_clock
-            fill_container: true
-            hold_action:
-              action: none
-            layout: vertical
-            name: Alarm clock
-            tap_action:
-              action: toggle
-            type: custom:mushroom-entity-card
-        columns: 2
-        square: false
-        type: grid
-      - type: custom:layout-break
-      - double_tap_action:
-          action: none
-        entity: sensor.limburg_net_morgen
-        hold_action:
-          action: none
-        icon: mdi:trash-can
-        icon_color: white
-        primary:
-          'Take out the following trash: {% if is_state(entity, "Geen") %} nothing
-          {% else %}{{states(entity)}}{%endif%}'
-        secondary: ""
-        tap_action:
-          action: none
-        type: custom:mushroom-template-card
-      - cards:
-          - entity: climate.living_room
-            icon_type: none
-            layout: horizontal
-            show_temperature_control: true
-            type: custom:mushroom-climate-card
-          - entity: climate.bathroom
-            icon_type: none
-            layout: horizontal
-            show_temperature_control: true
-            type: custom:mushroom-climate-card
-          - entity: climate.bedroom
-            icon_type: none
-            layout: horizontal
-            show_temperature_control: true
-            type: custom:mushroom-climate-card
-          - entity: climate.guest_bedroom
-            icon_type: none
-            layout: horizontal
-            show_temperature_control: true
-            type: custom:mushroom-climate-card
-          - entity: climate.kitchen
-            icon_type: none
-            layout: horizontal
-            show_temperature_control: true
-            type: custom:mushroom-climate-card
-          - entity: climate.storage
-            icon_type: none
-            layout: horizontal
-            show_temperature_control: true
-            type: custom:mushroom-climate-card
-          - entity: climate.bedroom_marthe
-            icon_type: none
-            layout: horizontal
-            show_temperature_control: true
-            type: custom:mushroom-climate-card
-          - entity: climate.hall
-            icon_type: none
-            layout: horizontal
-            show_temperature_control: true
-            type: custom:mushroom-climate-card
-        mode: vertical
-        type: custom:stack-in-card
-      - type: custom:layout-break
-      - cards:
-          - color: auto
-            icon: mdi:weather-sunset-up
-            name: Wake up
-            styles:
-              card:
-                - font-size: 12px
-                - font-weight: bold
-                - height: 70px
-            tap_action:
-              action: call-service
-              haptic: success
-              service: input_select.select_option
-              service_data:
-                entity_id: input_select.sleep_mode
-                option: "off"
-            type: custom:button-card
-          - color: auto
-            entity: input_select.sleep_mode
-            icon: mdi:weather-night
-            name:
-              '[[[ if (entity.state != "off") return "Sleep mode on"; else return  "Go
-              to sleep" ]]]'
-            styles:
-              card:
-                - font-size: 12px
-                - font-weight: bold
-                - height: 70px
-            tap_action:
-              action: call-service
-              haptic: success
-              service: script.going_to_sleep
-            type: custom:button-card
-          - color: auto
-            icon: mdi:home-map-marker
-            name: Arrive Home
-            styles:
-              card:
-                - font-size: 12px
-                - font-weight: bold
-                - height: 70px
-            tap_action:
-              action: call-service
-              haptic: success
-              service: script.arriving
-            type: custom:button-card
-          - color: auto
-            icon: mdi:home-export-outline
-            name: Leave Home
-            styles:
-              card:
-                - font-size: 12px
-                - font-weight: bold
-                - height: 70px
-            tap_action:
-              action: call-service
-              haptic: success
-              service: script.leaving
-            type: custom:button-card
-        mode: horizontal
-        type: custom:stack-in-card
-      - cards:
-          - entity: input_boolean.vacation_mode
-            layout: vertical
-            type: custom:mushroom-entity-card
-          - entity: input_boolean.guest_mode
-            layout: vertical
-            type: custom:mushroom-entity-card
-          - entity: input_boolean.automatic_temperature
-            layout: vertical
-            type: custom:mushroom-entity-card
-          - entity: input_boolean.optimal_electric_vehicle_charging
-            layout: vertical
-            type: custom:mushroom-entity-card
-        columns: 2
-        square: false
-        type: grid
-      - cards:
-          - entities:
-              - entity: vacuum.robot_vacuum
-                name: Vacuum cleaner
-                primary:
-                  entity: binary_sensor.vacuum_day
-                  name: Vacuum day
-                secondary:
-                  attribute: battery_level
-                  name: Battery
-                  unit: "%"
-                type: custom:multiple-entity-row
-              - entity: switch.vacuum_mode
-              - entity: input_boolean.cleaned_today
-              - entity: binary_sensor.vacuum_day
-            show_header_toggle: false
-            style:
-              ".card-content {\n  padding-top: 16px;\n}\nha-card {\n  border-radius:\
-              \ var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0\
-              \ 0;\n  background: transparent;\n}\n"
-            type: entities
-          - cards:
-              - calibration_source:
-                  camera: true
-                entity: vacuum.robot_vacuum
-                icons: []
-                map_locked: true
-                map_modes:
-                  - template: vacuum_clean_zone
-                  - template: vacuum_goto
-                  - predefined_selections:
-                      - icon:
-                          name: mdi:stairs
-                          x: 17750
-                          y: 31500
-                        id: "1"
-                        label:
-                          offset_y: 35
-                          text: Hall
-                          x: 17750
-                          y: 31500
-                        outline:
-                          - - 16200
-                            - 30200
-                          - - 21900
-                            - 30200
-                          - - 21900
-                            - 33750
-                          - - 16200
-                            - 33750
-                      - icon:
-                          name: mdi:cupboard
-                          x: 23975
-                          y: 35000
-                        id: "16"
-                        label:
-                          offset_y: 35
-                          text: Storage
-                          x: 23975
-                          y: 35000
-                        outline:
-                          - - 22000
-                            - 33800
-                          - - 25950
-                            - 33800
-                          - - 25950
-                            - 35950
-                          - - 22000
-                            - 35950
-                      - icon:
-                          name: mdi:sofa
-                          x: 21500
-                          y: 28025
-                        id: "17"
-                        label:
-                          offset_y: 35
-                          text: Living room
-                          x: 21500
-                          y: 28025
-                        outline:
-                          - - 16350
-                            - 25100
-                          - - 26150
-                            - 25100
-                          - - 26150
-                            - 28450
-                          - - 24500
-                            - 28450
-                          - - 23800
-                            - 29200
-                          - - 23800
-                            - 30200
-                          - - 16350
-                            - 30200
-                      - icon:
-                          name: mdi:pot-mix
-                          x: 24025
-                          y: 32525
-                        id: "18"
-                        label:
-                          offset_y: 35
-                          text: Kitchen
-                          x: 24025
-                          y: 32525
-                        outline:
-                          - - 21900
-                            - 30200
-                          - - 23800
-                            - 30200
-                          - - 23800
-                            - 29200
-                          - - 24500
-                            - 28450
-                          - - 26150
-                            - 28450
-                          - - 26150
-                            - 30200
-                          - - 25500
-                            - 30200
-                          - - 25500
-                            - 33800
-                          - - 21900
-                            - 33800
-                    template: vacuum_clean_segment
-                map_source:
-                  camera: camera.xiaomi_cloud_map_extractor
-                style:
-                  "ha-card {\n  border-radius: 0 0 var(--ha-card-border-radius, 12px)\
-                  \ var(--ha-card-border-radius, 12px);\n}\n"
-                tiles: []
-                two_finger_pan: false
-                type: custom:xiaomi-vacuum-map-card
-            style:
-              "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
-              \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
-              }\n"
-            title: Vacuum map
-            type: custom:collapsable-cards
-          - cards:
-              - entity: vacuum.robot_vacuum
-                image: null
-                name: false
-                type: custom:xiaomi-vacuum-card
-                vendor: xiaomi
-            style:
-              "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
-              \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
-              }\n"
-            title: Vacuum maintenance
-            type: custom:collapsable-cards
-        mode: vertical
-        type: custom:stack-in-card
-      - type: custom:layout-break
-      - entities:
-          - entities:
-              - icon: mdi:currency-eur
-                name:
-                  '{% set kwh = states("sensor.dishwasher_today_s_consumption") | float(default=0)
-                  %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
-                  * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
-
-                  '
-                type: custom:template-entity-row
-            head:
-              entity: binary_sensor.dishwasher
-              name: Dishwasher
-              secondary:
-                "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.dishwasher_on\"\
-                )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.dishwasher_off\"\
-                )) %} {% if states(\"binary_sensor.dishwasher\") == \"on\" %}\n  Has been\
-                \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
-                \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-              state:
-                "{% if is_state(\"binary_sensor.dishwasher\", \"on\") %}\n  {{ states(\"\
-                sensor.dishwasher_current_consumption\") }} Watt\n{% else %}\n  Off\n{%\
-                \ endif %}\n"
-              type: custom:template-entity-row
-            type: custom:fold-entity-row
-          - entities:
-              - icon: mdi:currency-eur
-                name:
-                  '{% set kwh = states("sensor.washing_machine_today_s_consumption") |
-                  float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
-                  * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
-
-                  '
-                type: custom:template-entity-row
-            head:
-              entity: binary_sensor.washing_machine
-              name: Washing machine
-              secondary:
-                "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_on\"\
-                )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_off\"\
-                )) %} {% if states(\"binary_sensor.washing_machine\") == \"on\" %}\n  Has\
-                \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
-                \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-              state:
-                "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
-                \ states(\"sensor.washing_machine_energy_consumption\")|float(3) }} KWh\n\
-                {% else %}\n  Off\n{% endif %}\n"
-              type: custom:template-entity-row
-            type: custom:fold-entity-row
-          - entities:
-              - icon: mdi:currency-eur
-                name:
-                  '{% set kwh = states("sensor.tumble_dryer_today_s_consumption") | float(default=0)
-                  %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
-                  * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
-
-                  '
-                type: custom:template-entity-row
-            head:
-              entity: binary_sensor.tumble_dryer
-              name: Tumble dryer
-              secondary:
-                "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_on\"\
-                )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_off\"\
-                )) %} {% if states(\"binary_sensor.tumble_dryer\") == \"on\" %}\n  Has been\
-                \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
-                \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-              state:
-                "{% if is_state(\"binary_sensor.tumble_dryer\", \"on\") %}\n  {{ states(\"\
-                sensor.tumble_dryer_current_consumption\") }} Watt\n{% else %}\n  Off\n\
-                {% endif %}\n"
-              type: custom:template-entity-row
-            type: custom:fold-entity-row
-          - entities:
-              - icon: mdi:currency-eur
-                name:
-                  '{% set kwh = states("sensor.espresso_machine_today_s_consumption")
-                  | float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
-                  * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
-
-                  '
-                type: custom:template-entity-row
-            head:
-              entity: binary_sensor.espresso_machine
-              name: Espresso machine
-              secondary:
-                "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_on\"\
-                )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_off\"\
-                )) %} {% if states(\"binary_sensor.espresso_machine\") == \"on\" %}\n  Has\
-                \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
-                \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
-              state:
-                "{% if is_state(\"binary_sensor.espresso_machine\", \"on\") %}\n  {{\
-                \ states(\"sensor.espresso_machine_current_consumption\") }} Watt\n{% else\
-                \ %}\n  Off\n{% endif %}\n"
-              type: custom:template-entity-row
-            type: custom:fold-entity-row
-          - entities:
-              - icon: mdi:trending-up
-                name: "Today's usage statistics "
-                type: custom:template-entity-row
-              - name:
-                  '{{ states("sensor.daily_power")|float(default=0)|round(2) }} kWh power
-                  → €{{ states("sensor.daily_power_cost")|float(default=0)|round(2) }}. '
-                type: custom:template-entity-row
-              - name:
-                  '{{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³ gas →
-                  €{{ states("sensor.daily_gas_cost")|float(default=0)|round(2) }}. '
-                type: custom:template-entity-row
-              - name:
-                  '€{{ states("sensor.daily_energy_fixed_cost")|float(default=0)|round(2)
-                  }} (fixed) + €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0))|round(2)}}
-                  = €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
-                  + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }}. '
-                type: custom:template-entity-row
-              - type: divider
-              - icon: mdi:trending-up
-                name: '{{ as_timestamp(now()) | timestamp_custom("%B") }}''s usage statistics '
-                type: custom:template-entity-row
-              - name:
-                  '{{ states("sensor.monthly_power")|float(default=0)|round(2) }} kWh
-                  power → €{{ states("sensor.monthly_power_cost")|float(default=0)|round(2)
-                  }}. '
-                type: custom:template-entity-row
-              - name:
-                  '{{ states("sensor.monthly_gas")|float(default=0)|round(2) }} m³ gas
-                  → €{{ states("sensor.monthly_gas_cost")|float(default=0)|round(2) }}. '
-                type: custom:template-entity-row
-              - name:
-                  '€{{ states("sensor.monthly_energy_fixed_cost")|float(default=0)|round(2)
-                  }} (fixed) + €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0))|round(2)}}
-                  = €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0)
-                  + states("sensor.monthly_energy_fixed_cost")|float(default=0))|round(2)
-                  }}. '
-                type: custom:template-entity-row
-              - type: divider
-              - icon: mdi:trending-up
-                name: "Last month's usage statistics "
-                type: custom:template-entity-row
-              - name:
-                  '{{ states("sensor.monthly_power_last_period")|float(default=0)|round(2)
-                  }} kWh power → €{{ states("sensor.monthly_power_cost_last_period")|float(default=0)|round(2)
-                  }}. '
-                type: custom:template-entity-row
-              - name:
-                  '{{ state_attr("sensor.monthly_gas", "last_period")|float(default=0)|round(2)
-                  }} m³ gas → €{{ states("sensor.monthly_gas_cost_last_period")|float(default=0)|round(2)
-                  }}. '
-                type: custom:template-entity-row
-              - name:
-                  '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0)|round(2)
-                  }} (fixed) + €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0)
-                  + states("sensor.monthly_power_cost_last_period")|float(default=0))|round(2)}}
-                  = €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0) +
-                  states("sensor.monthly_power_cost_last_period")|float(default=0) + states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0))|round(2)
-                  }}. '
-                type: custom:template-entity-row
-            head:
-              entity: sensor.daily_gas
-              name: Energy usage
-              secondary:
-                'Today {{ states("sensor.daily_power")|float(default=0)|round(2)
-                }} kWh and {{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³
-                gas. '
-              state:
-                '€{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
-                + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }} '
-              type: custom:template-entity-row
-            type: custom:fold-entity-row
-        show_header_toggle: false
-        title: Utilities
-        type: entities
-      - cards:
-          - cards:
-              - color_thresholds_transition: smooth
-                entities:
-                  - entity: sensor.p1_meter_active_power
-                    name: Power consumption
-                font_size: 100
-                group: false
-                hour24: true
-                line_width: 6
-                points_per_hour: 1
-                show:
-                  extrema: false
-                  fill: fade
-                  labels: false
-                  name: true
-                  state: true
-                type: custom:mini-graph-card
-              - color_thresholds_transition: smooth
-                entities:
-                  - entity: sensor.daily_gas
-                    name: Gas consumption
-                font_size: 100
-                group: false
-                hour24: true
-                line_width: 6
-                points_per_hour: 1
-                show:
-                  extrema: false
-                  fill: fade
-                  labels: false
-                  name: true
-                  state: true
-                type: custom:mini-graph-card
-            type: horizontal-stack
-          - cards:
-              - color_thresholds_transition: smooth
-                entities:
-                  - entity: sensor.daily_power_cost
-                    name: Power cost
-                font_size: 100
-                group: false
-                hour24: true
-                line_width: 6
-                points_per_hour: 1
-                show:
-                  extrema: false
-                  fill: fade
-                  labels: false
-                  name: true
-                  state: true
-                type: custom:mini-graph-card
-              - color_thresholds_transition: smooth
-                entities:
-                  - entity: sensor.daily_gas_cost
-                    name: Gas cost
-                font_size: 100
-                group: false
-                hour24: true
-                line_width: 6
-                points_per_hour: 1
-                show:
-                  extrema: false
-                  fill: fade
-                  labels: false
-                  name: true
-                  state: true
-                type: custom:mini-graph-card
-            type: horizontal-stack
-        parameters:
-          autoplay:
-            delay: 5000
-          speed: 2000
-        type: vertical-stack
-    icon: mdi:home
-    layout:
-      width: 300
-    path: default_view
-    theme: Fluent Blue
-    title: Home
-    type: custom:vertical-layout
-  - badges: []
-    cards:
-      - cards:
-          - entities:
-              - entity: sensor.current_version
-                icon: mdi:home-assistant
-                name: Hassio Installed Version
-              - entity: sensor.home_assistant_versions
-                icon: mdi:home-assistant
-                name: Hassio Current Version
-              - entity: sensor.hacs
-                icon: mdi:update
-                name: Community Store
-              - entity: binary_sensor.backups_stale
-              - type: divider
-              - entity: sensor.last_boot
-                icon: mdi:calendar
-              - entity: sensor.uptime
-                icon: mdi:home-assistant
-              - entity: sensor.mariadb_size
-                icon: mdi:home-assistant
-              - animation: "off"
-                entity: sensor.processor_use
-                entity_row: true
-                height: 30px
-                indicator: "off"
-                severity:
-                  - color: green
-                    from: 0
-                    to: 60
-                  - color: orange
-                    from: 60
-                    to: 85
-                  - color: red
-                    from: 85
-                    to: 100
-                style:
-                  "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-                  \ 0, 0)';\n}\n"
-                type: custom:bar-card
-              - animation: "off"
-                entity: sensor.memory_use_percent
-                entity_row: true
-                height: 30px
-                indicator: "off"
-                severity:
-                  - color: green
-                    from: 0
-                    to: 60
-                  - color: orange
-                    from: 60
-                    to: 85
-                  - color: red
-                    from: 85
-                    to: 100
-                style:
-                  "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-                  \ 0, 0)';\n}\n"
-                type: custom:bar-card
-              - animation: "off"
-                entity: sensor.disk_use_percent
-                entity_row: true
-                height: 30px
-                indicator: "off"
-                severity:
-                  - color: green
-                    from: 0
-                    to: 60
-                  - color: orange
-                    from: 60
-                    to: 85
-                  - color: red
-                    from: 85
-                    to: 100
-                style:
-                  "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-                  \ 0, 0)';\n}\n"
-                type: custom:bar-card
-              - type: divider
-              - entity: sensor.myip
-                icon: mdi:ip-network
-            show_header_toggle: false
-            title: System
-            type: entities
-        type: vertical-stack
-      - cards:
-          - columns: 4
-            entities:
-              - entity: sensor.count_automations
-                name: Automations
-              - entity: sensor.count_scripts
-                name: Scripts
-              - entity: sensor.count_zones
-                name: Zones
-              - entity: sensor.count_device_trackers
-                name: Device Trackers
-              - entity: sensor.count_switches
-                name: Switches
-              - entity: sensor.count_sensors
-                name: Sensors
-              - entity: sensor.count_binary_sensors
-                name: Binary Sensors
-              - entity: sensor.count_input_booleans
-                name: Input Booleans
-              - entity: sensor.count_input_numbers
-                name: Input Numbers
-              - entity: sensor.count_input_texts
-                name: Input Texts
-              - entity: sensor.count_input_selects
-                name: Input Select
-              - entity: sensor.count_input_datetimes
-                name: Input Date Times
-            title: Component Count
-            type: glance
-        type: vertical-stack
-      - cards:
-          - cards:
-              - color_thresholds_transition: smooth
-                entities:
-                  - entity: sensor.speedtest_ping
-                    index: 0
-                    name: Ping
-                font_size: 70
-                group: false
-                hour24: true
-                line_width: 6
-                lower_bound: 0
-                points_per_hour: 1
-                show:
-                  extrema: true
-                  fill: fade
-                  icon: true
-                  labels: false
-                  name: true
-                  state: true
-                style:
-                  "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-                  \ 0, 0)';\n}\n"
-                type: custom:mini-graph-card
-              - color_thresholds_transition: smooth
-                entities:
-                  - entity: sensor.speedtest_download
-                    index: 0
-                    name: Download
-                font_size: 70
-                group: false
-                hour24: true
-                line_width: 6
-                lower_bound: 0
-                points_per_hour: 1
-                show:
-                  extrema: true
-                  fill: fade
-                  icon: true
-                  labels: false
-                  name: true
-                  state: true
-                style:
-                  "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-                  \ 0, 0)';\n}\n"
-                type: custom:mini-graph-card
-              - color_thresholds_transition: smooth
-                entities:
-                  - entity: sensor.speedtest_upload
-                    index: 0
-                    name: Upload
-                font_size: 70
-                group: false
-                hour24: true
-                line_width: 6
-                lower_bound: 0
-                points_per_hour: 1
-                show:
-                  extrema: true
-                  fill: fade
-                  icon: true
-                  labels: false
-                  name: true
-                  state: true
-                style:
-                  "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-                  \ 0, 0)';\n}\n"
-                type: custom:mini-graph-card
-            horizontal: true
-            name: Speedtest
-            style:
-              "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
-              \ 0, 0)';\n}\n"
-            type: custom:vertical-stack-in-card
-        style:
-          "ha-card {\n  box-shadow: none;\n  --ha-card-background: var(--ha-card-background);\n\
-          }\n"
-        title: Network
-        type: custom:vertical-stack-in-card
-      - entities:
-          - entity: zone.home
-            icon: mdi:restart
-            name: Lovelace
-            tap_action:
-              action: call-service
-              service: frontend.reload_themes
-          - entity: zone.home
-            icon: mdi:restart
-            name: Home Assistant
-            tap_action:
-              action: call-service
-              service: homeassistant.restart
-          - entity: zone.home
-            icon: mdi:restart
-            name: Server
-            tap_action:
-              action: call-service
-              service: hassio.host_reboot
+- badges:
+  - entity: person.tom
+  - entity: person.tanja
+  cards:
+  - cards:
+    - entity: person.tom
+      icon_type: entity-picture
+      type: custom:mushroom-person-card
+    - entity: person.tanja
+      fill_container: false
+      icon_type: entity-picture
+      type: custom:mushroom-person-card
+    columns: 2
+    square: false
+    type: grid
+  - entities:
+    - entities:
+      - light.living_room_dining_table_lights
+      - light.living_room_middle_lights
+      - switch.hue_plug
+      - entity: script.cozy_lights_living_room
+        icon_height: 20px
+        name: Cozy lights
+        show_icon: false
         show_name: true
-        show_state: false
-        type: glance
-    icon: mdi:home-assistant
-    path: system
-    theme: ios-dark-mode-blue-red
-    title: System Information
-  - badges: []
-    cards:
-      - card:
-          show_header_toggle: false
-          title: Uncategorized automations
-          type: entities
-        filter:
-          exclude:
-            - entity_id: automation.adaptive_lighting*
-            - entity_id: automation.alarm_clock_*
-            - entity_id: automation.apple_watch*
-            - entity_id: automation.arriving_*
-            - entity_id: automation.climate_*
-            - entity_id: automation.control_switches*
-            - entity_id: automation.cube_*
-            - entity_id: automation.doorbell_*
-            - entity_id: automation.frontend_*
-            - entity_id: automation.kef_dsp_*
-            - entity_id: automation.leaving_*
-            - entity_id: automation.light_*
-            - entity_id: automation.lovelace_*
-            - entity_id: automation.lsx_*
-            - entity_id: automation.media_player_*
-            - entity_id: automation.music_*
-            - entity_id: automation.night_mode_*
-            - entity_id: automation.plant_*
-            - entity_id: automation.rhasspy_*
-            - entity_id: automation.security_*
-            - entity_id: automation.system_*
-            - entity_id: automation.utilities_*
-            - entity_id: automation.vacation_mode_*
-            - entity_id: automation.vacuum_*
-            - entity_id: automation.work*
-            - entity_id: automation.curtains_*
-            - entity_id: automation.energy_*
-            - entity_id: automation.medication_*
-            - entity_id: automation.candy_*
-            - entity_id: automation.electric_vehicle_*
-            - entity_id: automation.ai_*
-          include:
-            - domain: automation
-        show_empty: false
-        sort: entity_id
-        type: custom:auto-entities
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Alarm clock
-          - slug: alarm_clock
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Plant
-          - slug: plant_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Climate
-          - slug: climate
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Leaving
-          - slug: leaving
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Light
-          - slug: light
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Lovelace
-          - slug: lovelace
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Night mode
-          - slug: night_mode_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Security
-          - slug: security
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: System
-          - slug: system_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Utilities
-          - slug: utilities_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Vacation mode
-          - slug: vacation_mode
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Vacuum
-          - slug: vacuum
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Work
-          - slug: work
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Apple Watch
-          - slug: apple_watch
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Adaptive Lighting
-          - slug: adaptive_lighting_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Curtains
-          - slug: curtains_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Doorbell
-          - slug: doorbell_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Security
-          - slug: security_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Music
-          - slug: music_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Arriving
-          - slug: arriving
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Control Switches
-          - slug: control_switches_
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Energy
-          - slug: energy
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Medication
-          - slug: medication
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Candy
-          - slug: candy
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: Electric vehicle
-          - slug: electric_vehicle
-      - template: automation_template
-        type: custom:decluttering-card
-        variables:
-          - name: AI
-          - slug: ai
-    icon: mdi:robot
-    layout:
-      max_cols: 7
-    path: automations
-    theme: ios-dark-mode-blue-red
-    title: Automations
-    type: custom:masonry-layout
+        tap_action:
+          action: call-service
+          service: script.cozy_lights_living_room
+      - entity: script.white_lights_living_room
+        icon_height: 20px
+        name: White lights
+        show_icon: false
+        show_name: true
+        tap_action:
+          action: call-service
+          service: script.white_lights_living_room
+      head:
+        entity: light.living_room_lights
+        hide_when_off: false
+        name: Living
+        type: custom:slider-entity-row
+      type: custom:fold-entity-row
+    - entity: light.upper_hall_lights
+      name: Hall
+    - entity: light.bathroom_lights
+      hide_when_off: false
+      name: Bathroom
+      type: custom:slider-entity-row
+    - entities:
+      - light.bedroom_ceiling_lights
+      - light.bedroom_bedside_tom
+      head:
+        entity: light.bedroom_lights
+        hide_when_off: false
+        name: Bedroom
+        type: custom:slider-entity-row
+      name: Bed
+      type: custom:fold-entity-row
+    - entities:
+      - light.guest_bedroom_bedside
+      head:
+        entity: light.guest_bedroom_lights
+        hide_when_off: false
+        name: Guest Bedroom
+        type: custom:slider-entity-row
+      name: Bed
+      type: custom:fold-entity-row
+    - entities:
+      - entities:
+        - light.terrace_lights
+        head:
+          entity: light.automatic_lights
+          hide_when_off: false
+          name: Outside lights
+          type: custom:slider-entity-row
+        type: custom:fold-entity-row
+      - light.kitchen_lights
+      - light.toilet
+      - entities:
+        - icon: mdi:human-edit
+          name: "{% set manual_control = (\n    (state_attr('switch.adaptive_lighting_default',\
+            \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_half_and_full',\
+            \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_half_and_dim',\
+            \ 'manual_control') or [])\n) %} {% if manual_control %}\n  {{ manual_control\
+            \ | join(\", \") }}.\n{% else %}\n  Nothing is manually controlled.\n\
+            {% endif %}\n"
+          type: custom:template-entity-row
+        - entity: script.reset_adaptive_lighting
+        head:
+          label: Adaptive lighting
+          type: section
+        type: custom:fold-entity-row
+      head:
+        entity: light.automatic_lights
+        hide_when_off: false
+        name: Automatic
+        type: custom:slider-entity-row
+      type: custom:fold-entity-row
+    show_header_toggle: false
+    type: entities
+  - entities:
+    - entity: input_datetime.alarm_clock
+    type: entities
+  - cards:
+    - double_tap_action:
+        action: none
+      entity: input_select.sleep_mode
+      fill_container: false
+      hold_action:
+        action: none
+      name: Sleep mode
+      secondary_info: none
+      tap_action:
+        action: none
+      type: custom:mushroom-select-card
+    - double_tap_action:
+        action: none
+      entity: input_boolean.alarm_clock
+      fill_container: true
+      hold_action:
+        action: none
+      layout: vertical
+      name: Alarm clock
+      tap_action:
+        action: toggle
+      type: custom:mushroom-entity-card
+    columns: 2
+    square: false
+    type: grid
+  - type: custom:layout-break
+  - double_tap_action:
+      action: none
+    entity: sensor.limburg_net_morgen
+    hold_action:
+      action: none
+    icon: mdi:trash-can
+    icon_color: white
+    primary: 'Take out the following trash: {% if is_state(entity, "Geen") %} nothing
+      {% else %}{{states(entity)}}{%endif%}'
+    secondary: ''
+    tap_action:
+      action: none
+    type: custom:mushroom-template-card
+  - cards:
+    - entity: climate.living_room
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.bathroom
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.bedroom
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.guest_bedroom
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.kitchen
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.storage
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.bedroom_marthe
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    - entity: climate.hall
+      icon_type: none
+      layout: horizontal
+      show_temperature_control: true
+      type: custom:mushroom-climate-card
+    mode: vertical
+    type: custom:stack-in-card
+  - type: custom:layout-break
+  - cards:
+    - color: auto
+      icon: mdi:weather-sunset-up
+      name: Wake up
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: input_select.select_option
+        service_data:
+          entity_id: input_select.sleep_mode
+          option: 'off'
+      type: custom:button-card
+    - color: auto
+      entity: input_select.sleep_mode
+      icon: mdi:weather-night
+      name: '[[[ if (entity.state != "off") return "Sleep mode on"; else return  "Go
+        to sleep" ]]]'
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.going_to_sleep
+      type: custom:button-card
+    - color: auto
+      icon: mdi:home-map-marker
+      name: Arrive Home
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.arriving
+      type: custom:button-card
+    - color: auto
+      icon: mdi:home-export-outline
+      name: Leave Home
+      styles:
+        card:
+        - font-size: 12px
+        - font-weight: bold
+        - height: 70px
+      tap_action:
+        action: call-service
+        haptic: success
+        service: script.leaving
+      type: custom:button-card
+    mode: horizontal
+    type: custom:stack-in-card
+  - cards:
+    - entity: input_boolean.vacation_mode
+      layout: vertical
+      type: custom:mushroom-entity-card
+    - entity: input_boolean.guest_mode
+      layout: vertical
+      type: custom:mushroom-entity-card
+    - entity: input_boolean.automatic_temperature
+      layout: vertical
+      type: custom:mushroom-entity-card
+    - entity: input_boolean.optimal_electric_vehicle_charging
+      layout: vertical
+      type: custom:mushroom-entity-card
+    columns: 2
+    square: false
+    type: grid
+  - cards:
+    - entities:
+      - entity: vacuum.robot_vacuum
+        name: Vacuum cleaner
+        primary:
+          entity: binary_sensor.vacuum_day
+          name: Vacuum day
+        secondary:
+          attribute: battery_level
+          name: Battery
+          unit: '%'
+        type: custom:multiple-entity-row
+      - entity: switch.vacuum_mode
+        name: Vacuum mode
+      - entity: input_boolean.cleaned_today
+      - entity: binary_sensor.vacuum_day
+      show_header_toggle: false
+      style: ".card-content {\n  padding-top: 16px;\n}\nha-card {\n  border-radius:\
+        \ var(--ha-card-border-radius, 12px) var(--ha-card-border-radius, 12px) 0\
+        \ 0;\n  background: transparent;\n}\n"
+      type: entities
+    - cards:
+      - calibration_source:
+          camera: true
+        entity: vacuum.robot_vacuum
+        icons: []
+        map_locked: true
+        map_modes:
+        - template: vacuum_clean_zone
+        - template: vacuum_goto
+        - predefined_selections:
+          - icon:
+              name: mdi:stairs
+              x: 17750
+              y: 31500
+            id: '1'
+            label:
+              offset_y: 35
+              text: Hall
+              x: 17750
+              y: 31500
+            outline:
+            - - 16200
+              - 30200
+            - - 21900
+              - 30200
+            - - 21900
+              - 33750
+            - - 16200
+              - 33750
+          - icon:
+              name: mdi:cupboard
+              x: 23975
+              y: 35000
+            id: '16'
+            label:
+              offset_y: 35
+              text: Storage
+              x: 23975
+              y: 35000
+            outline:
+            - - 22000
+              - 33800
+            - - 25950
+              - 33800
+            - - 25950
+              - 35950
+            - - 22000
+              - 35950
+          - icon:
+              name: mdi:sofa
+              x: 21500
+              y: 28025
+            id: '17'
+            label:
+              offset_y: 35
+              text: Living room
+              x: 21500
+              y: 28025
+            outline:
+            - - 16350
+              - 25100
+            - - 26150
+              - 25100
+            - - 26150
+              - 28450
+            - - 24500
+              - 28450
+            - - 23800
+              - 29200
+            - - 23800
+              - 30200
+            - - 16350
+              - 30200
+          - icon:
+              name: mdi:pot-mix
+              x: 24025
+              y: 32525
+            id: '18'
+            label:
+              offset_y: 35
+              text: Kitchen
+              x: 24025
+              y: 32525
+            outline:
+            - - 21900
+              - 30200
+            - - 23800
+              - 30200
+            - - 23800
+              - 29200
+            - - 24500
+              - 28450
+            - - 26150
+              - 28450
+            - - 26150
+              - 30200
+            - - 25500
+              - 30200
+            - - 25500
+              - 33800
+            - - 21900
+              - 33800
+          template: vacuum_clean_segment
+        map_source:
+          camera: camera.xiaomi_cloud_map_extractor
+        style: "ha-card {\n  border-radius: 0 0 var(--ha-card-border-radius, 12px)\
+          \ var(--ha-card-border-radius, 12px);\n}\n"
+        tiles: []
+        two_finger_pan: false
+        type: custom:xiaomi-vacuum-map-card
+      style: "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
+        \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
+        }\n"
+      title: Vacuum map
+      type: custom:collapsable-cards
+    - cards:
+      - entity: vacuum.robot_vacuum
+        image: null
+        name: false
+        type: custom:xiaomi-vacuum-card
+        vendor: xiaomi
+      style: "ha-card {\n  background: transparent;\n  padding-left: 8px;\n  border-radius:\
+        \ 0;\n}\nbutton.card-content:focus {\n  background: transparent !important;\n\
+        }\n"
+      title: Vacuum maintenance
+      type: custom:collapsable-cards
+    mode: vertical
+    type: custom:stack-in-card
+  - type: custom:layout-break
+  - entities:
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.dishwasher_today_s_consumption") | float(default=0)
+          %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      head:
+        entity: binary_sensor.dishwasher
+        name: Dishwasher
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.dishwasher_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.dishwasher_off\"\
+          )) %} {% if states(\"binary_sensor.dishwasher\") == \"on\" %}\n  Has been\
+          \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
+          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.dishwasher\", \"on\") %}\n  {{ states(\"\
+          sensor.dishwasher_current_consumption\") }} Watt\n{% else %}\n  Off\n{%\
+          \ endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.washing_machine_today_s_consumption") |
+          float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      head:
+        entity: binary_sensor.washing_machine
+        name: Washing machine
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.washing_machine_off\"\
+          )) %} {% if states(\"binary_sensor.washing_machine\") == \"on\" %}\n  Has\
+          \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
+          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.washing_machine\", \"on\") %}\n  {{\
+          \ states(\"sensor.washing_machine_energy\")|float(3) }} KWh\n{% else %}\n\
+          \  Off\n{% endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.tumble_dryer_today_s_consumption") | float(default=0)
+          %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      head:
+        entity: binary_sensor.tumble_dryer
+        name: Tumble dryer
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.tumble_dryer_off\"\
+          )) %} {% if states(\"binary_sensor.tumble_dryer\") == \"on\" %}\n  Has been\
+          \ on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been off\
+          \ for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.tumble_dryer\", \"on\") %}\n  {{ states(\"\
+          sensor.tumble_dryer_current_consumption\") }} Watt\n{% else %}\n  Off\n\
+          {% endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:currency-eur
+        name: '{% set kwh = states("sensor.espresso_machine_today_s_consumption")
+          | float(default=0) %} {% set cost_today = states(''sensor.electricity_price_peak'')|float(default=0)
+          * kwh %} Today used {{ kwh }} kWh and cost €{{ cost_today | round(2) }}.
+
+          '
+        type: custom:template-entity-row
+      head:
+        entity: binary_sensor.espresso_machine
+        name: Espresso machine
+        secondary: "{% set on_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_on\"\
+          )) %} {% set off_for = as_timestamp(now()) - as_timestamp(states(\"input_datetime.espresso_machine_off\"\
+          )) %} {% if states(\"binary_sensor.espresso_machine\") == \"on\" %}\n  Has\
+          \ been on for {{ (on_for / 60)|round(0) }} minutes.\n{% else %}\n  Has been\
+          \ off for {{ (off_for / 3600)|round(1, default=0) }} hours.\n{% endif %}\n"
+        state: "{% if is_state(\"binary_sensor.espresso_machine\", \"on\") %}\n  {{\
+          \ states(\"sensor.espresso_machine_current_consumption\") }} Watt\n{% else\
+          \ %}\n  Off\n{% endif %}\n"
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    - entities:
+      - icon: mdi:trending-up
+        name: 'Today''s usage statistics '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.daily_power")|float(default=0)|round(2) }} kWh power
+          → €{{ states("sensor.daily_power_cost")|float(default=0)|round(2) }}. '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³ gas →
+          €{{ states("sensor.daily_gas_cost")|float(default=0)|round(2) }}. '
+        type: custom:template-entity-row
+      - name: '€{{ states("sensor.daily_energy_fixed_cost")|float(default=0)|round(2)
+          }} (fixed) + €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0))|round(2)}}
+          = €{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
+          + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }}. '
+        type: custom:template-entity-row
+      - type: divider
+      - icon: mdi:trending-up
+        name: '{{ as_timestamp(now()) | timestamp_custom("%B") }}''s usage statistics '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.monthly_power")|float(default=0)|round(2) }} kWh
+          power → €{{ states("sensor.monthly_power_cost")|float(default=0)|round(2)
+          }}. '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.monthly_gas")|float(default=0)|round(2) }} m³ gas
+          → €{{ states("sensor.monthly_gas_cost")|float(default=0)|round(2) }}. '
+        type: custom:template-entity-row
+      - name: '€{{ states("sensor.monthly_energy_fixed_cost")|float(default=0)|round(2)
+          }} (fixed) + €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0))|round(2)}}
+          = €{{ (states("sensor.monthly_gas_cost")|float(default=0) + states("sensor.monthly_power_cost")|float(default=0)
+          + states("sensor.monthly_energy_fixed_cost")|float(default=0))|round(2)
+          }}. '
+        type: custom:template-entity-row
+      - type: divider
+      - icon: mdi:trending-up
+        name: 'Last month''s usage statistics '
+        type: custom:template-entity-row
+      - name: '{{ states("sensor.monthly_power_last_period")|float(default=0)|round(2)
+          }} kWh power → €{{ states("sensor.monthly_power_cost_last_period")|float(default=0)|round(2)
+          }}. '
+        type: custom:template-entity-row
+      - name: '{{ state_attr("sensor.monthly_gas", "last_period")|float(default=0)|round(2)
+          }} m³ gas → €{{ states("sensor.monthly_gas_cost_last_period")|float(default=0)|round(2)
+          }}. '
+        type: custom:template-entity-row
+      - name: '€{{ states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0)|round(2)
+          }} (fixed) + €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0)
+          + states("sensor.monthly_power_cost_last_period")|float(default=0))|round(2)}}
+          = €{{ (states("sensor.monthly_gas_cost_last_period")|float(default=0) +
+          states("sensor.monthly_power_cost_last_period")|float(default=0) + states("sensor.monthly_energy_fixed_cost_last_period")|float(default=0))|round(2)
+          }}. '
+        type: custom:template-entity-row
+      head:
+        entity: sensor.daily_gas
+        name: Energy usage
+        secondary: 'Today {{ states("sensor.daily_power")|float(default=0)|round(2)
+          }} kWh and {{ states("sensor.daily_gas")|float(default=0)|round(2) }} m³
+          gas. '
+        state: '€{{ (states("sensor.daily_gas_cost")|float(default=0) + states("sensor.daily_power_cost")|float(default=0)
+          + states("sensor.daily_energy_fixed_cost")|float(default=0))|round(2) }} '
+        type: custom:template-entity-row
+      type: custom:fold-entity-row
+    show_header_toggle: false
+    title: Utilities
+    type: entities
+  - cards:
+    - cards:
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.p1_meter_active_power
+          name: Power consumption
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.daily_gas
+          name: Gas consumption
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      type: horizontal-stack
+    - cards:
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.daily_power_cost
+          name: Power cost
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.daily_gas_cost
+          name: Gas cost
+        font_size: 100
+        group: false
+        hour24: true
+        line_width: 6
+        points_per_hour: 1
+        show:
+          extrema: false
+          fill: fade
+          labels: false
+          name: true
+          state: true
+        type: custom:mini-graph-card
+      type: horizontal-stack
+    parameters:
+      autoplay:
+        delay: 5000
+      speed: 2000
+    type: vertical-stack
+  icon: mdi:home
+  layout:
+    width: 300
+  path: default_view
+  theme: Fluent Blue
+  title: Home
+  type: custom:vertical-layout
+- badges: []
+  cards:
+  - cards:
+    - entities:
+      - entity: sensor.current_version
+        icon: mdi:home-assistant
+        name: Hassio Installed Version
+      - entity: sensor.home_assistant_versions
+        icon: mdi:home-assistant
+        name: Hassio Current Version
+      - entity: sensor.hacs
+        icon: mdi:update
+        name: Community Store
+      - entity: binary_sensor.backups_stale
+      - type: divider
+      - entity: sensor.last_boot
+        icon: mdi:calendar
+      - entity: sensor.uptime
+        icon: mdi:home-assistant
+      - entity: sensor.mariadb_size
+        icon: mdi:home-assistant
+      - animation: 'off'
+        entity: sensor.processor_use
+        entity_row: true
+        height: 30px
+        indicator: 'off'
+        severity:
+        - color: green
+          from: 0
+          to: 60
+        - color: orange
+          from: 60
+          to: 85
+        - color: red
+          from: 85
+          to: 100
+        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
+          \ 0, 0)';\n}\n"
+        type: custom:bar-card
+      - animation: 'off'
+        entity: sensor.memory_use_percent
+        entity_row: true
+        height: 30px
+        indicator: 'off'
+        severity:
+        - color: green
+          from: 0
+          to: 60
+        - color: orange
+          from: 60
+          to: 85
+        - color: red
+          from: 85
+          to: 100
+        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
+          \ 0, 0)';\n}\n"
+        type: custom:bar-card
+      - animation: 'off'
+        entity: sensor.disk_use_percent
+        entity_row: true
+        height: 30px
+        indicator: 'off'
+        severity:
+        - color: green
+          from: 0
+          to: 60
+        - color: orange
+          from: 60
+          to: 85
+        - color: red
+          from: 85
+          to: 100
+        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
+          \ 0, 0)';\n}\n"
+        type: custom:bar-card
+      - type: divider
+      - entity: sensor.myip
+        icon: mdi:ip-network
+      show_header_toggle: false
+      title: System
+      type: entities
+    type: vertical-stack
+  - cards:
+    - columns: 4
+      entities:
+      - entity: sensor.count_automations
+        name: Automations
+      - entity: sensor.count_scripts
+        name: Scripts
+      - entity: sensor.count_zones
+        name: Zones
+      - entity: sensor.count_device_trackers
+        name: Device Trackers
+      - entity: sensor.count_switches
+        name: Switches
+      - entity: sensor.count_sensors
+        name: Sensors
+      - entity: sensor.count_binary_sensors
+        name: Binary Sensors
+      - entity: sensor.count_input_booleans
+        name: Input Booleans
+      - entity: sensor.count_input_numbers
+        name: Input Numbers
+      - entity: sensor.count_input_texts
+        name: Input Texts
+      - entity: sensor.count_input_selects
+        name: Input Select
+      - entity: sensor.count_input_datetimes
+        name: Input Date Times
+      title: Component Count
+      type: glance
+    type: vertical-stack
+  - cards:
+    - cards:
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.speedtest_ping
+          index: 0
+          name: Ping
+        font_size: 70
+        group: false
+        hour24: true
+        line_width: 6
+        lower_bound: 0
+        points_per_hour: 1
+        show:
+          extrema: true
+          fill: fade
+          icon: true
+          labels: false
+          name: true
+          state: true
+        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
+          \ 0, 0)';\n}\n"
+        type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.speedtest_download
+          index: 0
+          name: Download
+        font_size: 70
+        group: false
+        hour24: true
+        line_width: 6
+        lower_bound: 0
+        points_per_hour: 1
+        show:
+          extrema: true
+          fill: fade
+          icon: true
+          labels: false
+          name: true
+          state: true
+        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
+          \ 0, 0)';\n}\n"
+        type: custom:mini-graph-card
+      - color_thresholds_transition: smooth
+        entities:
+        - entity: sensor.speedtest_upload
+          index: 0
+          name: Upload
+        font_size: 70
+        group: false
+        hour24: true
+        line_width: 6
+        lower_bound: 0
+        points_per_hour: 1
+        show:
+          extrema: true
+          fill: fade
+          icon: true
+          labels: false
+          name: true
+          state: true
+        style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
+          \ 0, 0)';\n}\n"
+        type: custom:mini-graph-card
+      horizontal: true
+      name: Speedtest
+      style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: 'rgba(0, 0,\
+        \ 0, 0)';\n}\n"
+      type: custom:vertical-stack-in-card
+    style: "ha-card {\n  box-shadow: none;\n  --ha-card-background: var(--ha-card-background);\n\
+      }\n"
+    title: Network
+    type: custom:vertical-stack-in-card
+  - entities:
+    - entity: zone.home
+      icon: mdi:restart
+      name: Lovelace
+      tap_action:
+        action: call-service
+        service: frontend.reload_themes
+    - entity: zone.home
+      icon: mdi:restart
+      name: Home Assistant
+      tap_action:
+        action: call-service
+        service: homeassistant.restart
+    - entity: zone.home
+      icon: mdi:restart
+      name: Server
+      tap_action:
+        action: call-service
+        service: hassio.host_reboot
+    show_name: true
+    show_state: false
+    type: glance
+  icon: mdi:home-assistant
+  path: system
+  theme: ios-dark-mode-blue-red
+  title: System Information
+- badges: []
+  cards:
+  - card:
+      show_header_toggle: false
+      title: Uncategorized automations
+      type: entities
+    filter:
+      exclude:
+      - entity_id: automation.adaptive_lighting*
+      - entity_id: automation.alarm_clock_*
+      - entity_id: automation.apple_watch*
+      - entity_id: automation.arriving_*
+      - entity_id: automation.climate_*
+      - entity_id: automation.control_switches*
+      - entity_id: automation.cube_*
+      - entity_id: automation.doorbell_*
+      - entity_id: automation.frontend_*
+      - entity_id: automation.kef_dsp_*
+      - entity_id: automation.leaving_*
+      - entity_id: automation.light_*
+      - entity_id: automation.lovelace_*
+      - entity_id: automation.lsx_*
+      - entity_id: automation.media_player_*
+      - entity_id: automation.music_*
+      - entity_id: automation.night_mode_*
+      - entity_id: automation.plant_*
+      - entity_id: automation.rhasspy_*
+      - entity_id: automation.security_*
+      - entity_id: automation.system_*
+      - entity_id: automation.utilities_*
+      - entity_id: automation.vacation_mode_*
+      - entity_id: automation.vacuum_*
+      - entity_id: automation.work*
+      - entity_id: automation.curtains_*
+      - entity_id: automation.energy_*
+      - entity_id: automation.medication_*
+      - entity_id: automation.candy_*
+      - entity_id: automation.electric_vehicle_*
+      - entity_id: automation.ai_*
+      include:
+      - domain: automation
+    show_empty: false
+    sort: entity_id
+    type: custom:auto-entities
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Alarm clock
+    - slug: alarm_clock
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Plant
+    - slug: plant_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Climate
+    - slug: climate
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Leaving
+    - slug: leaving
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Light
+    - slug: light
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Lovelace
+    - slug: lovelace
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Night mode
+    - slug: night_mode_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Security
+    - slug: security
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: System
+    - slug: system_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Utilities
+    - slug: utilities_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Vacation mode
+    - slug: vacation_mode
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Vacuum
+    - slug: vacuum
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Work
+    - slug: work
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Apple Watch
+    - slug: apple_watch
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Adaptive Lighting
+    - slug: adaptive_lighting_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Curtains
+    - slug: curtains_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Doorbell
+    - slug: doorbell_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Security
+    - slug: security_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Music
+    - slug: music_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Arriving
+    - slug: arriving
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Control Switches
+    - slug: control_switches_
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Energy
+    - slug: energy
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Medication
+    - slug: medication
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Candy
+    - slug: candy
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: Electric vehicle
+    - slug: electric_vehicle
+  - template: automation_template
+    type: custom:decluttering-card
+    variables:
+    - name: AI
+    - slug: ai
+  icon: mdi:robot
+  layout:
+    max_cols: 7
+  path: automations
+  theme: ios-dark-mode-blue-red
+  title: Automations
+  type: custom:masonry-layout
