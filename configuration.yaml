@@ -33,7 +33,6 @@ script ui: !include scripts.yaml
 script manual: !include scripts-with-secrets.yaml
 
 # Others
-person: !include includes/persons.yaml
 zone: !include includes/zones.yaml
 group: !include includes/groups.yaml
 switch: !include includes/switches.yaml
