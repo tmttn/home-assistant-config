@@ -144,3 +144,4 @@ zigbee2mqtt/
 watchman_report.txt
 
 automations.yaml
+image/*
