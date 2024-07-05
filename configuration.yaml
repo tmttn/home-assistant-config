@@ -10,7 +10,6 @@
 #- from github.com/tmttn/home-assistant-config
 
 # Core Configuration
-homeassistant: !include includes/homeassistant.yaml
 default_config:
 frontend:
   themes: !include_dir_merge_named themes
