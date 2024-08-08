@@ -123,26 +123,8 @@
       }
     },
     "number": {
-      "plate_0": {
-        "name": "Zone 0"
-      },
-      "plate_1": {
-        "name": "Zone 1"
-      },
-      "plate_2": {
-        "name": "Zone 2"
-      },
-      "plate_3": {
-        "name": "Zone 3"
-      },
-      "plate_4": {
-        "name": "Zone 4"
-      },
-      "plate_5": {
-        "name": "Zone 5"
-      },
-      "plate_6": {
-        "name": "Zone 6"
+      "plate": {
+        "name": "Zone {plate_no}"
       }
     },
     "sensor": {
@@ -317,6 +299,7 @@
           "disinfecting": "Désinfection",
           "dispensing": "Distribution",
           "docked": "Sur sa base",
+          "door_open": "Porte ouverte",
           "drain": "Vidange",
           "drying": "Séchage",
           "dust_box_missing": "Missing dust box",
@@ -332,9 +315,12 @@
           "hand_iron_1": "Repassage manuel 1",
           "hand_iron_2": "Repassage manuel 2",
           "heating": "Chauffage",
+          "heating_up": "Chauffe",
           "hot_milk": "Lait chaud",
           "hygiene": "Hygiène",
           "interim_rinse": "Rinçage intermédiaire",
+          "keep_warm": "Garde chaud",
+          "keeping_warm": "Garder chaud",
           "machine_iron": "Repassage auto",
           "main_dishwash": "Lavage",
           "main_wash": "Lavage principal",
@@ -359,6 +345,7 @@
           "rinses": "Rinçage",
           "safety_cooling": "Refroidissement sécurisé",
           "slightly_dry": "Léégèrement sec",
+          "slow_roasting": "Rôtissage lent",
           "smoothing": "Assouplissement",
           "soak": "Trempage",
           "spin": "Essorage",
@@ -371,6 +358,8 @@
           "vacuum_internal_fault": "Internal fault - reboot",
           "venting": "Aération",
           "warm_air": "Air chaud",
+          "warm_cups_glasses": "Chauffer des tasses",
+          "warm_dishes_plates": "Chauffer des assiettes",
           "wheel_lifted": "Roues levées"
         }
       },

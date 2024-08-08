@@ -13,11 +13,10 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntityDescription,
 )
 from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity import DeviceInfo, EntityCategory
+from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
     DataUpdateCoordinator,
 )
 
@@ -27,7 +26,6 @@ from .const import (
     DIALOG_OVEN,
     DISH_WARMER,
     DISHWASHER,
-    DOMAIN,
     FREEZER,
     FRIDGE,
     FRIDGE_FREEZER,
@@ -35,7 +33,6 @@ from .const import (
     HOB_INDUCT_EXTR,
     HOB_INDUCTION,
     HOOD,
-    MANUFACTURER,
     MICROWAVE,
     OVEN,
     OVEN_MICROWAVE,
@@ -53,6 +50,7 @@ from .const import (
     WINE_CONDITIONING_UNIT,
     WINE_STORAGE_CONDITIONING_UNIT,
 )
+from .entity import MieleEntity
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -316,7 +314,7 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class MieleBinarySensor(CoordinatorEntity, BinarySensorEntity):
+class MieleBinarySensor(MieleEntity, BinarySensorEntity):
     """Representation of a Binary Sensor."""
 
     entity_description: MieleBinarySensorDescription
@@ -329,25 +327,8 @@ class MieleBinarySensor(CoordinatorEntity, BinarySensorEntity):
         description: MieleBinarySensorDescription,
     ):
         """Initialize the sensor."""
-        super().__init__(coordinator)
-        self._idx = idx
-        self._ent = ent
-        self.entity_description = description
+        super().__init__(coordinator, idx, ent, description)
         _LOGGER.debug("init sensor %s", ent)
-        appl_type = self.coordinator.data[self._ent][self.entity_description.type_key]
-        if appl_type == "":
-            appl_type = self.coordinator.data[self._ent][
-                "ident|deviceIdentLabel|techType"
-            ]
-        self._attr_has_entity_name = True
-        self._attr_unique_id = f"{self.entity_description.key}-{self._ent}"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self._ent)},
-            serial_number=self._ent,
-            name=appl_type,
-            manufacturer=MANUFACTURER,
-            model=self.coordinator.data[self._ent]["ident|deviceIdentLabel|techType"],
-        )
 
     @property
     def is_on(self):

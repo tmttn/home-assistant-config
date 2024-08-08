@@ -123,26 +123,8 @@
       }
     },
     "number": {
-      "plate_0": {
-        "name": "Platte 0"
-      },
-      "plate_1": {
-        "name": "Platte 1"
-      },
-      "plate_2": {
-        "name": "Platte 2"
-      },
-      "plate_3": {
-        "name": "Platte 3"
-      },
-      "plate_4": {
-        "name": "Platte 4"
-      },
-      "plate_5": {
-        "name": "Platte 5"
-      },
-      "plate_6": {
-        "name": "Platte 6"
+      "plate": {
+        "name": "Platte {plate_no}"
       }
     },
     "sensor": {
@@ -205,6 +187,7 @@
           "check_appliance": "Gerät überprüfen",
           "clean_machine": "Maschine reinigen",
           "coffee": "Kaffee",
+          "coffee_pot": "Kaffeekanne",
           "conventional_heat": "Ober-/Unterhitze",
           "cool_air": "Lüften kalt",
           "cottons": "Baumwolle",
@@ -316,6 +299,7 @@
           "disinfecting": "Desinfizieren",
           "dispensing": "Abgabe",
           "docked": "In der Basisstation",
+          "door_open": "Tür offen",
           "drain": "Ablaufen",
           "drying": "Trocknen",
           "dust_box_missing": "Fehlender Staubbehälter",
@@ -331,9 +315,12 @@
           "hand_iron_1": "Bügelfeucht 1",
           "hand_iron_2": "Bügelfeucht 2",
           "heating": "Heizen",
+          "heating_up": "Aufheizen",
           "hot_milk": "Heiße Milch",
           "hygiene": "Hygiene",
           "interim_rinse": "Zwischenspülen",
+          "keep_warm": "Warmhalten",
+          "keeping_warm": "Warmhalten",
           "machine_iron": "Mangelfeucht",
           "main_dishwash": "Reinigen",
           "main_wash": "Waschen",
@@ -358,6 +345,7 @@
           "rinses": "Spülgänge",
           "safety_cooling": "Sicherheitskühlen",
           "slightly_dry": "Leichttrocken",
+          "slow_roasting": "Langsames Garen",
           "smoothing": "Glätten",
           "soak": "Einweichen",
           "spin": "Schleudern",
@@ -370,6 +358,8 @@
           "vacuum_internal_fault": "Interner Fehler – Neustart",
           "venting": "Entlüften",
           "warm_air": "Lüften warm",
+          "warm_cups_glasses": "Tassen/Gläser vorwärmen",
+          "warm_dishes_plates": "Geschirr/Teller vorwärmen",
           "wheel_lifted": "Rad angehoben"
         }
       },
