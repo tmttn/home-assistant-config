@@ -37,7 +37,7 @@ from .const import (
     POWER_ON,
     PROCESS_ACTION,
     PROGRAM_ID,
-    ROBOT_VACUUM_CLEANER,
+    MieleAppliance,
 )
 from .entity import MieleEntity
 
@@ -79,13 +79,13 @@ class MieleVacuumDescription(StateVacuumEntityDescription):
 class MieleVacuumDefinition:
     """Class for defining vacuum entities."""
 
-    types: tuple[int, ...]
+    types: tuple[MieleAppliance, ...]
     description: MieleVacuumDescription = None
 
 
 VACUUM_TYPES: Final[tuple[MieleVacuumDefinition, ...]] = (
     MieleVacuumDefinition(
-        types=[ROBOT_VACUUM_CLEANER],
+        types=[MieleAppliance.ROBOT_VACUUM_CLEANER],
         description=MieleVacuumDescription(
             key="vacuum",
             data_tag="state|status|value_raw",
@@ -110,20 +110,6 @@ async def async_setup_entry(
         for definition in VACUUM_TYPES
         if coordinator.data[ent]["ident|type|value_raw"] in definition.types
     ]
-    # entities = []
-    # for idx, ent in enumerate(coordinator.data):
-    #     for definition in VACUUM_TYPES:
-    #         if coordinator.data[ent]["ident|type|value_raw"] in definition.types:
-    #             entities.append(
-    #                 MieleVacuum(
-    #                     coordinator,
-    #                     idx,
-    #                     ent,
-    #                     definition.description,
-    #                     hass,
-    #                     config_entry,
-    #                 )
-    #             )
 
     async_add_entities(entities)
 

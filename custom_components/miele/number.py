@@ -23,15 +23,17 @@ from . import get_coordinator
 from .const import (
     API,
     DOMAIN,
-    HOB_HIGHLIGHT,
-    HOB_INDUCT_EXTR,
-    HOB_INDUCTION,
+    MieleAppliance,
 )
 from .entity import MieleEntity
 
 _LOGGER = logging.getLogger(__name__)
 
-HOB_TYPES = (HOB_INDUCT_EXTR, HOB_HIGHLIGHT, HOB_INDUCTION)
+HOB_TYPES = (
+    MieleAppliance.HOB_INDUCT_EXTR,
+    MieleAppliance.HOB_HIGHLIGHT,
+    MieleAppliance.HOB_INDUCTION,
+)
 
 PLATE_MAP = {
     0: 0,
@@ -102,7 +104,7 @@ class MieleNumberDescription(NumberEntityDescription, MieleNumberDescriptionMixi
 class MieleNumberDefinition:
     """Class for defining number entities."""
 
-    types: tuple[int, ...]
+    types: tuple[MieleAppliance, ...]
     description: MieleNumberDescription = None
 
 
@@ -116,26 +118,6 @@ async def async_setup_entry(
 
     entities = []
     for idx, ent in enumerate(coordinator.data):
-        # if (
-        #     coordinator.data[ent]["ident|type|value_raw"] in HOB_TYPES
-        #     and coordinator.data[ent]["ident|deviceIdentLabel|techType"]
-        #     not in PLATE_COUNT
-        # ):
-        #     ir.async_create_issue(
-        #         hass,
-        #         DOMAIN,
-        #         "hob_not_supported",
-        #         is_fixable=False,
-        #         severity=ir.IssueSeverity.WARNING,
-        #         translation_key="hob_not_supported",
-        #         translation_placeholders={
-        #             "tech_type": coordinator.data[ent][
-        #                 "ident|deviceIdentLabel|techType"
-        #             ],
-        #             "issue_url": "https://github.com/astrandb/miele/issues",
-        #         },
-        #     )
-
         if coordinator.data[ent]["ident|type|value_raw"] in HOB_TYPES:
             tech_type = coordinator.data[ent]["ident|deviceIdentLabel|techType"]
             api_plates = 0
