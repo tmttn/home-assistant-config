@@ -70,8 +70,7 @@ turn_off_everything_non_automatic:
   alias: Turn off everything non automatic
   mode: parallel
   sequence:
-  - service: light.turn_off
-    data:
+  - data:
       transition: 4
     target:
       entity_id:
@@ -79,8 +78,10 @@ turn_off_everything_non_automatic:
       - light.bedroom_lights
       - light.bathroom_lights
       - light.guest_bedroom_lights
-  - service: media_player.turn_off
-    entity_id: media_player.tv
+      - switch.shelly_kerstboom
+    action: light.turn_off
+  - entity_id: media_player.tv
+    action: media_player.turn_off
   max: 10
 turn_off_everything:
   alias: Turn off everything
