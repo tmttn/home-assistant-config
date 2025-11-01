@@ -9,7 +9,8 @@ blueprint:
       selector:
         target:
           entity:
-            domain: light
+          - domain:
+            - light
   source_url: https://gist.github.com/hugalafutro/07a15a55d1e8394744e423a9ce7c8223
 variables:
   colors: "{{ [[0.217,0.077], [0.157,0.05], [0.136,0.04], [0.137,0.065],\n    [0.141,0.137],
