@@ -8,11 +8,6 @@
 #         |_|            |_____|
 #
 #- from github.com/tmttn/home-assistant-config
-alarm_clock:
-  name: Alarm clock
-  has_date: false
-  has_time: true
-
 washing_machine_on:
   name: Washing machine last started
   has_date: true
