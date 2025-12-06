@@ -10,7 +10,7 @@ from .models import WasteCollectionRepository
 from .collectors import (
     XimmioCollector, BurgerportaalCollector, OpzetCollector, KlikogroepCollector,
     AfvalAlertCollector, AfvalwijzerCollector, AmsterdamCollector, CirculusCollector, CleanprofsCollector,
-    DeAfvalAppCollector, LimburgNetCollector, MontferlandNetCollector, OmrinCollector,
+    DeAfvalAppCollector, LimburgNetCollector, IradoCollector, MontferlandNetCollector, OmrinCollector,
     RD4Collector, RecycleApp, ReinisCollector, ROVACollector, StraatbeeldCollector
 )
 
@@ -47,12 +47,13 @@ class WasteData(object):
         collector_mapping = {
             **{key: (XimmioCollector, common_args + [self.address_id, self.customer_id]) for key in XIMMIO_COLLECTOR_IDS.keys()},
             "mijnafvalwijzer": (AfvalwijzerCollector, common_args),
-            "afvalstoffendienstkalender": (AfvalwijzerCollector, common_args),
+            # "afvalstoffendienstkalender": (AfvalwijzerCollector, common_args),
             "afvalalert": (AfvalAlertCollector, common_args),
             "amsterdam": (AmsterdamCollector, common_args),
             "deafvalapp": (DeAfvalAppCollector, common_args),
             "circulus": (CirculusCollector, common_args),
             "limburg.net": (LimburgNetCollector, common_args + [self.street_name, self.city_name]),
+            "irado": (IradoCollector, common_args),
             "montferland": (MontferlandNetCollector, common_args),
             "omrin": (OmrinCollector, common_args),
             "recycleapp": (RecycleApp, common_args + [self.street_name]),
