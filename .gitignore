@@ -145,3 +145,10 @@ watchman_report.txt
 
 automations.yaml
 image/*
+/.idea/.gitignore
+/.idea/aws.xml
+/.idea/copilot.data.migration.edit.xml
+/.idea/home-assistant-config.iml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml

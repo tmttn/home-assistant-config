@@ -18,6 +18,9 @@ frontend:
 http: !include includes/http.yaml
 websocket_api:
 
+# Template entities (sensors, binary sensors, switches)
+template: !include includes/template.yaml
+
 # Inputs and counters
 input_boolean: !include includes/input_booleans.yaml
 input_datetime: !include includes/input_datetimes.yaml
@@ -33,7 +36,6 @@ script manual: !include scripts-with-secrets.yaml
 
 # Others
 group: !include includes/groups.yaml
-switch: !include includes/switches.yaml
 sensor: !include includes/sensors.yaml
 shell_command: !include includes/shell_commands.yaml
 notify: !include includes/notify.yaml
