@@ -17,7 +17,9 @@ frontend:
     - /hacsfiles/lovelace-card-mod/card-mod.js
 http: !include includes/http.yaml
 websocket_api:
-
+homeassistant:
+  allowlist_external_dirs:
+    - "/config/.storage"
 
 # Template entities (sensors, binary sensors, switches)
 template: !include includes/template.yaml
