@@ -124,6 +124,7 @@ ip_bans.yaml
 known_devices.yaml
 secrets.yaml
 .ssh
+.git-token
 
 ## Others
 ._includes
