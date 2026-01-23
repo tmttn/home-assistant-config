@@ -9,6 +9,13 @@
 #- from github.com/tmttn/home-assistant-config
 
 LOGFILE="/config/chores.log"
+MAX_LOG_LINES=500
+
+# Rotate log if it exceeds MAX_LOG_LINES
+if [[ -f "$LOGFILE" ]] && [[ $(wc -l < "$LOGFILE") -gt $MAX_LOG_LINES ]]; then
+    tail -n $MAX_LOG_LINES "$LOGFILE" > "${LOGFILE}.tmp"
+    mv "${LOGFILE}.tmp" "$LOGFILE"
+fi
 
 log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOGFILE"
