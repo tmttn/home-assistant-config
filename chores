@@ -21,6 +21,38 @@ log() {
     echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOGFILE"
 }
 
+# Send notification to Home Assistant
+ha_notify() {
+    local title="$1"
+    local message="$2"
+    local HA_URL="http://supervisor/core"
+
+    # Use Supervisor token if available (HA OS/Supervised), otherwise try local token
+    if [[ -n "$SUPERVISOR_TOKEN" ]]; then
+        local TOKEN="$SUPERVISOR_TOKEN"
+    elif [[ -f /config/.ha-token ]]; then
+        local TOKEN=$(cat /config/.ha-token | tr -d '[:space:]')
+        HA_URL="http://localhost:8123"
+    else
+        log "No HA token available for notifications"
+        return 1
+    fi
+
+    # Persistent notification (shows in HA sidebar)
+    curl -sf -X POST \
+        -H "Authorization: Bearer $TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{\"title\": \"$title\", \"message\": \"$message\", \"notification_id\": \"chores_git_error\"}" \
+        "$HA_URL/api/services/persistent_notification/create" >> "$LOGFILE" 2>&1 || true
+
+    # Mobile notification
+    curl -sf -X POST \
+        -H "Authorization: Bearer $TOKEN" \
+        -H "Content-Type: application/json" \
+        -d "{\"title\": \"$title\", \"message\": \"$message\"}" \
+        "$HA_URL/api/services/notify/tom" >> "$LOGFILE" 2>&1 || true
+}
+
 # Redirect all stderr to log file as well
 exec 2>> "$LOGFILE"
 
@@ -55,6 +87,16 @@ python3 utils/ascii_art.py
 
 log "Running update-readme.py..."
 python3 utils/update-readme.py
+
+log "Pulling latest changes..."
+if ! git pull --rebase origin master >> "$LOGFILE" 2>&1; then
+    log "ERROR: Rebase failed, likely due to conflicts"
+    log "Aborting rebase to restore clean state..."
+    git rebase --abort >> "$LOGFILE" 2>&1 || true
+    log "Please resolve conflicts manually. Skipping push."
+    ha_notify "⚠️ Git Conflict" "Config repo has conflicts that need manual resolution. Check /config/chores.log"
+    exit 1
+fi
 
 log "Pushing to git..."
 git push >> "$LOGFILE" 2>&1
