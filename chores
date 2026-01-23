@@ -28,9 +28,14 @@ log "Setting git config..."
 git config --global user.name "Thomas Metten"
 git config --global user.email "thomas.metten@gmail.com"
 
-log "Ensuring GitHub host key is known..."
-mkdir -p ~/.ssh
-ssh-keyscan -t ed25519,rsa github.com >> ~/.ssh/known_hosts 2>/dev/null
+log "Setting up HTTPS authentication..."
+if [[ -f /config/.git-token ]]; then
+    GIT_TOKEN=$(cat /config/.git-token | tr -d '[:space:]')
+    git remote set-url origin "https://${GIT_TOKEN}@github.com/tmttn/home-assistant-config.git"
+else
+    log "ERROR: /config/.git-token not found"
+    exit 1
+fi
 
 log "Running commit-updates.py..."
 python3 utils/commit-updates.py
