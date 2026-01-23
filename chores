@@ -28,6 +28,10 @@ log "Setting git config..."
 git config --global user.name "Thomas Metten"
 git config --global user.email "thomas.metten@gmail.com"
 
+log "Ensuring GitHub host key is known..."
+mkdir -p ~/.ssh
+ssh-keyscan -t ed25519,rsa github.com >> ~/.ssh/known_hosts 2>/dev/null
+
 log "Running commit-updates.py..."
 python3 utils/commit-updates.py
 
