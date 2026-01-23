@@ -8,13 +8,21 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
-set -e  # Exit immediately on error
+LOGFILE="/config/chores.log"
 
 log() {
-    echo "[chores] $1" >&2
+    echo "$(date '+%Y-%m-%d %H:%M:%S') $1" >> "$LOGFILE"
 }
 
-log "Starting chores script"
+# Redirect all stderr to log file as well
+exec 2>> "$LOGFILE"
+
+log "===== Starting chores script ====="
+log "Working directory: $(pwd)"
+log "Git status:"
+git status >> "$LOGFILE" 2>&1 || log "git status failed"
+
+set -e  # Exit immediately on error
 
 log "Setting git config..."
 git config --global user.name "Thomas Metten"
@@ -33,7 +41,7 @@ log "Running update-readme.py..."
 python3 utils/update-readme.py
 
 log "Pushing to git..."
-git push
+git push >> "$LOGFILE" 2>&1
 
 log "Running commit-readme.sh..."
 ./utils/commit-readme.sh
