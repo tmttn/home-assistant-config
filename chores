@@ -8,11 +8,34 @@
 #
 #- from github.com/tmttn/home-assistant-config
 
+set -e  # Exit immediately on error
+
+log() {
+    echo "[chores] $1" >&2
+}
+
+log "Starting chores script"
+
+log "Setting git config..."
 git config --global user.name "Thomas Metten"
 git config --global user.email "thomas.metten@gmail.com"
+
+log "Running commit-updates.py..."
 python3 utils/commit-updates.py
+
+log "Installing pip packages..."
 pip3 -q install --root-user-action=ignore pyfiglet jinja2
+
+log "Running ascii_art.py..."
 python3 utils/ascii_art.py
+
+log "Running update-readme.py..."
 python3 utils/update-readme.py
+
+log "Pushing to git..."
 git push
+
+log "Running commit-readme.sh..."
 ./utils/commit-readme.sh
+
+log "Chores completed successfully"
