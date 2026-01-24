@@ -76,6 +76,36 @@ else
     exit 1
 fi
 
+# Stash any uncommitted changes before pulling
+STASHED=false
+if ! git diff --quiet || ! git diff --cached --quiet; then
+    log "Stashing uncommitted changes..."
+    git stash push -m "chores-auto-stash" >> "$LOGFILE" 2>&1
+    STASHED=true
+fi
+
+log "Pulling latest changes..."
+if ! git pull --rebase origin master >> "$LOGFILE" 2>&1; then
+    log "ERROR: Pull failed, likely due to conflicts"
+    log "Aborting rebase to restore clean state..."
+    git rebase --abort >> "$LOGFILE" 2>&1 || true
+    if $STASHED; then
+        log "Restoring stashed changes..."
+        git stash pop >> "$LOGFILE" 2>&1 || true
+    fi
+    log "Please resolve conflicts manually. Skipping push."
+    ha_notify "⚠️ Git Conflict" "Config repo has conflicts that need manual resolution. Check /config/chores.log"
+    exit 1
+fi
+
+# Restore stashed changes
+if $STASHED; then
+    log "Restoring stashed changes..."
+    if ! git stash pop >> "$LOGFILE" 2>&1; then
+        log "WARNING: Stash pop had conflicts, may need manual resolution"
+    fi
+fi
+
 log "Running commit-updates.py..."
 python3 utils/commit-updates.py
 
@@ -87,16 +117,6 @@ python3 utils/ascii_art.py
 
 log "Running update-readme.py..."
 python3 utils/update-readme.py
-
-log "Pulling latest changes..."
-if ! git pull --rebase origin master >> "$LOGFILE" 2>&1; then
-    log "ERROR: Rebase failed, likely due to conflicts"
-    log "Aborting rebase to restore clean state..."
-    git rebase --abort >> "$LOGFILE" 2>&1 || true
-    log "Please resolve conflicts manually. Skipping push."
-    ha_notify "⚠️ Git Conflict" "Config repo has conflicts that need manual resolution. Check /config/chores.log"
-    exit 1
-fi
 
 log "Pushing to git..."
 git push >> "$LOGFILE" 2>&1
