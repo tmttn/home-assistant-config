@@ -558,4 +558,3 @@
         - action: vacuum.return_to_base
           target:
             entity_id: vacuum.robot_vacuum
-
