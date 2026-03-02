@@ -333,6 +333,17 @@
       unit_of_measurement: "°C"
       state: '{{state_attr("climate.guest_bedroom", "current_temperature")}}'
 
+    - name: Outside temperature
+      unique_id: outside_temperature
+      unit_of_measurement: "°C"
+      state: >
+        {% set ws = states('sensor.bunderhome_weerstation_ws_2902c_temp') %}
+        {% if ws not in ['unknown', 'unavailable', None] %}
+          {{ ws }}
+        {% else %}
+          {{ state_attr('weather.home', 'temperature') }}
+        {% endif %}
+
     - name: Total grid export
       unique_id: total_grid_export
       unit_of_measurement: kWh

@@ -348,7 +348,7 @@
 - platform: statistics
   name: outside_temperature_avg
   unique_id: outside_temperature_avg
-  entity_id: sensor.bunderhome_weerstation_ws_2902c_temp
+  entity_id: sensor.outside_temperature
   state_characteristic: mean
   max_age:
     hours: 24
