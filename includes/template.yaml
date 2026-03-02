@@ -521,6 +521,12 @@
       state: >
         {{ as_timestamp(now()) | timestamp_custom("%a") in ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun") }}
 
+    - name: Anyone home
+      unique_id: anyone_home
+      device_class: occupancy
+      state: >
+        {{ states.person | selectattr('state','eq','home') | list | count > 0 }}
+
     - name: No one is home
       unique_id: no_one_home
       state: >
@@ -538,6 +544,190 @@
       state: >
         {{ (states('sensor.multi_sensor_storage_humidity') | float(0)) > (states('sensor.multi_sensor_storage_humidity') | float(0)) }}
       # Note: This is a simplified version. For proper trend detection, consider using the trend integration via UI
+
+#  ____                              ____
+# |  _ \  ___  __ _ _ __ ___  ___  |  _ \  __ _ _   _ ___
+# | | | |/ _ \/ _` | '__/ _ \/ _ \ | | | |/ _` | | | / __|
+# | |_| |  __/ (_| | | |  __/  __/ | |_| | (_| | |_| \__ \
+# |____/ \___|\__, |_|  \___|\___|_|____/ \__,_|\__, |___/
+#             |___/                              |___/
+#
+
+# Whole-house degree day (classic: 18°C - outside avg temp)
+- trigger:
+    platform: time
+    at: "23:59:01"
+  sensor:
+    - name: Degree day daily
+      unique_id: degree_day_daily
+      state: >
+        {% set regularized_temp = 18.0 %}
+        {% set avg_outside = states('sensor.outside_temperature_avg') | float(0) %}
+        {% set dd = regularized_temp - avg_outside %}
+        {{ [dd, 0] | max | round(2) }}
+      unit_of_measurement: "DD"
+      state_class: measurement
+
+# Per-room degree days: DD = max(0, target_temp - current_temp)
+- trigger:
+    platform: time
+    at: "23:59:10"
+  sensor:
+    - name: Degree day living room
+      unique_id: degree_day_living_room
+      state: >
+        {% set target = state_attr('climate.living_room', 'temperature') | float(20) %}
+        {% set current = state_attr('climate.living_room', 'current_temperature') | float(target) %}
+        {{ [target - current, 0] | max | round(2) }}
+      unit_of_measurement: "DD"
+      state_class: measurement
+
+    - name: Degree day kitchen
+      unique_id: degree_day_kitchen
+      state: >
+        {% set target = state_attr('climate.kitchen', 'temperature') | float(20) %}
+        {% set current = state_attr('climate.kitchen', 'current_temperature') | float(target) %}
+        {{ [target - current, 0] | max | round(2) }}
+      unit_of_measurement: "DD"
+      state_class: measurement
+
+    - name: Degree day bedroom
+      unique_id: degree_day_bedroom
+      state: >
+        {% set target = state_attr('climate.bedroom', 'temperature') | float(18) %}
+        {% set current = states('sensor.temperature_bedroom') | float(target) %}
+        {{ [target - current, 0] | max | round(2) }}
+      unit_of_measurement: "DD"
+      state_class: measurement
+
+    - name: Degree day guest bedroom
+      unique_id: degree_day_guest_bedroom
+      state: >
+        {% set target = state_attr('climate.guest_bedroom', 'temperature') | float(18) %}
+        {% set current = states('sensor.temperature_guest_bedroom') | float(target) %}
+        {{ [target - current, 0] | max | round(2) }}
+      unit_of_measurement: "DD"
+      state_class: measurement
+
+    - name: Degree day Marthe bedroom
+      unique_id: degree_day_marthe_bedroom
+      state: >
+        {% set target = state_attr('climate.bedroom_marthe', 'temperature') | float(18) %}
+        {% set current = states('sensor.temperature_bedroom_marthe') | float(target) %}
+        {{ [target - current, 0] | max | round(2) }}
+      unit_of_measurement: "DD"
+      state_class: measurement
+
+    - name: Degree day bathroom
+      unique_id: degree_day_bathroom
+      state: >
+        {% set target = state_attr('climate.bathroom', 'temperature') | float(20) %}
+        {% set current = states('sensor.temperature_bathroom') | float(target) %}
+        {{ [target - current, 0] | max | round(2) }}
+      unit_of_measurement: "DD"
+      state_class: measurement
+
+    - name: Degree day storage
+      unique_id: degree_day_storage
+      state: >
+        {% set target = state_attr('climate.storage', 'temperature') | float(15) %}
+        {% set current = state_attr('climate.storage', 'current_temperature') | float(target) %}
+        {{ [target - current, 0] | max | round(2) }}
+      unit_of_measurement: "DD"
+      state_class: measurement
+
+    - name: Degree day hall
+      unique_id: degree_day_hall
+      state: >
+        {% set target = state_attr('climate.hall', 'temperature') | float(18) %}
+        {% set current = state_attr('climate.hall', 'current_temperature') | float(target) %}
+        {{ [target - current, 0] | max | round(2) }}
+      unit_of_measurement: "DD"
+      state_class: measurement
+
+# Per-room degree days adjusted for occupancy: DD * (hours_occupied / 24)
+# Excludes bedroom and Marthe's bedroom (no occupancy sensors)
+- trigger:
+    platform: time
+    at: "23:59:30"
+  sensor:
+    - name: Degree day living room adjusted
+      unique_id: degree_day_living_room_adjusted
+      state: >
+        {% set dd = states('sensor.degree_day_living_room') | float(0) %}
+        {% set hours = states('sensor.occupancy_living_room_daily') | float(0) %}
+        {% set occupancy_rate = hours / 24 %}
+        {{ (dd * occupancy_rate) | round(2) }}
+      unit_of_measurement: "DD·O"
+      state_class: measurement
+      attributes:
+        occupancy_hours: "{{ states('sensor.occupancy_living_room_daily') | float(0) | round(1) }}"
+        raw_dd: "{{ states('sensor.degree_day_living_room') | float(0) }}"
+
+    - name: Degree day kitchen adjusted
+      unique_id: degree_day_kitchen_adjusted
+      state: >
+        {% set dd = states('sensor.degree_day_kitchen') | float(0) %}
+        {% set hours = states('sensor.occupancy_kitchen_daily') | float(0) %}
+        {% set occupancy_rate = hours / 24 %}
+        {{ (dd * occupancy_rate) | round(2) }}
+      unit_of_measurement: "DD·O"
+      state_class: measurement
+      attributes:
+        occupancy_hours: "{{ states('sensor.occupancy_kitchen_daily') | float(0) | round(1) }}"
+        raw_dd: "{{ states('sensor.degree_day_kitchen') | float(0) }}"
+
+    - name: Degree day guest bedroom adjusted
+      unique_id: degree_day_guest_bedroom_adjusted
+      state: >
+        {% set dd = states('sensor.degree_day_guest_bedroom') | float(0) %}
+        {% set hours = states('sensor.occupancy_guest_bedroom_daily') | float(0) %}
+        {% set occupancy_rate = hours / 24 %}
+        {{ (dd * occupancy_rate) | round(2) }}
+      unit_of_measurement: "DD·O"
+      state_class: measurement
+      attributes:
+        occupancy_hours: "{{ states('sensor.occupancy_guest_bedroom_daily') | float(0) | round(1) }}"
+        raw_dd: "{{ states('sensor.degree_day_guest_bedroom') | float(0) }}"
+
+    - name: Degree day bathroom adjusted
+      unique_id: degree_day_bathroom_adjusted
+      state: >
+        {% set dd = states('sensor.degree_day_bathroom') | float(0) %}
+        {% set hours = states('sensor.occupancy_bathroom_daily') | float(0) %}
+        {% set occupancy_rate = hours / 24 %}
+        {{ (dd * occupancy_rate) | round(2) }}
+      unit_of_measurement: "DD·O"
+      state_class: measurement
+      attributes:
+        occupancy_hours: "{{ states('sensor.occupancy_bathroom_daily') | float(0) | round(1) }}"
+        raw_dd: "{{ states('sensor.degree_day_bathroom') | float(0) }}"
+
+    - name: Degree day storage adjusted
+      unique_id: degree_day_storage_adjusted
+      state: >
+        {% set dd = states('sensor.degree_day_storage') | float(0) %}
+        {% set hours = states('sensor.occupancy_storage_daily') | float(0) %}
+        {% set occupancy_rate = hours / 24 %}
+        {{ (dd * occupancy_rate) | round(2) }}
+      unit_of_measurement: "DD·O"
+      state_class: measurement
+      attributes:
+        occupancy_hours: "{{ states('sensor.occupancy_storage_daily') | float(0) | round(1) }}"
+        raw_dd: "{{ states('sensor.degree_day_storage') | float(0) }}"
+
+    - name: Degree day hall adjusted
+      unique_id: degree_day_hall_adjusted
+      state: >
+        {% set dd = states('sensor.degree_day_hall') | float(0) %}
+        {% set hours = states('sensor.occupancy_hall_daily') | float(0) %}
+        {% set occupancy_rate = hours / 24 %}
+        {{ (dd * occupancy_rate) | round(2) }}
+      unit_of_measurement: "DD·O"
+      state_class: measurement
+      attributes:
+        occupancy_hours: "{{ states('sensor.occupancy_hall_daily') | float(0) | round(1) }}"
+        raw_dd: "{{ states('sensor.degree_day_hall') | float(0) }}"
 
 #  ____          _ _       _
 # / ___|_      _(_) |_ ___| |__   ___  ___
