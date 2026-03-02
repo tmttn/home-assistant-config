@@ -397,7 +397,8 @@
     - name: Activity in the bathroom
       unique_id: activity_in_bathroom
       state: >
-        {{ is_state("binary_sensor.someone_showering", "on") }}
+        {{ is_state("binary_sensor.someone_showering", "on")
+            or is_state("light.bathroom_lights", "on") }}
       delay_off: "00:03:00"
 
     - name: Activity in the living room
@@ -405,6 +406,7 @@
       state: >
         {{ is_state("binary_sensor.motion_sensor_living_room", "on")
             or is_state("media_player.tv", "on")
+            or is_state("light.living_room_lights", "on")
             or is_state("binary_sensor.openclose_back_door", "on")
             or is_state("binary_sensor.openclose_living_room_door", "on") }}
       delay_off: "00:20:00"
@@ -441,7 +443,8 @@
     - name: Activity in the guest bedroom
       unique_id: activity_in_guest_bedroom
       state: >
-        {{ is_state("binary_sensor.motion_sensor_guest_bedroom", "on") }}
+        {{ is_state("binary_sensor.motion_sensor_guest_bedroom", "on")
+            or is_state("light.guest_bedroom_lights", "on") }}
       delay_off: "00:01:00"
 
     - name: Activity outside the bedroom
