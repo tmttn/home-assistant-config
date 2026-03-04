@@ -67,6 +67,8 @@ log "Setting git config..."
 git config --global user.name "Thomas Metten"
 git config --global user.email "thomas.metten@gmail.com"
 
+SSH_ORIGIN="git@github.com:tmttn/home-assistant-config.git"
+
 log "Setting up HTTPS authentication..."
 if [[ -f /config/.git-token ]]; then
     GIT_TOKEN=$(cat /config/.git-token | tr -d '[:space:]')
@@ -75,6 +77,9 @@ else
     log "ERROR: /config/.git-token not found"
     exit 1
 fi
+
+# Restore SSH origin on exit so the git pull add-on keeps working
+trap 'git remote set-url origin "$SSH_ORIGIN"' EXIT
 
 # Stash any uncommitted changes before pulling
 STASHED=false
