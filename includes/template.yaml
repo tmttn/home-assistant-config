@@ -582,82 +582,163 @@
       unit_of_measurement: "DD"
       state_class: measurement
 
-# Per-room degree days: DD = max(0, target_temp - current_temp)
+# Per-room degree days: running daily average of max(0, target - current)
+# Samples every 15 min, resets at midnight. State = day's average deficit so far.
 - trigger:
-    platform: time
-    at: "23:59:10"
+    platform: time_pattern
+    minutes: "/15"
   sensor:
     - name: Degree day living room
       unique_id: degree_day_living_room
       state: >
         {% set target = state_attr('climate.living_room', 'temperature') | float(20) %}
         {% set current = state_attr('climate.living_room', 'current_temperature') | float(target) %}
-        {{ [target - current, 0] | max | round(2) }}
+        {% set deficit = [target - current, 0] | max %}
+        {% set n = this.attributes.get('samples', 0) | int(0) %}
+        {% if now().hour == 0 and now().minute < 15 or n == 0 %}
+          {{ deficit | round(2) }}
+        {% else %}
+          {{ ((this.state | float(0) * n + deficit) / (n + 1)) | round(2) }}
+        {% endif %}
       unit_of_measurement: "DD"
       state_class: measurement
+      attributes:
+        samples: >
+          {% set n = this.attributes.get('samples', 0) | int(0) %}
+          {% if now().hour == 0 and now().minute < 15 or n == 0 %}1{% else %}{{ n + 1 }}{% endif %}
 
     - name: Degree day kitchen
       unique_id: degree_day_kitchen
       state: >
         {% set target = state_attr('climate.kitchen', 'temperature') | float(20) %}
         {% set current = state_attr('climate.kitchen', 'current_temperature') | float(target) %}
-        {{ [target - current, 0] | max | round(2) }}
+        {% set deficit = [target - current, 0] | max %}
+        {% set n = this.attributes.get('samples', 0) | int(0) %}
+        {% if now().hour == 0 and now().minute < 15 or n == 0 %}
+          {{ deficit | round(2) }}
+        {% else %}
+          {{ ((this.state | float(0) * n + deficit) / (n + 1)) | round(2) }}
+        {% endif %}
       unit_of_measurement: "DD"
       state_class: measurement
+      attributes:
+        samples: >
+          {% set n = this.attributes.get('samples', 0) | int(0) %}
+          {% if now().hour == 0 and now().minute < 15 or n == 0 %}1{% else %}{{ n + 1 }}{% endif %}
 
     - name: Degree day bedroom
       unique_id: degree_day_bedroom
       state: >
         {% set target = state_attr('climate.bedroom', 'temperature') | float(18) %}
         {% set current = states('sensor.temperature_bedroom') | float(target) %}
-        {{ [target - current, 0] | max | round(2) }}
+        {% set deficit = [target - current, 0] | max %}
+        {% set n = this.attributes.get('samples', 0) | int(0) %}
+        {% if now().hour == 0 and now().minute < 15 or n == 0 %}
+          {{ deficit | round(2) }}
+        {% else %}
+          {{ ((this.state | float(0) * n + deficit) / (n + 1)) | round(2) }}
+        {% endif %}
       unit_of_measurement: "DD"
       state_class: measurement
+      attributes:
+        samples: >
+          {% set n = this.attributes.get('samples', 0) | int(0) %}
+          {% if now().hour == 0 and now().minute < 15 or n == 0 %}1{% else %}{{ n + 1 }}{% endif %}
 
     - name: Degree day guest bedroom
       unique_id: degree_day_guest_bedroom
       state: >
         {% set target = state_attr('climate.guest_bedroom', 'temperature') | float(18) %}
         {% set current = states('sensor.temperature_guest_bedroom') | float(target) %}
-        {{ [target - current, 0] | max | round(2) }}
+        {% set deficit = [target - current, 0] | max %}
+        {% set n = this.attributes.get('samples', 0) | int(0) %}
+        {% if now().hour == 0 and now().minute < 15 or n == 0 %}
+          {{ deficit | round(2) }}
+        {% else %}
+          {{ ((this.state | float(0) * n + deficit) / (n + 1)) | round(2) }}
+        {% endif %}
       unit_of_measurement: "DD"
       state_class: measurement
+      attributes:
+        samples: >
+          {% set n = this.attributes.get('samples', 0) | int(0) %}
+          {% if now().hour == 0 and now().minute < 15 or n == 0 %}1{% else %}{{ n + 1 }}{% endif %}
 
     - name: Degree day Marthe bedroom
       unique_id: degree_day_marthe_bedroom
       state: >
         {% set target = state_attr('climate.bedroom_marthe', 'temperature') | float(18) %}
         {% set current = states('sensor.temperature_bedroom_marthe') | float(target) %}
-        {{ [target - current, 0] | max | round(2) }}
+        {% set deficit = [target - current, 0] | max %}
+        {% set n = this.attributes.get('samples', 0) | int(0) %}
+        {% if now().hour == 0 and now().minute < 15 or n == 0 %}
+          {{ deficit | round(2) }}
+        {% else %}
+          {{ ((this.state | float(0) * n + deficit) / (n + 1)) | round(2) }}
+        {% endif %}
       unit_of_measurement: "DD"
       state_class: measurement
+      attributes:
+        samples: >
+          {% set n = this.attributes.get('samples', 0) | int(0) %}
+          {% if now().hour == 0 and now().minute < 15 or n == 0 %}1{% else %}{{ n + 1 }}{% endif %}
 
     - name: Degree day bathroom
       unique_id: degree_day_bathroom
       state: >
         {% set target = state_attr('climate.bathroom', 'temperature') | float(20) %}
         {% set current = states('sensor.temperature_bathroom') | float(target) %}
-        {{ [target - current, 0] | max | round(2) }}
+        {% set deficit = [target - current, 0] | max %}
+        {% set n = this.attributes.get('samples', 0) | int(0) %}
+        {% if now().hour == 0 and now().minute < 15 or n == 0 %}
+          {{ deficit | round(2) }}
+        {% else %}
+          {{ ((this.state | float(0) * n + deficit) / (n + 1)) | round(2) }}
+        {% endif %}
       unit_of_measurement: "DD"
       state_class: measurement
+      attributes:
+        samples: >
+          {% set n = this.attributes.get('samples', 0) | int(0) %}
+          {% if now().hour == 0 and now().minute < 15 or n == 0 %}1{% else %}{{ n + 1 }}{% endif %}
 
     - name: Degree day storage
       unique_id: degree_day_storage
       state: >
         {% set target = state_attr('climate.storage', 'temperature') | float(15) %}
         {% set current = state_attr('climate.storage', 'current_temperature') | float(target) %}
-        {{ [target - current, 0] | max | round(2) }}
+        {% set deficit = [target - current, 0] | max %}
+        {% set n = this.attributes.get('samples', 0) | int(0) %}
+        {% if now().hour == 0 and now().minute < 15 or n == 0 %}
+          {{ deficit | round(2) }}
+        {% else %}
+          {{ ((this.state | float(0) * n + deficit) / (n + 1)) | round(2) }}
+        {% endif %}
       unit_of_measurement: "DD"
       state_class: measurement
+      attributes:
+        samples: >
+          {% set n = this.attributes.get('samples', 0) | int(0) %}
+          {% if now().hour == 0 and now().minute < 15 or n == 0 %}1{% else %}{{ n + 1 }}{% endif %}
 
     - name: Degree day hall
       unique_id: degree_day_hall
       state: >
         {% set target = state_attr('climate.hall', 'temperature') | float(18) %}
         {% set current = state_attr('climate.hall', 'current_temperature') | float(target) %}
-        {{ [target - current, 0] | max | round(2) }}
+        {% set deficit = [target - current, 0] | max %}
+        {% set n = this.attributes.get('samples', 0) | int(0) %}
+        {% if now().hour == 0 and now().minute < 15 or n == 0 %}
+          {{ deficit | round(2) }}
+        {% else %}
+          {{ ((this.state | float(0) * n + deficit) / (n + 1)) | round(2) }}
+        {% endif %}
       unit_of_measurement: "DD"
       state_class: measurement
+      attributes:
+        samples: >
+          {% set n = this.attributes.get('samples', 0) | int(0) %}
+          {% if now().hour == 0 and now().minute < 15 or n == 0 %}1{% else %}{{ n + 1 }}{% endif %}
 
 # Per-room degree days adjusted for occupancy: DD * (hours_occupied / 24)
 # Excludes bedroom and Marthe's bedroom (no occupancy sensors)
