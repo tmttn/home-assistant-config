@@ -1,0 +1,31 @@
+---
+# Deploy to Home Assistant right after a push to main: POST to a secret HA
+# webhook whose automation starts the Git pull app (core_git_pull). The app
+# pulls main, runs the config check, and restarts Core only when needed.
+name: Deploy to Home Assistant
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ha-deploy
+  cancel-in-progress: false
+
+jobs:
+  trigger-pull:
+    name: Trigger Git pull app
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call Home Assistant webhook
+        env:
+          WEBHOOK_URL: ${{ secrets.HA_DEPLOY_WEBHOOK_URL }}
+        run: |
+          if [ -z "$WEBHOOK_URL" ]; then
+            echo "::warning::HA_DEPLOY_WEBHOOK_URL secret is not set; skipping deploy"
+            exit 0
+          fi
+          curl --fail --silent --show-error --max-time 30 -X POST "$WEBHOOK_URL"

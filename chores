@@ -74,7 +74,10 @@ log "Setting git config..."
 git config --global user.name "Thomas Metten"
 git config --global user.email "thomas.metten@gmail.com"
 
-SSH_ORIGIN="git@github.com:tmttn/home-assistant-config.git"
+# Plain public HTTPS origin. The Git pull app refuses to sync unless origin
+# matches its `repository` option exactly, and a public repo needs no
+# credentials to pull.
+ORIGIN_URL="https://github.com/tmttn/home-assistant-config.git"
 
 log "Setting up HTTPS authentication..."
 if [[ -f /config/.git-token ]]; then
@@ -85,8 +88,9 @@ else
     exit 1
 fi
 
-# Restore SSH origin on exit so the git pull add-on keeps working
-trap 'git remote set-url origin "$SSH_ORIGIN"' EXIT
+# Restore the plain origin on exit: drops the token from .git/config and
+# keeps the Git pull app's origin check passing
+trap 'git remote set-url origin "$ORIGIN_URL"' EXIT
 
 # Refuse to run on a half-finished git operation. Without this, a leftover
 # conflict makes every later run die at `git stash` ("needs merge") before
