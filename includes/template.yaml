@@ -250,28 +250,6 @@
           notify.mobile_app_t_phone
         {% endif %}
 
-    - name: Half an hour before alarm
-      unique_id: half_hour_before_alarm
-      state: >
-        {# next_event is the next block start only while the schedule is off #}
-        {% set next_alarm = state_attr("schedule.alarm_clock_schedule", "next_event") %}
-        {% if next_alarm is not none and is_state("schedule.alarm_clock_schedule", "off") %}
-          {{ (as_datetime(next_alarm) - timedelta(minutes=30)).strftime("%H:%M") }}
-        {% else %}
-          unknown
-        {% endif %}
-
-    - name: Ten minutes before alarm
-      unique_id: ten_minutes_before_alarm
-      state: >
-        {# next_event is the next block start only while the schedule is off #}
-        {% set next_alarm = state_attr("schedule.alarm_clock_schedule", "next_event") %}
-        {% if next_alarm is not none and is_state("schedule.alarm_clock_schedule", "off") %}
-          {{ (as_datetime(next_alarm) - timedelta(minutes=10)).strftime("%H:%M") }}
-        {% else %}
-          unknown
-        {% endif %}
-
     - name: Lights on total hours
       unique_id: lights_on_total_hours
       unit_of_measurement: h
