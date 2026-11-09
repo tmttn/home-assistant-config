@@ -158,3 +158,4 @@ image/*
 /.idea/copilot.data.migration.ask2agent.xml
 .ha_run.lock
 .ha_mcp/
+.chores-last-alert

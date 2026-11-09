@@ -45,13 +45,20 @@ ha_notify() {
         -d "{\"title\": \"$title\", \"message\": \"$message\", \"notification_id\": \"chores_git_error\"}" \
         "$HA_URL/api/services/persistent_notification/create" >> "$LOGFILE" 2>&1 || true
 
-    # Mobile notification
-    curl -sf -X POST \
-        -H "Authorization: Bearer $TOKEN" \
-        -H "Content-Type: application/json" \
-        -d "{\"title\": \"$title\", \"message\": \"$message\"}" \
-        "$HA_URL/api/services/notify/tom" >> "$LOGFILE" 2>&1 || true
+    # Mobile notification, only when the alert changes: chores runs every
+    # 15 minutes, so a stuck repo would otherwise ping the phone all day.
+    if [[ "$(cat "$ALERT_STAMP" 2>/dev/null)" != "$title|$message" ]]; then
+        echo "$title|$message" > "$ALERT_STAMP"
+        curl -sf -X POST \
+            -H "Authorization: Bearer $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"title\": \"$title\", \"message\": \"$message\"}" \
+            "$HA_URL/api/services/notify/tom" >> "$LOGFILE" 2>&1 || true
+    fi
 }
+
+ALERT_STAMP="/config/.chores-last-alert"
+BRANCH="main"
 
 # Redirect all stderr to log file as well
 exec 2>> "$LOGFILE"
@@ -81,6 +88,37 @@ fi
 # Restore SSH origin on exit so the git pull add-on keeps working
 trap 'git remote set-url origin "$SSH_ORIGIN"' EXIT
 
+# Refuse to run on a half-finished git operation. Without this, a leftover
+# conflict makes every later run die at `git stash` ("needs merge") before
+# any notification is sent, so the repo silently stops syncing.
+GIT_DIR=$(git rev-parse --git-dir)
+if [[ -n "$(git ls-files --unmerged)" ]] || [[ -d "$GIT_DIR/rebase-merge" ]] \
+    || [[ -d "$GIT_DIR/rebase-apply" ]] || [[ -f "$GIT_DIR/MERGE_HEAD" ]]; then
+    log "ERROR: unfinished merge/rebase or unresolved conflicts. Skipping."
+    ha_notify "⚠️ Git stuck" "Config repo has an unfinished merge/rebase. Resolve it on the HA box; check /config/chores.log"
+    exit 1
+fi
+
+CURRENT_BRANCH=$(git branch --show-current)
+if [[ "$CURRENT_BRANCH" != "$BRANCH" ]]; then
+    log "ERROR: on branch '$CURRENT_BRANCH', expected '$BRANCH'. Skipping."
+    ha_notify "⚠️ Git wrong branch" "Config repo is on '$CURRENT_BRANCH' instead of '$BRANCH'. Check /config/chores.log"
+    exit 1
+fi
+
+# Don't pull if incoming changes touch files that are modified locally: the
+# stash pop afterwards would leave conflict markers in live config files.
+log "Fetching origin/$BRANCH..."
+git fetch origin "$BRANCH" >> "$LOGFILE" 2>&1
+OVERLAP=$(comm -12 \
+    <(git diff --name-only HEAD..."origin/$BRANCH" | sort -u) \
+    <({ git diff --name-only; git diff --cached --name-only; } | sort -u))
+if [[ -n "$OVERLAP" ]]; then
+    log "ERROR: incoming changes overlap uncommitted local edits: $OVERLAP"
+    ha_notify "⚠️ Git Conflict" "Incoming changes touch locally modified files ($(echo $OVERLAP)). Commit or revert them on the HA box."
+    exit 1
+fi
+
 # Stash any uncommitted changes before pulling
 STASHED=false
 if ! git diff --quiet || ! git diff --cached --quiet; then
@@ -90,7 +128,7 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
 fi
 
 log "Pulling latest changes..."
-if ! git pull --rebase origin master >> "$LOGFILE" 2>&1; then
+if ! git pull --rebase origin "$BRANCH" >> "$LOGFILE" 2>&1; then
     log "ERROR: Pull failed, likely due to conflicts"
     log "Aborting rebase to restore clean state..."
     git rebase --abort >> "$LOGFILE" 2>&1 || true
@@ -107,7 +145,9 @@ fi
 if $STASHED; then
     log "Restoring stashed changes..."
     if ! git stash pop >> "$LOGFILE" 2>&1; then
-        log "WARNING: Stash pop had conflicts, may need manual resolution"
+        log "ERROR: Stash pop had conflicts. Stopping before committing or pushing."
+        ha_notify "⚠️ Git Conflict" "Restoring local changes after pull conflicted. Resolve on the HA box; check /config/chores.log"
+        exit 1
     fi
 fi
 
@@ -123,10 +163,13 @@ python3 utils/ascii_art.py
 log "Running update-readme.py..."
 python3 utils/update-readme.py
 
-log "Pushing to git..."
-git push >> "$LOGFILE" 2>&1
-
 log "Running commit-readme.sh..."
 ./utils/commit-readme.sh
 
+# Single push at the end, so the README/ascii-art commits go out too
+# (this replaces the old post-commit hook that pushed master).
+log "Pushing to origin/$BRANCH..."
+git push origin "$BRANCH" >> "$LOGFILE" 2>&1
+
+rm -f "$ALERT_STAMP"
 log "Chores completed successfully"
