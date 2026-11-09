@@ -27,7 +27,7 @@
   name: Humidity bathroom stats
   unique_id: humidity_bathroom_stats
   entity_id: sensor.multi_sensor_bathroom_humidity
-  state_characteristic: mean
+  state_characteristic: median
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
   max_age:
     hours: 24
@@ -42,7 +42,7 @@
   name: Humidity storage stats
   unique_id: humidity_storage_stats
   entity_id: sensor.multi_sensor_storage_humidity
-  state_characteristic: mean
+  state_characteristic: median
   sampling_size: 86400 # make sure all data points of the last 24hrs are included
   max_age:
     hours: 24
@@ -102,42 +102,6 @@
 - platform: history_stats
   name: Times TV has been on last 7 days
   entity_id: media_player.tv
-  state: "on"
-  type: count
-  duration:
-    days: 7
-  end: "{{ now() }}"
-
-- platform: history_stats
-  name: Hours dishwasher has been on last 7 days
-  entity_id: binary_sensor.dishwasher
-  state: "on"
-  type: time
-  duration:
-    days: 7
-  end: "{{ now() }}"
-
-- platform: history_stats
-  name: Times dishwasher has been on last 7 days
-  entity_id: binary_sensor.dishwasher
-  state: "on"
-  type: count
-  duration:
-    days: 7
-  end: "{{ now() }}"
-
-- platform: history_stats
-  name: Hours tumble dryer has been on last 7 days
-  entity_id: binary_sensor.tumble_dryer
-  state: "on"
-  type: time
-  duration:
-    days: 7
-  end: "{{ now() }}"
-
-- platform: history_stats
-  name: Times tumble dryer has been on last 7 days
-  entity_id: binary_sensor.tumble_dryer
   state: "on"
   type: count
   duration:
