@@ -250,30 +250,6 @@
           notify.mobile_app_t_phone
         {% endif %}
 
-    - name: Half an hour before alarm
-      unique_id: half_hour_before_alarm
-      state: >
-        {% set t_alarm = state_attr("input_datetime.alarm_clock", "timestamp") %}
-        {% set t_start = states("sensor.timestamp_start_of_today") %}
-        {% if t_alarm is not none and t_start not in ['unknown', 'unavailable'] %}
-          {% set half_hour_before_alarm = t_alarm | int + t_start | int - 60 * 30 %}
-          {{ half_hour_before_alarm | timestamp_custom("%H:%M", True) }}
-        {% else %}
-          unknown
-        {% endif %}
-
-    - name: Ten minutes before alarm
-      unique_id: ten_minutes_before_alarm
-      state: >
-        {% set t_alarm = state_attr("input_datetime.alarm_clock", "timestamp") %}
-        {% set t_start = states("sensor.timestamp_start_of_today") %}
-        {% if t_alarm is not none and t_start not in ['unknown', 'unavailable'] %}
-          {% set before_alarm = t_alarm | int + t_start | int - 60 * 10 %}
-          {{ before_alarm | timestamp_custom("%H:%M", True) }}
-        {% else %}
-          unknown
-        {% endif %}
-
     - name: Lights on total hours
       unique_id: lights_on_total_hours
       unit_of_measurement: h
