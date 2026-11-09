@@ -74,23 +74,32 @@ log "Setting git config..."
 git config --global user.name "Thomas Metten"
 git config --global user.email "thomas.metten@gmail.com"
 
-# Plain public HTTPS origin. The Git pull app refuses to sync unless origin
-# matches its `repository` option exactly, and a public repo needs no
-# credentials to pull.
+# Plain public HTTPS origin, never with the token in it. The Git pull app
+# refuses to sync unless origin matches its `repository` option exactly, and
+# a public repo needs no credentials to fetch or pull. Setting it here also
+# cleans up a token URL left behind by older versions of this script.
 ORIGIN_URL="https://github.com/tmttn/home-assistant-config.git"
+git remote set-url origin "$ORIGIN_URL"
 
 log "Setting up HTTPS authentication..."
 if [[ -f /config/.git-token ]]; then
-    GIT_TOKEN=$(cat /config/.git-token | tr -d '[:space:]')
-    git remote set-url origin "https://${GIT_TOKEN}@github.com/tmttn/home-assistant-config.git"
+    GIT_TOKEN=$(tr -d '[:space:]' < /config/.git-token)
+    export GIT_TOKEN
 else
     log "ERROR: /config/.git-token not found"
     exit 1
 fi
 
-# Restore the plain origin on exit: drops the token from .git/config and
-# keeps the Git pull app's origin check passing
-trap 'git remote set-url origin "$ORIGIN_URL"' EXIT
+# Push with the token from a credential helper instead of embedding it in the
+# URL. GitHub answers token-in-URL requests with a redirect, and git drops
+# URL-embedded credentials when it follows one, so pushes failed with
+# "could not read Username". Git asks a helper again after a redirect, and
+# the token never lands in .git/config or a process argument list.
+git_push() {
+    git -c credential.helper= \
+        -c 'credential.helper=!f() { test "$1" = get || return 0; echo username=x-access-token; echo "password=${GIT_TOKEN}"; }; f' \
+        push "$@"
+}
 
 # Refuse to run on a half-finished git operation. Without this, a leftover
 # conflict makes every later run die at `git stash` ("needs merge") before
@@ -173,7 +182,7 @@ log "Running commit-readme.sh..."
 # Single push at the end, so the README/ascii-art commits go out too
 # (this replaces the old post-commit hook that pushed master).
 log "Pushing to origin/$BRANCH..."
-git push origin "$BRANCH" >> "$LOGFILE" 2>&1
+git_push origin "$BRANCH" >> "$LOGFILE" 2>&1
 
 rm -f "$ALERT_STAMP"
 log "Chores completed successfully"
