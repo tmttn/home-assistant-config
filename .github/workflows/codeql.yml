@@ -25,7 +25,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [actions, javascript-typescript, python]
+        # No javascript-typescript: the only JS/TS in the repo is third-party
+        # (custom_components/, www/community/), which the config ignores, and
+        # CodeQL fails fatally when it finds no source files for a language.
+        language: [actions, python]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
