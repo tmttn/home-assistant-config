@@ -183,18 +183,18 @@ utility_notification:
   sequence:
   - variables:
       start_time: '{{ as_timestamp(now()) }}'
-      start_kwh: '{{ states(energy_sensor) }}'
+      start_kwh: '{{ states(energy_sensor) | float(0) }}'
   - wait_for_trigger:
       platform: template
       value_template: '{{ is_state(binary_sensor, "off") }}'
-    timeout: 04:00:00
+    timeout: '18:00:00'
     continue_on_timeout: false
   - variables:
       end_time: '{{ as_timestamp(now()) }}'
-      end_kwh: '{{ states(energy_sensor) }}'
+      end_kwh: '{{ states(energy_sensor) | float(0) }}'
   - variables:
       total_time: '{{ (end_time - start_time) }}'
-      total_kwh: '{{ end_kwh - start_kwh }}'
+      total_kwh: '{{ [end_kwh - start_kwh, 0] | max }}'
   - variables:
       minutes: '{{ (total_time / 60) | round(0) }}'
       total_kwh_rounded: '{{ (total_kwh) | round(2) }}'

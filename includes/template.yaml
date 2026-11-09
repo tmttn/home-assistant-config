@@ -437,7 +437,7 @@
     - name: Washing machine
       unique_id: washing_machine
       state: >
-        {{ is_state("sensor.washing_machine_status", "running") }}
+        {{ states("sensor.washing_machine_status") in ["in_use", "pause"] }}
       delay_off: "00:01:00"
       icon: >
         {% if is_state("binary_sensor.washing_machine", "on") %}
