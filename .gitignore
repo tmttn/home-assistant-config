@@ -156,3 +156,6 @@ image/*
 /.idea/copilot.data.migration.agent.xml
 /.idea/copilot.data.migration.ask.xml
 /.idea/copilot.data.migration.ask2agent.xml
+.ha_run.lock
+.ha_mcp/
+.chores-last-alert

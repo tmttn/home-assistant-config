@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
+from enum import IntFlag
 from typing import TYPE_CHECKING
 
 from homeassistant.const import (
@@ -13,9 +14,8 @@ from homeassistant.const import (
     CONF_ENTITY_ID,
     STATE_UNAVAILABLE,
 )
-from homeassistant.core import Event, HomeAssistant, State, callback
+from homeassistant.core import Event, HomeAssistant, State, callback, split_entity_id
 from homeassistant.helpers import device_registry as dr, entity_registry as er
-from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity import Entity
 from homeassistant.helpers.event import (
     EventStateChangedData,
@@ -27,6 +27,24 @@ if TYPE_CHECKING:
     from homeassistant.config_entries import ConfigEntry
 
 
+def swapped_features[FeatureT: IntFlag](
+    features: FeatureT,
+    one: FeatureT,
+    other: FeatureT,
+) -> FeatureT:
+    """Return the features with these two traded places.
+
+    Something that can only be opened is, upside down, something that can
+    only be closed.
+    """
+    swapped = features & ~(one | other)
+    if features & one:
+        swapped |= other
+    if features & other:
+        swapped |= one
+    return swapped
+
+
 class InverseEntity(Entity):  # pylint: disable=too-many-instance-attributes
     """Inverse entity."""
 
@@ -35,39 +53,31 @@ class InverseEntity(Entity):  # pylint: disable=too-many-instance-attributes
 
     def __init__(
         self,
+        hass: HomeAssistant,
         config_entry: ConfigEntry,
     ) -> None:
         """Initialize an inverse entity."""
         super().__init__()
-        self._entity_id = config_entry.options[CONF_ENTITY_ID]
+        # The source can be stored as its entity registry ID, which the state
+        # machine knows nothing about. Following that would leave the inverse
+        # unavailable next to a source that is perfectly fine.
+        source = config_entry.options[CONF_ENTITY_ID]
+        self._entity_id = (
+            er.async_resolve_entity_id(er.async_get(hass), source) or source
+        )
         self._attr_name = config_entry.title
         self._attr_extra_state_attributes = {ATTR_ENTITY_ID: self._entity_id}
         self._attr_unique_id = config_entry.entry_id
+        self.hass = hass
         self.config_entry = config_entry
 
-    @property
-    def device_info(self) -> DeviceInfo | None:
-        """Return the device info."""
         entity_registry = er.async_get(self.hass)
         device_registry = dr.async_get(self.hass)
         source_entity = entity_registry.async_get(self._entity_id)
-        if (
-            (source_entity is not None)
-            and (source_entity.device_id is not None)
-            and (
-                (
-                    device := device_registry.async_get(
-                        device_id=source_entity.device_id,
-                    )
-                )
-                is not None
-            )
-        ):
-            return DeviceInfo(
-                identifiers=device.identifiers,
-                connections=device.connections,
-            )
-        return None
+        device_id = source_entity.device_id if source_entity else None
+
+        if device_id and (device := device_registry.async_get(device_id)):
+            self.device_entry = device
 
     async def async_added_to_hass(self) -> None:
         """Register callbacks."""
@@ -102,13 +112,26 @@ class InverseEntity(Entity):  # pylint: disable=too-many-instance-attributes
         if (
             state := self.hass.states.get(self._entity_id)
         ) is None or state.state == STATE_UNAVAILABLE:
+            # Written down as well, or the inverse goes on showing what it was
+            # before its source went, as if nothing happened.
             self._attr_available = False
+            self.async_write_ha_state()
             return
 
         self._attr_available = True
-        self._attr_supported_features = state.attributes.get(ATTR_SUPPORTED_FEATURES)
-        self._attr_device_class = state.attributes.get(ATTR_DEVICE_CLASS)
         self._attr_icon = state.attributes.get(ATTR_ICON)
+
+        # Only from a source of its own kind. A light's features are not a
+        # switch's, and a device class means something else for every domain:
+        # taken across, they claim things this entity cannot do or be.
+        if split_entity_id(self._entity_id)[0] == split_entity_id(self.entity_id)[0]:
+            self._attr_supported_features = state.attributes.get(
+                ATTR_SUPPORTED_FEATURES
+            )
+            self._attr_device_class = state.attributes.get(ATTR_DEVICE_CLASS)
+        else:
+            self._attr_supported_features = None
+            self._attr_device_class = None
 
         self.async_update_state(state)
 

@@ -22,7 +22,7 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FILTER_REGEX_EXCLUDE: (custom_components|pyscript|rhasspy)/.*
+          FILTER_REGEX_EXCLUDE: (custom_components|www/community|pyscript|rhasspy)/.*
           VALIDATE_YAML: true
           VALIDATE_MARKDOWN: true
           VALIDATE_GITHUB_ACTIONS: true

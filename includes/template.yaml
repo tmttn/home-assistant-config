@@ -244,7 +244,7 @@
       state: >
         {% if is_state("person.tom", "home") and is_state("person.tanja", "home") %}
           notify.all_iphones
-        {% elif is_state_attr("proximity.home", "nearest", "Tom iPhone") %}
+        {% elif is_state("sensor.home_nearest_device", "Tom iPhone") %}
           notify.mobile_app_bizzyphone
         {% else %}
           notify.mobile_app_t_phone
