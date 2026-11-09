@@ -13,7 +13,6 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
 
 - [My devices](#my-devices)
 - [Supervisor add-ons](#supervisor-add-ons)
-- [All my automations](#automations---table-of-content)
 
 ## Cool AppDaemon apps
 
@@ -552,7 +551,7 @@ Using [iOS Light and Dark Mode Themes](https://github.com/basnijholt/lovelace-io
 </table>
 <!-- end-table -->
 
-# Supervisor add-ons
+## Supervisor add-ons
 
 I run a [Supervised install](https://www.home-assistant.io/getting-started/) with the following add-ons:
 

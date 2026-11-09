@@ -1,0 +1,9 @@
+---
+name: CodeQL config
+
+# Third-party code installed by HACS is not ours to fix; scanning it only
+# produces alerts we can't act on. Our own code (pyscript/, utils/, www/
+# outside community/, workflows) is still analyzed.
+paths-ignore:
+  - custom_components
+  - www/community
