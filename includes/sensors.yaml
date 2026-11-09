@@ -416,21 +416,3 @@
   type: time
   start: "{{ now().replace(hour=0, minute=0, second=0, microsecond=0) }}"
   end: "{{ now() }}"
-
-# Waste management
-- platform: afvalbeheer
-  wastecollector: Limburg.NET
-  resources:
-    - restafval
-    - gft
-    - papier
-    - pmd
-  postcode: !secret postal_code
-  streetname: !secret street_name
-  cityname: !secret city_name
-  streetnumber: !secret street_number
-  upcomingsensor: 1
-  builtinicons: 1
-  builtiniconsnew: 1
-  dutch: 1
-  dayofweekonly: 1

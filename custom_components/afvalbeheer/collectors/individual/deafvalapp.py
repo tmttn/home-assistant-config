@@ -6,8 +6,8 @@ from datetime import datetime
 import requests
 
 from ..base import WasteCollector
-from ...models import WasteCollection
-from ...const import WASTE_TYPE_PLASTIC, WASTE_TYPE_GREY, WASTE_TYPE_PACKAGES, WASTE_TYPE_TREE
+from ...models import WasteCollection, WasteCollectionRepository
+from ...const import WASTE_TYPE_PLASTIC, WASTE_TYPE_GREY, WASTE_TYPE_PACKAGES, WASTE_TYPE_TREE, DEFAULT_REQUEST_TIMEOUT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -26,16 +26,20 @@ class DeAfvalAppCollector(WasteCollector):
 
     def __init__(self, hass, waste_collector, postcode, street_number, suffix, custom_mapping):
         super().__init__(hass, waste_collector, postcode, street_number, suffix, custom_mapping)
-        self.main_url = "http://dataservice.deafvalapp.nl"
+        self.main_url = "https://dataservice.deafvalapp.nl"
 
     def __get_data(self):
         _LOGGER.debug("Fetching data from DeAfvalApp")
         get_url = '{}/dataservice/DataServiceServlet?service=OPHAALSCHEMA&land=NL&postcode={}&straatId=0&huisnr={}&huisnrtoev={}'.format(
                 self.main_url, self.postcode, self.street_number, self.suffix)
-        response = requests.get(get_url)
+        # Never follow a redirect that could send the address over plain HTTP.
+        response = requests.get(get_url, timeout=DEFAULT_REQUEST_TIMEOUT, allow_redirects=False)
+        if 300 <= response.status_code < 400:
+            raise requests.exceptions.RequestException("DeAfvalApp returned an unexpected redirect")
+        response.raise_for_status()
         return response.text
 
-    async def update(self):
+    async def _async_update(self) -> bool:
         _LOGGER.debug("Updating Waste collection dates using DeAfvalApp API")
 
         try:
@@ -43,9 +47,9 @@ class DeAfvalAppCollector(WasteCollector):
 
             if not response:
                 _LOGGER.error('No Waste data found!')
-                return
+                return False
             
-            self.collections.remove_all()
+            collections = WasteCollectionRepository()
 
             for rows in response.strip().split('\n'):
                 waste_type = self.map_waste_type(rows.split(';')[0])
@@ -61,8 +65,11 @@ class DeAfvalAppCollector(WasteCollector):
                         waste_type=waste_type,
                         waste_type_slug=rows.split(';')[0]
                     )
-                    if collection not in self.collections:
-                        self.collections.add(collection)
+                    if collection not in collections:
+                        collections.add(collection)
+
+            self.collections = collections
+            return True
 
         except requests.exceptions.RequestException as exc:
             _LOGGER.error('Error occurred while fetching data: %r', exc)

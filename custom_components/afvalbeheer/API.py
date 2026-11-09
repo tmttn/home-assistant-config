@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import timedelta
 
@@ -5,12 +6,36 @@ from homeassistant.helpers.event import async_track_point_in_utc_time
 from homeassistant.util import dt as dt_util
 from homeassistant.components import persistent_notification
 
-from .const import *
+from .const import (
+    BURGERPORTAAL_COLLECTOR_IDS,
+    CONF_ADDRESS_ID,
+    CONF_CITY_NAME,
+    CONF_CUSTOMER_ID,
+    CONF_CUSTOM_MAPPING,
+    CONF_EMAIL,
+    CONF_PASSWORD,
+    CONF_POSTCODE,
+    CONF_PRINT_AVAILABLE_WASTE_TYPES,
+    CONF_PRINT_AVAILABLE_WASTE_TYPE_SLUGS,
+    CONF_STREET_NAME,
+    CONF_STREET_NUMBER,
+    CONF_SUFFIX,
+    CONF_UPDATE_INTERVAL,
+    CONF_WASTE_COLLECTOR,
+    DEPRECATED_AND_NEW_WASTECOLLECTORS,
+    KLIKOGROEP_COLLECTOR_IDS,
+    LANGUAGE_NL,
+    NOTIFICATION_ID,
+    OPZET_COLLECTOR_URLS,
+    SCHEDULE_UPDATE_INTERVAL,
+    XIMMIO_COLLECTOR_IDS,
+)
+from .translation import resolve_language, text
 from .models import WasteCollectionRepository
 from .collectors import (
     XimmioCollector, BurgerportaalCollector, OpzetCollector, KlikogroepCollector,
     AfvalAlertCollector, AfvalwijzerCollector, AmsterdamCollector, CirculusCollector, CleanprofsCollector,
-    DeAfvalAppCollector, LimburgNetCollector, IradoCollector, MontferlandNetCollector, OmrinCollector,
+    DeAfvalAppCollector, DemoCollector, FrisseKlikoCollector, LimburgNetCollector, IradoCollector, MontferlandNetCollector, OmrinCollector,
     RD4Collector, RecycleApp, ReinisCollector, ROVACollector, StraatbeeldCollector
 )
 
@@ -23,7 +48,7 @@ class WasteData(object):
     Manages waste data and schedules updates.
     """
 
-    def __init__(self, hass, waste_collector, city_name, postcode, street_name, street_number, suffix, custom_mapping, address_id, print_waste_type, print_waste_type_slugs, update_interval, customer_id):
+    def __init__(self, hass, waste_collector, city_name, postcode, street_name, street_number, suffix, custom_mapping, address_id, print_waste_type, print_waste_type_slugs, update_interval, customer_id, email=None, password=None, language=None):
         self.hass = hass
         self.waste_collector = waste_collector
         self.city_name = city_name
@@ -37,7 +62,13 @@ class WasteData(object):
         self.collector = None
         self.update_interval = update_interval
         self.customer_id = customer_id
+        self.email = email
+        self.password = password
         self.custom_mapping = custom_mapping
+        self.language = language or LANGUAGE_NL
+        self._cancel_update = None
+        self._stopped = False
+        self._update_lock = asyncio.Lock()
         self.__select_collector()
 
     def __select_collector(self):
@@ -51,15 +82,17 @@ class WasteData(object):
             "afvalalert": (AfvalAlertCollector, common_args),
             "amsterdam": (AmsterdamCollector, common_args),
             "deafvalapp": (DeAfvalAppCollector, common_args),
+            "demo": (DemoCollector, common_args),
             "circulus": (CirculusCollector, common_args),
             "limburg.net": (LimburgNetCollector, common_args + [self.street_name, self.city_name]),
             "irado": (IradoCollector, common_args),
             "montferland": (MontferlandNetCollector, common_args),
-            "omrin": (OmrinCollector, common_args),
+            "omrin": (OmrinCollector, common_args + [self.email, self.password]),
             "recycleapp": (RecycleApp, common_args + [self.street_name]),
             "reinis": (ReinisCollector, common_args),
             "rd4": (RD4Collector, common_args),
             "cleanprofs": (CleanprofsCollector, common_args),
+            "frissekliko": (FrisseKlikoCollector, common_args + [self.street_name]),
             "rova": (ROVACollector, common_args),
             "drimmelen": (StraatbeeldCollector, common_args),
             **{key: (BurgerportaalCollector, common_args) for key in BURGERPORTAAL_COLLECTOR_IDS.keys()},
@@ -74,37 +107,61 @@ class WasteData(object):
         else:
             persistent_notification.create(
                 self.hass,
-                f'Waste collector "{self.waste_collector}" not found!',
+                text(self.language, "notifications.collector_not_found", collector=self.waste_collector),
                 f'Afvalwijzer {self.waste_collector}',
                 f'{NOTIFICATION_ID}_collectornotfound_{self.waste_collector}'
             )
 
-    async def schedule_update(self, interval):
-        _LOGGER.debug(f"Scheduling update with interval: {interval}")
+    async def schedule_update(self, interval: timedelta) -> None:
+        """Schedule exactly one refresh, unless this data source was stopped."""
+        if self._cancel_update is not None:
+            self._cancel_update()
+            self._cancel_update = None
+        if self._stopped:
+            return
+        _LOGGER.debug("Scheduling update with interval: %s", interval)
         nxt = dt_util.utcnow() + interval
-        async_track_point_in_utc_time(self.hass, self.async_update, nxt)
+        self._cancel_update = async_track_point_in_utc_time(self.hass, self.async_update, nxt)
 
-    async def async_update(self, *_):
+    def async_stop(self) -> None:
+        """Cancel polling and prevent an in-flight refresh from rescheduling."""
+        self._stopped = True
+        if self._cancel_update is not None:
+            self._cancel_update()
+            self._cancel_update = None
+
+    async def async_update(self, *_) -> None:
+        """Serialize refreshes and schedule the next one while active."""
+        async with self._update_lock:
+            if self._stopped:
+                return
+            await self._async_refresh()
+
+    async def _async_refresh(self) -> None:
         _LOGGER.debug("Performing async update")
-        await self.collector.update()
-        if self.update_interval is not None and self.update_interval != 0:
-            await self.schedule_update(timedelta(hours=self.update_interval))
-        else:
-            await self.schedule_update(SCHEDULE_UPDATE_INTERVAL)
+        try:
+            await self.collector.update()
+        finally:
+            if self.update_interval is not None and self.update_interval != 0:
+                await self.schedule_update(timedelta(hours=self.update_interval))
+            else:
+                await self.schedule_update(SCHEDULE_UPDATE_INTERVAL)
+        if self._stopped:
+            return
         if self.print_waste_type:
             persistent_notification.create(
                 self.hass,
-                f'Available waste types: {", ".join(self.collector.collections.get_available_waste_types())}',
+                text(self.language, "notifications.available_waste_types", types=", ".join(self.collector.collections.get_available_waste_types())),
                 f'Afvalwijzer {self.waste_collector}',
                 f'{NOTIFICATION_ID}_availablewastetypes_{self.waste_collector}')
             self.print_waste_type = False
         if self.print_waste_type_slugs:
             persistent_notification.create(
                 self.hass,
-                f'Waste type slugs used by API: {", ".join(self.collector.collections.get_available_waste_type_slugs())}',
+                text(self.language, "notifications.available_waste_type_slugs", slugs=", ".join(self.collector.collections.get_available_waste_type_slugs())),
                 f'Afvalwijzer {self.waste_collector}',
                 f'{NOTIFICATION_ID}_availablewastetypeslugs_{self.waste_collector}')
-            self.print_waste_type = False
+            self.print_waste_type_slugs = False
 
     @property
     def collections(self):
@@ -125,13 +182,21 @@ def get_wastedata_from_config(hass, config):
     print_waste_type_slugs = config.get(CONF_PRINT_AVAILABLE_WASTE_TYPE_SLUGS)
     update_interval = config.get(CONF_UPDATE_INTERVAL)
     customer_id = config.get(CONF_CUSTOMER_ID)
+    email = config.get(CONF_EMAIL)
+    password = config.get(CONF_PASSWORD)
     custom_mapping = config.get(CONF_CUSTOM_MAPPING)
+    language = resolve_language(config)
     config["id"] = _format_id(waste_collector, postcode, street_number)
 
     if waste_collector in DEPRECATED_AND_NEW_WASTECOLLECTORS:
         persistent_notification.create(
             hass,
-            f"Update your config to use {DEPRECATED_AND_NEW_WASTECOLLECTORS[waste_collector]}! You are still using {waste_collector} as a waste collector, which is deprecated. Check your automations and lovelace config, as the sensor names may also be changed!",
+            text(
+                language,
+                "notifications.deprecated_collector",
+                new_collector=DEPRECATED_AND_NEW_WASTECOLLECTORS[waste_collector],
+                old_collector=waste_collector,
+            ),
             f"Afvalbeheer {waste_collector}",
             f"{NOTIFICATION_ID}_update_config_{waste_collector}",
         )
@@ -140,7 +205,7 @@ def get_wastedata_from_config(hass, config):
     if waste_collector in ["limburg.net"] and not city_name:
         persistent_notification.create(
             hass,
-            f"Config invalid! Cityname is required for {waste_collector}",
+            text(language, "notifications.city_required", collector=waste_collector),
             f"Afvalbeheer {waste_collector}",
             f"{NOTIFICATION_ID}_invalid_config_{waste_collector}",
         )
@@ -149,7 +214,7 @@ def get_wastedata_from_config(hass, config):
     if waste_collector in ["limburg.net", "recycleapp"] and not street_name:
         persistent_notification.create(
             hass,
-            f"Config invalid! Streetname is required for {waste_collector}",
+            text(language, "notifications.street_required", collector=waste_collector),
             f"Afvalbeheer {waste_collector}",
             f"{NOTIFICATION_ID}_invalid_config_{waste_collector}",
         )
@@ -169,6 +234,9 @@ def get_wastedata_from_config(hass, config):
         print_waste_type_slugs,
         update_interval,
         customer_id,
+        email,
+        password,
+        language,
     )
 
 
