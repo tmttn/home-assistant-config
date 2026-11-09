@@ -18,26 +18,6 @@ washing_machine_off:
   has_date: true
   has_time: true
 
-tumble_dryer_on:
-  name: Tumble dryer last started
-  has_date: true
-  has_time: true
-
-tumble_dryer_off:
-  name: Tumble dryer last done
-  has_date: true
-  has_time: true
-
-dishwasher_on:
-  name: Dishwasher last started
-  has_date: true
-  has_time: true
-
-dishwasher_off:
-  name: Dishwasher last done
-  has_date: true
-  has_time: true
-
 espresso_machine_on:
   name: Espresso machine last started
   has_date: true
