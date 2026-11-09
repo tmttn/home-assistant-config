@@ -118,7 +118,7 @@ views:
     show_header_toggle: false
     type: entities
   - entities:
-    - entity: input_datetime.alarm_clock
+    - entity: sensor.next_alarm
     type: entities
   - cards:
     - double_tap_action:
@@ -134,14 +134,14 @@ views:
       type: custom:mushroom-select-card
     - double_tap_action:
         action: none
-      entity: input_boolean.alarm_clock
+      entity: schedule.alarm_clock_schedule
       fill_container: true
       hold_action:
         action: none
       layout: vertical
       name: Alarm clock
       tap_action:
-        action: toggle
+        action: more-info
       type: custom:mushroom-entity-card
     columns: 2
     square: false
