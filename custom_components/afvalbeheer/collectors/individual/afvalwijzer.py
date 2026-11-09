@@ -6,12 +6,13 @@ from datetime import datetime
 import requests
 
 from ..base import WasteCollector
-from ...models import WasteCollection
+from ...models import WasteCollection, WasteCollectionRepository
 from ...const import (
     WASTE_TYPE_PAPER_PMD, WASTE_TYPE_GREENGREY, WASTE_TYPE_BRANCHES,
     WASTE_TYPE_BULKLITTER, WASTE_TYPE_BULKYGARDENWASTE, WASTE_TYPE_GLASS,
     WASTE_TYPE_GREEN, WASTE_TYPE_KCA_LOCATION, WASTE_TYPE_KCA, WASTE_TYPE_GREY,
-    WASTE_TYPE_PACKAGES, WASTE_TYPE_PAPER, WASTE_TYPE_TEXTILE, WASTE_TYPE_TREE
+    WASTE_TYPE_PACKAGES, WASTE_TYPE_PAPER, WASTE_TYPE_TEXTILE, WASTE_TYPE_TREE,
+    WASTE_TYPE_VET_GOED, DEFAULT_REQUEST_TIMEOUT
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -28,6 +29,7 @@ class AfvalwijzerCollector(WasteCollector):
         'grofvuil': WASTE_TYPE_BULKLITTER,
         'tuinafval': WASTE_TYPE_BULKYGARDENWASTE,
         'glas': WASTE_TYPE_GLASS,
+        'vet-goed': WASTE_TYPE_VET_GOED,
         'gft': WASTE_TYPE_GREEN,
         'keukenafval': WASTE_TYPE_GREEN,
         'kcalocatie': WASTE_TYPE_KCA_LOCATION,
@@ -51,9 +53,9 @@ class AfvalwijzerCollector(WasteCollector):
         _LOGGER.debug("Fetching data from Afvalwijzer")
         get_url = 'https://api.{}.nl/webservices/appsinput/?apikey={}&method=postcodecheck&postcode={}&street=&huisnummer={}&toevoeging={}&app_name=afvalwijzer&platform=web&afvaldata={}&langs=nl'.format(
                 self.waste_collector_url, self.apikey, self.postcode, self.street_number, self.suffix, datetime.today().strftime('%Y-%m-%d'))
-        return requests.get(get_url)
+        return requests.get(get_url, timeout=DEFAULT_REQUEST_TIMEOUT)
 
-    async def update(self):
+    async def _async_update(self) -> bool:
         _LOGGER.debug("Updating Waste collection dates using Afvalwijzer API")
 
         try:
@@ -62,33 +64,47 @@ class AfvalwijzerCollector(WasteCollector):
 
             data = []
 
+            if not isinstance(response, dict):
+                return False
+
             if 'ophaaldagen' in response:
+                if not isinstance(response['ophaaldagen']['data'], list):
+                    return False
                 data = data + response['ophaaldagen']['data']
 
             if 'ophaaldagenNext' in response:
+                if not isinstance(response['ophaaldagenNext']['data'], list):
+                    return False
                 data = data + response['ophaaldagenNext']['data']
 
-            if not data:
+            if 'ophaaldagen' not in response and 'ophaaldagenNext' not in response:
                 _LOGGER.error('No Waste data found!')
-                return
+                return False
             
-            self.collections.remove_all()
+            collections = WasteCollectionRepository()
 
             for item in data:
                 if not item['date']:
                     continue
 
-                waste_type = self.map_waste_type(item['type'])
+                # Vet-goed (Vetten, Elektrische apparaten, Textiel) is reported with
+                # type 'keukenafval', so it can only be told apart by its nameType.
+                raw_type = 'vet-goed' if item.get('nameType') == 'vet-goed' else item['type']
+
+                waste_type = self.map_waste_type(raw_type)
                 if not waste_type:
                     continue
 
                 collection = WasteCollection.create(
                     date=datetime.strptime(item['date'], '%Y-%m-%d'),
                     waste_type=waste_type,
-                    waste_type_slug=item['type']
+                    waste_type_slug=raw_type
                 )
-                if collection not in self.collections:
-                    self.collections.add(collection)
+                if collection not in collections:
+                    collections.add(collection)
+
+            self.collections = collections
+            return True
 
         except requests.exceptions.RequestException as exc:
             _LOGGER.error('Error occurred while fetching data: %r', exc)

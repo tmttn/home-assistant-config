@@ -2,16 +2,56 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.components import automation
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.entity_component import DATA_INSTANCES, EntityComponent
 
-from ....const import LOGGER
-from ....repairs import AbstractSpookRepair
-from ....util import async_filter_known_device_ids, async_get_all_device_ids
+from ....entity_filtering import async_filter_known_device_ids, async_get_all_device_ids
+from ....reference_extraction import (
+    core_references,
+    extract_targets_from_config,
+    names_given_to_templates,
+    only_in_disabled_steps,
+)
+from ....template_extraction import extract_device_ids_from_config
+from . import AbstractSpookAutomationReferencesRepair
 
 
-class SpookRepair(AbstractSpookRepair):
+def extract_event_data_device_ids_from_trigger_config(
+    config: dict[str, Any] | list,
+) -> set[str]:
+    """Extract device IDs from event trigger data."""
+    device_ids = set()
+
+    if not config:
+        return device_ids
+
+    if isinstance(config, list):
+        for item in config:
+            device_ids.update(extract_event_data_device_ids_from_trigger_config(item))
+        return device_ids
+
+    if not isinstance(config, dict):
+        return device_ids
+
+    if config.get("platform", config.get("trigger")) == "event" and isinstance(
+        event_data := config.get("event_data"), dict
+    ):
+        value = event_data.get("device_id")
+        if isinstance(value, str):
+            device_ids.add(value)
+        elif isinstance(value, list):
+            device_ids.update(item for item in value if isinstance(item, str))
+
+    for value in config.values():
+        if isinstance(value, (dict, list)):
+            device_ids.update(extract_event_data_device_ids_from_trigger_config(value))
+
+    return device_ids
+
+
+class SpookRepair(AbstractSpookAutomationReferencesRepair):
     """Spook repair tries to find unknown referenced devices in automations."""
 
     domain = automation.DOMAIN
@@ -23,46 +63,54 @@ class SpookRepair(AbstractSpookRepair):
     inspect_config_entry_changed = True
     inspect_on_reload = True
 
-    automatically_clean_up_issues = True
+    unavailable_entity_class = automation.UnavailableAutomationEntity
+    entity_label = "automation"
+    reference_label = "devices"
+    edit_url_pattern = "/config/automation/edit/{unique_id}"
 
-    async def async_inspect(self) -> None:
-        """Trigger a inspection."""
-        if self.domain not in self.hass.data[DATA_INSTANCES]:
-            return
+    _known_device_ids: set[str]
 
-        entity_component: EntityComponent[automation.AutomationEntity] = self.hass.data[
-            DATA_INSTANCES
-        ][self.domain]
+    async def _async_setup_inspection(self) -> None:
+        """Cache known device IDs for this inspection cycle."""
+        self._known_device_ids = async_get_all_device_ids(self.hass)
 
-        LOGGER.debug("Spook is inspecting: %s", self.repair)
+    async def _async_compute_unknown_references(self, entity: Any) -> set[str]:
+        """Return unknown device IDs referenced by ``entity``."""
+        device_ids = core_references(entity, "devices")
 
-        known_device_ids = async_get_all_device_ids(self.hass)
-
-        for entity in entity_component.entities:
-            self.possible_issue_ids.add(entity.entity_id)
-            if not isinstance(entity, automation.UnavailableAutomationEntity) and (
-                unknown_devices := async_filter_known_device_ids(
-                    self.hass,
-                    device_ids=entity.referenced_devices,
-                    known_device_ids=known_device_ids,
+        if hasattr(entity, "raw_config") and entity.raw_config:
+            # Also walk the raw configuration; the built-in extraction misses
+            # references nested in some step types, like repeat sequences.
+            # The walker never collects from event trigger payloads, so the
+            # subtraction below only affects built-in extraction results.
+            device_ids.update(extract_targets_from_config(entity.raw_config).device_ids)
+            device_ids.difference_update(
+                extract_event_data_device_ids_from_trigger_config(
+                    entity.raw_config.get("trigger")
                 )
-            ):
-                self.async_create_issue(
-                    issue_id=entity.entity_id,
-                    translation_placeholders={
-                        "devices": "\n".join(
-                            f"- `{device}`" for device in unknown_devices
-                        ),
-                        "automation": entity.name,
-                        "edit": f"/config/automation/edit/{entity.unique_id}",
-                        "entity_id": entity.entity_id,
-                    },
+            )
+            device_ids.difference_update(
+                extract_event_data_device_ids_from_trigger_config(
+                    entity.raw_config.get("triggers")
                 )
-                LOGGER.debug(
-                    (
-                        "Spook found unknown devices in %s "
-                        "and created an issue for it; Areas: %s",
-                    ),
-                    entity.entity_id,
-                    ", ".join(unknown_devices),
-                )
+            )
+            # Devices referenced through the device functions in templates.
+            # The variables and fields it gives its templates hide a call.
+            shadowed = names_given_to_templates(entity.raw_config)
+            device_ids.update(
+                extract_device_ids_from_config(entity.raw_config, shadowed)
+            )
+            # A disabled step does nothing, so what only it names is left out.
+            device_ids -= only_in_disabled_steps(
+                entity.raw_config,
+                lambda found: (
+                    extract_targets_from_config(found).device_ids
+                    | extract_device_ids_from_config(found, shadowed)
+                ),
+            )
+
+        return async_filter_known_device_ids(
+            self.hass,
+            device_ids=device_ids,
+            known_device_ids=self._known_device_ids,
+        )

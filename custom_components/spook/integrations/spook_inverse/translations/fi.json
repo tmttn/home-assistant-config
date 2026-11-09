@@ -3,24 +3,44 @@
         "step": {
             "binary_sensor": {
                 "data": {
-                    "entity_id": "Lähde entiteetti",
+                    "entity_id": "Lähde-entiteetti",
                     "name": "Nimi",
-                    "hide_source": "Piilota lähde entiteetti"
+                    "hide_source": "Piilota lähde-entiteetti"
+                },
+                "title": "Käännä 👻"
+            },
+            "cover": {
+                "data": {
+                    "entity_id": "Lähde-entiteetti",
+                    "hide_source": "Piilota lähde-entiteetti",
+                    "inverse_position": "Käännä avaaminen, sulkeminen ja asento",
+                    "inverse_tilt": "Käännä kallistus",
+                    "name": "Nimi"
                 },
                 "title": "Käännä 👻"
             },
             "user": {
-                "description": "Tämän apuohjelman avulla voit kääntää entiteetin käyttäytymisen. Voit esimerkiksi kääntää binääriantureiden ja kytkimien auki/kiinni tai päälle/pois.",
+                "description": "Tämän apurin avulla voit vaihtaa entiteetin toiminnan päinvastaiseksi. Voit esimerkiksi vaihtaa binäärisensoreiden, kaihtimien, kytkimien ja venttiilien auki/kiinni- tai päällä/pois-tilan käänteiseksi.",
                 "menu_options": {
                     "binary_sensor": "Käännä binäärisensori",
-                    "switch": "Käännä kytkin"
+                    "cover": "Käännä kaihdin",
+                    "switch": "Käännä kytkin",
+                    "valve": "Käännä venttiili"
                 },
                 "title": "Käännä 👻"
             },
             "switch": {
                 "data": {
-                    "entity_id": "Lähde entiteetti",
-                    "hide_source": "Piilota lähde entiteetti",
+                    "entity_id": "Lähde-entiteetti",
+                    "hide_source": "Piilota lähde-entiteetti",
+                    "name": "Nimi"
+                },
+                "title": "Käännä 👻"
+            },
+            "valve": {
+                "data": {
+                    "entity_id": "Lähde-entiteetti",
+                    "hide_source": "Piilota lähde-entiteetti",
                     "name": "Nimi"
                 },
                 "title": "Käännä 👻"
@@ -31,16 +51,34 @@
         "step": {
             "switch": {
                 "data": {
-                    "hide_source": "Piilota lähde entiteetti",
+                    "hide_source": "Piilota lähde-entiteetti",
                     "name": "Nimi",
-                    "entity_id": "Lähde entiteetti"
+                    "entity_id": "Lähde-entiteetti"
+                },
+                "title": "Käännä 👻"
+            },
+            "valve": {
+                "data": {
+                    "entity_id": "Lähde-entiteetti",
+                    "hide_source": "Piilota lähde-entiteetti",
+                    "name": "Nimi"
                 },
                 "title": "Käännä 👻"
             },
             "binary_sensor": {
                 "data": {
-                    "entity_id": "Lähde entiteetti",
-                    "hide_source": "Piilota lähde entiteetti",
+                    "entity_id": "Lähde-entiteetti",
+                    "hide_source": "Piilota lähde-entiteetti",
+                    "name": "Nimi"
+                },
+                "title": "Käännä 👻"
+            },
+            "cover": {
+                "data": {
+                    "entity_id": "Lähde-entiteetti",
+                    "hide_source": "Piilota lähde-entiteetti",
+                    "inverse_position": "Käännä avaaminen, sulkeminen ja asento",
+                    "inverse_tilt": "Käännä kallistus",
                     "name": "Nimi"
                 },
                 "title": "Käännä 👻"

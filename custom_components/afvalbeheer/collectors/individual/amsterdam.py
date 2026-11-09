@@ -6,11 +6,11 @@ from datetime import datetime, timedelta
 import requests
 
 from ..base import WasteCollector
-from ...models import WasteCollection
+from ...models import WasteCollection, WasteCollectionRepository
 from ...const import (
     WASTE_TYPE_BULKLITTER, WASTE_TYPE_GREEN, WASTE_TYPE_GREY, 
     WASTE_TYPE_PAPER, WASTE_TYPE_TEXTILE, WASTE_TYPE_GLASS, 
-    WASTE_TYPE_PMD_GREY
+    WASTE_TYPE_PMD_GREY, DEFAULT_REQUEST_TIMEOUT
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -70,9 +70,9 @@ class AmsterdamCollector(WasteCollector):
         filtered_params = {k: v for k, v in params.items() if v}
         query_string = '&'.join(f'{k}={v}' for k, v in filtered_params.items())
         get_url = f'{self.waste_collector_url}/?{query_string}'
-        test_response = requests.get(get_url)
+        test_response = requests.get(get_url, timeout=DEFAULT_REQUEST_TIMEOUT)
         is_valid = len(test_response.text) > 220
-        return is_valid, get_url
+        return is_valid, test_response
 
     def __init__(self, hass, waste_collector, postcode, street_number, suffix, custom_mapping):
         super().__init__(hass, waste_collector, postcode, street_number, suffix, custom_mapping)
@@ -99,15 +99,15 @@ class AmsterdamCollector(WasteCollector):
         # Try each suffix combination
         for suffix_param in suffix_params:
             params = {**base_params, **suffix_param}
-            test_result, get_url = self.check_response_for_suffix(params)
+            test_result, test_response = self.check_response_for_suffix(params)
             if test_result:
-                return requests.get(get_url)
+                return test_response
         
         # No suffix or all suffix attempts failed - use base parameters
         filtered_params = {k: v for k, v in base_params.items() if v}
         query_string = '&'.join(f'{k}={v}' for k, v in filtered_params.items())
         get_url = f'{self.waste_collector_url}/?{query_string}'
-        return requests.get(get_url)
+        return requests.get(get_url, timeout=DEFAULT_REQUEST_TIMEOUT)
 
     def _parse_date(self, date_str, today):
         """Parse date string with multiple format attempts."""
@@ -125,6 +125,22 @@ class AmsterdamCollector(WasteCollector):
         
         _LOGGER.error('Unable to process date: %s', date_str)
         return None
+
+    def _generate_first_weekday_dates_for_year(self, week_day, today):
+        """Generate dates for the first matching weekday of each month."""
+        dates = []
+        for month_offset in range(0, 13):
+            year = today.year + ((today.month - 1 + month_offset) // 12)
+            month = ((today.month - 1 + month_offset) % 12) + 1
+            first_of_month = datetime(year, month, 1)
+            day_delta = (week_day - first_of_month.isocalendar()[2]) % 7
+            dates.append(first_of_month + timedelta(days=day_delta))
+        # Keep today's pickup visible for the entire collection day.
+        return [date for date in dates if date.date() >= today.date()]
+
+    def _is_first_of_month_frequency(self, frequency):
+        """Check if frequency indicates first pickup weekday of each month."""
+        return frequency and frequency.strip().lower().replace(' ', '') == '1evandemaand'
 
     def _calculate_day_delta(self, week_day, today, frequency_type=None):
         """Calculate day delta for collection day calculation."""
@@ -179,6 +195,8 @@ class AmsterdamCollector(WasteCollector):
                 # Weekly collection
                 day_delta = self._calculate_day_delta(week_day, today)
                 future_dates.extend(self.generate_dates_for_year(day_delta, 1, today, False))
+            elif self._is_first_of_month_frequency(frequency):
+                future_dates.extend(self._generate_first_weekday_dates_for_year(week_day, today))
             elif 'weken' in frequency or 'week' in frequency:
                 # Bi-weekly collection (odd/even weeks)
                 frequency_clean = frequency.replace(' weken', '').replace(' week', '')
@@ -197,7 +215,7 @@ class AmsterdamCollector(WasteCollector):
         
         return future_dates
 
-    async def update(self):
+    async def _async_update(self) -> bool:
         """Update waste collection dates using Rest API."""
         _LOGGER.debug('Updating Waste collection dates using Rest API')
 
@@ -205,14 +223,14 @@ class AmsterdamCollector(WasteCollector):
             r = await self.hass.async_add_executor_job(self.__get_data)
             response = r.json()
 
-            if len(response['_embedded']['afvalwijzer']) < 1:
-                _LOGGER.error('No Waste data found!')
-                return
-            
-            self.collections.remove_all()
+            items = response['_embedded']['afvalwijzer']
+            if not isinstance(items, list):
+                return False
+
+            collections = WasteCollectionRepository()
             today = datetime.now()
 
-            for item in response['_embedded']['afvalwijzer']:
+            for item in items:
                 if not self._is_item_valid(item):
                     continue
 
@@ -228,8 +246,11 @@ class AmsterdamCollector(WasteCollector):
                         waste_type=waste_type,
                         waste_type_slug=item['afvalwijzerFractieCode'].lower()
                     )
-                    if collection not in self.collections:
-                        self.collections.add(collection)
+                    if collection not in collections:
+                        collections.add(collection)
+
+            self.collections = collections
+            return True
 
         except requests.exceptions.RequestException as exc:
             _LOGGER.error('Error occurred while fetching data: %r', exc)

@@ -7,8 +7,11 @@ from datetime import datetime, timedelta
 import requests
 
 from ..base import WasteCollector
-from ...models import WasteCollection
-from ...const import WASTE_TYPE_PAPER, WASTE_TYPE_GREEN, WASTE_TYPE_GREY, WASTE_TYPE_PACKAGES, WASTE_TYPE_TREE
+from ...models import WasteCollection, WasteCollectionRepository
+from ...const import (
+    WASTE_TYPE_PAPER, WASTE_TYPE_GREEN, WASTE_TYPE_GREY, WASTE_TYPE_PACKAGES, WASTE_TYPE_TREE,
+    DEFAULT_REQUEST_TIMEOUT,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +42,7 @@ class CirculusCollector(WasteCollector):
 
     def __get_data(self):
         _LOGGER.debug("Fetching data from Circulus")
-        r = requests.get(self.main_url)
+        r = requests.get(self.main_url, timeout=DEFAULT_REQUEST_TIMEOUT)
         cookies = r.cookies
         session_cookie = ""
         logged_in_cookies = ""
@@ -49,7 +52,11 @@ class CirculusCollector(WasteCollector):
                 session_cookie = item[1]
 
         if session_cookie:
-            authenticityToken = re.search('__AT=(.*)&___TS=', session_cookie).group(1)
+            authenticityToken_match = re.search('__AT=(.*)&___TS=', session_cookie)
+            if not authenticityToken_match:
+                _LOGGER.error("Unable to parse authenticity token from Session Cookie")
+                return
+            authenticityToken = authenticityToken_match.group(1)
             data = {
                 'authenticityToken': authenticityToken,
                 'zipCode': self.postcode,
@@ -57,7 +64,8 @@ class CirculusCollector(WasteCollector):
                 }
 
             r = requests.post(
-                '{}/register/zipcode.json'.format(self.main_url), data=data, cookies=cookies
+                '{}/register/zipcode.json'.format(self.main_url), data=data, cookies=cookies,
+                timeout=DEFAULT_REQUEST_TIMEOUT
             )
 
             json_response_data = r.json()
@@ -73,7 +81,7 @@ class CirculusCollector(WasteCollector):
                 else:
                     authenticationUrl = addresses[0]["authenticationUrl"]
                 if authenticationUrl:
-                    r = requests.get(self.main_url + authenticationUrl, cookies=cookies)
+                    r = requests.get(self.main_url + authenticationUrl, cookies=cookies, timeout=DEFAULT_REQUEST_TIMEOUT)
 
             logged_in_cookies = r.cookies
         else:
@@ -91,25 +99,32 @@ class CirculusCollector(WasteCollector):
                 self.main_url,
                 startDate,
                 endDate
-                ), headers=headers, cookies=logged_in_cookies)
+                ), headers=headers, cookies=logged_in_cookies, timeout=DEFAULT_REQUEST_TIMEOUT)
             return response
         else:
             _LOGGER.error("Unable to get Logged-in Cookie")
 
-    async def update(self):
+    async def _async_update(self) -> bool:
         _LOGGER.debug("Updating Waste collection dates using Circulus API")
 
         try:
             r = await self.hass.async_add_executor_job(self.__get_data)
+            if r is None:
+                _LOGGER.error('No response received from Circulus API!')
+                return False
             response = r.json()
 
-            if not response or 'customData' not in response or not response['customData']['response']['garbage']:
+            if not response or 'customData' not in response:
                 _LOGGER.error('No Waste data found!')
-                return
-            
-            self.collections.remove_all()
+                return False
 
-            for item in response['customData']['response']['garbage']:
+            items = response['customData']['response']['garbage']
+            if not isinstance(items, list):
+                return False
+            
+            collections = WasteCollectionRepository()
+
+            for item in items:
                 for date in item['dates']:
                     waste_type = self.map_waste_type(item['code'])
                     if not waste_type:
@@ -120,8 +135,11 @@ class CirculusCollector(WasteCollector):
                         waste_type=waste_type,
                         waste_type_slug=item['code']
                     )
-                    if collection not in self.collections:
-                        self.collections.add(collection)
+                    if collection not in collections:
+                        collections.add(collection)
+
+            self.collections = collections
+            return True
 
         except requests.exceptions.RequestException as exc:
             _LOGGER.error('Error occurred while fetching data: %r', exc)

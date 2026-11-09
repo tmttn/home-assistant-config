@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+import asyncio
 from typing import TYPE_CHECKING
 
 import aiohttp
-import async_timeout
 import voluptuous as vol
 
 from homeassistant.components.blueprint import DOMAIN
@@ -14,6 +14,7 @@ from homeassistant.components.blueprint.importer import fetch_blueprint_from_url
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv
 
+from ....const import DOMAIN as SPOOK_DOMAIN
 from ....services import AbstractSpookAdminService
 
 if TYPE_CHECKING:
@@ -31,23 +32,32 @@ class SpookService(AbstractSpookAdminService):
     async def async_handle_service(self, call: ServiceCall) -> None:
         """Handle the service call."""
         try:
-            async with async_timeout.timeout(10):
+            async with asyncio.timeout(10):
                 imported_blueprint = await fetch_blueprint_from_url(
                     self.hass,
                     call.data["url"],
                 )
         except (TimeoutError, aiohttp.ClientError) as err:
-            msg = "Error fetching blueprint from URL"
-            raise HomeAssistantError(msg) from err
+            raise HomeAssistantError(
+                translation_domain=SPOOK_DOMAIN,
+                translation_key="blueprint_fetch_failed",
+            ) from err
 
         if imported_blueprint is None:
-            msg = "This url is not supported"
-            raise HomeAssistantError(msg)
+            raise HomeAssistantError(
+                translation_domain=SPOOK_DOMAIN,
+                translation_key="blueprint_url_not_supported",
+            )
 
         domain_blueprints: dict[str, DomainBlueprints] = self.hass.data.get(DOMAIN, {})
         if imported_blueprint.blueprint.domain not in domain_blueprints:
-            msg = f"Unsupported domain: {imported_blueprint.blueprint.domain}"
-            raise HomeAssistantError(msg)
+            raise HomeAssistantError(
+                translation_domain=SPOOK_DOMAIN,
+                translation_key="blueprint_domain_not_supported",
+                translation_placeholders={
+                    "domain": imported_blueprint.blueprint.domain,
+                },
+            )
 
         imported_blueprint.blueprint.update_metadata(source_url=call.data["url"])
 
@@ -59,8 +69,12 @@ class SpookService(AbstractSpookAdminService):
                 imported_blueprint.suggested_filename,
             )
         except FileAlreadyExists as ex:
-            msg = "File already exists"
-            raise HomeAssistantError(msg) from ex
+            raise HomeAssistantError(
+                translation_domain=SPOOK_DOMAIN,
+                translation_key="blueprint_file_exists",
+            ) from ex
         except OSError as err:
-            msg = "Error writing file"
-            raise HomeAssistantError(msg) from err
+            raise HomeAssistantError(
+                translation_domain=SPOOK_DOMAIN,
+                translation_key="blueprint_write_failed",
+            ) from err

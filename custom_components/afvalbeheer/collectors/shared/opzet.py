@@ -10,12 +10,12 @@ from contextlib import contextmanager
 import urllib3.util.connection as _urllib3_connection
 
 from ..base import WasteCollector
-from ...models import WasteCollection
+from ...models import WasteCollection, WasteCollectionRepository
 from ...const import (
-    WASTE_TYPE_PAPER_PMD, WASTE_TYPE_BRANCHES, WASTE_TYPE_BULKLITTER,
+    WASTE_TYPE_PMD_GREY, WASTE_TYPE_PAPER_PMD, WASTE_TYPE_BRANCHES, WASTE_TYPE_BULKLITTER,
     WASTE_TYPE_GLASS, WASTE_TYPE_GREENGREY, WASTE_TYPE_GREEN, WASTE_TYPE_KCA,
     WASTE_TYPE_GREY_BAGS, WASTE_TYPE_GREY, WASTE_TYPE_PACKAGES, WASTE_TYPE_PAPER,
-    WASTE_TYPE_TEXTILE, WASTE_TYPE_TREE, OPZET_COLLECTOR_URLS
+    WASTE_TYPE_TEXTILE, WASTE_TYPE_TREE, OPZET_COLLECTOR_URLS, DEFAULT_REQUEST_TIMEOUT
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -52,18 +52,21 @@ class OpzetCollector(WasteCollector):
         'glas': WASTE_TYPE_GLASS,
         'duobak': WASTE_TYPE_GREENGREY,
         'groente': WASTE_TYPE_GREEN,
+        'etensresten': WASTE_TYPE_GREEN,
         'gft': WASTE_TYPE_GREEN,
         'groene container': WASTE_TYPE_GREEN,
         'chemisch': WASTE_TYPE_KCA,
         'kca': WASTE_TYPE_KCA,
         'tariefzak restafval': WASTE_TYPE_GREY_BAGS,
         'restafvalzakken': WASTE_TYPE_GREY_BAGS,
+        'rest+pmd': WASTE_TYPE_PMD_GREY,
         'rest': WASTE_TYPE_GREY,
         'grijze container': WASTE_TYPE_GREY,
         'plastic': WASTE_TYPE_PACKAGES,
         'papier': WASTE_TYPE_PAPER,
         'textiel': WASTE_TYPE_TEXTILE,
         'kerstb': WASTE_TYPE_TREE,
+        'plastic': WASTE_TYPE_PACKAGES,
         'pmd': WASTE_TYPE_PACKAGES,
         'pbd': WASTE_TYPE_PACKAGES,
     }
@@ -84,7 +87,7 @@ class OpzetCollector(WasteCollector):
         url = "{}/rest/adressen/{}-{}".format(self.main_url, self.postcode, self.street_number)
 
         with _force_ipv4_resolution():
-            response = self._session.get(url, verify=self._verify).json()
+            response = self._session.get(url, verify=self._verify, timeout=DEFAULT_REQUEST_TIMEOUT).json()
 
         if not response:
             _LOGGER.error('Address not found!')
@@ -103,9 +106,58 @@ class OpzetCollector(WasteCollector):
         url = "{}/rest/adressen/{}/afvalstromen".format(self.main_url, self.bag_id)
 
         with _force_ipv4_resolution():
-            return self._session.get(url, verify=self._verify)
+            return self._session.get(url, verify=self._verify, timeout=DEFAULT_REQUEST_TIMEOUT)
 
-    async def update(self):
+    def __get_calendar(self, year):
+        _LOGGER.debug("Fetching calendar for %s from Opzet", year)
+        url = "{}/rest/adressen/{}/kalender/{}".format(self.main_url, self.bag_id, year)
+
+        try:
+            with _force_ipv4_resolution():
+                response = self._session.get(url, verify=self._verify, timeout=DEFAULT_REQUEST_TIMEOUT)
+            if response.status_code != 200:
+                return []
+            data = response.json()
+        except (requests.exceptions.RequestException, ValueError) as exc:
+            _LOGGER.debug('Calendar for %s not available: %r', year, exc)
+            return []
+
+        return data if isinstance(data, list) else []
+
+    @staticmethod
+    def __parse_date(value):
+        """Return the date as a datetime, or None when it is missing or not a valid YYYY-MM-DD date."""
+        try:
+            return datetime.strptime(value, '%Y-%m-%d')
+        except (TypeError, ValueError):
+            return None
+
+    def __get_calendar_dates(self, streams):
+        """Return (waste stream, date) pairs from today on, from this year's and next year's calendar.
+
+        Entries that can't be used (not an object, unknown stream, missing or invalid date) are skipped,
+        so one bad entry doesn't cost the rest of the calendar.
+        """
+        streams_by_id = {item.get('id'): item for item in streams if isinstance(item, dict)}
+        today = datetime.now().date()
+        dates = []
+        for year in (today.year, today.year + 1):
+            for entry in self.__get_calendar(year):
+                if not isinstance(entry, dict):
+                    _LOGGER.debug('Skipping calendar entry that is not an object: %r', entry)
+                    continue
+                item = streams_by_id.get(entry.get('afvalstroom_id'))
+                if not item:
+                    continue
+                date = self.__parse_date(entry.get('ophaaldatum'))
+                if date is None:
+                    _LOGGER.debug('Skipping calendar entry with an invalid date: %r', entry)
+                    continue
+                if date.date() >= today:
+                    dates.append((item, date))
+        return dates
+
+    async def _async_update(self) -> bool:
         _LOGGER.debug("Updating Waste collection dates using Opzet API")
 
         try:
@@ -117,14 +169,22 @@ class OpzetCollector(WasteCollector):
 
             if not response:
                 _LOGGER.error('No Waste data found!')
-                return
+                return False
 
-            self.collections.remove_all()
-
+            # The afvalstromen endpoint only holds the next pickup per waste stream. The calendar endpoint,
+            # which the municipalities' own websites use, holds the whole year. Use both: a stream that the
+            # calendar leaves out still gets its next pickup.
+            calendar_dates = await self.hass.async_add_executor_job(self.__get_calendar_dates, response)
+            next_dates = []
             for item in response:
-                if not item['ophaaldatum']:
-                    continue
+                date = self.__parse_date(item.get('ophaaldatum'))
+                if date is not None:
+                    next_dates.append((item, date))
 
+            # Build the new collections first and replace the old ones only once that has succeeded, with no
+            # await in between: if anything fails, the previous collections stay as they were.
+            collections = []
+            for item, date in next_dates + calendar_dates:
                 waste_type = self.map_waste_type(item['menu_title'])
                 if not waste_type:
                     continue
@@ -133,13 +193,19 @@ class OpzetCollector(WasteCollector):
                 icon_data = item['icon_data'] if 'icon_data' in item else None
 
                 collection = WasteCollection.create(
-                    date=datetime.strptime(item['ophaaldatum'], '%Y-%m-%d'),
+                    date=date,
                     waste_type=waste_type,
                     waste_type_slug=item['menu_title'],
                     icon_data=icon_data,
                 )
-                if collection not in self.collections:
-                    self.collections.add(collection)
+                if collection not in collections:
+                    collections.append(collection)
+
+            repository = WasteCollectionRepository()
+            for collection in collections:
+                repository.add(collection)
+            self.collections = repository
+            return True
 
         except requests.exceptions.RequestException as exc:
             _LOGGER.error('Error occurred while fetching data: %r', exc)
