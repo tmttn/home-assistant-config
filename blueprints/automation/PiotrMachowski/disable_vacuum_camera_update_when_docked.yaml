@@ -22,16 +22,16 @@ blueprint:
           multiple: false
           reorder: false
 mode: restart
-trigger:
-- platform: state
+triggers:
+- trigger: state
   entity_id: !input vacuum
-condition:
+conditions:
 - condition: template
   value_template: '{{ trigger.to_state.state != trigger.from_state.state }}'
-action:
+actions:
 - condition: trigger
   id: 0
-- service: "{% if trigger.to_state.state in [\"unavailable\", \"unknown\", \"docked\",
+- action: "{% if trigger.to_state.state in [\"unavailable\", \"unknown\", \"docked\",
     \"idle\", \"paused\", \"charging\"] %}\n  camera.turn_off\n{% else %}\n  camera.turn_on\n{%
     endif %}\n"
   entity_id: !input camera
