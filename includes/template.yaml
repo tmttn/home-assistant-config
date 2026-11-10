@@ -474,6 +474,10 @@
       unique_id: washing_machine
       state: >
         {{ states("sensor.washing_machine_status") in ["in_use", "pause"] }}
+      # Unavailable rather than off while Miele is down (e.g. at startup), so
+      # the run tracker does not mistake a missing status for a finished run.
+      availability: >
+        {{ has_value("sensor.washing_machine_status") }}
       delay_off: "00:01:00"
       icon: >
         {% if is_state("binary_sensor.washing_machine", "on") %}
@@ -486,6 +490,10 @@
       unique_id: espresso_machine
       state: >
         {{ states("sensor.espresso_machine_power") | float(0) > 3 }}
+      # Unavailable rather than off while the plug is down (e.g. at startup),
+      # so the run tracker does not mistake a missing reading for a finished run.
+      availability: >
+        {{ has_value("sensor.espresso_machine_power") }}
       delay_off: "00:03:00"
       icon: >
         {% if is_state("binary_sensor.espresso_machine", "on") %}
