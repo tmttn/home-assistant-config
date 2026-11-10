@@ -164,51 +164,6 @@ arriving:
   - service: script.cozy_lights_living_room
     data: {}
   mode: single
-utility_notification:
-  mode: parallel
-  max: 20
-  fields:
-    name:
-      description: name
-      example: washing_machine
-    emojis:
-      description: emojis
-      example: "\U0001F45A\U0001F455"
-  variables:
-    binary_sensor: '{{ "binary_sensor.{}".format(name) }}'
-    friendly_name: '{{ name.capitalize().replace("_", " ") }}'
-    energy_sensor: '{{ "sensor.{}_energy".format(name) }}'
-    interruption_level: '{{ "time-sensitive" if is_state("input_select.sleep_mode","off")
-      else "passive"}}'
-  sequence:
-  - variables:
-      start_time: '{{ as_timestamp(now()) }}'
-      start_kwh: '{{ states(energy_sensor) | float(0) }}'
-  - wait_for_trigger:
-      platform: template
-      value_template: '{{ is_state(binary_sensor, "off") }}'
-    timeout: '18:00:00'
-    continue_on_timeout: false
-  - variables:
-      end_time: '{{ as_timestamp(now()) }}'
-      end_kwh: '{{ states(energy_sensor) | float(0) }}'
-  - variables:
-      total_time: '{{ (end_time - start_time) }}'
-      total_kwh: '{{ [end_kwh - start_kwh, 0] | max }}'
-  - variables:
-      minutes: '{{ (total_time / 60) | round(0) }}'
-      total_kwh_rounded: '{{ (total_kwh) | round(2) }}'
-      price: '{{ (states("sensor.electricity_price_peak")|float(default=0) * total_kwh)
-        | round(2) }}'
-  - service: '{{ states("sensor.nearest_iphone_notify") }}'
-    data:
-      title: Utilities
-      message: '{{ friendly_name }} is done after {{ minutes }} minutes and it used
-        {{ total_kwh_rounded }} kWh (€{{ price }}) {{ emojis }}'
-      data:
-        push:
-          interruption-level: '{{ interruption_level }}'
-  alias: Utility notification
 turn_on_lights:
   alias: Turn on lights with Adaptive Lighting
   icon: mdi:script-text
