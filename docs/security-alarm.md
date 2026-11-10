@@ -26,9 +26,8 @@ the automations below work alongside it.
   also runs from the back door button and the "turn off everything" push,
   where someone may still be home.
 - It uses `input_select.sleep_mode`, the helper the dashboard's "Go to sleep" /
-  "Wake up" buttons set. `input_boolean.sleep_mode` is an unused leftover that
-  nothing reads or writes. `half` means someone is still up, so only `total`
-  arms.
+  "Wake up" buttons set. (An unused `input_boolean.sleep_mode` leftover was
+  deleted.) `half` means someone is still up, so only `total` arms.
 
 ## Security: disarm the alarm when someone arrives or night mode ends
 
