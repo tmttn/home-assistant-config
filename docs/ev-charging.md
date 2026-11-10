@@ -71,11 +71,16 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
   - Solar: start after 5 min of >1.2 kW export, stop after 10 min of >300 W import.
   - Night (22:00–07:00): only when battery or forecast is below the minimum; ends at 07:00 once the battery is above the minimum.
   - Boost: `ev_charge_full_now` on → charge until full, no sun/night rules, at peak-safe amps; charging is switched back on if it stops for 2 min. Turning it off returns to smart charging.
+  - Boost peak guard: when even the 5 A minimum would set a new monthly peak
+    (`sensor.ev_peak_safe_charging_amps` below 5 for 2 min, or already at boost start), charging pauses
+    and a push (tag `ev_boost_paused`) says so. It resumes on its own once 6 A or more fits for 3 min
+    (hysteresis 5/6 A, also checked after an HA restart); the push is cleared on resume or session end.
+    A long pause can let the car sleep, so the resume command may cost a wake (20 credits).
   - Plugged in at home with no need → native charging is paused and a push
     (`notify.all`, tag `ev_plugged_in`) offers **Nu volladen** (`EV_CHARGE_FULL`), which turns boost on.
   - Ends on unplug, `complete`, car leaving home.
 - **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min, never above the charger max. Target −100 W (solar) or the peak cap (night, boost). Each change is one Teslemetry command credit.
-- **Energy: EV charging amps too high** — push (`notify.all`) when the car charges at home above `sensor.ev_peak_safe_charging_amps` for 3 min while charging natively (`idle`), or in `boost` when even 5 A exceeds the peak, with a button to lower to the peak-safe amps or to pause. Max one push per 30 min.
+- **Energy: EV charging amps too high** — push (`notify.all`) when the car charges at home above `sensor.ev_peak_safe_charging_amps` for 3 min while charging natively (`idle`), with a button to lower to the peak-safe amps or to pause. Boost no longer pushes here: it pauses itself. Max one push per 30 min.
 - **Energy: EV charging amps too high actions** — handles `EV_LOWER_AMPS` / `EV_PAUSE_CHARGING`.
 - **Energy: grid export too high** — skips its nag while smart charging can absorb the surplus.
 
@@ -84,4 +89,6 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 
 Flemish grid costs include a capacity tariff on the highest 15-minute average import of each month
 (`sensor.p1_meter_peak_demand_current_month`, minimum 2.5 kW). Night and boost charging stay
-300 W under that peak, so charging the car never raises it.
+300 W under that peak, so charging the car never raises it. When even 5 A does not fit (early in the month, when
+the peak is still near the 2.5 kW minimum, plus a big load such as the oven), boost pauses instead of setting a new peak.
+Native charging (smart charging off, session `idle`) is not steered; it only gets the amps-too-high push.
