@@ -25,8 +25,9 @@ the automations below work alongside it.
 - Arming lives in its own automation, not in `script.leaving`. That script
   also runs from the back door button and the "turn off everything" push,
   where someone may still be home.
-- It uses `input_select.sleep_mode` rather than `input_boolean.sleep_mode`.
-  `half` means someone is still up, so only `total` arms.
+- It uses `input_select.sleep_mode`, the helper the dashboard's "Go to sleep" /
+  "Wake up" buttons set. (An unused `input_boolean.sleep_mode` leftover was
+  deleted.) `half` means someone is still up, so only `total` arms.
 
 ## Security: disarm the alarm when someone arrives or night mode ends
 
@@ -39,6 +40,22 @@ Sleep mode turns off when the wake-up alarm stops, or at 09:00 ("Night mode:
 automatically turn off when alarm turns off or at 9AM"). An alarm that was
 armed away stays armed then. The automation waits up to 60 seconds for
 `disarmed` and pushes the result.
+
+The disarm call passes a `code`. The ring-mqtt app has a `disarm_code` option,
+and Home Assistant's MQTT alarm panel rejects a disarm without it ("Wrong code
+entered for disarming" in the log). If that app option changes, update the
+automation too. Arming needs no code.
+
+### Voice control
+
+`switch.sleep_mode` (template switch helper, aliases "Slaapmodus" and
+"Nachtmodus") is exposed to Google Assistant and Assist. It is on whenever
+`input_select.sleep_mode` is not `off`. Turning it off sets the select to `off`,
+like the dashboard's "Wake up" button, so "Hey Google, zet slaapmodus uit" also
+disarms a night-armed alarm. Turning it on runs `script.going_to_sleep`, like
+"Go to sleep": everything turns off and the alarm arms home. Google can take a
+question such as "staat slaapmodus aan?" as a command, so ask "zet slaapmodus
+aan/uit" rather than asking for the state.
 
 All pushes go to `notify.all_iphones` with the title "Security". Arming or
 disarming by hand or by the Ring schedule sends no push from Home Assistant.
