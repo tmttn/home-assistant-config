@@ -1,0 +1,772 @@
+---
+views:
+- header:
+    card:
+      content: '# Degree Days
+
+        How hard the heating has to work against the weather, and which rooms fail
+        to reach their thermostat setpoint. Live numbers for today are at the top;
+        the charts at the bottom cover the last 30 complete days.'
+      text_only: true
+      type: markdown
+    layout: start
+  icon: mdi:thermometer-lines
+  max_columns: 3
+  path: degree-days
+  sections:
+  - cards:
+    - heading: What to do now
+      heading_style: title
+      icon: mdi:clipboard-check-outline
+      type: heading
+    - content: "{%- set est = [18 - states('sensor.outside_temperature_avg') | float(18),\
+        \ 0] | max -%}\n{%- set cold = est >= 10 -%}\n{%- set rooms = [\n ('Living\
+        \ room','living_room','climate.living_room',none,'sensor.occupancy_living_room_daily','sensor.degree_day_living_room_adjusted'),\n\
+        \ ('Kitchen','kitchen','climate.kitchen',none,'sensor.occupancy_kitchen_daily','sensor.degree_day_kitchen_adjusted'),\n\
+        \ ('Guest bedroom','guest_bedroom','climate.guest_bedroom','sensor.temperature_guest_bedroom','sensor.occupancy_guest_bedroom_daily','sensor.degree_day_guest_bedroom_adjusted'),\n\
+        \ ('Bathroom','bathroom','climate.bathroom','sensor.temperature_bathroom','sensor.occupancy_bathroom_daily','sensor.degree_day_bathroom_adjusted'),\n\
+        \ ('Storage','storage','climate.storage',none,'sensor.occupancy_storage_daily','sensor.degree_day_storage_adjusted'),\n\
+        \ ('Hall','hall','climate.hall',none,'sensor.occupancy_hall_daily','sensor.degree_day_hall_adjusted'),\n\
+        \ ('Bedroom','bedroom','climate.bedroom','sensor.temperature_bedroom',none,none),\n\
+        \ (\"Marthe's room\",'marthe_bedroom','climate.bedroom_marthe','sensor.temperature_bedroom_marthe',none,none)]\
+        \ -%}\n{%- set ns = namespace(red=[], amber=[], info=[]) -%}\n{%- for name,\
+        \ key, clim, tsens, occ, adj in rooms -%}\n{%- set dd = states('sensor.degree_day_'\
+        \ ~ key) | float(0) -%}\n{%- set sp = state_attr(clim, 'temperature') | float(0)\
+        \ -%}\n{%- set cur = (states(tsens) if tsens else state_attr(clim, 'current_temperature'))\
+        \ | float(-99) -%}\n{%- set off = is_state(clim, 'off') or sp <= 7 -%}\n{%-\
+        \ set y = (state_attr(adj, 'raw_dd') | float(0)) if adj else 0 -%}\n{%- set\
+        \ h = (states(occ) | float(0)) if occ else 0 -%}\n{%- set fix = 'Start heating\
+        \ earlier or raise the flow temperature.' if cold else 'On a mild day that\
+        \ points to a local cause: check that the radiator gets hot, the valve is\
+        \ not stuck and the TRV battery is fine.' -%}\n{%- if states(clim) in ['unavailable',\
+        \ 'unknown'] or cur == -99 -%}\n{%- set ns.amber = ns.amber + ['<b>' ~ name\
+        \ ~ '</b>: no temperature data. Check the thermostat or sensor battery.']\
+        \ -%}\n{%- elif dd >= 0.7 and y >= 0.7 -%}\n{%- set ns.red = ns.red + ['<b>'\
+        \ ~ name ~ '</b> fell behind two days running (' ~ ('%.1f' | format(y)) ~\
+        \ ' °C yesterday, ' ~ ('%.1f' | format(dd)) ~ ' °C today). That is structural,\
+        \ not a one-off. ' ~ fix] -%}\n{%- elif dd >= 0.7 -%}\n{%- set ns.red = ns.red\
+        \ + ['<b>' ~ name ~ '</b> is falling behind today (' ~ ('%.1f' | format(dd))\
+        \ ~ ' °C under setpoint on average). ' ~ fix ~ ' One day alone can be airing\
+        \ or a schedule change; act if it repeats.'] -%}\n{%- elif not off and cur\
+        \ < sp - 1 -%}\n{%- set ns.amber = ns.amber + ['<b>' ~ name ~ '</b> is ' ~\
+        \ ('%.1f' | format(sp - cur)) ~ ' °C under its setpoint right now (' ~ ('%.1f'\
+        \ | format(cur)) ~ ' of ' ~ ('%.1f' | format(sp)) ~ ' °C). Normal for up to\
+        \ an hour after a setpoint change or airing; if it lasts longer, check that\
+        \ the radiator gets warm.'] -%}\n{%- elif off and h >= 2 and cur < 16 -%}\n\
+        {%- set ns.info = ns.info + ['<b>' ~ name ~ '</b> was in use ' ~ ('%.1f' |\
+        \ format(h)) ~ ' h today at ' ~ ('%.1f' | format(cur)) ~ ' °C with the heating\
+        \ off. If that is not on purpose, add it to the heating schedule.'] -%}\n\
+        {%- endif -%}\n{%- endfor -%}\n{%- if (ns.red + ns.amber + ns.info) | length\
+        \ == 0 -%}\n<ha-alert alert-type=\"success\" title=\"Nothing to do\">All rooms\
+        \ stay within their thermostat's normal swing. Look again when a room tile\
+        \ turns amber or red, or on cold days (10+ degree days).</ha-alert>\n{%- else\
+        \ -%}\n{%- for t in ns.red %}<ha-alert alert-type=\"error\">{{ t }}</ha-alert>{%\
+        \ endfor -%}\n{%- for t in ns.amber %}<ha-alert alert-type=\"warning\">{{\
+        \ t }}</ha-alert>{% endfor -%}\n{%- for t in ns.info %}<ha-alert alert-type=\"\
+        info\">{{ t }}</ha-alert>{% endfor -%}\n{%- endif %}"
+      grid_options:
+        columns: full
+      text_only: true
+      type: markdown
+    column_span: 3
+    type: grid
+  - cards:
+    - heading: Today at a glance
+      heading_style: title
+      icon: mdi:calendar-today
+      type: heading
+    - content: '{%- set avg = states(''sensor.outside_temperature_avg'') | float(0)
+        -%}
+
+        {%- set est = [18 - avg, 0] | max -%}
+
+        {%- set y = states(''sensor.degree_day_daily'') | float(0) -%}
+
+        {%- set label = ''No heating needed'' if est == 0 else ''Mild'' if est < 5
+        else ''Cool'' if est < 10 else ''Cold'' if est < 15 else ''Very cold'' -%}
+
+        {%- set rooms = [(''Living room'',''living_room''),(''Kitchen'',''kitchen''),(''Guest
+        bedroom'',''guest_bedroom''),(''Bathroom'',''bathroom''),(''Storage'',''storage''),(''Hall'',''hall''),(''Bedroom'',''bedroom''),("Marthe''s
+        room",''marthe_bedroom'')] -%}
+
+        {%- set ns = namespace(n=0, worst='''', wv=0) -%}
+
+        {%- for name, key in rooms -%}
+
+        {%- set dd = states(''sensor.degree_day_'' ~ key) | float(0) -%}
+
+        {%- if dd >= 0.3 %}{% set ns.n = ns.n + 1 %}{% endif -%}
+
+        {%- if dd > ns.wv %}{% set ns.wv = dd %}{% set ns.worst = name %}{% endif
+        -%}
+
+        {%- endfor -%}
+
+        **{{ label }} day.** Outdoors averaged **{{ avg | round(1) }} °C** over the
+        last 24 hours, so today is heading for about **{{ est | round(1) }} degree
+        days**, {{ ''colder than'' if est > y + 0.5 else ''milder than'' if est <
+        y - 0.5 else ''about the same as'' }} yesterday ({{ y | round(1) }}).
+
+        {% if ns.n == 0 -%}
+
+        Every room has stayed within its thermostat''s normal swing so far today.
+
+        {%- else -%}
+
+        **{{ ns.n }} of 8 rooms** have run noticeably below their setpoint since midnight.
+        **{{ ns.worst }}** is furthest behind, averaging **{{ ''%.2f'' | format(ns.wv)
+        }} °C** under target{{ '': worth a look.'' if ns.wv >= 0.7 else '', which
+        is minor.'' }}
+
+        {%- endif %}'
+      grid_options:
+        columns: full
+      type: markdown
+    - cards:
+      - entity: sensor.outside_temperature_avg
+        icon: mdi:thermometer
+        icon_color: blue
+        multiline_secondary: true
+        primary: '{{ states(''sensor.outside_temperature_avg'') | float(0) | round(1)
+          }} °C outside'
+        secondary: 'Average over the last 24 h
+
+          Right now {{ states(''sensor.outside_temperature'') | float(0) | round(1)
+          }} °C'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - entity: sensor.degree_day_daily
+        icon: mdi:home-thermometer
+        icon_color: orange
+        multiline_secondary: true
+        primary: '{% set est = [18 - states(''sensor.outside_temperature_avg'') |
+          float(18), 0] | max %}≈ {{ est | round(1) }} DD today'
+        secondary: '{% set est = [18 - states(''sensor.outside_temperature_avg'')
+          | float(18), 0] | max %}{{ ''No heating needed'' if est == 0 else ''Mild''
+          if est < 5 else ''Cool'' if est < 10 else ''Cold'' if est < 15 else ''Very
+          cold'' }} · running estimate
+
+          18 °C − 24 h outdoor average'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - entity: sensor.degree_day_daily
+        icon: mdi:calendar-check
+        icon_color: blue-grey
+        multiline_secondary: true
+        primary: '{{ states(''sensor.degree_day_daily'') | float(0) | round(1) }}
+          DD yesterday'
+        secondary: 'Final daily value
+
+          Logged every night at 23:59'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - icon: '{%- set ns = namespace(n=0) -%}{%- for key in [''living_room'',''kitchen'',''guest_bedroom'',''bathroom'',''storage'',''hall'',''bedroom'',''marthe_bedroom'']
+          -%}{%- if states(''sensor.degree_day_'' ~ key) | float(0) >= 0.3 %}{% set
+          ns.n = ns.n + 1 %}{% endif -%}{%- endfor -%}{{ ''mdi:home-alert-outline''
+          if ns.n > 0 else ''mdi:home-heart'' }}'
+        icon_color: '{%- set ns = namespace(wv=0) -%}{%- for key in [''living_room'',''kitchen'',''guest_bedroom'',''bathroom'',''storage'',''hall'',''bedroom'',''marthe_bedroom'']
+          -%}{%- set dd = states(''sensor.degree_day_'' ~ key) | float(0) -%}{%- if
+          dd > ns.wv %}{% set ns.wv = dd %}{% endif -%}{%- endfor -%}{{ ''red'' if
+          ns.wv >= 0.7 else ''amber'' if ns.wv >= 0.3 else ''green'' }}'
+        multiline_secondary: true
+        primary: '{%- set ns = namespace(n=0) -%}{%- for key in [''living_room'',''kitchen'',''guest_bedroom'',''bathroom'',''storage'',''hall'',''bedroom'',''marthe_bedroom'']
+          -%}{%- if states(''sensor.degree_day_'' ~ key) | float(0) >= 0.3 %}{% set
+          ns.n = ns.n + 1 %}{% endif -%}{%- endfor -%}{{ ns.n ~ '' of 8 rooms below
+          setpoint'' if ns.n > 0 else ''All rooms on target'' }}'
+        secondary: '{%- set rooms = [(''Living room'',''living_room''),(''Kitchen'',''kitchen''),(''Guest
+          bedroom'',''guest_bedroom''),(''Bathroom'',''bathroom''),(''Storage'',''storage''),(''Hall'',''hall''),(''Bedroom'',''bedroom''),("Marthe''s
+          room",''marthe_bedroom'')] -%}{%- set ns = namespace(worst='''', wv=0) -%}{%-
+          for name, key in rooms -%}{%- set dd = states(''sensor.degree_day_'' ~ key)
+          | float(0) -%}{%- if dd > ns.wv %}{% set ns.wv = dd %}{% set ns.worst =
+          name %}{% endif -%}{%- endfor -%}Since midnight, by ≥ 0.3 °C
+
+          {{ ''Worst: '' ~ ns.worst ~ '', '' ~ (''%.2f'' | format(ns.wv)) ~ '' °C''
+          if ns.wv >= 0.3 else ''No shortfall anywhere'' }}'
+        tap_action:
+          action: none
+        type: custom:mushroom-template-card
+      columns: 4
+      grid_options:
+        columns: full
+      square: false
+      type: grid
+    column_span: 3
+    type: grid
+  - cards:
+    - heading: Rooms today
+      heading_style: title
+      icon: mdi:floor-plan
+      type: heading
+    - content: 'How far each room has stayed **below its own thermostat setpoint**,
+        averaged since midnight (checked every 15 minutes). Tap a room for its history.
+
+        **Green** on target (under 0.3 °C, normal thermostat swing) · **Amber** slightly
+        under (0.3–0.7 °C) · **Red** falling behind (0.7 °C or more) · **Grey** heating
+        off'
+      grid_options:
+        columns: full
+      text_only: true
+      type: markdown
+    - cards:
+      - badge_color: '{% set dd = states(''sensor.degree_day_living_room'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' }}'
+        badge_icon: '{% set dd = states(''sensor.degree_day_living_room'') | float(0)
+          %}{{ ''mdi:alert'' if dd >= 0.7 else ''mdi:arrow-down'' if dd >= 0.3 else
+          '''' }}'
+        entity: sensor.degree_day_living_room
+        fill_container: true
+        icon: mdi:sofa
+        icon_color: '{% set dd = states(''sensor.degree_day_living_room'') | float(0)
+          %}{% set sp = state_attr(''climate.living_room'', ''temperature'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' if dd >= 0.3 else ''grey'' if (is_state(''climate.living_room'',
+          ''off'') or sp <= 7) else ''green'' }}'
+        layout: vertical
+        multiline_secondary: true
+        primary: Living room
+        secondary: '{%- set dd = states(''sensor.degree_day_living_room'') | float(0)
+          -%}{%- set sp = state_attr(''climate.living_room'', ''temperature'') | float(0)
+          -%}{%- set cur = state_attr(''climate.living_room'', ''current_temperature'')
+          | float(0) -%}{%- set off = is_state(''climate.living_room'', ''off'') or
+          sp <= 7 -%}{%- set h = states(''sensor.occupancy_living_room_daily'') |
+          float(0) -%}{{ ''Falling behind'' if dd >= 0.7 else ''Slightly under'' if
+          dd >= 0.3 else ''Heating off'' if off else ''On target'' }} · {{ ''%.2f''
+          | format(dd) }} °C below
+
+          Now {{ ''%.1f'' | format(cur) }} °C · {{ ''heating off'' if off else ''set
+          '' ~ (''%.1f'' | format(sp)) ~ '' °C'' }}
+
+          In use today: {{ ((h * 60) | round(0) | int) ~ '' min'' if h < 1 else (''%.1f''
+          | format(h)) ~ '' h'' }}'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - badge_color: '{% set dd = states(''sensor.degree_day_kitchen'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' }}'
+        badge_icon: '{% set dd = states(''sensor.degree_day_kitchen'') | float(0)
+          %}{{ ''mdi:alert'' if dd >= 0.7 else ''mdi:arrow-down'' if dd >= 0.3 else
+          '''' }}'
+        entity: sensor.degree_day_kitchen
+        fill_container: true
+        icon: mdi:pot-steam
+        icon_color: '{% set dd = states(''sensor.degree_day_kitchen'') | float(0)
+          %}{% set sp = state_attr(''climate.kitchen'', ''temperature'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' if dd >= 0.3 else ''grey'' if (is_state(''climate.kitchen'',
+          ''off'') or sp <= 7) else ''green'' }}'
+        layout: vertical
+        multiline_secondary: true
+        primary: Kitchen
+        secondary: '{%- set dd = states(''sensor.degree_day_kitchen'') | float(0)
+          -%}{%- set sp = state_attr(''climate.kitchen'', ''temperature'') | float(0)
+          -%}{%- set cur = state_attr(''climate.kitchen'', ''current_temperature'')
+          | float(0) -%}{%- set off = is_state(''climate.kitchen'', ''off'') or sp
+          <= 7 -%}{%- set h = states(''sensor.occupancy_kitchen_daily'') | float(0)
+          -%}{{ ''Falling behind'' if dd >= 0.7 else ''Slightly under'' if dd >= 0.3
+          else ''Heating off'' if off else ''On target'' }} · {{ ''%.2f'' | format(dd)
+          }} °C below
+
+          Now {{ ''%.1f'' | format(cur) }} °C · {{ ''heating off'' if off else ''set
+          '' ~ (''%.1f'' | format(sp)) ~ '' °C'' }}
+
+          In use today: {{ ((h * 60) | round(0) | int) ~ '' min'' if h < 1 else (''%.1f''
+          | format(h)) ~ '' h'' }}'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - badge_color: '{% set dd = states(''sensor.degree_day_guest_bedroom'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' }}'
+        badge_icon: '{% set dd = states(''sensor.degree_day_guest_bedroom'') | float(0)
+          %}{{ ''mdi:alert'' if dd >= 0.7 else ''mdi:arrow-down'' if dd >= 0.3 else
+          '''' }}'
+        entity: sensor.degree_day_guest_bedroom
+        fill_container: true
+        icon: mdi:bed-double
+        icon_color: '{% set dd = states(''sensor.degree_day_guest_bedroom'') | float(0)
+          %}{% set sp = state_attr(''climate.guest_bedroom'', ''temperature'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' if dd >= 0.3 else ''grey'' if (is_state(''climate.guest_bedroom'',
+          ''off'') or sp <= 7) else ''green'' }}'
+        layout: vertical
+        multiline_secondary: true
+        primary: Guest bedroom
+        secondary: '{%- set dd = states(''sensor.degree_day_guest_bedroom'') | float(0)
+          -%}{%- set sp = state_attr(''climate.guest_bedroom'', ''temperature'') |
+          float(0) -%}{%- set cur = states(''sensor.temperature_guest_bedroom'') |
+          float(0) -%}{%- set off = is_state(''climate.guest_bedroom'', ''off'') or
+          sp <= 7 -%}{%- set h = states(''sensor.occupancy_guest_bedroom_daily'')
+          | float(0) -%}{{ ''Falling behind'' if dd >= 0.7 else ''Slightly under''
+          if dd >= 0.3 else ''Heating off'' if off else ''On target'' }} · {{ ''%.2f''
+          | format(dd) }} °C below
+
+          Now {{ ''%.1f'' | format(cur) }} °C · {{ ''heating off'' if off else ''set
+          '' ~ (''%.1f'' | format(sp)) ~ '' °C'' }}
+
+          In use today: {{ ((h * 60) | round(0) | int) ~ '' min'' if h < 1 else (''%.1f''
+          | format(h)) ~ '' h'' }}'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - badge_color: '{% set dd = states(''sensor.degree_day_bathroom'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' }}'
+        badge_icon: '{% set dd = states(''sensor.degree_day_bathroom'') | float(0)
+          %}{{ ''mdi:alert'' if dd >= 0.7 else ''mdi:arrow-down'' if dd >= 0.3 else
+          '''' }}'
+        entity: sensor.degree_day_bathroom
+        fill_container: true
+        icon: mdi:shower-head
+        icon_color: '{% set dd = states(''sensor.degree_day_bathroom'') | float(0)
+          %}{% set sp = state_attr(''climate.bathroom'', ''temperature'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' if dd >= 0.3 else ''grey'' if (is_state(''climate.bathroom'',
+          ''off'') or sp <= 7) else ''green'' }}'
+        layout: vertical
+        multiline_secondary: true
+        primary: Bathroom
+        secondary: '{%- set dd = states(''sensor.degree_day_bathroom'') | float(0)
+          -%}{%- set sp = state_attr(''climate.bathroom'', ''temperature'') | float(0)
+          -%}{%- set cur = states(''sensor.temperature_bathroom'') | float(0) -%}{%-
+          set off = is_state(''climate.bathroom'', ''off'') or sp <= 7 -%}{%- set
+          h = states(''sensor.occupancy_bathroom_daily'') | float(0) -%}{{ ''Falling
+          behind'' if dd >= 0.7 else ''Slightly under'' if dd >= 0.3 else ''Heating
+          off'' if off else ''On target'' }} · {{ ''%.2f'' | format(dd) }} °C below
+
+          Now {{ ''%.1f'' | format(cur) }} °C · {{ ''heating off'' if off else ''set
+          '' ~ (''%.1f'' | format(sp)) ~ '' °C'' }}
+
+          In use today: {{ ((h * 60) | round(0) | int) ~ '' min'' if h < 1 else (''%.1f''
+          | format(h)) ~ '' h'' }}'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - badge_color: '{% set dd = states(''sensor.degree_day_storage'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' }}'
+        badge_icon: '{% set dd = states(''sensor.degree_day_storage'') | float(0)
+          %}{{ ''mdi:alert'' if dd >= 0.7 else ''mdi:arrow-down'' if dd >= 0.3 else
+          '''' }}'
+        entity: sensor.degree_day_storage
+        fill_container: true
+        icon: mdi:archive
+        icon_color: '{% set dd = states(''sensor.degree_day_storage'') | float(0)
+          %}{% set sp = state_attr(''climate.storage'', ''temperature'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' if dd >= 0.3 else ''grey'' if (is_state(''climate.storage'',
+          ''off'') or sp <= 7) else ''green'' }}'
+        layout: vertical
+        multiline_secondary: true
+        primary: Storage
+        secondary: '{%- set dd = states(''sensor.degree_day_storage'') | float(0)
+          -%}{%- set sp = state_attr(''climate.storage'', ''temperature'') | float(0)
+          -%}{%- set cur = state_attr(''climate.storage'', ''current_temperature'')
+          | float(0) -%}{%- set off = is_state(''climate.storage'', ''off'') or sp
+          <= 7 -%}{%- set h = states(''sensor.occupancy_storage_daily'') | float(0)
+          -%}{{ ''Falling behind'' if dd >= 0.7 else ''Slightly under'' if dd >= 0.3
+          else ''Heating off'' if off else ''On target'' }} · {{ ''%.2f'' | format(dd)
+          }} °C below
+
+          Now {{ ''%.1f'' | format(cur) }} °C · {{ ''heating off'' if off else ''set
+          '' ~ (''%.1f'' | format(sp)) ~ '' °C'' }}
+
+          In use today: {{ ((h * 60) | round(0) | int) ~ '' min'' if h < 1 else (''%.1f''
+          | format(h)) ~ '' h'' }}'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - badge_color: '{% set dd = states(''sensor.degree_day_hall'') | float(0) %}{{
+          ''red'' if dd >= 0.7 else ''amber'' }}'
+        badge_icon: '{% set dd = states(''sensor.degree_day_hall'') | float(0) %}{{
+          ''mdi:alert'' if dd >= 0.7 else ''mdi:arrow-down'' if dd >= 0.3 else ''''
+          }}'
+        entity: sensor.degree_day_hall
+        fill_container: true
+        icon: mdi:stairs
+        icon_color: '{% set dd = states(''sensor.degree_day_hall'') | float(0) %}{%
+          set sp = state_attr(''climate.hall'', ''temperature'') | float(0) %}{{ ''red''
+          if dd >= 0.7 else ''amber'' if dd >= 0.3 else ''grey'' if (is_state(''climate.hall'',
+          ''off'') or sp <= 7) else ''green'' }}'
+        layout: vertical
+        multiline_secondary: true
+        primary: Hall
+        secondary: '{%- set dd = states(''sensor.degree_day_hall'') | float(0) -%}{%-
+          set sp = state_attr(''climate.hall'', ''temperature'') | float(0) -%}{%-
+          set cur = state_attr(''climate.hall'', ''current_temperature'') | float(0)
+          -%}{%- set off = is_state(''climate.hall'', ''off'') or sp <= 7 -%}{%- set
+          h = states(''sensor.occupancy_hall_daily'') | float(0) -%}{{ ''Falling behind''
+          if dd >= 0.7 else ''Slightly under'' if dd >= 0.3 else ''Heating off'' if
+          off else ''On target'' }} · {{ ''%.2f'' | format(dd) }} °C below
+
+          Now {{ ''%.1f'' | format(cur) }} °C · {{ ''heating off'' if off else ''set
+          '' ~ (''%.1f'' | format(sp)) ~ '' °C'' }}
+
+          In use today: {{ ((h * 60) | round(0) | int) ~ '' min'' if h < 1 else (''%.1f''
+          | format(h)) ~ '' h'' }}'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - badge_color: '{% set dd = states(''sensor.degree_day_bedroom'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' }}'
+        badge_icon: '{% set dd = states(''sensor.degree_day_bedroom'') | float(0)
+          %}{{ ''mdi:alert'' if dd >= 0.7 else ''mdi:arrow-down'' if dd >= 0.3 else
+          '''' }}'
+        entity: sensor.degree_day_bedroom
+        fill_container: true
+        icon: mdi:bed-king
+        icon_color: '{% set dd = states(''sensor.degree_day_bedroom'') | float(0)
+          %}{% set sp = state_attr(''climate.bedroom'', ''temperature'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' if dd >= 0.3 else ''grey'' if (is_state(''climate.bedroom'',
+          ''off'') or sp <= 7) else ''green'' }}'
+        layout: vertical
+        multiline_secondary: true
+        primary: Bedroom
+        secondary: '{%- set dd = states(''sensor.degree_day_bedroom'') | float(0)
+          -%}{%- set sp = state_attr(''climate.bedroom'', ''temperature'') | float(0)
+          -%}{%- set cur = states(''sensor.temperature_bedroom'') | float(0) -%}{%-
+          set off = is_state(''climate.bedroom'', ''off'') or sp <= 7 -%}{{ ''Falling
+          behind'' if dd >= 0.7 else ''Slightly under'' if dd >= 0.3 else ''Heating
+          off'' if off else ''On target'' }} · {{ ''%.2f'' | format(dd) }} °C below
+
+          Now {{ ''%.1f'' | format(cur) }} °C · {{ ''heating off'' if off else ''set
+          '' ~ (''%.1f'' | format(sp)) ~ '' °C'' }}
+
+          No occupancy sensor'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      - badge_color: '{% set dd = states(''sensor.degree_day_marthe_bedroom'') | float(0)
+          %}{{ ''red'' if dd >= 0.7 else ''amber'' }}'
+        badge_icon: '{% set dd = states(''sensor.degree_day_marthe_bedroom'') | float(0)
+          %}{{ ''mdi:alert'' if dd >= 0.7 else ''mdi:arrow-down'' if dd >= 0.3 else
+          '''' }}'
+        entity: sensor.degree_day_marthe_bedroom
+        fill_container: true
+        icon: mdi:teddy-bear
+        icon_color: '{% set dd = states(''sensor.degree_day_marthe_bedroom'') | float(0)
+          %}{% set sp = state_attr(''climate.bedroom_marthe'', ''temperature'') |
+          float(0) %}{{ ''red'' if dd >= 0.7 else ''amber'' if dd >= 0.3 else ''grey''
+          if (is_state(''climate.bedroom_marthe'', ''off'') or sp <= 7) else ''green''
+          }}'
+        layout: vertical
+        multiline_secondary: true
+        primary: Marthe's room
+        secondary: '{%- set dd = states(''sensor.degree_day_marthe_bedroom'') | float(0)
+          -%}{%- set sp = state_attr(''climate.bedroom_marthe'', ''temperature'')
+          | float(0) -%}{%- set cur = states(''sensor.temperature_bedroom_marthe'')
+          | float(0) -%}{%- set off = is_state(''climate.bedroom_marthe'', ''off'')
+          or sp <= 7 -%}{{ ''Falling behind'' if dd >= 0.7 else ''Slightly under''
+          if dd >= 0.3 else ''Heating off'' if off else ''On target'' }} · {{ ''%.2f''
+          | format(dd) }} °C below
+
+          Now {{ ''%.1f'' | format(cur) }} °C · {{ ''heating off'' if off else ''set
+          '' ~ (''%.1f'' | format(sp)) ~ '' °C'' }}
+
+          No occupancy sensor'
+        tap_action:
+          action: more-info
+        type: custom:mushroom-template-card
+      columns: 4
+      grid_options:
+        columns: full
+      square: false
+      type: grid
+    column_span: 2
+    type: grid
+  - cards:
+    - heading: How to read this page
+      heading_style: title
+      icon: mdi:help-circle-outline
+      type: heading
+    - content: '**House degree days (DD)** describe the weather: 18 °C minus the day''s
+        average outdoor temperature, never below 0. Zero means no heating needed,
+        around 10 is an ordinary cold day, 15 or more is a cold snap.
+
+
+        **Room shortfall (°C)** describes the heating: how far a room stayed *below
+        its own setpoint*, averaged over the day. Heating off (5 °C frost setpoint)
+        reads 0.
+
+
+        **Why under 0.3 °C is fine:** a thermostat turns the radiator on just below
+        the setpoint and off just above it, so a room swings about 1 °C around its
+        target. Averaged over a day, that swing alone leaves 0.1–0.3 °C of shortfall.
+
+
+        **When to act:** a day average of 0.7 °C or more (especially two days running),
+        or a room that stays more than 1 °C under its setpoint for over an hour. *What
+        to do now* at the top lists these for you.'
+      grid_options:
+        columns: full
+      type: markdown
+    column_span: 1
+    type: grid
+  - cards:
+    - heading: Last 30 complete days
+      heading_style: title
+      icon: mdi:chart-bar
+      type: heading
+    - content: '**Read the top two charts side by side:** left is how cold each day
+        was, right is how well the rooms kept up. Room bars that **grow on cold days**
+        mean the heating can''t keep up in the cold: start it earlier or raise the
+        flow temperature. Room bars on **mild days** point at a local problem such
+        as a stuck valve, a flat TRV battery or a schedule gap. A room that falls
+        short but is **barely used** (bottom charts) is usually fine.
+
+        Today is left out until it is complete; see the tiles above. House DD and
+        weighted shortfall are logged once a day at 23:59. Hover a bar for exact values;
+        click a room in a legend to hide it.'
+      grid_options:
+        columns: full
+      text_only: true
+      type: markdown
+    - cards:
+      - content: '**House degree days** · how cold each day was
+
+          Taller bar = more heat needed. Grey because it describes the weather, not
+          a room.'
+        text_only: true
+        type: markdown
+      - content: '**Room shortfall** · °C below setpoint, day average
+
+          One segment per room, stacked. A tall bar means several rooms fell short
+          that day.'
+        text_only: true
+        type: markdown
+      - apex_config:
+          chart:
+            height: 260
+          grid:
+            strokeDashArray: 3
+          legend:
+            show: false
+          plotOptions:
+            bar:
+              borderRadius: 3
+              columnWidth: 70%
+          tooltip:
+            intersect: false
+            shared: true
+        graph_span: 30d
+        header:
+          show: false
+        series:
+        - color: '#7f93a8'
+          entity: sensor.degree_day_daily
+          float_precision: 1
+          group_by:
+            duration: 1d
+            func: last
+          name: House degree days
+          type: column
+          yaxis_id: dd
+        span:
+          end: day
+          offset: -1d
+        type: custom:apexcharts-card
+        yaxis:
+        - apex_config:
+            tickAmount: 4
+            title:
+              text: degree days
+          decimals: 0
+          id: dd
+          min: 0
+      - all_series_config:
+          float_precision: 2
+          group_by:
+            duration: 1d
+            func: last
+          show:
+            legend_value: false
+          type: column
+        apex_config:
+          chart:
+            height: 260
+          grid:
+            strokeDashArray: 3
+          legend:
+            position: bottom
+            show: true
+          plotOptions:
+            bar:
+              borderRadius: 3
+              borderRadiusApplication: end
+              borderRadiusWhenStacked: last
+              columnWidth: 70%
+          tooltip:
+            intersect: false
+            shared: true
+          yaxis:
+            decimalsInFloat: 1
+            forceNiceScale: true
+            min: 0
+            tickAmount: 4
+            title:
+              text: °C below setpoint (sum of rooms)
+        graph_span: 30d
+        header:
+          show: false
+        series:
+        - color: '#3987e5'
+          entity: sensor.degree_day_living_room
+          name: Living room
+        - color: '#d95926'
+          entity: sensor.degree_day_kitchen
+          name: Kitchen
+        - color: '#199e70'
+          entity: sensor.degree_day_guest_bedroom
+          name: Guest bedroom
+        - color: '#c98500'
+          entity: sensor.degree_day_bathroom
+          name: Bathroom
+        - color: '#d55181'
+          entity: sensor.degree_day_storage
+          name: Storage
+        - color: '#008300'
+          entity: sensor.degree_day_hall
+          name: Hall
+        - color: '#9085e9'
+          entity: sensor.degree_day_bedroom
+          name: Bedroom
+        - color: '#e66767'
+          entity: sensor.degree_day_marthe_bedroom
+          name: Marthe's room
+        span:
+          end: day
+          offset: -1d
+        stacked: true
+        type: custom:apexcharts-card
+      - content: '**Occupancy-weighted shortfall** · shortfall × share of day occupied
+
+          The shortfall people actually felt. Bedroom and Marthe''s room have no occupancy
+          sensor.'
+        text_only: true
+        type: markdown
+      - content: '**Room occupancy** · hours with activity per day
+
+          Explains the weighting: a room nobody uses scores near zero even when it
+          is cold.'
+        text_only: true
+        type: markdown
+      - all_series_config:
+          float_precision: 2
+          group_by:
+            duration: 1d
+            func: last
+          show:
+            legend_value: false
+          type: column
+        apex_config:
+          chart:
+            height: 260
+          grid:
+            strokeDashArray: 3
+          legend:
+            position: bottom
+            show: true
+          plotOptions:
+            bar:
+              borderRadius: 3
+              borderRadiusApplication: end
+              borderRadiusWhenStacked: last
+              columnWidth: 70%
+          tooltip:
+            intersect: false
+            shared: true
+          yaxis:
+            decimalsInFloat: 2
+            forceNiceScale: true
+            min: 0
+            tickAmount: 4
+            title:
+              text: weighted °C (sum of rooms)
+        graph_span: 30d
+        header:
+          show: false
+        series:
+        - color: '#3987e5'
+          entity: sensor.degree_day_living_room_adjusted
+          name: Living room
+        - color: '#d95926'
+          entity: sensor.degree_day_kitchen_adjusted
+          name: Kitchen
+        - color: '#199e70'
+          entity: sensor.degree_day_guest_bedroom_adjusted
+          name: Guest bedroom
+        - color: '#c98500'
+          entity: sensor.degree_day_bathroom_adjusted
+          name: Bathroom
+        - color: '#d55181'
+          entity: sensor.degree_day_storage_adjusted
+          name: Storage
+        - color: '#008300'
+          entity: sensor.degree_day_hall_adjusted
+          name: Hall
+        span:
+          end: day
+          offset: -1d
+        stacked: true
+        type: custom:apexcharts-card
+      - all_series_config:
+          float_precision: 1
+          group_by:
+            duration: 1d
+            func: last
+          show:
+            legend_value: false
+          stroke_width: 2
+          type: line
+          yaxis_id: hours
+        apex_config:
+          chart:
+            height: 260
+          grid:
+            strokeDashArray: 3
+          legend:
+            position: bottom
+            show: true
+          markers:
+            size: 3
+          tooltip:
+            intersect: false
+            shared: true
+        graph_span: 30d
+        header:
+          show: false
+        series:
+        - color: '#3987e5'
+          entity: sensor.occupancy_living_room_daily
+          name: Living room
+        - color: '#d95926'
+          entity: sensor.occupancy_kitchen_daily
+          name: Kitchen
+        - color: '#199e70'
+          entity: sensor.occupancy_guest_bedroom_daily
+          name: Guest bedroom
+        - color: '#c98500'
+          entity: sensor.occupancy_bathroom_daily
+          name: Bathroom
+        - color: '#d55181'
+          entity: sensor.occupancy_storage_daily
+          name: Storage
+        - color: '#008300'
+          entity: sensor.occupancy_hall_daily
+          name: Hall
+        span:
+          end: day
+          offset: -1d
+        type: custom:apexcharts-card
+        yaxis:
+        - apex_config:
+            tickAmount: 4
+            title:
+              text: hours
+          decimals: 0
+          id: hours
+          min: 0
+      columns: 2
+      grid_options:
+        columns: full
+      square: false
+      type: grid
+    column_span: 3
+    type: grid
+  theme: Mushroom
+  title: Degree Days
+  type: sections

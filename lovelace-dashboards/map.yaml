@@ -1,0 +1,21 @@
+---
+views:
+- cards:
+  - auto_fit: true
+    entities:
+    - zone.home
+    - zone.work
+    - zone.work_tanja
+    - zone.talentenhuis_beverst
+    - entity: device_tracker.bizzylectric_location
+      name: Tesla
+    - entity: device_tracker.tanja_iphone
+      name: Tanja
+    - entity: device_tracker.tom_iphone
+      name: Tom
+    hours_to_show: 24
+    theme_mode: auto
+    type: map
+  icon: mdi:map
+  title: Map
+  type: panel

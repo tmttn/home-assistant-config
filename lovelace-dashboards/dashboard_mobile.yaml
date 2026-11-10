@@ -1,0 +1,1584 @@
+---
+kiosk_mode:
+  admin_settings:
+    hide_sidebar: false
+  mobile_settings:
+    hide_menubutton: true
+    hide_overflow: true
+  non_admin_settings:
+    hide_sidebar: true
+title: Bunderhome
+views:
+- badges: []
+  cards:
+  - card_mod:
+      style: "ha-card {\n  background: transparent;\n  border: none;\n  --card-primary-font-size:\
+        \ 24px;\n  --card-secondary-font-size: 14px;\n}\n"
+    icon: '{% set hour = now().hour %} {% if hour < 6 %}mdi:weather-night {% elif
+      hour < 12 %}mdi:weather-sunset-up {% elif hour < 18 %}mdi:white-balance-sunny
+      {% else %}mdi:weather-sunset-down{% endif %}'
+    icon_color: '{% set hour = now().hour %} {% if hour < 6 %}deep-purple {% elif
+      hour < 12 %}amber {% elif hour < 18 %}yellow {% else %}orange{% endif %}'
+    layout: horizontal
+    primary: '{% set hour = now().hour %} {% if hour < 6 %}Goedenacht{% elif hour
+      < 12 %}Goedemorgen{% elif hour < 18 %}Goedemiddag{% else %}Goedenavond{% endif
+      %}!'
+    secondary: '{{ states(''weather.home'') | replace(''_'', '' '') | capitalize }}
+      · {{ state_attr(''weather.home'', ''temperature'') }}°C'
+    tap_action:
+      action: more-info
+      entity: weather.home
+    type: custom:mushroom-template-card
+  - alignment: center
+    chips:
+    - content_info: none
+      entity: person.tom
+      tap_action:
+        action: more-info
+      type: entity
+      use_entity_picture: true
+    - content_info: none
+      entity: person.tanja
+      tap_action:
+        action: more-info
+      type: entity
+      use_entity_picture: true
+    - chip:
+        content: Guests
+        icon: mdi:account-group
+        icon_color: cyan
+        type: template
+      conditions:
+      - entity: input_boolean.guest_mode
+        state: 'on'
+      type: conditional
+    - type: spacer
+    - entity: alarm_control_panel.bunderhome_alarm
+      icon: '{% if is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_away'')
+        %}mdi:shield-lock {% elif is_state(''alarm_control_panel.bunderhome_alarm'',
+        ''armed_home'') %}mdi:shield-home {% else %}mdi:shield-off{% endif %}'
+      icon_color: '{% if is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_away'')
+        %}red {% elif is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_home'')
+        %}orange {% else %}green{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/security
+      type: template
+    type: custom:mushroom-chips-card
+  - card:
+      card_mod:
+        style: "ha-card {\n  background: rgba(244, 67, 54, 0.15);\n  border: 1px solid\
+          \ rgba(244, 67, 54, 0.3);\n}\n"
+      icon: mdi:door-open
+      icon_color: red
+      layout: horizontal
+      primary: ⚠️ Door open
+      secondary: '{% set doors = [] %} {% if is_state(''binary_sensor.openclose_front_door'',
+        ''on'') %}{% set doors = doors + [''Front''] %}{% endif %} {% if is_state(''binary_sensor.openclose_back_door'',
+        ''on'') %}{% set doors = doors + [''Back''] %}{% endif %} {% if is_state(''binary_sensor.openclose_storage_door'',
+        ''on'') %}{% set doors = doors + [''Storage''] %}{% endif %} {{ doors | join('',
+        '') }}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/security
+      type: custom:mushroom-template-card
+    conditions:
+    - condition: or
+      conditions:
+      - entity: binary_sensor.openclose_front_door
+        state: 'on'
+      - entity: binary_sensor.openclose_back_door
+        state: 'on'
+      - entity: binary_sensor.openclose_storage_door
+        state: 'on'
+    type: conditional
+  - cards:
+    - card_mod:
+        style: 'ha-card { background: transparent; }
+
+          '
+      icon: '{% set power = states(''sensor.p1_meter_active_power'') | float(0) %}
+        {% if power < 0 %}mdi:solar-power{% else %}mdi:flash{% endif %}'
+      icon_color: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
+        %} {% if power < 0 %}green {% elif power < 2000 %}blue {% elif power < 5000
+        %}orange {% else %}red{% endif %}'
+      layout: vertical
+      primary: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
+        %} {% if power < 0 %}{{ (power | abs / 1000) | round(1) }} kW{% else %}{{
+        (power / 1000) | round(1) }} kW{% endif %}'
+      secondary: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
+        %} {% if power < 0 %}Exporting{% else %}Using{% endif %}'
+      tap_action:
+        action: more-info
+        entity: sensor.p1_meter_active_power
+      type: custom:mushroom-template-card
+    - card_mod:
+        style: 'ha-card { background: transparent; }
+
+          '
+      icon: '{% set battery = states(''sensor.bizzylectric_battery_level'') | float(0)
+        %} {% if is_state(''sensor.bizzylectric_charging'', ''charging'') %}mdi:battery-charging
+        {% elif battery > 80 %}mdi:battery-high {% elif battery > 40 %}mdi:battery-medium
+        {% else %}mdi:battery-low{% endif %}'
+      icon_color: '{% set battery = states(''sensor.bizzylectric_battery_level'')
+        | float(0) %} {% if is_state(''sensor.bizzylectric_charging'', ''charging'')
+        %}green {% elif battery > 80 %}green {% elif battery > 50 %}blue {% elif battery
+        > 20 %}orange {% else %}red{% endif %}'
+      layout: vertical
+      primary: '{{ states(''sensor.bizzylectric_battery_level'') | round(0) }}%'
+      secondary: '{% if is_state(''sensor.bizzylectric_charging'', ''charging'') %}Charging
+        {% else %}{{ states(''sensor.bizzylectric_ideal_battery_range'') | round(0,
+        default=''?'') }} km{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/ev
+      type: custom:mushroom-template-card
+    - card_mod:
+        style: 'ha-card { background: transparent; }
+
+          '
+      icon: mdi:solar-panel
+      icon_color: '{% set solar = states(''sensor.sb3_0_1av_41_570_grid_power'') |
+        float(0) %} {% if solar > 1000 %}amber {% elif solar > 100 %}yellow {% else
+        %}disabled{% endif %}'
+      layout: vertical
+      primary: '{{ states(''sensor.sb3_0_1av_41_570_grid_power'') | round(0) }} W'
+      secondary: Solar
+      tap_action:
+        action: more-info
+        entity: sensor.sb3_0_1av_41_570_grid_power
+      type: custom:mushroom-template-card
+    mode: horizontal
+    type: custom:stack-in-card
+  - card:
+      card_mod:
+        style: "ha-card {\n  background: rgba(255, 193, 7, 0.1);\n  border: 1px solid\
+          \ rgba(255, 193, 7, 0.2);\n}\n"
+      icon: '{% set val = states(''sensor.limburg_net_morgen'') %} {% if val == ''GFT''
+        %}mdi:leaf {% elif val == ''PMD'' %}mdi:recycle {% elif val == ''Restafval''
+        %}mdi:trash-can {% elif val == ''Papier'' %}mdi:newspaper {% else %}mdi:trash-can-outline{%
+        endif %}'
+      icon_color: '{% set val = states(''sensor.limburg_net_morgen'') %}
+
+        {% if val == ''GFT'' %}green
+
+        {% elif val == ''PMD'' %}blue
+
+        {% elif val == ''Restafval'' %}grey
+
+        {% elif val == ''Papier'' %}amber
+
+        {% else %}disabled{% endif %}'
+      layout: horizontal
+      primary: 🗑️ Tomorrow
+      secondary: '{{ states(''sensor.limburg_net_morgen'') }}'
+      type: custom:mushroom-template-card
+    conditions:
+    - entity: sensor.limburg_net_morgen
+      state_not: Geen
+    type: conditional
+  - alignment: left
+    subtitle: Climate
+    title: ''
+    type: custom:mushroom-title-card
+  - alignment: center
+    chips:
+    - content: '{{ state_attr(''climate.living_room'', ''current_temperature'') |
+        round(1) }}°'
+      entity: climate.living_room
+      icon: mdi:sofa
+      icon_color: '{% set temp = state_attr(''climate.living_room'', ''current_temperature'')
+        | float(20) %} {% if temp < 18 %}blue{% elif temp < 21 %}cyan{% elif temp
+        < 23 %}green{% else %}orange{% endif %}'
+      tap_action:
+        action: more-info
+      type: template
+    - content: '{{ state_attr(''climate.kitchen'', ''current_temperature'') | round(1)
+        }}°'
+      entity: climate.kitchen
+      icon: mdi:pot-steam
+      icon_color: '{% set temp = state_attr(''climate.kitchen'', ''current_temperature'')
+        | float(20) %} {% if temp < 18 %}blue{% elif temp < 21 %}cyan{% elif temp
+        < 23 %}green{% else %}orange{% endif %}'
+      tap_action:
+        action: more-info
+      type: template
+    - content: '{{ states(''sensor.temperature_bedroom'') | round(1) }}°'
+      entity: climate.bedroom
+      icon: mdi:bed
+      icon_color: '{% set temp = states(''sensor.temperature_bedroom'') | float(20)
+        %} {% if temp < 17 %}blue{% elif temp < 19 %}cyan{% elif temp < 21 %}green{%
+        else %}orange{% endif %}'
+      tap_action:
+        action: more-info
+      type: template
+    - content: '{{ states(''sensor.temperature_bedroom_marthe'') | round(1) }}°'
+      entity: climate.bedroom_marthe
+      icon: mdi:teddy-bear
+      icon_color: pink
+      tap_action:
+        action: more-info
+      type: template
+    - content: '{% set temp = states(''sensor.bunderhome_weerstation_ws_2902c_temp'')
+        %} {% if temp not in [''unavailable'', ''unknown''] %}{{ temp | float | round(1)
+        }}°{% else %}—{% endif %}'
+      entity: sensor.bunderhome_weerstation_ws_2902c_temp
+      icon: mdi:tree
+      icon_color: green
+      tap_action:
+        action: more-info
+      type: template
+    type: custom:mushroom-chips-card
+  - alignment: left
+    subtitle: Rooms
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - fill_container: true
+      hold_action:
+        action: toggle
+        entity: light.living_room_lights
+      icon: mdi:sofa
+      icon_color: '{% if is_state(''light.living_room_lights'', ''on'') %}amber {%
+        elif is_state(''binary_sensor.activity_in_living_room'', ''on'') %}blue {%
+        else %}disabled{% endif %}'
+      layout: vertical
+      primary: Living room
+      secondary: '{{ state_attr(''climate.living_room'', ''current_temperature'')
+        | round(1) }}° ·  {% if is_state(''light.living_room_lights'', ''on'') %}Lights
+        on{% else %}Lights off{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/living-room
+      type: custom:mushroom-template-card
+    - fill_container: true
+      hold_action:
+        action: toggle
+        entity: light.kitchen_lights
+      icon: mdi:pot-steam
+      icon_color: '{% if is_state(''light.kitchen_lights'', ''on'') %}amber
+
+        {% elif is_state(''binary_sensor.activity_in_kitchen'', ''on'') %}blue
+
+        {% else %}disabled{% endif %}'
+      layout: vertical
+      primary: Kitchen
+      secondary: '{{ state_attr(''climate.kitchen'', ''current_temperature'') | round(1)
+        }}° ·  {% if is_state(''binary_sensor.espresso_machine'', ''on'') %}☕{% else
+        %}Idle{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/kitchen
+      type: custom:mushroom-template-card
+    - fill_container: true
+      icon: mdi:archive
+      icon_color: '{% if is_state(''binary_sensor.activity_in_storage'', ''on'') %}blue
+        {% else %}disabled{% endif %}'
+      layout: vertical
+      primary: Storage
+      secondary: '{{ state_attr(''climate.storage'', ''current_temperature'') | round(1)
+        }}° ·  {% if is_state(''binary_sensor.openclose_storage_door'', ''on'') %}🚪
+        Open{% else %}Closed{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/storage
+      type: custom:mushroom-template-card
+    - fill_container: true
+      hold_action:
+        action: toggle
+        entity: light.toilet
+      icon: mdi:toilet
+      icon_color: '{% if is_state(''light.toilet'', ''on'') %}amber {% elif is_state(''binary_sensor.motion_sensor_toilet'',
+        ''on'') %}blue {% else %}disabled{% endif %}'
+      layout: vertical
+      primary: Toilet
+      secondary: '{% if is_state(''light.toilet'', ''on'') %}Lights on{% else %}Lights
+        off{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/toilet
+      type: custom:mushroom-template-card
+    - fill_container: true
+      icon: mdi:stairs
+      icon_color: '{% if is_state(''binary_sensor.activity_in_hall'', ''on'') %}blue
+        {% else %}disabled{% endif %}'
+      layout: vertical
+      primary: Hall
+      secondary: '{{ state_attr(''climate.hall'', ''current_temperature'') | round(1)
+        }}° ·  {% if is_state(''binary_sensor.openclose_front_door'', ''on'') %}🚪
+        Open{% else %}Closed{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/hall
+      type: custom:mushroom-template-card
+    - fill_container: true
+      hold_action:
+        action: toggle
+        entity: light.bathroom_lights
+      icon: mdi:shower-head
+      icon_color: '{% if is_state(''light.bathroom_lights'', ''on'') %}amber {% elif
+        is_state(''switch.shelly_bathroom'', ''on'') %}deep-orange {% elif is_state(''binary_sensor.activity_in_bathroom'',
+        ''on'') %}blue {% else %}disabled{% endif %}'
+      layout: vertical
+      primary: Bathroom
+      secondary: '{{ states(''sensor.temperature_bathroom'') | round(1) }}° ·  {%
+        if is_state(''switch.shelly_bathroom'', ''on'') %}🔥{% endif %} {% if is_state(''light.bathroom_lights'',
+        ''on'') %}Lights on{% else %}Off{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/bathroom
+      type: custom:mushroom-template-card
+    - fill_container: true
+      hold_action:
+        action: toggle
+        entity: light.bedroom_lights
+      icon: mdi:bed-king
+      icon_color: '{% if is_state(''light.bedroom_lights'', ''on'') %}amber
+
+        {% elif not is_state(''input_select.sleep_mode'', ''off'') %}deep-purple
+
+        {% else %}disabled{% endif %}'
+      layout: vertical
+      primary: Bedroom
+      secondary: '{{ states(''sensor.temperature_bedroom'') | round(1) }}° ·  {% if
+        not is_state(''input_select.sleep_mode'', ''off'') %}💤{% endif %} {% if is_state(''light.bedroom_lights'',
+        ''on'') %}Lights on{% else %}Off{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/bedroom
+      type: custom:mushroom-template-card
+    - fill_container: true
+      hold_action:
+        action: toggle
+        entity: light.guest_bedroom_lights
+      icon: mdi:bed-double
+      icon_color: '{% if is_state(''light.guest_bedroom_lights'', ''on'') %}amber
+        {% elif is_state(''binary_sensor.activity_in_guest_bedroom'', ''on'') %}blue
+        {% else %}disabled{% endif %}'
+      layout: vertical
+      primary: Guest room
+      secondary: '{{ states(''sensor.temperature_guest_bedroom'') | round(1) }}° ·  {%
+        if is_state(''binary_sensor.activity_in_guest_bedroom'', ''on'') %}Occupied{%
+        else %}Empty{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/guest-bedroom
+      type: custom:mushroom-template-card
+    - fill_container: true
+      icon: mdi:teddy-bear
+      icon_color: pink
+      layout: vertical
+      primary: Marthe
+      secondary: '{{ states(''sensor.temperature_bedroom_marthe'') | round(1) }}°'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/marthe-bedroom
+      type: custom:mushroom-template-card
+    - fill_container: true
+      hold_action:
+        action: toggle
+        entity: light.outside_lights
+      icon: mdi:tree
+      icon_color: '{% if is_state(''light.outside_lights'', ''on'') %}amber {% else
+        %}green{% endif %}'
+      layout: vertical
+      primary: Outside
+      secondary: '{% set temp = states(''sensor.bunderhome_weerstation_ws_2902c_temp'')
+        %} {% if temp not in [''unavailable'', ''unknown''] %}{{ temp | float | round(1)
+        }}°{% else %}—{% endif %} ·  {% if is_state(''light.outside_lights'', ''on'')
+        %}Lights on{% else %}Lights off{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/outside
+      type: custom:mushroom-template-card
+    columns: 2
+    square: false
+    type: grid
+  - alignment: left
+    subtitle: Quick Actions
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - fill_container: true
+      icon: mdi:weather-sunset-up
+      icon_color: amber
+      layout: vertical
+      primary: Wake up
+      tap_action:
+        action: call-service
+        data:
+          option: 'off'
+        service: input_select.select_option
+        target:
+          entity_id: input_select.sleep_mode
+      type: custom:mushroom-template-card
+    - fill_container: true
+      icon: mdi:weather-night
+      icon_color: '{% if not is_state(''input_select.sleep_mode'',''off'') %}purple
+
+        {% else %}deep-purple{% endif %}'
+      layout: vertical
+      primary: '{% if not is_state(''input_select.sleep_mode'',''off'') %}Sleep mode
+        on {% else %}Go to sleep{% endif %}'
+      tap_action:
+        action: call-service
+        service: script.going_to_sleep
+      type: custom:mushroom-template-card
+    - fill_container: true
+      icon: mdi:home-import-outline
+      icon_color: green
+      layout: vertical
+      primary: Arrive
+      tap_action:
+        action: call-service
+        service: script.arriving
+      type: custom:mushroom-template-card
+    - fill_container: true
+      icon: mdi:home-export-outline
+      icon_color: blue
+      layout: vertical
+      primary: Leave
+      tap_action:
+        action: call-service
+        service: script.leaving
+      type: custom:mushroom-template-card
+    columns: 2
+    square: false
+    type: grid
+  - entity: input_boolean.guest_mode
+    icon: mdi:account-multiple
+    icon_color: '{% if is_state(''input_boolean.guest_mode'', ''on'') %}cyan{% else
+      %}disabled{% endif %}'
+    layout: horizontal
+    name: Guest mode
+    tap_action:
+      action: toggle
+    type: custom:mushroom-entity-card
+  - cards:
+    - fill_container: true
+      icon: mdi:shield-home
+      icon_color: '{% if is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_away'')
+        %}red {% elif is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_home'')
+        %}orange {% else %}green{% endif %}'
+      layout: vertical
+      primary: Security
+      secondary: '{% if is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_away'')
+        %}Armed away {% elif is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_home'')
+        %}Armed home {% else %}Disarmed{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/security
+      type: custom:mushroom-template-card
+    - fill_container: true
+      icon: mdi:lightning-bolt
+      icon_color: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
+        %} {% if power < 0 %}green{% else %}amber{% endif %}'
+      layout: vertical
+      primary: Energy
+      secondary: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
+        %} {% if power < 0 %}+{{ (power | abs / 1000) | round(1) }} kW{% else %}{{
+        (power / 1000) | round(1) }} kW{% endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/energy
+      type: custom:mushroom-template-card
+    - fill_container: true
+      icon: mdi:tools
+      icon_color: '{% set low_batteries = states.sensor | selectattr(''entity_id'',
+        ''search'', ''battery'') | selectattr(''state'', ''lt'', ''20'') | list |
+        count %} {% if low_batteries > 0 %}orange{% else %}disabled{% endif %}'
+      layout: vertical
+      primary: Maintenance
+      secondary: '{% set low_batteries = states.sensor | selectattr(''entity_id'',
+        ''search'', ''battery'') | selectattr(''state'', ''lt'', ''20'') | list |
+        count %} {% if low_batteries > 0 %}{{ low_batteries }} low{% else %}All good{%
+        endif %}'
+      tap_action:
+        action: navigate
+        navigation_path: /dashboard-mobile/maintenance
+      type: custom:mushroom-template-card
+    columns: 3
+    square: false
+    type: grid
+  icon: mdi:home
+  path: home
+  theme: Mushroom
+  title: Home
+  type: custom:vertical-layout
+  visible:
+  - user: b64ec45da7a14f57bbcec78e6bb90b50
+  - user: 3647a3cda1b843dfa9fa724038fdd82b
+  - user: 5ee38b35098341c497a6c7a830742fbe
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ state_attr(''climate.kitchen'', ''current_temperature'') | round(1)
+        }}°C'
+      entity: climate.kitchen
+      icon: mdi:thermometer
+      icon_color: '{% set temp = state_attr(''climate.kitchen'', ''current_temperature'')
+        | float(20) %} {% if temp < 18 %}blue{% elif temp < 22 %}green{% elif temp
+        < 25 %}orange{% else %}red{% endif %}'
+      type: template
+    - entity: binary_sensor.openclose_back_door
+      icon: mdi:door
+      icon_color: '{% if is_state(''binary_sensor.openclose_back_door'', ''on'') %}red{%
+        else %}green{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - alignment: left
+    subtitle: '{% if is_state(''binary_sensor.espresso_machine'', ''on'') %}Coffee
+      machine on{% else %}All appliances off{% endif %}'
+    type: custom:mushroom-title-card
+  - collapsible_controls: false
+    entity: light.kitchen_lights
+    fill_container: true
+    layout: vertical
+    name: Lights
+    show_brightness_control: true
+    show_color_temp_control: true
+    type: custom:mushroom-light-card
+    use_light_color: true
+  - entity: climate.kitchen
+    type: thermostat
+  - alignment: left
+    subtitle: Appliances
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - entity: switch.espresso_machine
+      fill_container: true
+      icon: mdi:coffee-maker
+      icon_color: '{% if is_state(''switch.espresso_machine'', ''on'') %}amber{% else
+        %}disabled{% endif %}'
+      layout: vertical
+      name: Espresso
+      tap_action:
+        action: toggle
+      type: custom:mushroom-entity-card
+    columns: 2
+    square: false
+    type: grid
+  icon: mdi:pot-steam
+  path: kitchen
+  subview: true
+  theme: Mushroom
+  title: Kitchen
+  visible:
+  - user: b64ec45da7a14f57bbcec78e6bb90b50
+  - user: 5ee38b35098341c497a6c7a830742fbe
+  - user: 3647a3cda1b843dfa9fa724038fdd82b
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: left
+    subtitle: '{% if is_state(''light.living_room_lights'', ''on'') %}Lights on{%
+      else %}Lights off{% endif %} ·  {% if is_state(''binary_sensor.activity_in_living_room'',
+      ''on'') %}Occupied{% else %}Empty{% endif %}'
+    type: custom:mushroom-title-card
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ state_attr(''climate.living_room'', ''current_temperature'') |
+        round(1) }}°C'
+      entity: climate.living_room
+      icon: mdi:thermometer
+      icon_color: '{% set temp = state_attr(''climate.living_room'', ''current_temperature'')
+        | float(20) %} {% if temp < 18 %}blue{% elif temp < 22 %}green{% elif temp
+        < 25 %}orange{% else %}red{% endif %}'
+      type: template
+    - entity: binary_sensor.activity_in_living_room
+      icon: mdi:motion-sensor
+      icon_color: '{% if is_state(''binary_sensor.activity_in_living_room'', ''on'')
+        %}amber{% else %}disabled{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - collapsible_controls: false
+    entity: light.living_room_lights
+    fill_container: true
+    icon: mdi:lightbulb-group
+    layout: vertical
+    name: All lights
+    show_brightness_control: true
+    show_color_temp_control: true
+    type: custom:mushroom-light-card
+    use_light_color: true
+  - entity: climate.living_room
+    type: thermostat
+  - alignment: left
+    subtitle: Zone Lights
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - collapsible_controls: true
+      entity: light.living_room_playing_corner_lights
+      fill_container: true
+      icon: mdi:teddy-bear
+      layout: vertical
+      name: Playing corner
+      show_brightness_control: true
+      type: custom:mushroom-light-card
+      use_light_color: true
+    - collapsible_controls: true
+      entity: light.living_room_dining_table_lights
+      fill_container: true
+      icon: mdi:table-furniture
+      layout: vertical
+      name: Dining table
+      show_brightness_control: true
+      type: custom:mushroom-light-card
+      use_light_color: true
+    - collapsible_controls: true
+      entity: light.living_room_middle_lights
+      fill_container: true
+      icon: mdi:ceiling-light
+      layout: vertical
+      name: Middle
+      show_brightness_control: true
+      type: custom:mushroom-light-card
+      use_light_color: true
+    - entity: light.hue_plug
+      fill_container: true
+      icon: mdi:floor-lamp
+      layout: vertical
+      name: Reading lamp
+      type: custom:mushroom-light-card
+      use_light_color: true
+    columns: 2
+    square: false
+    type: grid
+  - card:
+      entity: switch.shelly_kerstboom
+      icon: mdi:pine-tree
+      icon_color: green
+      layout: horizontal
+      name: 🎄 Christmas tree
+      type: custom:mushroom-light-card
+    conditions:
+    - entity: switch.shelly_kerstboom
+      state: 'on'
+    type: conditional
+  - alignment: left
+    subtitle: Controls
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - entity: cover.curtain_controller_curtain
+      fill_container: true
+      icon: mdi:roller-shade
+      layout: vertical
+      name: Screens
+      show_buttons_control: true
+      show_position_control: true
+      type: custom:mushroom-cover-card
+    - commands:
+      - start_pause
+      - return_home
+      - locate
+      entity: vacuum.robot_vacuum
+      fill_container: true
+      icon_animation: true
+      layout: vertical
+      name: Brenda
+      type: custom:mushroom-vacuum-card
+    columns: 2
+    square: false
+    type: grid
+  icon: mdi:sofa
+  path: living-room
+  subview: true
+  theme: Mushroom
+  title: Living room
+  visible:
+  - user: b64ec45da7a14f57bbcec78e6bb90b50
+  - user: 5ee38b35098341c497a6c7a830742fbe
+  - user: 3647a3cda1b843dfa9fa724038fdd82b
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ states(''sensor.temperature_bedroom'') | round(1) }}°C'
+      entity: sensor.temperature_bedroom
+      icon: mdi:thermometer
+      type: template
+    - entity: input_select.sleep_mode
+      icon: '{% if is_state(''input_select.sleep_mode'', ''off'') %}mdi:power-sleep{%
+        else %}mdi:sleep{% endif %}'
+      icon_color: '{% if is_state(''input_select.sleep_mode'', ''off'') %}disabled{%
+        else %}deep-purple{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - alignment: left
+    subtitle: '{% if not is_state(''input_select.sleep_mode'', ''off'') %}Sleep mode:
+      {{ states(''input_select.sleep_mode'') }}{% else %}Sleep mode off{% endif %}'
+    type: custom:mushroom-title-card
+  - collapsible_controls: false
+    entity: light.bedroom_lights
+    fill_container: true
+    icon: mdi:lightbulb-group
+    layout: vertical
+    name: All lights
+    show_brightness_control: true
+    show_color_temp_control: true
+    type: custom:mushroom-light-card
+    use_light_color: true
+  - entity: climate.bedroom
+    type: thermostat
+  - cards:
+    - collapsible_controls: true
+      entity: light.bedroom_ceiling_lights
+      fill_container: true
+      icon: mdi:ceiling-light
+      layout: vertical
+      name: Ceiling
+      show_brightness_control: true
+      type: custom:mushroom-light-card
+      use_light_color: true
+    - collapsible_controls: true
+      entity: light.bedroom_bedside_tom
+      fill_container: true
+      icon: mdi:lamp
+      layout: vertical
+      name: Tom's side
+      show_brightness_control: true
+      type: custom:mushroom-light-card
+      use_light_color: true
+    columns: 2
+    square: false
+    type: grid
+  icon: mdi:bed-king
+  path: bedroom
+  subview: true
+  theme: Mushroom
+  title: Bedroom
+  visible:
+  - user: b64ec45da7a14f57bbcec78e6bb90b50
+  - user: 5ee38b35098341c497a6c7a830742fbe
+  - user: 3647a3cda1b843dfa9fa724038fdd82b
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ states(''sensor.temperature_bathroom'') | round(1) }}°C'
+      entity: sensor.temperature_bathroom
+      icon: mdi:thermometer
+      icon_color: '{% set temp = states(''sensor.temperature_bathroom'') | float(20)
+        %}
+
+        {% if temp < 20 %}blue{% elif temp < 24 %}green{% else %}orange{% endif %}'
+      type: template
+    - entity: switch.shelly_bathroom
+      icon: mdi:radiator
+      icon_color: '{% if is_state(''switch.shelly_bathroom'', ''on'') %}deep-orange{%
+        else %}disabled{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - alignment: left
+    subtitle: '{% if is_state(''switch.shelly_bathroom'', ''on'') %}Heating active{%
+      else %}Heating off{% endif %}'
+    type: custom:mushroom-title-card
+  - collapsible_controls: false
+    entity: light.bathroom_lights
+    fill_container: true
+    icon: mdi:lightbulb-group
+    layout: vertical
+    name: Lights
+    show_brightness_control: true
+    show_color_temp_control: true
+    type: custom:mushroom-light-card
+    use_light_color: true
+  - entity: climate.bathroom
+    type: thermostat
+  - cards:
+    - entity: switch.shelly_bathroom
+      fill_container: true
+      icon: mdi:radiator
+      icon_color: '{% if is_state(''switch.shelly_bathroom'', ''on'') %}deep-orange{%
+        else %}disabled{% endif %}'
+      layout: vertical
+      name: Radiator boost
+      tap_action:
+        action: toggle
+      type: custom:mushroom-entity-card
+    - entity: automation.color_loop_bathroom
+      fill_container: true
+      icon: mdi:palette
+      icon_color: '{% if is_state(''automation.color_loop_bathroom'', ''on'') %}cyan{%
+        else %}disabled{% endif %}'
+      layout: vertical
+      name: Light therapy
+      tap_action:
+        action: toggle
+      type: custom:mushroom-entity-card
+    columns: 2
+    square: false
+    type: grid
+  icon: mdi:shower-head
+  path: bathroom
+  subview: true
+  theme: Mushroom
+  title: Bathroom
+  visible:
+  - user: b64ec45da7a14f57bbcec78e6bb90b50
+  - user: 5ee38b35098341c497a6c7a830742fbe
+  - user: 3647a3cda1b843dfa9fa724038fdd82b
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ states(''sensor.temperature_guest_bedroom'') | round(1) }}°C'
+      entity: sensor.temperature_guest_bedroom
+      icon: mdi:thermometer
+      type: template
+    - entity: binary_sensor.activity_in_guest_bedroom
+      icon: mdi:motion-sensor
+      icon_color: '{% if is_state(''binary_sensor.activity_in_guest_bedroom'', ''on'')
+        %}amber{% else %}disabled{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - collapsible_controls: false
+    entity: light.guest_bedroom_lights
+    fill_container: true
+    icon: mdi:lightbulb-group
+    layout: vertical
+    name: All lights
+    show_brightness_control: true
+    show_color_temp_control: true
+    type: custom:mushroom-light-card
+    use_light_color: true
+  - entity: climate.guest_bedroom
+    type: thermostat
+  - cards:
+    - entity: light.guest_bedroom_ceiling_lights
+      fill_container: true
+      icon: mdi:ceiling-light
+      layout: vertical
+      name: Ceiling
+      type: custom:mushroom-light-card
+      use_light_color: true
+    - entity: light.guest_bedroom_bedside
+      fill_container: true
+      icon: mdi:lamp
+      layout: vertical
+      name: Bedside
+      type: custom:mushroom-light-card
+      use_light_color: true
+    columns: 2
+    square: false
+    type: grid
+  - alignment: left
+    subtitle: Alarm Clock
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - entity: input_select.sleep_mode
+      fill_container: true
+      icon: mdi:power-sleep
+      layout: vertical
+      name: Sleep mode
+      type: custom:mushroom-select-card
+    - entity: schedule.alarm_clock_schedule
+      fill_container: true
+      icon: mdi:alarm
+      icon_color: '{% if state_attr(''schedule.alarm_clock_schedule'', ''next_event'')
+        is not none %}amber{% else %}disabled{% endif %}'
+      layout: vertical
+      name: Alarm
+      tap_action:
+        action: more-info
+      type: custom:mushroom-entity-card
+    columns: 2
+    square: false
+    type: grid
+  - entities:
+    - entity: schedule.alarm_clock_schedule
+    type: entities
+  icon: mdi:bed-double
+  path: guest-bedroom
+  subview: true
+  theme: Mushroom
+  title: Guest bedroom
+  visible:
+  - user: b64ec45da7a14f57bbcec78e6bb90b50
+  - user: 5ee38b35098341c497a6c7a830742fbe
+  - user: 3647a3cda1b843dfa9fa724038fdd82b
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ states(''sensor.multi_sensor_marthe_bedroom_temperature'') | round(1)
+        }}°C'
+      entity: sensor.multi_sensor_marthe_bedroom_temperature
+      icon: mdi:thermometer
+      icon_color: pink
+      type: template
+    type: custom:mushroom-chips-card
+  - entity: climate.bedroom_marthe
+    type: thermostat
+  icon: mdi:teddy-bear
+  path: marthe-bedroom
+  subview: true
+  theme: Mushroom
+  title: Marthe bedroom
+  type: custom:vertical-layout
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - entity: binary_sensor.motion_sensor_toilet
+      icon: mdi:motion-sensor
+      icon_color: '{% if is_state(''binary_sensor.motion_sensor_toilet'', ''on'')
+        %}amber{% else %}disabled{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - collapsible_controls: false
+    entity: light.toilet
+    fill_container: true
+    icon: mdi:lightbulb
+    layout: vertical
+    name: Light
+    show_brightness_control: true
+    show_color_temp_control: true
+    type: custom:mushroom-light-card
+    use_light_color: true
+  icon: mdi:toilet
+  path: toilet
+  subview: true
+  theme: Mushroom
+  title: Toilet
+  visible:
+  - user: b64ec45da7a14f57bbcec78e6bb90b50
+  - user: 5ee38b35098341c497a6c7a830742fbe
+  - user: 3647a3cda1b843dfa9fa724038fdd82b
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ state_attr(''climate.storage'', ''current_temperature'') | round(1)
+        }}°C'
+      entity: climate.storage
+      icon: mdi:thermometer
+      type: template
+    - entity: binary_sensor.openclose_storage_door
+      icon: mdi:door
+      icon_color: '{% if is_state(''binary_sensor.openclose_storage_door'', ''on'')
+        %}red{% else %}green{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - entity: climate.storage
+    type: thermostat
+  icon: mdi:archive
+  path: storage
+  subview: true
+  theme: Mushroom
+  title: Storage
+  visible:
+  - user: b64ec45da7a14f57bbcec78e6bb90b50
+  - user: 5ee38b35098341c497a6c7a830742fbe
+  - user: 3647a3cda1b843dfa9fa724038fdd82b
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ state_attr(''climate.hall'', ''current_temperature'') | round(1)
+        }}°C'
+      entity: climate.hall
+      icon: mdi:thermometer
+      type: template
+    - entity: binary_sensor.openclose_front_door
+      icon: mdi:door
+      icon_color: '{% if is_state(''binary_sensor.openclose_front_door'', ''on'')
+        %}red{% else %}green{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - collapsible_controls: false
+    entity: light.upper_hall_lights
+    fill_container: true
+    layout: vertical
+    name: Upper hall lights
+    show_brightness_control: true
+    type: custom:mushroom-light-card
+    use_light_color: true
+  - entity: climate.hall
+    type: thermostat
+  icon: mdi:stairs
+  path: hall
+  subview: true
+  theme: Mushroom
+  title: Hall
+  visible:
+  - user: b64ec45da7a14f57bbcec78e6bb90b50
+  - user: 5ee38b35098341c497a6c7a830742fbe
+  - user: 3647a3cda1b843dfa9fa724038fdd82b
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ states(''sensor.bunderhome_weerstation_ws_2902c_temp'') | round(1)
+        }}°C'
+      entity: sensor.bunderhome_weerstation_ws_2902c_temp
+      icon: mdi:thermometer
+      type: template
+    - content: UV {{ states('sensor.bunderhome_weerstation_ws_2902c_uv_index') }}
+      entity: sensor.bunderhome_weerstation_ws_2902c_uv_index
+      icon: mdi:weather-sunny
+      icon_color: '{% set uv = states(''sensor.bunderhome_weerstation_ws_2902c_uv_index'')
+        | float(0) %} {% if uv < 3 %}green{% elif uv < 6 %}amber{% elif uv < 8 %}orange{%
+        else %}red{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - collapsible_controls: false
+    entity: light.outside_lights
+    fill_container: true
+    icon: mdi:lightbulb-group
+    layout: vertical
+    name: All lights
+    show_brightness_control: true
+    type: custom:mushroom-light-card
+    use_light_color: true
+  - collapsible_controls: true
+    entity: light.terrace_lights
+    fill_container: true
+    icon: mdi:outdoor-lamp
+    layout: vertical
+    name: Terrace
+    show_brightness_control: true
+    type: custom:mushroom-light-card
+    use_light_color: true
+  - alignment: left
+    subtitle: Cameras
+    title: ''
+    type: custom:mushroom-title-card
+  - aspect_ratio: '16:9'
+    camera_image: camera.front_door_snapshot
+    camera_view: auto
+    entity: camera.front_door_live_view
+    name: Front door
+    show_name: true
+    show_state: false
+    tap_action:
+      action: more-info
+    type: picture-entity
+  - aspect_ratio: '16:9'
+    camera_image: camera.front_garden_snapshot
+    camera_view: auto
+    entity: camera.front_garden_live_view
+    name: Front garden
+    show_name: true
+    show_state: false
+    tap_action:
+      action: more-info
+    type: picture-entity
+  - aspect_ratio: '16:9'
+    camera_image: camera.porch_snapshot
+    camera_view: auto
+    entity: camera.porch_live_view
+    name: Porch
+    show_name: true
+    show_state: false
+    tap_action:
+      action: more-info
+    type: picture-entity
+  icon: mdi:tree
+  path: outside
+  subview: true
+  theme: Mushroom
+  title: Outside
+  type: custom:vertical-layout
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ states(''sensor.bizzylectric_battery_level'') | round(0) }}%'
+      entity: sensor.bizzylectric_battery_level
+      icon: '{% if is_state(''sensor.bizzylectric_charging'', ''charging'') %}mdi:battery-charging
+        {% else %}mdi:battery{% endif %}'
+      icon_color: '{% set battery = states(''sensor.bizzylectric_battery_level'')
+        | float(0) %} {% if is_state(''sensor.bizzylectric_charging'', ''charging'')
+        %}green {% elif battery > 80 %}green {% elif battery > 50 %}blue {% elif battery
+        > 20 %}orange {% else %}red{% endif %}'
+      type: template
+    - entity: switch.bizzylectric_sentry_mode
+      icon: mdi:shield-car
+      icon_color: '{% if is_state(''switch.bizzylectric_sentry_mode'', ''on'') %}red{%
+        else %}disabled{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - alignment: left
+    subtitle: '{% if is_state(''sensor.bizzylectric_charging'', ''charging'') %}Charging{%
+      else %}{{ states(''sensor.bizzylectric_ideal_battery_range'') | round(0, default=''?'')
+      }} km range{% endif %}'
+    type: custom:mushroom-title-card
+  - entity: sensor.bizzylectric_battery_level
+    max: 100
+    min: 0
+    name: Battery
+    severity:
+      green: 60
+      red: 0
+      yellow: 30
+    type: gauge
+  - entity: number.bizzylectric_charge_current
+    icon: mdi:current-ac
+    layout: horizontal
+    name: Charging Amps
+    type: custom:mushroom-number-card
+  - alignment: left
+    subtitle: Climate
+    title: ''
+    type: custom:mushroom-title-card
+  - entity: climate.bizzylectric_climate
+    type: thermostat
+  - alignment: left
+    subtitle: Locks & Access
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - entity: lock.bizzylectric_lock
+      fill_container: true
+      icon: mdi:car-door-lock
+      layout: vertical
+      name: Doors
+      type: custom:mushroom-lock-card
+    - entity: cover.bizzylectric_trunk
+      fill_container: true
+      icon: mdi:car-back
+      layout: vertical
+      name: Trunk
+      show_buttons_control: true
+      type: custom:mushroom-cover-card
+    - entity: cover.bizzylectric_frunk
+      fill_container: true
+      icon: mdi:car
+      layout: vertical
+      name: Frunk
+      show_buttons_control: true
+      type: custom:mushroom-cover-card
+    - entity: lock.bizzylectric_charge_cable_lock
+      fill_container: true
+      icon: mdi:ev-plug-ccs2
+      layout: vertical
+      name: Charge port
+      type: custom:mushroom-lock-card
+    columns: 2
+    square: false
+    type: grid
+  - entity: update.bizzylectric_update
+    icon: mdi:cellphone-arrow-down
+    layout: horizontal
+    name: Software Update
+    show_buttons_control: true
+    type: custom:mushroom-update-card
+  icon: mdi:car-electric
+  path: ev
+  subview: true
+  theme: Mushroom
+  title: Bizzylectric
+  type: custom:vertical-layout
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - entity: alarm_control_panel.bunderhome_alarm
+      icon: '{% if is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_away'')
+        %}mdi:shield-lock {% elif is_state(''alarm_control_panel.bunderhome_alarm'',
+        ''armed_home'') %}mdi:shield-home {% else %}mdi:shield-off{% endif %}'
+      icon_color: '{% if is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_away'')
+        %}red {% elif is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_home'')
+        %}orange {% else %}green{% endif %}'
+      type: template
+    type: custom:mushroom-chips-card
+  - alignment: left
+    subtitle: '{% if is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_away'')
+      %}Armed away {% elif is_state(''alarm_control_panel.bunderhome_alarm'', ''armed_home'')
+      %}Armed home {% else %}Disarmed{% endif %}'
+    type: custom:mushroom-title-card
+  - entity: alarm_control_panel.bunderhome_alarm
+    layout: horizontal
+    states:
+    - armed_home
+    - armed_away
+    type: custom:mushroom-alarm-control-panel-card
+  - alignment: left
+    subtitle: Doors
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - entity: binary_sensor.openclose_front_door
+      fill_container: true
+      icon: mdi:door
+      icon_color: '{% if is_state(''binary_sensor.openclose_front_door'', ''on'')
+        %}red{% else %}green{% endif %}'
+      layout: vertical
+      primary: Front door
+      secondary: '{{ ''Open'' if is_state(''binary_sensor.openclose_front_door'',
+        ''on'') else ''Closed'' }}'
+      type: custom:mushroom-template-card
+    - entity: binary_sensor.openclose_back_door
+      fill_container: true
+      icon: mdi:door-sliding
+      icon_color: '{% if is_state(''binary_sensor.openclose_back_door'', ''on'') %}red{%
+        else %}green{% endif %}'
+      layout: vertical
+      primary: Back door
+      secondary: '{{ ''Open'' if is_state(''binary_sensor.openclose_back_door'', ''on'')
+        else ''Closed'' }}'
+      type: custom:mushroom-template-card
+    - entity: binary_sensor.openclose_storage_door
+      fill_container: true
+      icon: mdi:door
+      icon_color: '{% if is_state(''binary_sensor.openclose_storage_door'', ''on'')
+        %}red{% else %}green{% endif %}'
+      layout: vertical
+      primary: Storage
+      secondary: '{{ ''Open'' if is_state(''binary_sensor.openclose_storage_door'',
+        ''on'') else ''Closed'' }}'
+      type: custom:mushroom-template-card
+    - entity: binary_sensor.openclose_living_room_door
+      fill_container: true
+      icon: mdi:door
+      icon_color: '{% if is_state(''binary_sensor.openclose_living_room_door'', ''on'')
+        %}red{% else %}green{% endif %}'
+      layout: vertical
+      primary: Living room
+      secondary: '{{ ''Open'' if is_state(''binary_sensor.openclose_living_room_door'',
+        ''on'') else ''Closed'' }}'
+      type: custom:mushroom-template-card
+    columns: 2
+    square: false
+    type: grid
+  - alignment: left
+    subtitle: Cameras
+    title: ''
+    type: custom:mushroom-title-card
+  - aspect_ratio: '16:9'
+    camera_image: camera.front_door_snapshot
+    camera_view: auto
+    entity: camera.front_door_live_view
+    name: Front door
+    show_name: true
+    show_state: false
+    tap_action:
+      action: more-info
+    type: picture-entity
+  - aspect_ratio: '16:9'
+    camera_image: camera.front_garden_snapshot
+    camera_view: auto
+    entity: camera.front_garden_live_view
+    name: Front garden
+    show_name: true
+    show_state: false
+    tap_action:
+      action: more-info
+    type: picture-entity
+  - aspect_ratio: '16:9'
+    camera_image: camera.porch_snapshot
+    camera_view: auto
+    entity: camera.porch_live_view
+    name: Porch
+    show_name: true
+    show_state: false
+    tap_action:
+      action: more-info
+    type: picture-entity
+  - alignment: left
+    subtitle: Motion
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - entity: binary_sensor.front_door_motion
+      fill_container: true
+      icon: mdi:motion-sensor
+      icon_color: '{% if is_state(''binary_sensor.front_door_motion'', ''on'') %}amber{%
+        else %}disabled{% endif %}'
+      layout: vertical
+      primary: ''
+      secondary: Door
+      type: custom:mushroom-template-card
+    - entity: binary_sensor.front_garden_motion_2
+      fill_container: true
+      icon: mdi:motion-sensor
+      icon_color: '{% if is_state(''binary_sensor.front_garden_motion_2'', ''on'')
+        %}amber{% else %}disabled{% endif %}'
+      layout: vertical
+      primary: ''
+      secondary: Garden
+      type: custom:mushroom-template-card
+    - entity: binary_sensor.porch_motion_2
+      fill_container: true
+      icon: mdi:motion-sensor
+      icon_color: '{% if is_state(''binary_sensor.porch_motion_2'', ''on'') %}amber{%
+        else %}disabled{% endif %}'
+      layout: vertical
+      primary: ''
+      secondary: Porch
+      type: custom:mushroom-template-card
+    - entity: binary_sensor.motion_sensor_living_room
+      fill_container: true
+      icon: mdi:motion-sensor
+      icon_color: '{% if is_state(''binary_sensor.motion_sensor_living_room'', ''on'')
+        %}amber{% else %}disabled{% endif %}'
+      layout: vertical
+      primary: ''
+      secondary: Living
+      type: custom:mushroom-template-card
+    columns: 4
+    square: true
+    type: grid
+  - alignment: left
+    subtitle: Battery Status
+    title: ''
+    type: custom:mushroom-title-card
+  - cards:
+    - entity: sensor.keypad_back_door_battery_level
+      fill_container: true
+      icon: '{% set battery = states(''sensor.keypad_back_door_battery_level'') |
+        float(100) %} {% if battery > 50 %}mdi:battery{% elif battery > 20 %}mdi:battery-50{%
+        else %}mdi:battery-alert{% endif %}'
+      icon_color: '{% set battery = states(''sensor.keypad_back_door_battery_level'')
+        | float(100) %} {% if battery > 50 %}green{% elif battery > 20 %}orange{%
+        else %}red{% endif %}'
+      layout: horizontal
+      primary: Keypad
+      secondary: '{{ states(''sensor.keypad_back_door_battery_level'') }}%'
+      type: custom:mushroom-template-card
+    - entity: sensor.front_door_battery_level_2
+      fill_container: true
+      icon: '{% set battery = states(''sensor.front_door_battery_level_2'') | float(100)
+        %} {% if battery > 50 %}mdi:battery{% elif battery > 20 %}mdi:battery-50{%
+        else %}mdi:battery-alert{% endif %}'
+      icon_color: '{% set battery = states(''sensor.front_door_battery_level_2'')
+        | float(100) %} {% if battery > 50 %}green{% elif battery > 20 %}orange{%
+        else %}red{% endif %}'
+      layout: horizontal
+      primary: Front cam
+      secondary: '{{ states(''sensor.front_door_battery_level_2'') }}%'
+      type: custom:mushroom-template-card
+    - entity: sensor.front_garden_battery
+      fill_container: true
+      icon: '{% set battery = states(''sensor.front_garden_battery'') | float(100)
+        %} {% if battery > 50 %}mdi:battery{% elif battery > 20 %}mdi:battery-50{%
+        else %}mdi:battery-alert{% endif %}'
+      icon_color: '{% set battery = states(''sensor.front_garden_battery'') | float(100)
+        %} {% if battery > 50 %}green{% elif battery > 20 %}orange{% else %}red{%
+        endif %}'
+      layout: horizontal
+      primary: Garden cam
+      secondary: '{{ states(''sensor.front_garden_battery'') }}%'
+      type: custom:mushroom-template-card
+    - entity: sensor.porch_battery
+      fill_container: true
+      icon: '{% set battery = states(''sensor.porch_battery'') | float(100) %} {%
+        if battery > 50 %}mdi:battery{% elif battery > 20 %}mdi:battery-50{% else
+        %}mdi:battery-alert{% endif %}'
+      icon_color: '{% set battery = states(''sensor.porch_battery'') | float(100)
+        %} {% if battery > 50 %}green{% elif battery > 20 %}orange{% else %}red{%
+        endif %}'
+      layout: horizontal
+      primary: Porch cam
+      secondary: '{{ states(''sensor.porch_battery'') }}%'
+      type: custom:mushroom-template-card
+    columns: 2
+    square: false
+    type: grid
+  icon: mdi:shield-home
+  path: security
+  subview: true
+  theme: Mushroom
+  title: Security
+  type: custom:vertical-layout
+- back_path: /dashboard-mobile/home
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    type: custom:mushroom-chips-card
+  - alignment: left
+    subtitle: System health overview
+    type: custom:mushroom-title-card
+  - alignment: left
+    subtitle: All Batteries
+    title: ''
+    type: custom:mushroom-title-card
+  - card:
+      sort_by_level: asc
+      type: custom:battery-state-card
+    filter:
+      exclude:
+      - entity_id: automation*
+      - entity_id: '*iphone*'
+      - entity_id: '*weerstation*'
+      - entity_id: '*bizzylectric*'
+      - entity_id: '*doorbell*'
+      - entity_id: '*bizzy*'
+      include:
+      - entity_id: '*battery*'
+    sort:
+      method: state
+      numeric: true
+    type: custom:auto-entities
+  icon: mdi:tools
+  path: maintenance
+  subview: true
+  theme: Mushroom
+  title: Maintenance
+- back_path: /dashboard-mobile/home
+  badges: []
+  cards:
+  - alignment: center
+    chips:
+    - type: spacer
+    - content: '{{ states(''sensor.p1_meter_active_power'') | round(0) }} W'
+      entity: sensor.p1_meter_active_power
+      icon: mdi:flash
+      icon_color: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
+        %} {% if power < 0 %}green{% elif power < 2000 %}blue{% elif power < 5000
+        %}orange{% else %}red{% endif %}'
+      type: template
+    - content: '{{ states(''sensor.sb3_0_1av_41_570_grid_power'') | round(0) }} W'
+      entity: sensor.sb3_0_1av_41_570_grid_power
+      icon: mdi:solar-power
+      icon_color: amber
+      type: template
+    type: custom:mushroom-chips-card
+  - alignment: left
+    subtitle: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
+      %} {% if power < 0 %}Exporting {{ (power | abs / 1000) | round(2) }} kW{% else
+      %}Consuming {{ (power / 1000) | round(2) }} kW{% endif %}'
+    type: custom:mushroom-title-card
+  - cards:
+    - card_mod:
+        style: 'ha-card { background: transparent; }
+
+          '
+      icon: mdi:transmission-tower
+      icon_color: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
+        %} {% if power < 0 %}green{% else %}red{% endif %}'
+      layout: vertical
+      primary: Grid
+      secondary: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
+        %} {% if power < 0 %}← {{ (power | abs / 1000) | round(1) }} kW{% else %}→
+        {{ (power / 1000) | round(1) }} kW{% endif %}'
+      type: custom:mushroom-template-card
+    - card_mod:
+        style: 'ha-card { background: transparent; }
+
+          '
+      icon: mdi:solar-panel
+      icon_color: amber
+      layout: vertical
+      primary: Solar
+      secondary: '{{ (states(''sensor.sb3_0_1av_41_570_grid_power'') | float(0) /
+        1000) | round(1) }} kW'
+      type: custom:mushroom-template-card
+    - card_mod:
+        style: 'ha-card { background: transparent; }
+
+          '
+      icon: mdi:car-electric
+      icon_color: '{% if is_state(''sensor.bizzylectric_charging'', ''charging'')
+        %}cyan{% else %}disabled{% endif %}'
+      layout: vertical
+      primary: EV
+      secondary: '{% if is_state(''sensor.bizzylectric_charging'', ''charging'') %}{{
+        states(''sensor.bizzylectric_charger_power'') | round(1) }} kW{% else %}—{%
+        endif %}'
+      type: custom:mushroom-template-card
+    mode: horizontal
+    type: custom:stack-in-card
+  - alignment: left
+    subtitle: Usage (24h)
+    title: ''
+    type: custom:mushroom-title-card
+  - animate: true
+    color_thresholds:
+    - color: '#4CAF50'
+      value: -1000
+    - color: '#2196F3'
+      value: 0
+    - color: '#FF9800'
+      value: 3000
+    - color: '#F44336'
+      value: 5000
+    entities:
+    - color: '#4CAF50'
+      entity: sensor.p1_meter_active_power
+      name: Total
+    hour24: true
+    hours_to_show: 24
+    line_width: 2
+    points_per_hour: 4
+    show:
+      fill: true
+      labels: true
+      points: false
+    type: custom:mini-graph-card
+  - alignment: left
+    subtitle: Solar Production (24h)
+    title: ''
+    type: custom:mushroom-title-card
+  - animate: true
+    entities:
+    - color: '#FFC107'
+      entity: sensor.sb3_0_1av_41_570_grid_power
+      name: Solar
+    hour24: true
+    hours_to_show: 24
+    line_width: 2
+    points_per_hour: 4
+    show:
+      fill: true
+      labels: true
+      points: false
+    type: custom:mini-graph-card
+  - alignment: left
+    subtitle: Peak Demand
+    title: ''
+    type: custom:mushroom-title-card
+  - animate: true
+    color_thresholds:
+    - color: '#4CAF50'
+      value: 0
+    - color: '#FF9800'
+      value: 2500
+    - color: '#F44336'
+      value: 5000
+    entities:
+    - entity: sensor.p1_meter_active_average_demand
+      name: Average Demand
+    hour24: true
+    hours_to_show: 24
+    line_width: 2
+    points_per_hour: 4
+    show:
+      labels: true
+      points: false
+    type: custom:mini-graph-card
+  icon: mdi:lightning-bolt
+  path: energy
+  subview: true
+  theme: Mushroom
+  title: Energy
