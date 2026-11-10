@@ -217,3 +217,39 @@ Ground floor        | First floor     | Home              | Security
 
 At 1728 px the whole view fits on one screen in four even columns; at
 1280 px it falls back to two columns with the floors first.
+
+## House-panel card (supersedes the room-centric tiles)
+
+The room layout above was right in structure but still rendered as HA's
+standard tiles: 25 identical grey light buttons, five of them called
+"Lights", on/off hard to see. Built-in cards cannot render the room-card
+design, so Tom chose a bespoke card over Mushroom with card-mod.
+
+`www/house-panel/house-panel.js` defines three cards, no dependencies,
+colours from the active theme plus one accent ("lamplight" amber):
+
+- `custom:house-rooms-card`: one card per room, grouped by floor, in its
+  own grid (4 columns, living room 2 wide, outside 3 wide; container queries
+  drop to 3, 2 and 1 columns). A room with any light on is tinted amber.
+  The room icon toggles the room's light group (or all its zones), the
+  temperature is the large figure (tap opens the thermostat, "→ 17°" while
+  heating up), light zones and the espresso machine are pills (tap toggles,
+  long press opens more-info), Cozy/White are outlined scene pills. Rooms
+  without lights show their heating state; an open door shows in red.
+- `custom:house-actions-card`: the four routines and "Everything off",
+  sleep mode as a segmented control, heating Low/Mid/High, mode toggles,
+  and an adaptive-lighting manual-control notice with Reset only when
+  something is under manual control.
+- `custom:house-status-card`: quiet label/value rows for Security (alarm,
+  doors), Energy (solar with forecast, grid import/export, cost today,
+  this month, last month; title opens the Energy dashboard), Devices (car
+  and vacuum open their subviews; washer with time since change and time
+  left; water-tank warning only when empty) and Schedule (alarm and
+  collection days, grouped by date).
+
+Layout at 1728 px: rooms span three columns with Security, Energy and
+Devices beneath them; Home, Schedule and the three camera stills fill the
+fourth column. The whole house fits on one screen.
+
+The card is served from `/local/house-panel/house-panel.js?v=<VERSION>`;
+bump both after editing, because `/local/` is cached for 31 days.
