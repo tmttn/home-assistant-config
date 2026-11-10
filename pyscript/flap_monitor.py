@@ -76,7 +76,7 @@ def flap_monitor_flush():
     service.call(
         "notify",
         NOTIFY_NAME,
-        title="Device keeps dropping out 📡",
-        message="These keep going unavailable:\n" + "\n".join(lines)
-        + "\nCheck wifi/Zigbee signal or power supply.",
+        title="Toestel valt steeds weg 📡",
+        message="Deze worden steeds onbeschikbaar:\n" + "\n".join(lines)
+        + "\nCheck het wifi-/Zigbee-signaal of de voeding.",
     )

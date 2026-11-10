@@ -108,14 +108,14 @@ GIT_DIR=$(git rev-parse --git-dir)
 if [[ -n "$(git ls-files --unmerged)" ]] || [[ -d "$GIT_DIR/rebase-merge" ]] \
     || [[ -d "$GIT_DIR/rebase-apply" ]] || [[ -f "$GIT_DIR/MERGE_HEAD" ]]; then
     log "ERROR: unfinished merge/rebase or unresolved conflicts. Skipping."
-    ha_notify "⚠️ Git stuck" "Config repo has an unfinished merge/rebase. Resolve it on the HA box; check /config/chores.log"
+    ha_notify "⚠️ Git vastgelopen" "Config-repo heeft een onafgewerkte merge/rebase. Los het op op de HA-box; zie /config/chores.log"
     exit 1
 fi
 
 CURRENT_BRANCH=$(git branch --show-current)
 if [[ "$CURRENT_BRANCH" != "$BRANCH" ]]; then
     log "ERROR: on branch '$CURRENT_BRANCH', expected '$BRANCH'. Skipping."
-    ha_notify "⚠️ Git wrong branch" "Config repo is on '$CURRENT_BRANCH' instead of '$BRANCH'. Check /config/chores.log"
+    ha_notify "⚠️ Git verkeerde branch" "Config-repo staat op '$CURRENT_BRANCH' in plaats van '$BRANCH'. Zie /config/chores.log"
     exit 1
 fi
 
@@ -128,7 +128,7 @@ OVERLAP=$(comm -12 \
     <({ git diff --name-only; git diff --cached --name-only; } | sort -u))
 if [[ -n "$OVERLAP" ]]; then
     log "ERROR: incoming changes overlap uncommitted local edits: $OVERLAP"
-    ha_notify "⚠️ Git Conflict" "Incoming changes touch locally modified files ($(echo $OVERLAP)). Commit or revert them on the HA box."
+    ha_notify "⚠️ Git-conflict" "Binnenkomende wijzigingen raken lokaal gewijzigde bestanden ($(echo $OVERLAP)). Commit of draai ze terug op de HA-box."
     exit 1
 fi
 
@@ -150,7 +150,7 @@ if ! git pull --rebase origin "$BRANCH" >> "$LOGFILE" 2>&1; then
         git stash pop >> "$LOGFILE" 2>&1 || true
     fi
     log "Please resolve conflicts manually. Skipping push."
-    ha_notify "⚠️ Git Conflict" "Config repo has conflicts that need manual resolution. Check /config/chores.log"
+    ha_notify "⚠️ Git-conflict" "Config-repo heeft conflicten die je manueel moet oplossen. Zie /config/chores.log"
     exit 1
 fi
 
@@ -159,7 +159,7 @@ if $STASHED; then
     log "Restoring stashed changes..."
     if ! git stash pop >> "$LOGFILE" 2>&1; then
         log "ERROR: Stash pop had conflicts. Stopping before committing or pushing."
-        ha_notify "⚠️ Git Conflict" "Restoring local changes after pull conflicted. Resolve on the HA box; check /config/chores.log"
+        ha_notify "⚠️ Git-conflict" "Lokale wijzigingen terugzetten na de pull gaf een conflict. Los het op op de HA-box; zie /config/chores.log"
         exit 1
     fi
 fi
