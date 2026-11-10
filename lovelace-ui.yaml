@@ -237,10 +237,10 @@ views:
       icon: mdi:devices
       rows:
       - decimals: 0
-        entity: sensor.bizzylectric_battery
+        entity: sensor.bizzylectric_battery_level
         name: Bizzylectric
         navigate: /lovelace/car
-        secondary: device_tracker.bizzylectric_location_tracker
+        secondary: device_tracker.bizzylectric_location
       - attribute: status
         entity: vacuum.robot_vacuum
         name: Vacuum
@@ -730,11 +730,11 @@ views:
   sections:
   - cards:
     - badges:
-      - entity: sensor.bizzylectric_range
+      - entity: sensor.bizzylectric_ideal_battery_range
         show_icon: true
         show_state: true
         type: entity
-      - entity: device_tracker.bizzylectric_location_tracker
+      - entity: device_tracker.bizzylectric_location
         show_icon: true
         show_state: true
         type: entity
@@ -742,7 +742,7 @@ views:
       heading_style: title
       icon: mdi:car-electric
       type: heading
-    - entity: sensor.bizzylectric_battery
+    - entity: sensor.bizzylectric_battery_level
       features:
       - max: 100
         min: 0
@@ -760,7 +760,7 @@ views:
       icon: mdi:ev-station
       name: Charging
       type: tile
-    - entity: switch.bizzylectric_charger
+    - entity: switch.bizzylectric_charge
       grid_options:
         columns: 6
       hold_action:
@@ -796,7 +796,7 @@ views:
       tap_action:
         action: toggle
       type: tile
-    - entity: number.bizzylectric_charging_amps
+    - entity: number.bizzylectric_charge_current
       features:
       - style: buttons
         type: numeric-input
@@ -806,7 +806,7 @@ views:
       type: tile
       visibility:
       - condition: state
-        entity: switch.bizzylectric_charger
+        entity: switch.bizzylectric_charge
         state: 'on'
     - entity: number.bizzylectric_charge_limit
       features:
@@ -816,7 +816,7 @@ views:
         columns: 6
       name: Limit
       type: tile
-    - entity: lock.bizzylectric_doors
+    - entity: lock.bizzylectric_lock
       grid_options:
         columns: 6
       icon_tap_action:
