@@ -6,7 +6,7 @@ The car charges on **1 phase**: ~230 W per amp, 5–16 A.
 ## Helpers
 
 | Entity | Purpose |
-|--------|---------|
+| ------ | ------- |
 | `input_boolean.ev_smart_charging` | Master switch for solar/night charging. Off = the car charges natively on plug-in. |
 | `input_boolean.ev_charge_full_now` | Boost: charge at 16 A up to the car's charge limit now (or on the next plug-in at home). Turns itself off when the session ends. |
 | `input_select.ev_charging_session` | Current session: `idle`, `solar`, `night`, `boost`. Restart-safe state. |
