@@ -27,19 +27,22 @@ clamped between now and the deadline:
 | Armed | Start |
 |-------|-------|
 | Before the planned time | At the planned time |
-| After the planned time, before the deadline | Right away |
-| After the deadline | Tomorrow, an hour before tomorrow's peak (at the latest at tomorrow's deadline) |
+| After the planned time, before the deadline (15:00) | Right away |
+| Between the deadline and the overnight time (20:00) | Right away, so it is done the same evening |
+| After the overnight time | Tomorrow, an hour before tomorrow's peak (at the latest at tomorrow's deadline) |
 
-It starts earlier than planned when the forecast production
-(`sensor.power_production_now`) rises above the threshold, and always at the
-deadline, so the laundry still gets done on cloudy days.
+It starts earlier than planned when the measured PV power of the SMA Sunny
+Boy 3.0 inverter (`sensor.sb3_0_1av_41_570_pv_power`) stays above the
+threshold for 5 minutes, or is already above it when you arm the machine. It
+always starts at the deadline, so the laundry still gets done on cloudy days.
 
 ## Settings (helpers, editable in the UI)
 
 | Helper | Default | Meaning |
 |--------|---------|---------|
 | `input_datetime.washing_machine_solar_start_deadline` | 15:00 | Latest start of the day |
-| `input_number.washing_machine_solar_start_threshold` | 2500 W | Start early once the forecast production passes this |
+| `input_datetime.washing_machine_solar_start_overnight_from` | 20:00 | Armed from this time on, it waits for tomorrow's sun |
+| `input_number.washing_machine_solar_start_threshold` | 2000 W | Start early once the measured PV power passes this (the inverter peaks at 3 kW) |
 | `input_datetime.washing_machine_solar_start_planned` | – | The planned start; written by the automation |
 
 The lead time (60 minutes before the peak) is the `lead_minutes` variable in
