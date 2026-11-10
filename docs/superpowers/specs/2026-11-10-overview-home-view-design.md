@@ -156,3 +156,18 @@ calmer cards (84 → 66 cards, most remaining tiles smaller):
 - Car: door lock became a heading badge; Amps shows only while charging.
 - Vacuum: vacuum day and cleaned today became heading badges; the Appliances
   subheading went.
+
+## Schedule and car pass
+
+- Schedule: the alarm clock and the four collection-date tiles became one
+  borderless list sorted by date ("Tomorrow 07:15 · Alarm", "Sat 14 Nov ·
+  GFT, PMD"). The tiles cut the dates off and mixed two date formats. The
+  amber "trash tomorrow" tile stays as the alert.
+- Sleep mode is one row: the select sits inline and the duplicate "off" state
+  is hidden.
+- Car: the door-lock badge did not fit the heading (three badges need about
+  250 px of the 204 available) and scrolled out of view. It is now a Doors
+  tile next to Limit; tapping the tile or its icon opens the lock dialog, so
+  unlocking is never a single click.
+- "Vacuum & appliances" became "Appliances" so the heading fits beside its
+  badges.

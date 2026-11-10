@@ -204,23 +204,16 @@ views:
     - entity: input_select.sleep_mode
       features:
       - type: select-options
+      features_position: inline
       grid_options:
         columns: 12
+      hide_state: true
       name: Sleep mode
       type: tile
     - heading: Schedule
       heading_style: subtitle
       icon: mdi:calendar-clock
       type: heading
-    - entity: schedule.alarm_clock_schedule
-      grid_options:
-        columns: 12
-      icon: mdi:alarm
-      name: Alarm clock
-      state_content:
-      - state
-      - next_event
-      type: tile
     - color: amber
       entity: sensor.limburg_net_morgen
       grid_options:
@@ -232,46 +225,28 @@ views:
       - condition: state
         entity: sensor.limburg_net_morgen
         state_not: Geen
-    - entity: sensor.limburg_net_gft
+    - content: "{%- set today = now().date() -%}\n{%- set ns = namespace(rows=[],\
+        \ bins=[]) -%}\n{%- set alarm = 'schedule.alarm_clock_schedule' -%}\n{%- set\
+        \ next = state_attr(alarm, 'next_event') -%}\n{%- if is_state(alarm, 'on')\
+        \ -%}\n  {%- set ns.rows = ns.rows + [('Now', 'Alarm')] -%}\n{%- elif next\
+        \ -%}\n  {%- set a = as_local(as_datetime(next)) -%}\n  {%- set n = (a.date()\
+        \ - today).days -%}\n  {%- set d = 'Today' if n == 0 else 'Tomorrow' if n\
+        \ == 1 else a.strftime('%a %-d %b') -%}\n  {%- set ns.rows = ns.rows + [(d\
+        \ ~ ' ' ~ a.strftime('%H:%M'), 'Alarm')] -%}\n{%- endif -%}\n{%- for name,\
+        \ e in [('Papier', 'sensor.limburg_net_papier'), ('GFT', 'sensor.limburg_net_gft'),\
+        \ ('PMD', 'sensor.limburg_net_pmd'), ('Restafval', 'sensor.limburg_net_restafval')]\
+        \ -%}\n  {%- if state_attr(e, 'Sort_date') -%}\n    {%- set ns.bins = ns.bins\
+        \ + [{'date': state_attr(e, 'Sort_date') | string, 'name': name}] -%}\n  {%-\
+        \ endif -%}\n{%- endfor -%}\n{%- for g in ns.bins | groupby('date') -%}\n\
+        \  {%- set t = strptime(g.grouper, '%Y%m%d') -%}\n  {%- set n = (t.date()\
+        \ - today).days -%}\n  {%- set d = 'Today' if n == 0 else 'Tomorrow' if n\
+        \ == 1 else t.strftime('%a %-d %b') -%}\n  {%- set ns.rows = ns.rows + [(d,\
+        \ g.list | map(attribute='name') | join(', '))] -%}\n{%- endfor -%}\n<table\
+        \ role=\"presentation\">\n{%- for d, what in ns.rows %}\n<tr><td><b>{{ d }}</b>&emsp;</td><td>{{\
+        \ what }}</td></tr>\n{%- endfor %}\n</table>\n"
       grid_options:
-        columns: 6
-      icon: mdi:trash-can-outline
-      name: GFT
-      type: tile
-      visibility:
-      - condition: state
-        entity: sensor.limburg_net_gft
-        state_not: unavailable
-    - entity: sensor.limburg_net_pmd
-      grid_options:
-        columns: 6
-      icon: mdi:trash-can-outline
-      name: PMD
-      type: tile
-      visibility:
-      - condition: state
-        entity: sensor.limburg_net_pmd
-        state_not: unavailable
-    - entity: sensor.limburg_net_restafval
-      grid_options:
-        columns: 6
-      icon: mdi:trash-can-outline
-      name: Restafval
-      type: tile
-      visibility:
-      - condition: state
-        entity: sensor.limburg_net_restafval
-        state_not: unavailable
-    - entity: sensor.limburg_net_papier
-      grid_options:
-        columns: 6
-      icon: mdi:trash-can-outline
-      name: Papier
-      type: tile
-      visibility:
-      - condition: state
-        entity: sensor.limburg_net_papier
-        state_not: unavailable
+        columns: full
+      type: markdown
     type: grid
   - cards:
     - badges:
@@ -398,16 +373,6 @@ views:
       hold_action:
         action: more-info
       name: Bath
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
-    - entity: light.toilet
-      grid_options:
-        columns: 3
-      hold_action:
-        action: more-info
-      name: Toilet
       tap_action:
         action: toggle
       type: tile
@@ -612,11 +577,6 @@ views:
         show_icon: true
         show_state: true
         type: entity
-      - color: state
-        entity: lock.bizzylectric_doors
-        show_icon: true
-        show_state: true
-        type: entity
       heading: Bizzylectric
       heading_style: title
       icon: mdi:car-electric
@@ -676,6 +636,15 @@ views:
         columns: 6
       name: Limit
       type: tile
+    - entity: lock.bizzylectric_doors
+      grid_options:
+        columns: 6
+      icon_tap_action:
+        action: more-info
+      name: Doors
+      tap_action:
+        action: more-info
+      type: tile
     type: grid
   - cards:
     - badges:
@@ -697,7 +666,7 @@ views:
         tap_action:
           action: toggle
         type: entity
-      heading: Vacuum & appliances
+      heading: Appliances
       heading_style: title
       icon: mdi:robot-vacuum
       type: heading
