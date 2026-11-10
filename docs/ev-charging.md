@@ -71,7 +71,11 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
   - Solar: start after 5 min of >1.2 kW export, stop after 10 min of >300 W import.
   - Night (22:00–07:00): only when battery or forecast is below the minimum; ends at 07:00 once the battery is above the minimum.
   - Boost: `ev_charge_full_now` on → charge until full, no sun/night rules, at peak-safe amps; charging is switched back on if it stops for 2 min. Turning it off returns to smart charging.
-  - Boost peak guard: when even the 5 A minimum would set a new monthly peak (`sensor.ev_peak_safe_charging_amps` below 5 for 2 min, or already at boost start), charging pauses and a push (tag `ev_boost_paused`) says so. It resumes on its own once 6 A or more fits for 3 min (hysteresis 5/6 A, also checked after an HA restart); the push is cleared on resume or session end. A long pause can let the car sleep, so the resume command may cost a wake (20 credits).
+  - Boost peak guard: when even the 5 A minimum would set a new monthly peak
+    (`sensor.ev_peak_safe_charging_amps` below 5 for 2 min, or already at boost start), charging pauses
+    and a push (tag `ev_boost_paused`) says so. It resumes on its own once 6 A or more fits for 3 min
+    (hysteresis 5/6 A, also checked after an HA restart); the push is cleared on resume or session end.
+    A long pause can let the car sleep, so the resume command may cost a wake (20 credits).
   - Plugged in at home with no need → native charging is paused and a push
     (`notify.all`, tag `ev_plugged_in`) offers **Nu volladen** (`EV_CHARGE_FULL`), which turns boost on.
   - Ends on unplug, `complete`, car leaving home.
