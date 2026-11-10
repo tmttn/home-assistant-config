@@ -33,15 +33,27 @@ views:
   - entity: alarm_control_panel.bunderhome_alarm
     show_name: false
     type: entity
-  - entity: sensor.bizzylectric_battery
-    name: Tesla
-    show_name: true
-    type: entity
   - entity: weather.home
     state_content:
     - state
     - temperature
     type: entity
+  dense_section_placement: true
+  header:
+    badges_position: bottom
+    card:
+      content: '{%- set h = now().hour -%}
+
+        # {{ ''Good morning'' if 5 <= h < 12 else ''Good afternoon'' if 12 <= h <
+        18 else ''Good evening'' if 18 <= h < 23 else ''Good night'' }}
+
+        {{ state_attr(''climate.living_room'', ''current_temperature'') | float(0)
+        | round(1) }}° inside · {{ state_attr(''weather.home'', ''temperature'') |
+        float(0) | round(0) | int }}° outside · solar {{ states(''sensor.sb3_0_1av_41_570_pv_power'')
+        | float(0) | round(0) | int }} W'
+      text_only: true
+      type: markdown
+    layout: responsive
   icon: mdi:home
   max_columns: 4
   path: default_view
@@ -50,7 +62,22 @@ views:
       color: amber
       opacity: 8
     cards:
-    - heading: Energy
+    - badges:
+      - entity: sensor.energy_production_today
+        icon: mdi:weather-sunny
+        name: Forecast today
+        show_icon: true
+        show_name: true
+        show_state: true
+        type: entity
+      - entity: sensor.energy_production_tomorrow
+        icon: mdi:weather-partly-cloudy
+        name: Tomorrow
+        show_icon: true
+        show_name: true
+        show_state: true
+        type: entity
+      heading: Energy
       heading_style: title
       icon: mdi:lightning-bolt
       tap_action:
@@ -76,56 +103,61 @@ views:
       icon: mdi:solar-power
       name: Solar
       type: tile
-    - entity: sensor.energy_production_today
-      grid_options:
-        columns: 12
-      icon: mdi:weather-sunny
-      name: Solar forecast today
-      type: tile
-    - entity: sensor.energy_production_tomorrow
-      grid_options:
-        columns: 12
-      icon: mdi:weather-partly-cloudy
-      name: Solar forecast tomorrow
-      type: tile
     - grid_options:
-        columns: 12
+        columns: full
       type: energy-distribution
-    - content: '{%- macro eur(e) -%}€{{ ''%.2f'' | format(states(e) | float(0)) }}{%-
-        endmacro -%}
+    - content: '{%- set today = states(''sensor.daily_power_cost'') | float(0) + states(''sensor.daily_gas_cost'')
+        | float(0) + states(''sensor.daily_energy_fixed_cost'') | float(0) -%}
 
-        {%- macro total(p, g, f) -%}€{{ ''%.2f'' | format(states(p) | float(0) + states(g)
-        | float(0) + states(f) | float(0)) }}{%- endmacro -%}
+        {%- set month = states(''sensor.monthly_power_cost'') | float(0) + states(''sensor.monthly_gas_cost'')
+        | float(0) + states(''sensor.monthly_energy_fixed_cost'') | float(0) -%}
 
-        | | Today | {{ now().strftime(''%B'') }} | Last month |
+        {%- set last = states(''sensor.monthly_power_cost_last_period'') | float(0)
+        + states(''sensor.monthly_gas_cost_last_period'') | float(0) + states(''sensor.monthly_energy_fixed_cost_last_period'')
+        | float(0) -%}
 
-        |:--|--:|--:|--:|
-
-        | Power | {{ eur(''sensor.daily_power_cost'') }} | {{ eur(''sensor.monthly_power_cost'')
-        }} | {{ eur(''sensor.monthly_power_cost_last_period'') }} |
-
-        | Gas | {{ eur(''sensor.daily_gas_cost'') }} | {{ eur(''sensor.monthly_gas_cost'')
-        }} | {{ eur(''sensor.monthly_gas_cost_last_period'') }} |
-
-        | Fixed | {{ eur(''sensor.daily_energy_fixed_cost'') }} | {{ eur(''sensor.monthly_energy_fixed_cost'')
-        }} | {{ eur(''sensor.monthly_energy_fixed_cost_last_period'') }} |
-
-        | **Total** | **{{ total(''sensor.daily_power_cost'', ''sensor.daily_gas_cost'',
-        ''sensor.daily_energy_fixed_cost'') }}** | **{{ total(''sensor.monthly_power_cost'',
-        ''sensor.monthly_gas_cost'', ''sensor.monthly_energy_fixed_cost'') }}** |
-        **{{ total(''sensor.monthly_power_cost_last_period'', ''sensor.monthly_gas_cost_last_period'',
-        ''sensor.monthly_energy_fixed_cost_last_period'') }}** |
-
-
-        Used today: {{ states(''sensor.daily_power'') | float(0) | round(1) }} kWh
-        power, {{ states(''sensor.daily_gas'') | float(0) | round(2) }} m³ gas.'
+        **€{{ ''%.2f'' | format(today) }}** today · **€{{ ''%.2f'' | format(month)
+        }}** in {{ now().strftime(''%B'') }} · €{{ ''%.2f'' | format(last) }} last
+        month'
       grid_options:
-        columns: 12
+        columns: full
+      text_only: true
       type: markdown
     column_span: 2
     type: grid
   - cards:
-    - heading: Home
+    - badges:
+      - color: state
+        entity: input_boolean.vacation_mode
+        hold_action:
+          action: more-info
+        icon: mdi:palm-tree
+        show_icon: true
+        show_state: true
+        tap_action:
+          action: toggle
+        type: entity
+      - color: state
+        entity: input_boolean.guest_mode
+        hold_action:
+          action: more-info
+        icon: mdi:account-multiple
+        show_icon: true
+        show_state: true
+        tap_action:
+          action: toggle
+        type: entity
+      - color: state
+        entity: input_boolean.automatic_temperature
+        hold_action:
+          action: more-info
+        icon: mdi:thermostat-auto
+        show_icon: true
+        show_state: true
+        tap_action:
+          action: toggle
+        type: entity
+      heading: Home
       heading_style: title
       icon: mdi:home-account
       type: heading
@@ -176,36 +208,6 @@ views:
         columns: 12
       name: Sleep mode
       type: tile
-    - entity: input_boolean.vacation_mode
-      grid_options:
-        columns: 4
-      hold_action:
-        action: more-info
-      name: Vacation
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
-    - entity: input_boolean.guest_mode
-      grid_options:
-        columns: 4
-      hold_action:
-        action: more-info
-      name: Guests
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
-    - entity: input_boolean.automatic_temperature
-      grid_options:
-        columns: 4
-      hold_action:
-        action: more-info
-      name: Auto temp
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
     - heading: Schedule
       heading_style: subtitle
       icon: mdi:calendar-clock
@@ -232,7 +234,7 @@ views:
         state_not: Geen
     - entity: sensor.limburg_net_gft
       grid_options:
-        columns: 12
+        columns: 6
       icon: mdi:trash-can-outline
       name: GFT
       type: tile
@@ -242,7 +244,7 @@ views:
         state_not: unavailable
     - entity: sensor.limburg_net_pmd
       grid_options:
-        columns: 12
+        columns: 6
       icon: mdi:trash-can-outline
       name: PMD
       type: tile
@@ -252,7 +254,7 @@ views:
         state_not: unavailable
     - entity: sensor.limburg_net_restafval
       grid_options:
-        columns: 12
+        columns: 6
       icon: mdi:trash-can-outline
       name: Restafval
       type: tile
@@ -262,7 +264,7 @@ views:
         state_not: unavailable
     - entity: sensor.limburg_net_papier
       grid_options:
-        columns: 12
+        columns: 6
       icon: mdi:trash-can-outline
       name: Papier
       type: tile
@@ -273,11 +275,23 @@ views:
     type: grid
   - cards:
     - badges:
+      - icon: mdi:candle
+        tap_action:
+          action: perform-action
+          perform_action: script.cozy_lights_living_room
+        text: Cozy
+        type: button
+      - icon: mdi:white-balance-sunny
+        tap_action:
+          action: perform-action
+          perform_action: script.white_lights_living_room
+        text: White
+        type: button
       - icon: mdi:restore
         tap_action:
           action: perform-action
           perform_action: script.reset_adaptive_lighting
-        text: Reset adaptive
+        text: Reset
         type: button
       heading: Lights
       heading_style: title
@@ -296,16 +310,12 @@ views:
           or []) + (state_attr(''switch.adaptive_lighting_half_and_full'', ''manual_control'')
           or []) + (state_attr(''switch.adaptive_lighting_half_and_dim'', ''manual_control'')
           or [])) | count > 0 }}'
-    - heading: Living room
-      heading_style: subtitle
-      icon: mdi:sofa
-      type: heading
     - entity: light.living_room_lights
       grid_options:
         columns: 3
       hold_action:
         action: more-info
-      name: All
+      name: Living
       tap_action:
         action: toggle
       type: tile
@@ -362,32 +372,16 @@ views:
         action: toggle
       type: tile
       vertical: true
-    - entity: script.cozy_lights_living_room
+    - entity: light.kitchen_lights
       grid_options:
         columns: 3
       hold_action:
         action: more-info
-      icon: mdi:candle
-      name: Cozy
+      name: Kitchen
       tap_action:
         action: toggle
       type: tile
       vertical: true
-    - entity: script.white_lights_living_room
-      grid_options:
-        columns: 3
-      hold_action:
-        action: more-info
-      icon: mdi:white-balance-sunny
-      name: White
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
-    - heading: Rooms
-      heading_style: subtitle
-      icon: mdi:floor-plan
-      type: heading
     - entity: light.upper_hall_lights
       grid_options:
         columns: 3
@@ -404,16 +398,6 @@ views:
       hold_action:
         action: more-info
       name: Bath
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
-    - entity: light.kitchen_lights
-      grid_options:
-        columns: 3
-      hold_action:
-        action: more-info
-      name: Kitchen
       tap_action:
         action: toggle
       type: tile
@@ -438,26 +422,6 @@ views:
         action: toggle
       type: tile
       vertical: true
-    - entity: light.bedroom_ceiling_lights
-      grid_options:
-        columns: 3
-      hold_action:
-        action: more-info
-      name: Ceiling
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
-    - entity: light.bedroom_bedside_tom
-      grid_options:
-        columns: 3
-      hold_action:
-        action: more-info
-      name: Bedside
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
     - entity: light.guest_bedroom_lights
       grid_options:
         columns: 3
@@ -468,42 +432,12 @@ views:
         action: toggle
       type: tile
       vertical: true
-    - entity: light.guest_bedroom_bedside
-      grid_options:
-        columns: 3
-      hold_action:
-        action: more-info
-      name: G. lamp
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
     - entity: light.outside_lights
       grid_options:
         columns: 3
       hold_action:
         action: more-info
       name: Outside
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
-    - entity: light.terrace_lights
-      grid_options:
-        columns: 3
-      hold_action:
-        action: more-info
-      name: Terrace
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
-    - entity: light.automatic_lights
-      grid_options:
-        columns: 3
-      hold_action:
-        action: more-info
-      name: Auto
       tap_action:
         action: toggle
       type: tile
@@ -534,92 +468,76 @@ views:
       icon: mdi:thermostat
       type: heading
     - entity: climate.living_room
-      features:
-      - type: target-temperature
       grid_options:
         columns: 6
       icon: mdi:sofa
       name: Living room
       state_content:
-      - state
       - current_temperature
+      - temperature
       type: tile
     - entity: climate.kitchen
-      features:
-      - type: target-temperature
       grid_options:
         columns: 6
       icon: mdi:stove
       name: Kitchen
       state_content:
-      - state
       - current_temperature
+      - temperature
       type: tile
     - entity: climate.bathroom
-      features:
-      - type: target-temperature
       grid_options:
         columns: 6
       icon: mdi:shower
       name: Bathroom
       state_content:
-      - state
       - current_temperature
+      - temperature
       type: tile
     - entity: climate.bedroom
-      features:
-      - type: target-temperature
       grid_options:
         columns: 6
       icon: mdi:bed
       name: Bedroom
       state_content:
-      - state
       - current_temperature
+      - temperature
       type: tile
     - entity: climate.hall
-      features:
-      - type: target-temperature
       grid_options:
         columns: 6
       icon: mdi:stairs
       name: Hall
       state_content:
-      - state
       - current_temperature
+      - temperature
       type: tile
     - entity: climate.bedroom_marthe
-      features:
-      - type: target-temperature
       grid_options:
         columns: 6
       icon: mdi:baby-face-outline
       name: Marthe
       state_content:
-      - state
       - current_temperature
+      - temperature
       type: tile
     - entity: climate.guest_bedroom
-      features:
-      - type: target-temperature
       grid_options:
         columns: 6
       icon: mdi:bed-outline
-      name: Guest bedroom
+      name: Guest room
       state_content:
-      - state
       - current_temperature
+      - temperature
       type: tile
     - entity: climate.storage
-      features:
-      - type: target-temperature
       grid_options:
         columns: 6
       icon: mdi:archive
       name: Storage
       state_content:
-      - state
       - current_temperature
+      - temperature
       type: tile
     type: grid
   - cards:
@@ -640,36 +558,28 @@ views:
       type: tile
     - entity: binary_sensor.openclose_front_door
       grid_options:
-        columns: 6
-      name: Front door
-      state_content:
-      - state
-      - last_changed
+        columns: 3
+      name: Front
       type: tile
+      vertical: true
     - entity: binary_sensor.openclose_back_door
       grid_options:
-        columns: 6
-      name: Back door
-      state_content:
-      - state
-      - last_changed
+        columns: 3
+      name: Back
       type: tile
+      vertical: true
     - entity: binary_sensor.openclose_living_room_door
       grid_options:
-        columns: 6
-      name: Living room
-      state_content:
-      - state
-      - last_changed
+        columns: 3
+      name: Living
       type: tile
+      vertical: true
     - entity: binary_sensor.openclose_storage_door
       grid_options:
-        columns: 6
+        columns: 3
       name: Storage
-      state_content:
-      - state
-      - last_changed
       type: tile
+      vertical: true
     - camera_view: auto
       entity: camera.front_door_snapshot
       grid_options:
@@ -699,6 +609,11 @@ views:
         show_state: true
         type: entity
       - entity: device_tracker.bizzylectric_location_tracker
+        show_icon: true
+        show_state: true
+        type: entity
+      - color: state
+        entity: lock.bizzylectric_doors
         show_icon: true
         show_state: true
         type: entity
@@ -749,6 +664,10 @@ views:
         columns: 6
       name: Amps
       type: tile
+      visibility:
+      - condition: state
+        entity: switch.bizzylectric_charger
+        state: 'on'
     - entity: number.bizzylectric_charge_limit
       features:
       - style: buttons
@@ -757,20 +676,26 @@ views:
         columns: 6
       name: Limit
       type: tile
-    - entity: lock.bizzylectric_doors
-      features:
-      - type: lock-commands
-      features_position: inline
-      grid_options:
-        columns: 12
-      name: Doors
-      type: tile
     type: grid
   - cards:
     - badges:
       - entity: sensor.living_room_robot_vacuum_battery
         show_icon: true
         show_state: true
+        type: entity
+      - color: state
+        entity: binary_sensor.vacuum_day
+        show_icon: true
+        show_state: true
+        type: entity
+      - color: state
+        entity: input_boolean.cleaned_today
+        hold_action:
+          action: more-info
+        show_icon: true
+        show_state: true
+        tap_action:
+          action: toggle
         type: entity
       heading: Vacuum & appliances
       heading_style: title
@@ -802,20 +727,6 @@ views:
       - condition: state
         entity: binary_sensor.robot_vacuum_water_shortage
         state: 'on'
-    - entity: binary_sensor.vacuum_day
-      grid_options:
-        columns: 6
-      name: Vacuum day
-      type: tile
-    - entity: input_boolean.cleaned_today
-      grid_options:
-        columns: 6
-      hold_action:
-        action: more-info
-      name: Cleaned today
-      tap_action:
-        action: toggle
-      type: tile
     - cards:
       - calibration_source:
           camera: true
@@ -949,10 +860,6 @@ views:
         columns: full
       title: Vacuum maintenance
       type: custom:collapsable-cards
-    - heading: Appliances
-      heading_style: subtitle
-      icon: mdi:washing-machine
-      type: heading
     - entity: binary_sensor.washing_machine
       grid_options:
         columns: 6
