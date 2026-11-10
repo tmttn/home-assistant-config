@@ -27,9 +27,12 @@ clamped between now and the deadline:
 | Armed | Start |
 |-------|-------|
 | Before the planned time | At the planned time |
-| After the planned time, before the deadline (15:00) | Right away |
-| Between the deadline and the overnight time (20:00) | Right away, so it is done the same evening |
-| After the overnight time | Tomorrow, an hour before tomorrow's peak (at the latest at tomorrow's deadline) |
+| After the planned time, before the deadline (15:00) | Right away: the best sun of today is now or just behind |
+| After the deadline, tomorrow forecast sunny (`sensor.energy_production_tomorrow` ≥ 5 kWh) | Tomorrow, an hour before tomorrow's peak (at the latest at tomorrow's deadline) |
+| After the deadline, tomorrow forecast grey (< 5 kWh) | Right away: waiting for tomorrow gains nothing |
+
+After the deadline the choice depends on the sun, not on the clock, so there
+is no evening cut-off where a minute decides between now and tomorrow.
 
 It starts earlier than planned when the measured PV power of the SMA Sunny
 Boy 3.0 inverter (`sensor.sb3_0_1av_41_570_pv_power`) stays above the
@@ -41,7 +44,7 @@ always starts at the deadline, so the laundry still gets done on cloudy days.
 | Helper | Default | Meaning |
 |--------|---------|---------|
 | `input_datetime.washing_machine_solar_start_deadline` | 15:00 | Latest start of the day |
-| `input_datetime.washing_machine_solar_start_overnight_from` | 20:00 | Armed from this time on, it waits for tomorrow's sun |
+| `input_number.washing_machine_solar_start_sunny_tomorrow` | 5 kWh | Tomorrow's forecast from which waiting for tomorrow is worth it (November averages ~7 kWh/day, May ~18) |
 | `input_number.washing_machine_solar_start_threshold` | 2000 W | Start early once the measured PV power passes this (the inverter peaks at 3 kW) |
 | `input_datetime.washing_machine_solar_start_planned` | – | The planned start; written by the automation |
 
