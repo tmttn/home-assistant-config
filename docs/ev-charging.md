@@ -13,8 +13,8 @@ The car runs on the core **Teslemetry** integration (since 2026-11-10). It repla
   Extra credits: €2.70 per 2000, never expire. Usage is visible in the Teslemetry console.
 - The Teslemetry virtual key must be paired with the car (`https://tesla.com/_ak/teslemetry.com`,
   opened on the phone with the Tesla app). Without it, commands such as charge current fail.
-- Data streams, so the old polling-interval scripts (`script.electric_vehicle_polling_interval_*`)
-  are no longer called. The integration never wakes a sleeping car for data; commands do.
+- Data streams, so no polling-interval changes are needed. The integration never wakes a
+  sleeping car for data; commands do.
 - Teslemetry gave its entity IDs an `outside_` (area) prefix. The ones the automations and
   dashboards use were renamed to `bizzylectric_*`; the rest keep the prefix.
 
@@ -29,6 +29,7 @@ The car runs on the core **Teslemetry** integration (since 2026-11-10). It repla
 | `number.bizzylectric_charge_limit` | Charge limit (%) |
 | `sensor.bizzylectric_charger_current` / `sensor.bizzylectric_charger_power` | Actual draw (A / kW) |
 | `sensor.bizzylectric_battery_level`, `sensor.bizzylectric_ideal_battery_range` | Battery % and range |
+| `sensor.bizzylectric_energy_added` | Energy added per session (kWh, `total_increasing`); Energy dashboard device. Teslemetry's *Charge energy added*, renamed to the old tesla_custom ID so the long-term statistics continue |
 | `device_tracker.bizzylectric_location` | Location (`home` gates all charging logic) |
 | `lock.bizzylectric_lock`, `cover.bizzylectric_vent_windows`, `binary_sensor.bizzylectric_*_window`, `cover.bizzylectric_trunk`, `cover.bizzylectric_frunk` | Goodnight check |
 
@@ -49,13 +50,9 @@ The car runs on the core **Teslemetry** integration (since 2026-11-10). It repla
 | `cover.bizzylectric_windows`, `binary_sensor.bizzylectric_windows` | `cover.bizzylectric_vent_windows`, `binary_sensor.bizzylectric_*_window` |
 | `tesla_custom.polling_interval` | not needed (streaming) |
 
-While both integrations are installed, the colliding tesla_custom entities carry a `_legacy`
-suffix (`number.bizzylectric_charge_limit_legacy`, `sensor.bizzylectric_charger_power_legacy`,
-`cover.bizzylectric_frunk_legacy`, `cover.bizzylectric_trunk_legacy`, `switch.bizzylectric_sentry_mode_legacy`).
-
-**Rollback:** ha-mcp per-edit backups of the seven automations and the peak-safe helper were taken
-on 2026-11-10 before the switch (`ha_manage_backup` scope `edits`). Restore those, rename the
-`_legacy` entities back, and the old setup works again as long as `tesla_custom` is installed.
+`tesla_custom` (integration, HACS repo and its three scripts) was removed on 2026-11-10 after a
+verified plug-in pause and boost session on Teslemetry. Going back would mean reinstalling it and
+logging in again; the old automation configs are in the ha-mcp `edits` backups of that day.
 
 ## Helpers
 
@@ -82,7 +79,6 @@ on 2026-11-10 before the switch (`ha_manage_backup` scope `edits`). Restore thos
 - **Energy: EV charging amps too high actions** — handles `EV_LOWER_AMPS` / `EV_PAUSE_CHARGING`.
 - **Energy: grid export too high** — skips its nag while smart charging can absorb the surplus.
 
-`script.electric_vehicle_charging_set_amps_link_to_excess_solar` is no longer used: it assumes 3-phase and ignores house load.
 
 ## Capacity tariff
 
