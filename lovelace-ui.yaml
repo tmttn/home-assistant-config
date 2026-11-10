@@ -402,16 +402,6 @@ views:
         action: toggle
       type: tile
       vertical: true
-    - entity: light.toilet
-      grid_options:
-        columns: 3
-      hold_action:
-        action: more-info
-      name: Toilet
-      tap_action:
-        action: toggle
-      type: tile
-      vertical: true
     - entity: light.bedroom_lights
       grid_options:
         columns: 3

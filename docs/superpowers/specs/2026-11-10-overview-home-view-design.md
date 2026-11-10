@@ -136,7 +136,7 @@ graphs, as long as the layout reads well at laptop width.
 ## Declutter pass
 
 Tom found the polished view still too busy. Same sections and layout, fewer and
-calmer cards (84 → 66 cards, most remaining tiles smaller):
+calmer cards (84 → 65 cards, most remaining tiles smaller):
 
 - View header: a greeting with inside, outside and solar figures; person, alarm
   and weather badges sit under it. The Tesla view badge went (the car section
@@ -145,11 +145,11 @@ calmer cards (84 → 66 cards, most remaining tiles smaller):
   (today, this month, last month).
 - Home: vacation, guests and auto temp became toggle badges on the heading;
   the four collection dates are a 2×2 grid.
-- Lights: 13 tiles instead of 21. Cozy and White moved to heading buttons. The
+- Lights: 12 tiles (an even 4×3 grid) instead of 21. Cozy and White moved to heading buttons. The
   bedroom, guest bedroom and outside groups list their members in more-info, so
   their sub-light tiles went; the living-room group is a Hue room without a
   member list, so its sub-lights stay. Automatic lights and terrace (the only
-  member of outside) went.
+  member of outside) went, and so did the motion-controlled toilet light, which left a lone tile on the last row.
 - Climate: no inline setpoint bars; each tile shows current and target
   temperature, and tapping it opens the thermostat.
 - Security: doors are four small tiles in one row, without last-changed text.
