@@ -41,6 +41,15 @@ automatically turn off when alarm turns off or at 9AM"). An alarm that was
 armed away stays armed then. The automation waits up to 60 seconds for
 `disarmed` and pushes the result.
 
+### Voice control
+
+`switch.sleep_mode` (template switch helper, aliases "Slaapmodus" and
+"Nachtmodus") is exposed to Google Assistant and Assist. It is on whenever
+`input_select.sleep_mode` is not `off`. Turning it off sets the select to `off`,
+like the dashboard's "Wake up" button. Turning it on runs `script.going_to_sleep`,
+like "Go to sleep". "Hey Google, zet slaapmodus uit" therefore also disarms a
+night-armed alarm.
+
 All pushes go to `notify.all_iphones` with the title "Security". Arming or
 disarming by hand or by the Ring schedule sends no push from Home Assistant.
 
