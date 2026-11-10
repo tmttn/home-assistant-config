@@ -26,3 +26,9 @@ monthly_power_peak:
 monthly_gas:
   source: sensor.p1_meter_total_gas
   cycle: monthly
+daily_power_export:
+  source: sensor.p1_meter_total_power_export
+  cycle: daily
+monthly_power_export:
+  source: sensor.p1_meter_total_power_export
+  cycle: monthly
