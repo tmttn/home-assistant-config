@@ -14,7 +14,7 @@ My personal Home Assistant configuration. Secrets live outside the repo; everyth
 | [`configuration.yaml`](configuration.yaml) | Entry point; pulls in the files under `includes/` |
 | [`includes/`](includes) | Template sensors, utility meters, helpers, recorder, notify, … |
 | [`blueprints/`](blueprints) | Automation and template blueprints |
-| [`pyscript/`](pyscript) | Pyscript apps (wake-up light, battery monitor, …) |
+| [`pyscript/`](pyscript) | Pyscript apps (wake-up light, flap monitor, …) |
 | [`custom_components/`](custom_components) | Custom integrations installed through HACS |
 | [`themes/`](themes) | Frontend themes |
 | [`utils/`](utils) | Maintenance scripts run by [`chores`](chores) |
