@@ -11,13 +11,18 @@ permissions:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    # Dependency bots, plus non-draft PRs opened by the repository owner
-    # (Claude Code sessions open PRs under that account too). The merge
-    # itself still waits for the ruleset's required status checks.
+    # Dependency bots, plus non-draft PRs that the repository owner both
+    # opened and last pushed to, from a branch in this repository (Claude
+    # Code sessions open and push under that account too). Checking the
+    # actor as well as the author keeps a push by anyone else to an
+    # owner-opened PR from being approved. The merge itself still waits for
+    # the ruleset's required status checks.
     if: >-
       github.actor == 'dependabot[bot]' ||
       github.actor == 'renovate[bot]' ||
-      (github.event.pull_request.user.login == github.repository_owner &&
+      (github.actor == github.repository_owner &&
+       github.event.pull_request.user.login == github.repository_owner &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
        !github.event.pull_request.draft)
     steps:
       - uses: hmarr/auto-approve-action@v4
