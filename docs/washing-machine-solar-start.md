@@ -25,7 +25,7 @@ The planned time is an hour before Forecast.Solar's peak
 clamped between now and the deadline:
 
 | Armed | Start |
-|-------|-------|
+| ------- | ------- |
 | Before the planned time | At the planned time |
 | After the planned time, before the deadline (15:00) | Right away: the best sun of today is now or just behind |
 | After the deadline, tomorrow forecast sunny (`sensor.energy_production_tomorrow` ≥ 5 kWh) | Tomorrow, an hour before tomorrow's peak (at the latest at tomorrow's deadline) |
@@ -42,7 +42,7 @@ always starts at the deadline, so the laundry still gets done on cloudy days.
 ## Settings (helpers, editable in the UI)
 
 | Helper | Default | Meaning |
-|--------|---------|---------|
+| -------- | --------- | --------- |
 | `input_datetime.washing_machine_solar_start_deadline` | 15:00 | Latest start of the day |
 | `input_number.washing_machine_solar_start_sunny_tomorrow` | 5 kWh | Tomorrow's forecast from which waiting for tomorrow is worth it (November averages ~7 kWh/day, May ~18) |
 | `input_number.washing_machine_solar_start_threshold` | 2000 W | Start early once the measured PV power passes this (the inverter peaks at 3 kW) |
