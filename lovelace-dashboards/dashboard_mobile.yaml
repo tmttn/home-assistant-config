@@ -125,7 +125,8 @@ views:
         %}green {% elif battery > 80 %}green {% elif battery > 50 %}blue {% elif battery
         > 20 %}orange {% else %}red{% endif %}'
       layout: vertical
-      primary: '{{ states(''sensor.bizzylectric_battery_level'') | round(0) }}%'
+      primary: '{{ states(''sensor.bizzylectric_battery_level'') | round(0, default=''—'')
+        }}%'
       secondary: '{% if is_state(''sensor.bizzylectric_charging'', ''charging'') %}Charging
         {% else %}{{ states(''sensor.bizzylectric_ideal_battery_range'') | round(0,
         default=''?'') }} km{% endif %}'
@@ -142,7 +143,8 @@ views:
         float(0) %} {% if solar > 1000 %}amber {% elif solar > 100 %}yellow {% else
         %}disabled{% endif %}'
       layout: vertical
-      primary: '{{ states(''sensor.sb3_0_1av_41_570_grid_power'') | round(0) }} W'
+      primary: '{{ states(''sensor.sb3_0_1av_41_570_grid_power'') | round(0, default=''—'')
+        }} W'
       secondary: Solar
       tap_action:
         action: more-info
@@ -184,7 +186,7 @@ views:
   - alignment: center
     chips:
     - content: '{{ state_attr(''climate.living_room'', ''current_temperature'') |
-        round(1) }}°'
+        round(1, default=''—'') }}°'
       entity: climate.living_room
       icon: mdi:sofa
       icon_color: '{% set temp = state_attr(''climate.living_room'', ''current_temperature'')
@@ -193,8 +195,8 @@ views:
       tap_action:
         action: more-info
       type: template
-    - content: '{{ state_attr(''climate.kitchen'', ''current_temperature'') | round(1)
-        }}°'
+    - content: '{{ state_attr(''climate.kitchen'', ''current_temperature'') | round(1,
+        default=''—'') }}°'
       entity: climate.kitchen
       icon: mdi:pot-steam
       icon_color: '{% set temp = state_attr(''climate.kitchen'', ''current_temperature'')
@@ -203,7 +205,8 @@ views:
       tap_action:
         action: more-info
       type: template
-    - content: '{{ states(''sensor.temperature_bedroom'') | round(1) }}°'
+    - content: '{{ states(''sensor.temperature_bedroom'') | round(1, default=''—'')
+        }}°'
       entity: climate.bedroom
       icon: mdi:bed
       icon_color: '{% set temp = states(''sensor.temperature_bedroom'') | float(20)
@@ -212,7 +215,8 @@ views:
       tap_action:
         action: more-info
       type: template
-    - content: '{{ states(''sensor.temperature_bedroom_marthe'') | round(1) }}°'
+    - content: '{{ states(''sensor.temperature_bedroom_marthe'') | round(1, default=''—'')
+        }}°'
       entity: climate.bedroom_marthe
       icon: mdi:teddy-bear
       icon_color: pink
@@ -245,8 +249,8 @@ views:
       layout: vertical
       primary: Living room
       secondary: '{{ state_attr(''climate.living_room'', ''current_temperature'')
-        | round(1) }}° ·  {% if is_state(''light.living_room_lights'', ''on'') %}Lights
-        on{% else %}Lights off{% endif %}'
+        | round(1, default=''—'') }}° ·  {% if is_state(''light.living_room_lights'',
+        ''on'') %}Lights on{% else %}Lights off{% endif %}'
       tap_action:
         action: navigate
         navigation_path: /dashboard-mobile/living-room
@@ -263,9 +267,9 @@ views:
         {% else %}disabled{% endif %}'
       layout: vertical
       primary: Kitchen
-      secondary: '{{ state_attr(''climate.kitchen'', ''current_temperature'') | round(1)
-        }}° ·  {% if is_state(''binary_sensor.espresso_machine'', ''on'') %}☕{% else
-        %}Idle{% endif %}'
+      secondary: '{{ state_attr(''climate.kitchen'', ''current_temperature'') | round(1,
+        default=''—'') }}° ·  {% if is_state(''binary_sensor.espresso_machine'', ''on'')
+        %}☕{% else %}Idle{% endif %}'
       tap_action:
         action: navigate
         navigation_path: /dashboard-mobile/kitchen
@@ -276,9 +280,9 @@ views:
         {% else %}disabled{% endif %}'
       layout: vertical
       primary: Storage
-      secondary: '{{ state_attr(''climate.storage'', ''current_temperature'') | round(1)
-        }}° ·  {% if is_state(''binary_sensor.openclose_storage_door'', ''on'') %}🚪
-        Open{% else %}Closed{% endif %}'
+      secondary: '{{ state_attr(''climate.storage'', ''current_temperature'') | round(1,
+        default=''—'') }}° ·  {% if is_state(''binary_sensor.openclose_storage_door'',
+        ''on'') %}🚪 Open{% else %}Closed{% endif %}'
       tap_action:
         action: navigate
         navigation_path: /dashboard-mobile/storage
@@ -304,9 +308,9 @@ views:
         {% else %}disabled{% endif %}'
       layout: vertical
       primary: Hall
-      secondary: '{{ state_attr(''climate.hall'', ''current_temperature'') | round(1)
-        }}° ·  {% if is_state(''binary_sensor.openclose_front_door'', ''on'') %}🚪
-        Open{% else %}Closed{% endif %}'
+      secondary: '{{ state_attr(''climate.hall'', ''current_temperature'') | round(1,
+        default=''—'') }}° ·  {% if is_state(''binary_sensor.openclose_front_door'',
+        ''on'') %}🚪 Open{% else %}Closed{% endif %}'
       tap_action:
         action: navigate
         navigation_path: /dashboard-mobile/hall
@@ -321,9 +325,10 @@ views:
         ''on'') %}blue {% else %}disabled{% endif %}'
       layout: vertical
       primary: Bathroom
-      secondary: '{{ states(''sensor.temperature_bathroom'') | round(1) }}° ·  {%
-        if is_state(''switch.shelly_bathroom'', ''on'') %}🔥{% endif %} {% if is_state(''light.bathroom_lights'',
-        ''on'') %}Lights on{% else %}Off{% endif %}'
+      secondary: '{{ states(''sensor.temperature_bathroom'') | round(1, default=''—'')
+        }}° ·  {% if is_state(''switch.shelly_bathroom'', ''on'') %}🔥{% endif %} {%
+        if is_state(''light.bathroom_lights'', ''on'') %}Lights on{% else %}Off{%
+        endif %}'
       tap_action:
         action: navigate
         navigation_path: /dashboard-mobile/bathroom
@@ -340,9 +345,10 @@ views:
         {% else %}disabled{% endif %}'
       layout: vertical
       primary: Bedroom
-      secondary: '{{ states(''sensor.temperature_bedroom'') | round(1) }}° ·  {% if
-        not is_state(''input_select.sleep_mode'', ''off'') %}💤{% endif %} {% if is_state(''light.bedroom_lights'',
-        ''on'') %}Lights on{% else %}Off{% endif %}'
+      secondary: '{{ states(''sensor.temperature_bedroom'') | round(1, default=''—'')
+        }}° ·  {% if not is_state(''input_select.sleep_mode'', ''off'') %}💤{% endif
+        %} {% if is_state(''light.bedroom_lights'', ''on'') %}Lights on{% else %}Off{%
+        endif %}'
       tap_action:
         action: navigate
         navigation_path: /dashboard-mobile/bedroom
@@ -357,9 +363,9 @@ views:
         {% else %}disabled{% endif %}'
       layout: vertical
       primary: Guest room
-      secondary: '{{ states(''sensor.temperature_guest_bedroom'') | round(1) }}° ·  {%
-        if is_state(''binary_sensor.activity_in_guest_bedroom'', ''on'') %}Occupied{%
-        else %}Empty{% endif %}'
+      secondary: '{{ states(''sensor.temperature_guest_bedroom'') | round(1, default=''—'')
+        }}° ·  {% if is_state(''binary_sensor.activity_in_guest_bedroom'', ''on'')
+        %}Occupied{% else %}Empty{% endif %}'
       tap_action:
         action: navigate
         navigation_path: /dashboard-mobile/guest-bedroom
@@ -369,7 +375,8 @@ views:
       icon_color: pink
       layout: vertical
       primary: Marthe
-      secondary: '{{ states(''sensor.temperature_bedroom_marthe'') | round(1) }}°'
+      secondary: '{{ states(''sensor.temperature_bedroom_marthe'') | round(1, default=''—'')
+        }}°'
       tap_action:
         action: navigate
         navigation_path: /dashboard-mobile/marthe-bedroom
@@ -515,8 +522,8 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ state_attr(''climate.kitchen'', ''current_temperature'') | round(1)
-        }}°C'
+    - content: '{{ state_attr(''climate.kitchen'', ''current_temperature'') | round(1,
+        default=''—'') }}°C'
       entity: climate.kitchen
       icon: mdi:thermometer
       icon_color: '{% set temp = state_attr(''climate.kitchen'', ''current_temperature'')
@@ -583,7 +590,7 @@ views:
     chips:
     - type: spacer
     - content: '{{ state_attr(''climate.living_room'', ''current_temperature'') |
-        round(1) }}°C'
+        round(1, default=''—'') }}°C'
       entity: climate.living_room
       icon: mdi:thermometer
       icon_color: '{% set temp = state_attr(''climate.living_room'', ''current_temperature'')
@@ -702,7 +709,8 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ states(''sensor.temperature_bedroom'') | round(1) }}°C'
+    - content: '{{ states(''sensor.temperature_bedroom'') | round(1, default=''—'')
+        }}°C'
       entity: sensor.temperature_bedroom
       icon: mdi:thermometer
       type: template
@@ -766,7 +774,8 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ states(''sensor.temperature_bathroom'') | round(1) }}°C'
+    - content: '{{ states(''sensor.temperature_bathroom'') | round(1, default=''—'')
+        }}°C'
       entity: sensor.temperature_bathroom
       icon: mdi:thermometer
       icon_color: '{% set temp = states(''sensor.temperature_bathroom'') | float(20)
@@ -835,7 +844,8 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ states(''sensor.temperature_guest_bedroom'') | round(1) }}°C'
+    - content: '{{ states(''sensor.temperature_guest_bedroom'') | round(1, default=''—'')
+        }}°C'
       entity: sensor.temperature_guest_bedroom
       icon: mdi:thermometer
       type: template
@@ -917,8 +927,8 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ states(''sensor.multi_sensor_marthe_bedroom_temperature'') | round(1)
-        }}°C'
+    - content: '{{ states(''sensor.multi_sensor_marthe_bedroom_temperature'') | round(1,
+        default=''—'') }}°C'
       entity: sensor.multi_sensor_marthe_bedroom_temperature
       icon: mdi:thermometer
       icon_color: pink
@@ -969,8 +979,8 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ state_attr(''climate.storage'', ''current_temperature'') | round(1)
-        }}°C'
+    - content: '{{ state_attr(''climate.storage'', ''current_temperature'') | round(1,
+        default=''—'') }}°C'
       entity: climate.storage
       icon: mdi:thermometer
       type: template
@@ -997,8 +1007,8 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ state_attr(''climate.hall'', ''current_temperature'') | round(1)
-        }}°C'
+    - content: '{{ state_attr(''climate.hall'', ''current_temperature'') | round(1,
+        default=''—'') }}°C'
       entity: climate.hall
       icon: mdi:thermometer
       type: template
@@ -1033,8 +1043,8 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ states(''sensor.bunderhome_weerstation_ws_2902c_temp'') | round(1)
-        }}°C'
+    - content: '{{ states(''sensor.bunderhome_weerstation_ws_2902c_temp'') | round(1,
+        default=''—'') }}°C'
       entity: sensor.bunderhome_weerstation_ws_2902c_temp
       icon: mdi:thermometer
       type: template
@@ -1110,7 +1120,8 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ states(''sensor.bizzylectric_battery_level'') | round(0) }}%'
+    - content: '{{ states(''sensor.bizzylectric_battery_level'') | round(0, default=''—'')
+        }}%'
       entity: sensor.bizzylectric_battery_level
       icon: '{% if is_state(''sensor.bizzylectric_charging'', ''charging'') %}mdi:battery-charging
         {% else %}mdi:battery{% endif %}'
@@ -1451,14 +1462,16 @@ views:
   - alignment: center
     chips:
     - type: spacer
-    - content: '{{ states(''sensor.p1_meter_active_power'') | round(0) }} W'
+    - content: '{{ states(''sensor.p1_meter_active_power'') | round(0, default=''—'')
+        }} W'
       entity: sensor.p1_meter_active_power
       icon: mdi:flash
       icon_color: '{% set power = states(''sensor.p1_meter_active_power'') | float(0)
         %} {% if power < 0 %}green{% elif power < 2000 %}blue{% elif power < 5000
         %}orange{% else %}red{% endif %}'
       type: template
-    - content: '{{ states(''sensor.sb3_0_1av_41_570_grid_power'') | round(0) }} W'
+    - content: '{{ states(''sensor.sb3_0_1av_41_570_grid_power'') | round(0, default=''—'')
+        }} W'
       entity: sensor.sb3_0_1av_41_570_grid_power
       icon: mdi:solar-power
       icon_color: amber
@@ -1504,8 +1517,8 @@ views:
       layout: vertical
       primary: EV
       secondary: '{% if is_state(''sensor.bizzylectric_charging'', ''charging'') %}{{
-        states(''sensor.bizzylectric_charger_power'') | round(1) }} kW{% else %}—{%
-        endif %}'
+        states(''sensor.bizzylectric_charger_power'') | round(1, default=''—'') }}
+        kW{% else %}—{% endif %}'
       type: custom:mushroom-template-card
     mode: horizontal
     type: custom:stack-in-card
