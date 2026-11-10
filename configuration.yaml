@@ -41,7 +41,6 @@ shell_command: !include includes/shell_commands.yaml
 notify: !include includes/notify.yaml
 wake_on_lan:
 utility_meter: !include includes/utility_meter.yaml
-camera: !include includes/camera.yaml
 evohome: !include includes/evohome.yaml
 tts: !include includes/tts.yaml
 spotcast: !include includes/spotcast.yaml
