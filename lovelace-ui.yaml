@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1290,6 +1281,14 @@ views:
       - condition: state
         entity: input_boolean.ev_smart_charging
         state: 'on'
+    - entity: input_boolean.ev_charge_full_now
+      grid_options:
+        columns: 6
+      icon: mdi:battery-charging-high
+      name: Charge full
+      tap_action:
+        action: toggle
+      type: tile
     - entity: number.bizzylectric_charging_amps
       features:
       - style: buttons
