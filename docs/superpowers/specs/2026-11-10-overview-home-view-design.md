@@ -132,3 +132,27 @@ Row 2: Climate | Security | Bizzylectric | Vacuum & appliances
 
 Card order within sections, `grid_options` sizes, icons, and which tiles get trend
 graphs, as long as the layout reads well at laptop width.
+
+## Declutter pass
+
+Tom found the polished view still too busy. Same sections and layout, fewer and
+calmer cards (84 → 66 cards, most remaining tiles smaller):
+
+- View header: a greeting with inside, outside and solar figures; person, alarm
+  and weather badges sit under it. The Tesla view badge went (the car section
+  shows the battery). `dense_section_placement` fills row gaps.
+- Energy: solar forecasts became heading badges; the cost table became one line
+  (today, this month, last month).
+- Home: vacation, guests and auto temp became toggle badges on the heading;
+  the four collection dates are a 2×2 grid.
+- Lights: 13 tiles instead of 21. Cozy and White moved to heading buttons. The
+  bedroom, guest bedroom and outside groups list their members in more-info, so
+  their sub-light tiles went; the living-room group is a Hue room without a
+  member list, so its sub-lights stay. Automatic lights and terrace (the only
+  member of outside) went.
+- Climate: no inline setpoint bars; each tile shows current and target
+  temperature, and tapping it opens the thermostat.
+- Security: doors are four small tiles in one row, without last-changed text.
+- Car: door lock became a heading badge; Amps shows only while charging.
+- Vacuum: vacuum day and cleaned today became heading badges; the Appliances
+  subheading went.
