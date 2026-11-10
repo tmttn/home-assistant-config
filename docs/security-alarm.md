@@ -52,10 +52,10 @@ automation too. Arming needs no code.
 "Nachtmodus") is exposed to Google Assistant and Assist. It is on whenever
 `input_select.sleep_mode` is not `off`. Turning it off sets the select to `off`,
 like the dashboard's "Wake up" button, so "Hey Google, zet slaapmodus uit" also
-disarms a night-armed alarm. Turning it on does nothing except write a logbook
-entry. Google once heard "staat slaapmodus aan?" as a command, and turning
-sleep mode on runs "Go to sleep", which turns everything off and arms the
-alarm. Use the dashboard to start sleep mode.
+disarms a night-armed alarm. Turning it on runs `script.going_to_sleep`, like
+"Go to sleep": everything turns off and the alarm arms home. Google can take a
+question such as "staat slaapmodus aan?" as a command, so ask "zet slaapmodus
+aan/uit" rather than asking for the state.
 
 All pushes go to `notify.all_iphones` with the title "Security". Arming or
 disarming by hand or by the Ring schedule sends no push from Home Assistant.
