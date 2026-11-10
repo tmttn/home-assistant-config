@@ -1290,6 +1290,14 @@ views:
       - condition: state
         entity: input_boolean.ev_smart_charging
         state: 'on'
+    - entity: input_boolean.ev_charge_full_now
+      grid_options:
+        columns: 6
+      icon: mdi:battery-charging-high
+      name: Charge full
+      tap_action:
+        action: toggle
+      type: tile
     - entity: number.bizzylectric_charging_amps
       features:
       - style: buttons
