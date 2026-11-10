@@ -17,6 +17,7 @@ p = subprocess.run(cmd, capture_output=True).stdout.decode()
 
 ha_version = ".HA_VERSION"
 lovelace_ui = "lovelace-ui.yaml"
+lovelace_dashboards = "lovelace-dashboards/"
 ha_update = False
 lovelace_update = False
 folder_update = False
@@ -47,7 +48,7 @@ for line in p.split("\n"):
         if path == ha_version:
             ha_update = True
 
-        if path.startswith(lovelace_ui):
+        if path.startswith(lovelace_ui) or path.startswith(lovelace_dashboards):
             lovelace_update = True
 
 for folder in folders_to_add:
@@ -64,5 +65,5 @@ if ha_update:
         ["git", "commit", "-m", f"update Home Assistant to {version}"])
 
 if lovelace_update:
-    subprocess.run(f"git add lovelace-ui.yaml".split())
+    subprocess.run(f"git add {lovelace_ui} {lovelace_dashboards}".split())
     subprocess.run(["git", "commit", "-m", f"update lovelace-ui via UI"])
