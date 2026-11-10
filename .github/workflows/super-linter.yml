@@ -22,7 +22,8 @@ jobs:
           VALIDATE_ALL_CODEBASE: false
           DEFAULT_BRANCH: main
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FILTER_REGEX_EXCLUDE: (custom_components|www/community|pyscript|rhasspy)/.*
+          # Third-party code, plus AI-generated Markdown (design docs, plans, agent instructions)
+          FILTER_REGEX_EXCLUDE: '(custom_components|www/community|pyscript|rhasspy|docs/superpowers|\.claude)/.*|(^|/)(CLAUDE|AGENTS|GEMINI)\.md$|\.github/copilot-instructions\.md$'
           VALIDATE_YAML: true
           VALIDATE_MARKDOWN: true
           VALIDATE_GITHUB_ACTIONS: true
