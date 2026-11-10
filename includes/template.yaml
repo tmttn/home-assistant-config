@@ -151,18 +151,60 @@
       state: >
         {{ state_attr("sensor.monthly_power_offpeak", "last_period")|float(default=0) + state_attr("sensor.monthly_power_peak", "last_period")|float(default=0) }}
 
-    - name: Monthly Power Cost (Last period)
-      unique_id: monthly_power_cost_last_period
-      unit_of_measurement: €
+    # Energy tariffs, all incl. 6% BTW, from Frank Energie invoice BE260247804
+    # (October 2026). Stroom/Gas Variabel: the energy component changes monthly,
+    # update it from each invoice. Fluvius = Limburg grid tariffs.
+    #
+    # The contract bills electricity as one "alle uren" rate, so peak and
+    # offpeak carry the same price. Note: P1 tariff 1 is the Belgian day/peak
+    # tariff, so the utility meters named "offpeak" (T1) hold peak-hour kWh.
+    - name: Electricity price offpeak
+      unique_id: electricity_price_offpeak
+      unit_of_measurement: €/kWh
       state: >
-        {{ (state_attr("sensor.monthly_power_offpeak", "last_period")|float(default=0) * states("sensor.electricity_price_offpeak")|float(default=0)
-            + state_attr("sensor.monthly_power_peak", "last_period")|float(default=0) * states("sensor.electricity_price_peak")|float(default=0)) | round(2) }}
+        {{ states("sensor.electricity_price_peak") }}
+
+    - name: Electricity price peak
+      unique_id: electricity_price_peak
+      unit_of_measurement: €/kWh
+      state: >
+        {# c/kWh: energy 21.487 + green certs 1.166 + WKK certs 0.371
+           + Fluvius afnametarief 5.752 + bijzondere accijns 4.876 #}
+        {{ ((21.487 + 1.166 + 0.371 + 5.752 + 4.876) / 100) | round(5) }}
+
+    - name: Electricity injection price
+      unique_id: electricity_price_injection
+      unit_of_measurement: €/kWh
+      state: >
+        {{ 0.12276 }}
+
+    - name: Electricity capacity tariff
+      unique_id: electricity_capacity_tariff
+      unit_of_measurement: €/kW/year
+      state: >
+        {# Fluvius capacity tariff on the monthly peak, billed per day #}
+        {{ 51.98 }}
 
     - name: Gas price
       unique_id: gas_price
       unit_of_measurement: €/m³
       state: >
-        {{ 0.940036171 }}
+        {# c/kWh: energy 9.665 + distribution 0.981 + transport 0.165
+           + bijzondere accijns 1.118, times calorific value 11.281 kWh/m³ #}
+        {{ ((9.665 + 0.981 + 0.165 + 1.118) / 100 * 11.281) | round(5) }}
+
+    - name: Monthly Power Cost (Last period)
+      unique_id: monthly_power_cost_last_period
+      unit_of_measurement: €
+      state: >
+        {% set price = states("sensor.electricity_price_peak") | float(0) %}
+        {% set kwh = state_attr("sensor.monthly_power_offpeak", "last_period") | float(0)
+                   + state_attr("sensor.monthly_power_peak", "last_period") | float(0) %}
+        {% set export = state_attr("sensor.monthly_power_export", "last_period") | float(0) %}
+        {% set peak_kw = [states("sensor.power_peak_demand_last_period") | float(0), 2.5] | max %}
+        {% set capacity = peak_kw * states("sensor.electricity_capacity_tariff") | float(0) / 365
+                          * states("sensor.n_days_last_month") | int(0) %}
+        {{ (kwh * price - export * states("sensor.electricity_price_injection") | float(0) + capacity) | round(2) }}
 
     - name: Daily Gas Cost
       unique_id: daily_gas_cost
@@ -178,7 +220,7 @@
 
     - name: Monthly Gas (Last period)
       unique_id: monthly_gas_last_period
-      unit_of_measurement: kWh
+      unit_of_measurement: m³
       state: >
         {{ state_attr("sensor.monthly_gas", "last_period")|float(default=0) }}
 
@@ -188,44 +230,38 @@
       state: >
         {{ (state_attr("sensor.monthly_gas", "last_period")|float(default=0) * states("sensor.gas_price")|float(default=0)) | round(2) }}
 
-    - name: Electricity price offpeak
-      unique_id: electricity_price_offpeak
-      unit_of_measurement: €/kWh
-      state: >
-        {{ 0.265939 }}
-
-    - name: Electricity price peak
-      unique_id: electricity_price_peak
-      unit_of_measurement: €/kWh
-      state: >
-        {{ 0.284039 }}
-
-    - name: Electricity injection price
-      unique_id: electricity_price_injection
-      unit_of_measurement: €/kWh
-      state: >
-        {{ 0.0949 }}
-
+    # Power cost = offtake - injection credit + capacity tariff on the
+    # month's peak so far (Fluvius bills at least 2.5 kW).
     - name: Daily Power Cost
       unique_id: daily_power_cost
       unit_of_measurement: €
       state: >
-        {{ (states("sensor.daily_power_offpeak")|float(default=0) * states("sensor.electricity_price_offpeak")|float(default=0)
-            + states("sensor.daily_power_peak")|float(default=0) * states("sensor.electricity_price_peak")|float(default=0)) | round(2) }}
+        {% set kwh = states("sensor.daily_power") | float(0) %}
+        {% set export = states("sensor.daily_power_export") | float(0) %}
+        {% set peak_kw = [states("sensor.p1_meter_peak_demand_current_month") | float(0) / 1000, 2.5] | max %}
+        {% set capacity = peak_kw * states("sensor.electricity_capacity_tariff") | float(0) / 365 %}
+        {{ (kwh * states("sensor.electricity_price_peak") | float(0)
+            - export * states("sensor.electricity_price_injection") | float(0) + capacity) | round(2) }}
 
     - name: Monthly Power Cost
       unique_id: monthly_power_cost
       unit_of_measurement: €
       state: >
-        {{ (states("sensor.monthly_power_offpeak")|float(default=0) * states("sensor.electricity_price_offpeak")|float(default=0)
-            + states("sensor.monthly_power_peak")|float(default=0) * states("sensor.electricity_price_peak")|float(default=0)) | round(2) }}
+        {% set kwh = states("sensor.monthly_power") | float(0) %}
+        {% set export = states("sensor.monthly_power_export") | float(0) %}
+        {% set peak_kw = [states("sensor.p1_meter_peak_demand_current_month") | float(0) / 1000, 2.5] | max %}
+        {% set capacity = peak_kw * states("sensor.electricity_capacity_tariff") | float(0) / 365 * now().day %}
+        {{ (kwh * states("sensor.electricity_price_peak") | float(0)
+            - export * states("sensor.electricity_price_injection") | float(0) + capacity) | round(2) }}
 
     - name: Fixed daily energy cost (gas and power)
       unique_id: daily_energy_fixed_cost
       unit_of_measurement: €
       state: >
         {% set _ = states("sensor.date") %}
-        {{ 1.05668 + 0.43719 }}
+        {# €/year: power vaste vergoeding 27.96 + databeheer 18.97,
+           gas vaste vergoeding 26.04 + vaste term 77.50 + databeheer 18.97 #}
+        {{ ((27.96 + 18.97 + 26.04 + 77.50 + 18.97) / 365) | round(5) }}
 
     - name: Fixed monthly energy cost (gas and power)
       unique_id: monthly_energy_fixed_cost
@@ -518,6 +554,29 @@
 # |____/ \___|\__, |_|  \___|\___|_|____/ \__,_|\__, |___/
 #             |___/                              |___/
 #
+
+# Last month's capacity peak. The P1 monthly peak only rises within a month,
+# so a drop means it reset: keep the value from before the drop.
+# Seeded with October 2026's invoiced peak (7.68 kW) until the first reset.
+- trigger:
+    - trigger: state
+      entity_id: sensor.p1_meter_peak_demand_current_month
+  sensor:
+    - name: Power peak demand (Last period)
+      unique_id: power_peak_demand_last_period
+      unit_of_measurement: kW
+      state: >
+        {% set prev = this.attributes.get("running_max") %}
+        {% set now_w = trigger.to_state.state | float(none) %}
+        {% if now_w is not none and prev is not none and now_w < prev %}
+          {{ (prev / 1000) | round(2) }}
+        {% else %}
+          {{ this.state | float(7.68) }}
+        {% endif %}
+      attributes:
+        running_max: >
+          {% set now_w = trigger.to_state.state | float(none) %}
+          {{ now_w if now_w is not none else this.attributes.get("running_max") }}
 
 # Whole-house degree day (classic: 18°C - outside avg temp)
 - trigger:
