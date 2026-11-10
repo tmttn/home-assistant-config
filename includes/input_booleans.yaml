@@ -51,6 +51,9 @@ marthe_candy:
 optimal_electric_vehicle_charging:
   name: Optimal electric vehicle charging
   icon: mdi:car-electric
+waste_put_outside:
+  name: Waste put outside
+  icon: mdi:delete-empty
 
 # Apps
 wake_up_light:
