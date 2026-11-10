@@ -41,14 +41,21 @@ automatically turn off when alarm turns off or at 9AM"). An alarm that was
 armed away stays armed then. The automation waits up to 60 seconds for
 `disarmed` and pushes the result.
 
+The disarm call passes a `code`. The ring-mqtt app has a `disarm_code` option,
+and Home Assistant's MQTT alarm panel rejects a disarm without it ("Wrong code
+entered for disarming" in the log). If that app option changes, update the
+automation too. Arming needs no code.
+
 ### Voice control
 
 `switch.sleep_mode` (template switch helper, aliases "Slaapmodus" and
 "Nachtmodus") is exposed to Google Assistant and Assist. It is on whenever
 `input_select.sleep_mode` is not `off`. Turning it off sets the select to `off`,
-like the dashboard's "Wake up" button. Turning it on runs `script.going_to_sleep`,
-like "Go to sleep". "Hey Google, zet slaapmodus uit" therefore also disarms a
-night-armed alarm.
+like the dashboard's "Wake up" button, so "Hey Google, zet slaapmodus uit" also
+disarms a night-armed alarm. Turning it on does nothing except write a logbook
+entry. Google once heard "staat slaapmodus aan?" as a command, and turning
+sleep mode on runs "Go to sleep", which turns everything off and arms the
+alarm. Use the dashboard to start sleep mode.
 
 All pushes go to `notify.all_iphones` with the title "Security". Arming or
 disarming by hand or by the Ring schedule sends no push from Home Assistant.
