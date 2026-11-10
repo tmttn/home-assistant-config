@@ -101,7 +101,7 @@ grey light tiles formed a wall. Tom chose to keep the built-in tiles and fix the
 composition. His laptop is 1728 px wide, which gives 4 section columns with the
 sidebar open.
 
-```
+```text
 Row 1: Energy (column_span 2, amber tint) | Home | Lights
 Row 2: Climate | Security | Bizzylectric | Vacuum & appliances
 ```

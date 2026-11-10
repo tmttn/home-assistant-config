@@ -4,7 +4,12 @@
 
 **Goal:** Replace `views[0]` ("Home") of the Overview dashboard with a laptop control panel built on built-in cards, per the design.
 
-**Architecture:** A scratchpad Python script builds the new view as JSON. A checker script validates it against live HA (every entity exists, every tile feature fits its entity, only allowed card types). The view is written through `ha_config_set_dashboard` with a JSON Patch on `/views/0`, then rendered in the browser to check it. `lovelace-ui.yaml` is regenerated locally in `json2yaml.py`'s format so the repo matches live.
+**Architecture:** A scratchpad Python script builds the new view as JSON.
+A checker script validates it against live HA (every entity exists, every tile
+feature fits its entity, only allowed card types). The view is written through
+`ha_config_set_dashboard` with a JSON Patch on `/views/0`, then rendered in the
+browser to check it. `lovelace-ui.yaml` is regenerated locally in
+`json2yaml.py`'s format so the repo matches live.
 
 **Tech Stack:** HA 2026.11 Lovelace (sections view, tile/heading/shortcut/markdown/energy cards), ha-mcp tools, Python 3 + PyYAML.
 
