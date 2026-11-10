@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1528,4 +1519,351 @@ views:
     type: grid
   subview: true
   title: Vacuum
+  type: sections
+- back_path: /lovelace/default_view
+  badges:
+  - entity: person.tom
+    show_entity_picture: true
+    type: entity
+  - entity: person.tanja
+    show_entity_picture: true
+    type: entity
+  - entity: weather.home
+    state_content:
+    - state
+    - temperature
+    type: entity
+  dense_section_placement: true
+  header:
+    badges_position: bottom
+    card:
+      content: '{%- set h = now().hour -%}
+
+        {%- set zones = ["light.living_room_lights", "light.living_room_dining_table_lights",
+        "light.living_room_middle_lights", "light.living_room_playing_corner_lights",
+        "switch.hue_plug", "switch.shelly_kerstboom", "light.kitchen_lights", "light.upper_hall_lights",
+        "light.outside_lights", "light.porch_light", "light.front_garden_light", "light.bedroom_lights",
+        "light.bathroom_lights", "light.guest_bedroom_lights", "light.marthe_bedroom"]
+        -%}
+
+        {%- set lit = zones | select(''is_state'', ''on'') | list | count -%}
+
+        {%- set doors = ["binary_sensor.openclose_front_door", "binary_sensor.openclose_back_door",
+        "binary_sensor.openclose_living_room_door", "binary_sensor.openclose_storage_door"]
+        -%}
+
+        {%- set open = doors | select(''is_state'', ''on'') | list | count -%}
+
+        {%- set alarm = states(''alarm_control_panel.bunderhome_alarm'') -%}
+
+        # {{ ''Good morning'' if 5 <= h < 12 else ''Good afternoon'' if 12 <= h <
+        18 else ''Good evening'' if 18 <= h < 23 else ''Good night'' }}
+
+        {{ state_attr(''climate.living_room'', ''current_temperature'') | float(0)
+        | round(1) }}° inside · {{ state_attr(''weather.home'', ''temperature'') |
+        float(0) | round(0) | int }}° outside · {{ ''no lights on'' if lit == 0 else
+        lit ~ ('' light'' if lit == 1 else '' lights'') ~ '' on'' }} · {{ ''all doors
+        closed'' if open == 0 else open ~ ('' door'' if open == 1 else '' doors'')
+        ~ '' open'' }} · alarm {{ ''off'' if alarm == ''disarmed'' else ''home'' if
+        alarm == ''armed_home'' else ''away'' if alarm == ''armed_away'' else alarm
+        | replace(''_'', '' '') }}'
+      text_only: true
+      type: markdown
+    layout: responsive
+  icon: mdi:home
+  max_columns: 4
+  path: preview
+  sections:
+  - cards:
+    - floors:
+      - name: Ground floor
+        rooms:
+        - climate: climate.living_room
+          door: binary_sensor.openclose_living_room_door
+          icon: mdi:sofa-outline
+          lights: light.living_room_lights
+          name: Living room
+          scenes:
+          - icon: mdi:candle
+            name: Cozy
+            script: script.cozy_lights_living_room
+          - icon: mdi:white-balance-sunny
+            name: White
+            script: script.white_lights_living_room
+          span: 2
+          zones:
+          - entity: light.living_room_dining_table_lights
+            icon: mdi:silverware-fork-knife
+            name: Dining
+          - entity: light.living_room_middle_lights
+            icon: mdi:ceiling-light-outline
+            name: Middle
+          - entity: light.living_room_playing_corner_lights
+            icon: mdi:lamp-outline
+            name: Corner
+          - entity: switch.hue_plug
+            icon: mdi:floor-lamp-outline
+            name: Reading
+          - entity: switch.shelly_kerstboom
+            icon: mdi:pine-tree
+            name: Tree
+        - climate: climate.kitchen
+          door: binary_sensor.openclose_back_door
+          icon: mdi:countertop-outline
+          lights: light.kitchen_lights
+          name: Kitchen
+          zones:
+          - entity: switch.espresso_machine
+            icon: mdi:coffee-maker-outline
+            kind: device
+            name: Espresso
+        - climate: climate.hall
+          door: binary_sensor.openclose_front_door
+          icon: mdi:stairs
+          lights: light.upper_hall_lights
+          name: Hall
+        - climate: climate.storage
+          door: binary_sensor.openclose_storage_door
+          icon: mdi:archive-outline
+          name: Storage
+        - icon: mdi:tree-outline
+          name: Outside
+          span: 3
+          temperature:
+            attribute: temperature
+            entity: weather.home
+          zones:
+          - entity: light.outside_lights
+            icon: mdi:outdoor-lamp
+            name: Terrace
+          - entity: light.porch_light
+            icon: mdi:coach-lamp
+            name: Porch
+          - entity: light.front_garden_light
+            icon: mdi:post-lamp
+            name: Garden
+      - name: First floor
+        rooms:
+        - climate: climate.bedroom
+          icon: mdi:bed-outline
+          lights: light.bedroom_lights
+          name: Bedroom
+          zones:
+          - entity: light.bedroom_ceiling_lights
+            icon: mdi:ceiling-light-outline
+            name: Ceiling
+          - entity: light.bedroom_bedside_tom
+            icon: mdi:lamp-outline
+            name: Bedside
+        - climate: climate.bathroom
+          icon: mdi:shower-head
+          lights: light.bathroom_lights
+          name: Bathroom
+        - climate: climate.guest_bedroom
+          icon: mdi:bed-single-outline
+          lights: light.guest_bedroom_lights
+          name: Guest room
+          zones:
+          - entity: light.guest_bedroom_bed_reading
+            icon: mdi:lamp-outline
+            name: Bedside
+        - climate: climate.bedroom_marthe
+          icon: mdi:teddy-bear
+          lights: light.marthe_bedroom
+          name: Marthe
+      grid_options:
+        columns: full
+      type: custom:house-rooms-card
+    column_span: 3
+    type: grid
+  - cards:
+    - buttons:
+      - color: '#f0b453'
+        data:
+          option: 'off'
+        icon: mdi:weather-sunset-up
+        name: Wake up
+        service: input_select.select_option
+        target: input_select.sleep_mode
+      - color: '#8f94f2'
+        icon: mdi:weather-night
+        name: Go to sleep
+        service: script.turn_on
+        target: script.going_to_sleep
+      - color: '#5fb97c'
+        icon: mdi:home-import-outline
+        name: Arrive home
+        service: script.turn_on
+        target: script.arriving
+      - color: '#e8975a'
+        icon: mdi:home-export-outline
+        name: Leave home
+        service: script.turn_on
+        target: script.leaving
+      groups:
+      - items:
+        - data:
+            entity_id: script.set_low_temperature
+          name: Low
+          service: script.turn_on
+        - data:
+            entity_id: script.set_moderate_temperature
+          name: Mid
+          service: script.turn_on
+        - data:
+            entity_id: script.set_high_temperature
+          name: High
+          service: script.turn_on
+        name: Heating
+      icon: mdi:home-outline
+      manual:
+        reset: script.reset_adaptive_lighting
+        switches:
+        - switch.adaptive_lighting_default
+        - switch.adaptive_lighting_half_and_full
+        - switch.adaptive_lighting_half_and_dim
+      selects:
+      - entity: input_select.sleep_mode
+        name: Sleep
+        options:
+        - name: 'Off'
+          option: 'off'
+        - name: Half
+          option: half
+        - name: Total
+          option: total
+      title: Home
+      toggles:
+      - entity: input_boolean.vacation_mode
+        icon: mdi:palm-tree
+        name: Vacation
+      - entity: input_boolean.guest_mode
+        icon: mdi:account-multiple-outline
+        name: Guests
+      - entity: input_boolean.automatic_temperature
+        icon: mdi:thermostat-auto
+        name: Auto temp
+      type: custom:house-actions-card
+      wide:
+      - color: var(--hp-alert)
+        icon: mdi:power
+        name: Everything off
+        service: script.turn_on
+        target: script.turn_off_everything_non_automatic
+    - icon: mdi:calendar-clock
+      rows:
+      - alarm: schedule.alarm_clock_schedule
+        alarm_name: Alarm
+        bins:
+        - - Papier
+          - sensor.limburg_net_papier
+        - - GFT
+          - sensor.limburg_net_gft
+        - - PMD
+          - sensor.limburg_net_pmd
+        - - Restafval
+          - sensor.limburg_net_restafval
+        type: schedule
+      title: Schedule
+      type: custom:house-status-card
+    - icon: mdi:shield-home-outline
+      rows:
+      - entity: alarm_control_panel.bunderhome_alarm
+        name: Alarm
+      - entities:
+        - - binary_sensor.openclose_front_door
+          - Front door
+        - - binary_sensor.openclose_back_door
+          - Back door
+        - - binary_sensor.openclose_living_room_door
+          - Living room door
+        - - binary_sensor.openclose_storage_door
+          - Storage door
+        name: Doors
+        type: doors
+      title: Security
+      type: custom:house-status-card
+    - camera_view: auto
+      entity: camera.front_door_snapshot
+      grid_options:
+        columns: 4
+        rows: 2
+      name: Door
+      show_state: false
+      type: picture-entity
+    - camera_view: auto
+      entity: camera.front_garden_snapshot
+      grid_options:
+        columns: 4
+        rows: 2
+      name: Garden
+      show_state: false
+      type: picture-entity
+    - camera_view: auto
+      entity: camera.porch_snapshot
+      grid_options:
+        columns: 4
+        rows: 2
+      name: Porch
+      show_state: false
+      type: picture-entity
+    - icon: mdi:lightning-bolt-outline
+      navigate: /energy
+      rows:
+      - decimals: 0
+        entity: sensor.sb3_0_1av_41_570_pv_power
+        name: Solar
+        secondary: sensor.energy_production_today
+        secondary_decimals: 1
+        secondary_suffix: ' expected'
+      - entity: sensor.p1_meter_active_power
+        name: Grid
+        type: power
+      - entities:
+        - sensor.daily_power_cost
+        - sensor.daily_gas_cost
+        - sensor.daily_energy_fixed_cost
+        name: Today
+        prefix: €
+        type: sum
+      - entities:
+        - sensor.monthly_power_cost
+        - sensor.monthly_gas_cost
+        - sensor.monthly_energy_fixed_cost
+        name: This month
+        prefix: €
+        type: sum
+      - entities:
+        - sensor.monthly_power_cost_last_period
+        - sensor.monthly_gas_cost_last_period
+        - sensor.monthly_energy_fixed_cost_last_period
+        name: Last month
+        prefix: €
+        type: sum
+      title: Energy
+      type: custom:house-status-card
+    - icon: mdi:devices
+      rows:
+      - decimals: 0
+        entity: sensor.bizzylectric_battery
+        name: Bizzylectric
+        navigate: /lovelace/car
+        secondary: device_tracker.bizzylectric_location_tracker
+      - attribute: status
+        entity: vacuum.robot_vacuum
+        name: Vacuum
+        navigate: /lovelace/vacuum
+      - alert_when_on: true
+        entity: binary_sensor.robot_vacuum_water_shortage
+        name: Water tank
+        only_when_on: true
+      - entity: binary_sensor.washing_machine
+        name: Washer
+        since: true
+        when_on: sensor.washing_machine_remaining_time
+      title: Devices
+      type: custom:house-status-card
+    type: grid
+  subview: true
+  title: Home preview
   type: sections
