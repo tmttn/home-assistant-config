@@ -171,3 +171,49 @@ calmer cards (84 → 66 cards, most remaining tiles smaller):
   unlocking is never a single click.
 - "Vacuum & appliances" became "Appliances" so the heading fits beside its
   badges.
+
+## Room-centric rebuild (supersedes the layouts above)
+
+Tom's verdict on the passes above: a pile of buttons (lights, climate and
+part of security), and an energy flow that took a third of the screen
+although nobody asked for it. He wants usability: a clearer dashboard that
+is easier to use, without losing information.
+
+What 21 days of his own actions (logbook entries with a user context) show:
+light zones per room dominate (dining table 44, middle 39, bedroom 38,
+bathroom 27, kitchen 19, corner 19), then espresso 22, "everything off" 18,
+heating Low 18 and going to sleep about 15. Room setpoints were changed by
+hand 3 times; security, energy and the car were only looked at.
+
+The Home view is therefore organised by room, not by device type:
+
+```text
+Ground floor        | First floor     | Home              | Security
+ Living room 19.8°  |  Bedroom 15.8°  |  Wake/Sleep/      |  Alarm modes
+  zones + Cozy/White|  Bathroom 17.7° |  Arrive/Leave     |  All doors closed
+ Kitchen, Hall,     |  Guest room     |  Everything off   |  3 camera stills
+ Storage, Outside   |  Marthe         |  Sleep, Heating   | Energy (compact)
+                    |                 |  Schedule         |
+                    |                 | Devices           |
+```
+
+- Each room is a subtitle heading with its current temperature (tap opens
+  the thermostat) and a door badge that appears only while that door is
+  open. Below it, one compact tile per light zone: name only, the icon
+  colour shows on/off, tap toggles, hold opens brightness.
+- Cozy and White sit on the living-room heading; Low/Mid/High on a
+  Heating heading in Home; "Everything off" is a shortcut there too.
+- Adaptive-lighting manual control (with its Reset button) appears in Home
+  only while some light is under manual control.
+- Security is one alarm tile, a one-line door summary and three stills.
+- Energy is two one-row tiles (solar, grid with inline trend) and the cost
+  line; the heading opens the Energy dashboard, which has the flow diagram.
+- Devices: the car and vacuum tiles open subviews (`/lovelace/car`,
+  `/lovelace/vacuum`) that hold everything the old sections had (charging,
+  amps, limit, door lock; vacuum commands, map, maintenance). The washer
+  stays inline.
+- The header line reads inside/outside temperature, how many light zones
+  are on, open doors and alarm state.
+
+At 1728 px the whole view fits on one screen in four even columns; at
+1280 px it falls back to two columns with the floors first.

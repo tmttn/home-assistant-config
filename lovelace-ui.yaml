@@ -667,123 +667,6 @@ views:
       grid_options:
         columns: full
       type: markdown
-    type: grid
-  - cards:
-    - heading: Security
-      heading_style: title
-      icon: mdi:shield-home-outline
-      type: heading
-    - entity: alarm_control_panel.bunderhome_alarm
-      features:
-      - modes:
-        - armed_home
-        - armed_away
-        - disarmed
-        type: alarm-modes
-      grid_options:
-        columns: 12
-      name: Alarm
-      type: tile
-    - content: '{%- set doors = [["binary_sensor.openclose_front_door", "Front door"],
-        ["binary_sensor.openclose_back_door", "Back door"], ["binary_sensor.openclose_living_room_door",
-        "Living room door"], ["binary_sensor.openclose_storage_door", "Storage door"]]
-        -%}
-
-        {%- set open = doors | selectattr(0, ''is_state'', ''on'') | map(attribute=1)
-        | list -%}
-
-        {{ ''All doors closed'' if not open else (open | join('', '')) ~ '' open''
-        }}'
-      grid_options:
-        columns: full
-      text_only: true
-      type: markdown
-    - camera_view: auto
-      entity: camera.front_door_snapshot
-      grid_options:
-        columns: 4
-        rows: 2
-      name: Door
-      show_state: false
-      type: picture-entity
-    - camera_view: auto
-      entity: camera.front_garden_snapshot
-      grid_options:
-        columns: 4
-        rows: 2
-      name: Garden
-      show_state: false
-      type: picture-entity
-    - camera_view: auto
-      entity: camera.porch_snapshot
-      grid_options:
-        columns: 4
-        rows: 2
-      name: Porch
-      show_state: false
-      type: picture-entity
-    type: grid
-  - cards:
-    - badges:
-      - entity: sensor.energy_production_today
-        icon: mdi:weather-sunny
-        name: Forecast today
-        show_icon: true
-        show_name: true
-        show_state: true
-        type: entity
-      - entity: sensor.energy_production_tomorrow
-        icon: mdi:weather-partly-cloudy
-        name: Tomorrow
-        show_icon: true
-        show_name: true
-        show_state: true
-        type: entity
-      heading: Energy
-      heading_style: title
-      icon: mdi:lightning-bolt-outline
-      tap_action:
-        action: navigate
-        navigation_path: /energy
-      type: heading
-    - color: amber
-      entity: sensor.sb3_0_1av_41_570_pv_power
-      features:
-      - hours_to_show: 24
-        type: trend-graph
-      grid_options:
-        columns: 6
-      icon: mdi:solar-power
-      name: Solar
-      type: tile
-    - entity: sensor.p1_meter_active_power
-      features:
-      - hours_to_show: 24
-        type: trend-graph
-      grid_options:
-        columns: 6
-      icon: mdi:transmission-tower
-      name: Grid (− = export)
-      type: tile
-    - content: '{%- set today = states(''sensor.daily_power_cost'') | float(0) + states(''sensor.daily_gas_cost'')
-        | float(0) + states(''sensor.daily_energy_fixed_cost'') | float(0) -%}
-
-        {%- set month = states(''sensor.monthly_power_cost'') | float(0) + states(''sensor.monthly_gas_cost'')
-        | float(0) + states(''sensor.monthly_energy_fixed_cost'') | float(0) -%}
-
-        {%- set last = states(''sensor.monthly_power_cost_last_period'') | float(0)
-        + states(''sensor.monthly_gas_cost_last_period'') | float(0) + states(''sensor.monthly_energy_fixed_cost_last_period'')
-        | float(0) -%}
-
-        **€{{ ''%.2f'' | format(today) }}** today · **€{{ ''%.2f'' | format(month)
-        }}** in {{ now().strftime(''%B'') }} · €{{ ''%.2f'' | format(last) }} last
-        month'
-      grid_options:
-        columns: full
-      text_only: true
-      type: markdown
-    type: grid
-  - cards:
     - heading: Devices
       heading_style: title
       icon: mdi:devices
@@ -845,6 +728,121 @@ views:
       - condition: state
         entity: binary_sensor.washing_machine
         state: 'on'
+    type: grid
+  - cards:
+    - heading: Security
+      heading_style: title
+      icon: mdi:shield-home-outline
+      type: heading
+    - entity: alarm_control_panel.bunderhome_alarm
+      features:
+      - modes:
+        - armed_home
+        - armed_away
+        - disarmed
+        type: alarm-modes
+      grid_options:
+        columns: 12
+      name: Alarm
+      type: tile
+    - content: '{%- set doors = [["binary_sensor.openclose_front_door", "Front door"],
+        ["binary_sensor.openclose_back_door", "Back door"], ["binary_sensor.openclose_living_room_door",
+        "Living room door"], ["binary_sensor.openclose_storage_door", "Storage door"]]
+        -%}
+
+        {%- set open = doors | selectattr(0, ''is_state'', ''on'') | map(attribute=1)
+        | list -%}
+
+        {{ ''All doors closed'' if not open else (open | join('', '')) ~ '' open''
+        }}'
+      grid_options:
+        columns: full
+      text_only: true
+      type: markdown
+    - camera_view: auto
+      entity: camera.front_door_snapshot
+      grid_options:
+        columns: 4
+        rows: 2
+      name: Door
+      show_state: false
+      type: picture-entity
+    - camera_view: auto
+      entity: camera.front_garden_snapshot
+      grid_options:
+        columns: 4
+        rows: 2
+      name: Garden
+      show_state: false
+      type: picture-entity
+    - camera_view: auto
+      entity: camera.porch_snapshot
+      grid_options:
+        columns: 4
+        rows: 2
+      name: Porch
+      show_state: false
+      type: picture-entity
+    - badges:
+      - entity: sensor.energy_production_today
+        icon: mdi:weather-sunny
+        name: Forecast today
+        show_icon: true
+        show_name: true
+        show_state: true
+        type: entity
+      - entity: sensor.energy_production_tomorrow
+        icon: mdi:weather-partly-cloudy
+        name: Tomorrow
+        show_icon: true
+        show_name: true
+        show_state: true
+        type: entity
+      heading: Energy
+      heading_style: title
+      icon: mdi:lightning-bolt-outline
+      tap_action:
+        action: navigate
+        navigation_path: /energy
+      type: heading
+    - color: amber
+      entity: sensor.sb3_0_1av_41_570_pv_power
+      features:
+      - hours_to_show: 24
+        type: trend-graph
+      features_position: inline
+      grid_options:
+        columns: 12
+      icon: mdi:solar-power
+      name: Solar
+      type: tile
+    - entity: sensor.p1_meter_active_power
+      features:
+      - hours_to_show: 24
+        type: trend-graph
+      features_position: inline
+      grid_options:
+        columns: 12
+      icon: mdi:transmission-tower
+      name: Grid (− = export)
+      type: tile
+    - content: '{%- set today = states(''sensor.daily_power_cost'') | float(0) + states(''sensor.daily_gas_cost'')
+        | float(0) + states(''sensor.daily_energy_fixed_cost'') | float(0) -%}
+
+        {%- set month = states(''sensor.monthly_power_cost'') | float(0) + states(''sensor.monthly_gas_cost'')
+        | float(0) + states(''sensor.monthly_energy_fixed_cost'') | float(0) -%}
+
+        {%- set last = states(''sensor.monthly_power_cost_last_period'') | float(0)
+        + states(''sensor.monthly_gas_cost_last_period'') | float(0) + states(''sensor.monthly_energy_fixed_cost_last_period'')
+        | float(0) -%}
+
+        **€{{ ''%.2f'' | format(today) }}** today · **€{{ ''%.2f'' | format(month)
+        }}** in {{ now().strftime(''%B'') }} · €{{ ''%.2f'' | format(last) }} last
+        month'
+      grid_options:
+        columns: full
+      text_only: true
+      type: markdown
     type: grid
   title: Home
   type: sections
