@@ -8,6 +8,7 @@ rules:
 
 ignore: |
   lovelace-ui.yaml
+  lovelace-dashboards/
   custom_components/
   rhasspy/
   notebooks/
