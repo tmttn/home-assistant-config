@@ -1,7 +1,7 @@
 # EV charging (Bizzylectric)
 
 All automations and helpers below live in Home Assistant storage (UI), not in this repo.
-The car charges on **1 phase**: ~230 W per amp, 5–16 A.
+The car charges on **1 phase**: ~230 W per amp, 5 A up to the wall charger's max (13 A).
 
 ## Integration: Teslemetry
 
@@ -25,7 +25,7 @@ The car runs on the core **Teslemetry** integration (since 2026-11-10). It repla
 | `binary_sensor.bizzylectric_charge_cable` | Cable plugged in |
 | `sensor.bizzylectric_charging` | Charging state enum: `starting`, `charging`, `stopped`, `complete`, `disconnected`, `no_power` |
 | `switch.bizzylectric_charge` | Start/stop charging |
-| `number.bizzylectric_charge_current` | Charge current (A) |
+| `number.bizzylectric_charge_current` | Charge current (A). Its `max` attribute is the wall charger's limit (13 A here); every automation caps at it, because Teslemetry rejects higher values |
 | `number.bizzylectric_charge_limit` | Charge limit (%) |
 | `sensor.bizzylectric_charger_current` / `sensor.bizzylectric_charger_power` | Actual draw (A / kW) |
 | `sensor.bizzylectric_battery_level`, `sensor.bizzylectric_ideal_battery_range` | Battery % and range |
@@ -66,7 +66,7 @@ on 2026-11-10 before the switch (`ha_manage_backup` scope `edits`). Restore thos
 | `input_select.ev_charging_session` | Current session: `idle`, `solar`, `night`, `boost`. Restart-safe state. |
 | `input_number.ev_minimum_battery` | Night fallback when the battery is below this (default 30 %). |
 | `input_number.ev_minimum_solar_forecast` | Night fallback when the coming day's Forecast.Solar estimate is below this (default 8 kWh). |
-| `sensor.ev_peak_safe_charging_amps` | Template helper: highest amps that keep grid import under this month's peak demand (min 2.5 kW) minus 300 W. House load = grid minus `sensor.bizzylectric_charger_current` × 230 W while charging. |
+| `sensor.ev_peak_safe_charging_amps` | Template helper: highest amps that keep grid import under this month's peak demand (min 2.5 kW) minus 300 W, capped at the charger's max. House load = grid minus `sensor.bizzylectric_charger_current` × 230 W while charging. |
 
 ## Automations
 
@@ -77,7 +77,7 @@ on 2026-11-10 before the switch (`ha_manage_backup` scope `edits`). Restore thos
   - Plugged in at home with no need → native charging is paused and a push
     (`notify.all`, tag `ev_plugged_in`) offers **Nu volladen** (`EV_CHARGE_FULL`), which turns boost on.
   - Ends on unplug, `complete`, car leaving home.
-- **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min. Target −100 W (solar) or the peak cap (night, boost). Each change is one Teslemetry command credit.
+- **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min, never above the charger max. Target −100 W (solar) or the peak cap (night, boost). Each change is one Teslemetry command credit.
 - **Energy: EV charging amps too high** — push (`notify.all`) when the car charges at home above `sensor.ev_peak_safe_charging_amps` for 3 min while charging natively (`idle`), or in `boost` when even 5 A exceeds the peak, with a button to lower to the peak-safe amps or to pause. Max one push per 30 min.
 - **Energy: EV charging amps too high actions** — handles `EV_LOWER_AMPS` / `EV_PAUSE_CHARGING`.
 - **Energy: grid export too high** — skips its nag while smart charging can absorb the surplus.
