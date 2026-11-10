@@ -24,12 +24,12 @@ start_spotify_playlist_of_nearest_person:
       shuffle: true
       start_volume: 35
       entity_id: '{{ entity_id }}'
-    service: spotcast.start
+    action: spotcast.start
 cozy_lights_living_room:
   alias: Set cozy lights in the living room
   mode: parallel
   sequence:
-  - service: light.turn_off
+  - action: light.turn_off
     data:
       transition: 1
     target:
@@ -41,13 +41,13 @@ cozy_lights_living_room:
       hs_color:
       - 26.667
       - 88.235
-    service: light.turn_on
+    action: light.turn_on
   max: 10
 white_lights_living_room:
   alias: Set white lights in the living room
   mode: parallel
   sequence:
-  - service: light.turn_on
+  - action: light.turn_on
     data:
       entity_id:
       - light.living_room_lights
@@ -61,7 +61,7 @@ increase_brightness:
       description: The group to apply the light increase to.
       example: light.living_room_lights
   sequence:
-  - service: light.turn_on
+  - action: light.turn_on
     data:
       entity_id: '{{ group }}'
       brightness: "{% set b = state_attr(group, 'brightness') %} {% if b == None or
@@ -87,15 +87,15 @@ turn_off_everything:
   alias: Turn off everything
   mode: parallel
   sequence:
-  - service: script.turn_off_everything_non_automatic
-  - service: light.turn_off
+  - action: script.turn_off_everything_non_automatic
+  - action: light.turn_off
     entity_id: all
 going_to_sleep:
   alias: Going to sleep
   mode: parallel
   sequence:
   - entity_id: input_select.sleep_mode
-    service: input_select.select_option
+    action: input_select.select_option
     data:
       option: total
   - delay:
@@ -103,19 +103,19 @@ going_to_sleep:
       minutes: 0
       seconds: 5
       milliseconds: 0
-  - service: script.turn_off_everything_non_automatic
+  - action: script.turn_off_everything_non_automatic
     data: {}
   max: 10
 set_low_temperature:
   alias: Set low temperature
   sequence:
-  - service: evohome.set_zone_override
+  - action: evohome.set_zone_override
     data:
       entity_id: climate.living_room
       setpoint: '{{ states("input_number.temperature_low") }}
 
         '
-  - service: evohome.set_zone_override
+  - action: evohome.set_zone_override
     data:
       entity_id: climate.kitchen
       setpoint: '{{ states("input_number.temperature_low") }}
@@ -124,13 +124,13 @@ set_low_temperature:
 set_moderate_temperature:
   alias: Set moderate temperature
   sequence:
-  - service: evohome.set_zone_override
+  - action: evohome.set_zone_override
     data:
       entity_id: climate.living_room
       setpoint: '{{ states("input_number.temperature_moderate") }}
 
         '
-  - service: evohome.set_zone_override
+  - action: evohome.set_zone_override
     data:
       entity_id: climate.kitchen
       setpoint: '{{ states("input_number.temperature_moderate") }}
@@ -139,13 +139,13 @@ set_moderate_temperature:
 set_high_temperature:
   alias: Set high temperature
   sequence:
-  - service: evohome.set_zone_override
+  - action: evohome.set_zone_override
     data:
       entity_id: climate.living_room
       setpoint: '{{ states("input_number.temperature_high") }}
 
         '
-  - service: evohome.set_zone_override
+  - action: evohome.set_zone_override
     data:
       entity_id: climate.kitchen
       setpoint: '{{ states("input_number.temperature_high") }}
@@ -154,14 +154,14 @@ set_high_temperature:
 leaving:
   alias: Leaving the house
   sequence:
-  - service: script.set_low_temperature
-  - service: script.turn_off_everything
+  - action: script.set_low_temperature
+  - action: script.turn_off_everything
 arriving:
   alias: Arriving home
   sequence:
-  - service: script.set_high_temperature
+  - action: script.set_high_temperature
     data: {}
-  - service: script.cozy_lights_living_room
+  - action: script.cozy_lights_living_room
     data: {}
   mode: single
 turn_on_lights:
@@ -172,7 +172,7 @@ turn_on_lights:
       description: entity_id of light
       example: light.bedroom_lights
   sequence:
-  - service: adaptive_lighting.apply
+  - action: adaptive_lighting.apply
     data:
       entity_id: switch.adaptive_lighting_default
       lights: '{{ entity_id }}'
@@ -181,19 +181,19 @@ turn_on_lights:
 reset_adaptive_lighting:
   alias: Reset 'manual control'
   sequence:
-  - service: adaptive_lighting.set_manual_control
+  - action: adaptive_lighting.set_manual_control
     data:
       entity_id: switch.adaptive_lighting_default
       manual_control: false
-  - service: adaptive_lighting.set_manual_control
+  - action: adaptive_lighting.set_manual_control
     data:
       entity_id: switch.adaptive_lighting_half_and_dim
       manual_control: false
-  - service: adaptive_lighting.set_manual_control
+  - action: adaptive_lighting.set_manual_control
     data:
       entity_id: switch.adaptive_lighting_half_and_full
       manual_control: false
-  - service: adaptive_lighting.set_manual_control
+  - action: adaptive_lighting.set_manual_control
     data:
       entity_id: switch.adaptive_lighting_outside
       manual_control: false
@@ -201,14 +201,77 @@ reset_adaptive_lighting:
 electric_vehicle_polling_interval_to_60:
   alias: Electric vehicle polling interval to 60
   sequence:
-  - service: tesla_custom.polling_interval
+  - action: tesla_custom.polling_interval
     data:
       scan_interval: 60
   mode: single
 electric_vehicle_polling_interval_to_default:
   alias: Electric vehicle polling interval to default
   sequence:
-  - service: tesla_custom.polling_interval
+  - action: tesla_custom.polling_interval
     data:
       scan_interval: 660
   mode: single
+color_loop_bathroom:
+  alias: Color loop bathroom
+  description: >-
+    Cycle the bathroom lights through the colour wheel, one full turn per
+    minute. Turn the script on to start the loop. It stops when the script is
+    turned off or the bathroom lights are switched off. Replaces the old
+    time_pattern automation that fired every second.
+  icon: mdi:looks
+  mode: single
+  max_exceeded: silent
+  variables:
+    colors:
+    - [0.217, 0.077]
+    - [0.157, 0.05]
+    - [0.136, 0.04]
+    - [0.137, 0.065]
+    - [0.141, 0.137]
+    - [0.146, 0.238]
+    - [0.151, 0.343]
+    - [0.157, 0.457]
+    - [0.164, 0.591]
+    - [0.17, 0.703]
+    - [0.172, 0.747]
+    - [0.199, 0.724]
+    - [0.269, 0.665]
+    - [0.36, 0.588]
+    - [0.444, 0.517]
+    - [0.527, 0.447]
+    - [0.612, 0.374]
+    - [0.677, 0.319]
+    - [0.701, 0.299]
+    - [0.667, 0.284]
+    - [0.581, 0.245]
+    - [0.477, 0.196]
+    - [0.385, 0.155]
+    - [0.301, 0.116]
+  sequence:
+  - action: light.turn_on
+    target:
+      entity_id: light.bathroom_lights
+    data:
+      xy_color: '{{ colors[0] }}'
+  - repeat:
+      while:
+      - condition: state
+        entity_id: light.bathroom_lights
+        state: 'on'
+      sequence:
+      - repeat:
+          for_each: '{{ colors }}'
+          sequence:
+          - condition: state
+            entity_id: light.bathroom_lights
+            state: 'on'
+            note: Skip the rest of the turn once the lights are off.
+          - action: light.turn_on
+            target:
+              entity_id: light.bathroom_lights
+            data:
+              xy_color: '{{ repeat.item }}'
+              transition: 2
+          - delay:
+              seconds: 2.5
