@@ -8,6 +8,13 @@
 #                        |___/
 #
 #- from github.com/tmttn/home-assistant-config
+
+# Kept in YAML on purpose: these legacy group services are the only way to
+# fan one push out to several phones *with* `data` (actionable buttons, tags).
+# The mobile_app notify entities and the UI notify group helper only carry
+# title and message. Consumers: notify.all_iphones (~26 automations and
+# sensor.nearest_iphone_notify), notify.all (EV pushes), notify.tom (the
+# `chores` script, via the REST API).
 - platform: group
   name: all_iphones
   services:
