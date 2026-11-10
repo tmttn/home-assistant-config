@@ -1,6 +1,8 @@
 name: Auto-merge
 
-on: pull_request_target
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: write
@@ -9,7 +11,14 @@ permissions:
 jobs:
   auto-merge:
     runs-on: ubuntu-latest
-    if: github.actor == 'dependabot[bot]' || github.actor == 'renovate[bot]'
+    # Dependency bots, plus non-draft PRs opened by the repository owner
+    # (Claude Code sessions open PRs under that account too). The merge
+    # itself still waits for the ruleset's required status checks.
+    if: >-
+      github.actor == 'dependabot[bot]' ||
+      github.actor == 'renovate[bot]' ||
+      (github.event.pull_request.user.login == github.repository_owner &&
+       !github.event.pull_request.draft)
     steps:
       - uses: hmarr/auto-approve-action@v4
       - name: Enable auto-merge
