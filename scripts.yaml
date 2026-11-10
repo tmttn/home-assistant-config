@@ -198,20 +198,6 @@ reset_adaptive_lighting:
       entity_id: switch.adaptive_lighting_outside
       manual_control: false
   mode: single
-electric_vehicle_polling_interval_to_60:
-  alias: Electric vehicle polling interval to 60
-  sequence:
-  - action: tesla_custom.polling_interval
-    data:
-      scan_interval: 60
-  mode: single
-electric_vehicle_polling_interval_to_default:
-  alias: Electric vehicle polling interval to default
-  sequence:
-  - action: tesla_custom.polling_interval
-    data:
-      scan_interval: 660
-  mode: single
 color_loop_bathroom:
   alias: Color loop bathroom
   description: >-

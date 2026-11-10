@@ -1,7 +1,7 @@
 # EV charging (Bizzylectric)
 
 All automations and helpers below live in Home Assistant storage (UI), not in this repo.
-The car charges on **1 phase**: ~230 W per amp, 5–16 A.
+The car charges on **1 phase**: ~230 W per amp, 5 A up to the wall charger's max (13 A).
 
 ## Integration: Teslemetry
 
@@ -13,8 +13,8 @@ The car runs on the core **Teslemetry** integration (since 2026-11-10). It repla
   Extra credits: €2.70 per 2000, never expire. Usage is visible in the Teslemetry console.
 - The Teslemetry virtual key must be paired with the car (`https://tesla.com/_ak/teslemetry.com`,
   opened on the phone with the Tesla app). Without it, commands such as charge current fail.
-- Data streams, so the old polling-interval scripts (`script.electric_vehicle_polling_interval_*`)
-  are no longer called. The integration never wakes a sleeping car for data; commands do.
+- Data streams, so no polling-interval changes are needed. The integration never wakes a
+  sleeping car for data; commands do.
 - Teslemetry gave its entity IDs an `outside_` (area) prefix. The ones the automations and
   dashboards use were renamed to `bizzylectric_*`; the rest keep the prefix.
 
@@ -25,10 +25,11 @@ The car runs on the core **Teslemetry** integration (since 2026-11-10). It repla
 | `binary_sensor.bizzylectric_charge_cable` | Cable plugged in |
 | `sensor.bizzylectric_charging` | Charging state enum: `starting`, `charging`, `stopped`, `complete`, `disconnected`, `no_power` |
 | `switch.bizzylectric_charge` | Start/stop charging |
-| `number.bizzylectric_charge_current` | Charge current (A) |
+| `number.bizzylectric_charge_current` | Charge current (A). Its `max` attribute is the wall charger's limit (13 A here); every automation caps at it, because Teslemetry rejects higher values |
 | `number.bizzylectric_charge_limit` | Charge limit (%) |
 | `sensor.bizzylectric_charger_current` / `sensor.bizzylectric_charger_power` | Actual draw (A / kW) |
 | `sensor.bizzylectric_battery_level`, `sensor.bizzylectric_ideal_battery_range` | Battery % and range |
+| `sensor.bizzylectric_energy_added` | Energy added per session (kWh, `total_increasing`); Energy dashboard device. Teslemetry's *Charge energy added*, renamed to the old tesla_custom ID so the long-term statistics continue |
 | `device_tracker.bizzylectric_location` | Location (`home` gates all charging logic) |
 | `lock.bizzylectric_lock`, `cover.bizzylectric_vent_windows`, `binary_sensor.bizzylectric_*_window`, `cover.bizzylectric_trunk`, `cover.bizzylectric_frunk` | Goodnight check |
 
@@ -49,13 +50,9 @@ The car runs on the core **Teslemetry** integration (since 2026-11-10). It repla
 | `cover.bizzylectric_windows`, `binary_sensor.bizzylectric_windows` | `cover.bizzylectric_vent_windows`, `binary_sensor.bizzylectric_*_window` |
 | `tesla_custom.polling_interval` | not needed (streaming) |
 
-While both integrations are installed, the colliding tesla_custom entities carry a `_legacy`
-suffix (`number.bizzylectric_charge_limit_legacy`, `sensor.bizzylectric_charger_power_legacy`,
-`cover.bizzylectric_frunk_legacy`, `cover.bizzylectric_trunk_legacy`, `switch.bizzylectric_sentry_mode_legacy`).
-
-**Rollback:** ha-mcp per-edit backups of the seven automations and the peak-safe helper were taken
-on 2026-11-10 before the switch (`ha_manage_backup` scope `edits`). Restore those, rename the
-`_legacy` entities back, and the old setup works again as long as `tesla_custom` is installed.
+`tesla_custom` (integration, HACS repo and its three scripts) was removed on 2026-11-10 after a
+verified plug-in pause and boost session on Teslemetry. Going back would mean reinstalling it and
+logging in again; the old automation configs are in the ha-mcp `edits` backups of that day.
 
 ## Helpers
 
@@ -66,7 +63,7 @@ on 2026-11-10 before the switch (`ha_manage_backup` scope `edits`). Restore thos
 | `input_select.ev_charging_session` | Current session: `idle`, `solar`, `night`, `boost`. Restart-safe state. |
 | `input_number.ev_minimum_battery` | Night fallback when the battery is below this (default 30 %). |
 | `input_number.ev_minimum_solar_forecast` | Night fallback when the coming day's Forecast.Solar estimate is below this (default 8 kWh). |
-| `sensor.ev_peak_safe_charging_amps` | Template helper: highest amps that keep grid import under this month's peak demand (min 2.5 kW) minus 300 W. House load = grid minus `sensor.bizzylectric_charger_current` × 230 W while charging. |
+| `sensor.ev_peak_safe_charging_amps` | Template helper: highest amps that keep grid import under this month's peak demand (min 2.5 kW) minus 300 W, capped at the charger's max. House load = grid minus `sensor.bizzylectric_charger_current` × 230 W while charging. |
 
 ## Automations
 
@@ -77,12 +74,11 @@ on 2026-11-10 before the switch (`ha_manage_backup` scope `edits`). Restore thos
   - Plugged in at home with no need → native charging is paused and a push
     (`notify.all`, tag `ev_plugged_in`) offers **Nu volladen** (`EV_CHARGE_FULL`), which turns boost on.
   - Ends on unplug, `complete`, car leaving home.
-- **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min. Target −100 W (solar) or the peak cap (night, boost). Each change is one Teslemetry command credit.
+- **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min, never above the charger max. Target −100 W (solar) or the peak cap (night, boost). Each change is one Teslemetry command credit.
 - **Energy: EV charging amps too high** — push (`notify.all`) when the car charges at home above `sensor.ev_peak_safe_charging_amps` for 3 min while charging natively (`idle`), or in `boost` when even 5 A exceeds the peak, with a button to lower to the peak-safe amps or to pause. Max one push per 30 min.
 - **Energy: EV charging amps too high actions** — handles `EV_LOWER_AMPS` / `EV_PAUSE_CHARGING`.
 - **Energy: grid export too high** — skips its nag while smart charging can absorb the surplus.
 
-`script.electric_vehicle_charging_set_amps_link_to_excess_solar` is no longer used: it assumes 3-phase and ignores house load.
 
 ## Capacity tariff
 
