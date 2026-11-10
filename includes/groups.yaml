@@ -8,12 +8,6 @@
 #  |___/                |_|
 #
 #- from github.com/tmttn/home-assistant-config
-persons:
-  name: People
-  entities:
-    - person.tom
-    - person.tanja
-
 iphone_tom:
   - sensor.bizzyphone_activity
   - sensor.bizzyphone_average_active_pace

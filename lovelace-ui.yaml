@@ -430,36 +430,6 @@ views:
         type: gauge
       type: horizontal-stack
   - cards:
-    - heading: Components
-      type: heading
-    - columns: 4
-      entities:
-      - entity: sensor.count_automations
-        name: Automations
-      - entity: sensor.count_scripts
-        name: Scripts
-      - entity: sensor.count_zones
-        name: Zones
-      - entity: sensor.count_device_trackers
-        name: Device Trackers
-      - entity: sensor.count_switches
-        name: Switches
-      - entity: sensor.count_sensors
-        name: Sensors
-      - entity: sensor.count_binary_sensors
-        name: Binary Sensors
-      - entity: sensor.count_input_booleans
-        name: Input Booleans
-      - entity: sensor.count_input_numbers
-        name: Input Numbers
-      - entity: sensor.count_input_texts
-        name: Input Texts
-      - entity: sensor.count_input_selects
-        name: Input Select
-      - entity: sensor.count_input_datetimes
-        name: Input Date Times
-      type: glance
-  - cards:
     - heading: Network
       type: heading
     - cards:
