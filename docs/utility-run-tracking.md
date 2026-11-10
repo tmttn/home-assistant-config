@@ -47,7 +47,7 @@ for up to 5 minutes before the push went out.
 
 `binary_sensor.espresso_machine` (power > 3 W) turns off 3 minutes after the
 power drops, `binary_sensor.washing_machine` (Miele status) 1 minute after the
-run ends (`delay_off` in `includes/template.yaml`). After a restart the
+run ends (`delay_off` on their UI template helpers). After a restart the
 template sensor comes back with its last state and starts that delay again,
 so a restart inside the window moves the push to that delay after the
 restart.
