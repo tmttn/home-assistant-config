@@ -1271,14 +1271,25 @@ views:
       tap_action:
         action: toggle
       type: tile
-    - entity: script.electric_vehicle_charging_set_amps_link_to_excess_solar
+    - entity: input_boolean.ev_smart_charging
       grid_options:
         columns: 6
       icon: mdi:solar-power
-      name: Solar charge
+      name: Smart charge
       tap_action:
         action: toggle
       type: tile
+    - entity: input_select.ev_charging_session
+      grid_options:
+        columns: 6
+      name: Session
+      tap_action:
+        action: more-info
+      type: tile
+      visibility:
+      - condition: state
+        entity: input_boolean.ev_smart_charging
+        state: 'on'
     - entity: number.bizzylectric_charging_amps
       features:
       - style: buttons
