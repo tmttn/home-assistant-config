@@ -93,6 +93,33 @@ Sections, each starting with a `heading` card:
 8. **Schedule:** alarm clock schedule, a trash-tomorrow tile shown only when there
    is a collection, and the four collection dates.
 
+## Polish pass (after the first render)
+
+The first build worked but looked flat. Sections in a sections view line up in
+rows, so short sections next to long ones left large gaps, and 16 identical
+grey light tiles formed a wall. Tom chose to keep the built-in tiles and fix the
+composition. His laptop is 1728 px wide, which gives 4 section columns with the
+sidebar open.
+
+```
+Row 1: Energy (column_span 2, amber tint) | Home | Lights
+Row 2: Climate | Security | Bizzylectric | Vacuum & appliances
+```
+
+- Energy is the one emphasised section: two columns wide with a faint amber
+  background. It holds grid and solar trends, today's and tomorrow's solar
+  forecast, the energy flow and the cost table side by side. Solar and grid
+  were removed from the view badges because Energy now shows them at the top.
+- Home merges Modes and Schedule; vacation, guests and auto temp are vertical
+  tiles three across.
+- Lights are compact vertical tiles four across (tap toggles, hold opens the
+  brightness dialog). The living-room brightness slider is gone because it
+  rendered as an empty grey bar when the light was off. The Cozy and White
+  scenes are tiles in the same grid.
+- Shorter names so no label truncates at 4 columns.
+- Vacuum battery is a heading badge; the separate espresso power tile is gone.
+- At 3 columns (1440 px) the layout still reads: Energy and Home share row 1.
+
 ## Calls made without asking
 
 - People map dropped from Home: the Map dashboard covers it.
