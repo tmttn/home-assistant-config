@@ -287,10 +287,13 @@ color_loop_bathroom:
 washing_machine_remote_start:
   alias: Washing machine remote start
   description: 'Sends the remote start to the Miele washing machine: miele.set_program
-    for Mobile Control (program_id > 0), otherwise button.washing_machine_start. The
-    Miele cloud often answers after more than 15 s, so the call raises a TimeoutError
-    while the machine still starts; callers run this with script.turn_on (fire and
-    forget) and confirm the start themselves via binary_sensor.washing_machine.'
+    for Mobile Control (program_id > 0), otherwise button.washing_machine_start. Up
+    to 3 attempts, a minute apart, while the machine is not running and still accepts
+    a remote start: the Miele cloud sometimes rejects the start with HTTP 500 (seen
+    right after a delayed start was set on the machine). The cloud also often answers
+    after more than 15 s, which raises a TimeoutError while the machine still starts
+    and ends this script; callers run it with script.turn_on (fire and forget) and
+    confirm the start themselves via binary_sensor.washing_machine.'
   fields:
     program_id:
       name: Program id
@@ -303,17 +306,44 @@ washing_machine_remote_start:
           max: 99999
           mode: box
   sequence:
-  - if:
-    - condition: template
-      value_template: '{{ program_id | int(0) > 0 }}'
-    then:
-    - action: miele.set_program
-      data:
-        device_id: 8437f5e53ab041fbf2e4db4bd23cb420
-        program_id: '{{ program_id | int }}'
-    else:
-    - action: button.press
-      target:
-        entity_id: button.washing_machine_start
+  - repeat:
+      sequence:
+      - if:
+        - condition: template
+          value_template: '{{ program_id | int(0) > 0 }}'
+        then:
+        - action: miele.set_program
+          continue_on_error: true
+          data:
+            device_id: 8437f5e53ab041fbf2e4db4bd23cb420
+            program_id: '{{ program_id | int }}'
+        else:
+        - action: button.press
+          continue_on_error: true
+          target:
+            entity_id: button.washing_machine_start
+      - wait_template: '{{ is_state(''binary_sensor.washing_machine'', ''on'') }}'
+        timeout: 00:01:00
+        continue_on_timeout: true
+        note: Give the machine a minute to report the start before trying again.
+      until:
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: binary_sensor.washing_machine
+          state: 'on'
+        - condition: template
+          value_template: '{{ repeat.index >= 3 }}'
+        - condition: and
+          conditions:
+          - condition: state
+            entity_id: binary_sensor.washing_machine_mobile_start
+            state: 'off'
+          - condition: not
+            conditions:
+            - condition: state
+              entity_id: sensor.washing_machine_status
+              state: waiting_to_start
+          note: The machine no longer accepts a remote start.
   mode: single
   icon: mdi:washing-machine
