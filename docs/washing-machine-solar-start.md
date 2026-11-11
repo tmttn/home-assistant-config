@@ -53,7 +53,29 @@ share one Memory.
    "Washing machine started on …". If the machine is not running five minutes
    later, or Miele offers no start, the push says so.
 
-Turning Mobile Start off cancels the plan: every trigger requires it to be on.
+### Delayed start set on the machine
+
+1. Load the machine, pick a program, set **Startuitstel** and press Start.
+   The machine waits (`sensor.washing_machine_status` is `waiting_to_start`;
+   `binary_sensor.washing_machine_mobile_start` stays off).
+2. After the status has held for a minute, Home Assistant plans the start on
+   the sun as above. If the plan falls after the end of your delay, the
+   machine starts itself at the end: the delay works as a second deadline.
+
+The minute of settling is needed: a start sent the instant the delay was set
+was rejected by the Miele cloud with HTTP 500 (2026-11-11), while the same
+start a while later worked.
+
+Turning Mobile Start off cancels the plan: every trigger requires it to be on
+(or the machine to be waiting on a delayed start).
+
+### Retries
+
+`script.washing_machine_remote_start` sends the start up to three times, a
+minute apart, until `binary_sensor.washing_machine` turns on or the machine
+no longer accepts a remote start. A Miele error (such as HTTP 500) no longer
+ends the attempt. A `TimeoutError` still ends the script, but the machine
+usually starts anyway; the automation's five-minute check reports either way.
 In Mobile Control without a chosen program the automation does nothing: it
 waits for the answer to the program push.
 
