@@ -7,9 +7,46 @@ Assistant storage, like the other automations; this page documents it.
 
 ## How to use it
 
-1. Load the machine, pick a program and enable **Mobile Start** on the machine
-   (`binary_sensor.washing_machine_mobile_start` turns on and
-   `button.washing_machine_start` becomes available).
+### Mobile Control (the usual way)
+
+1. Load the machine and turn the program dial to **MobileControl**
+   (`binary_sensor.washing_machine_mobile_start` turns on,
+   `sensor.washing_machine_program` stays `no_program`).
+2. **Utilities: ask washing machine program on mobile control**
+   (`automation.utilities_ask_washing_machine_program_on_mobile_control`)
+   pushes "Which program?" with the buttons **Delicaat**, **Katoen** and
+   **Handdoeken**. The answer goes into
+   `input_select.washing_machine_solar_start_program`.
+3. The answer arms the solar start below: it plans the start and pushes
+   "Washing machine (Delicaat) will start at ~HH:MM on solar".
+4. At that moment it calls `miele.set_program` and pushes the program,
+   temperature and spin speed the machine actually runs.
+
+Leaving Mobile Control (Mobile Start off for a minute) resets the choice to
+`Geen`.
+
+**Limits of the Miele API.** `miele.set_program` selects *and starts* the
+program at once: there is no "select now, start later", so it is only called
+at the solar moment. It takes a program id only: temperature and spin speed
+cannot be sent (`miele.get_programs` lists no parameters). The machine uses
+the program's defaults (Delicates: 40 °C / 900 rpm), or, with the machine
+setting **Memory** on, the settings of the last run of that program. Towels
+have no program of their own and run as Cottons, so Katoen and Handdoeken
+share one Memory.
+
+| Button | Miele program | `program_id` |
+| -------- | --------------- | -------------- |
+| Delicaat | Delicates | 4 |
+| Katoen | Cottons | 1 |
+| Handdoeken | Cottons | 1 |
+
+`miele.get_programs` lists the other programs and their ids.
+
+### Mobile Start with a program picked on the machine
+
+1. Load the machine, pick a program, temperature and spin speed on the
+   machine and enable **Mobile Start** (`button.washing_machine_start`
+   becomes available). No program push is sent.
 2. Home Assistant plans the start and pushes "Washing machine will start at
    ~HH:MM on solar".
 3. At that moment it presses `button.washing_machine_start` and pushes
@@ -17,6 +54,8 @@ Assistant storage, like the other automations; this page documents it.
    later, or Miele offers no start, the push says so.
 
 Turning Mobile Start off cancels the plan: every trigger requires it to be on.
+In Mobile Control without a chosen program the automation does nothing: it
+waits for the answer to the program push.
 
 ## When it starts
 
@@ -47,6 +86,7 @@ always starts at the deadline, so the laundry still gets done on cloudy days.
 | `input_number.washing_machine_solar_start_sunny_tomorrow` | 5 kWh | Tomorrow's forecast from which waiting for tomorrow is worth it (November averages ~7 kWh/day, May ~18) |
 | `input_number.washing_machine_solar_start_threshold` | 2000 W | Start early once the measured PV power passes this (the inverter peaks at 3 kW) |
 | `input_datetime.washing_machine_solar_start_planned` | – | The planned start; written by the automation |
+| `input_select.washing_machine_solar_start_program` | Geen | Program for Mobile Control (Geen, Delicaat, Katoen, Handdoeken); set by the program push, reset after the start |
 
 The lead time (60 minutes before the peak) is the `lead_minutes` variable in
 the automation.
