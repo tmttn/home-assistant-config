@@ -12,14 +12,6 @@ decluttering_templates:
         - entity_id: automation.[[slug]]*
       sort: entity_id
       type: custom:auto-entities
-kiosk_mode:
-  admin_settings:
-    hide_sidebar: false
-  mobile_settings:
-    hide_menubutton: true
-    hide_overflow: true
-  non_admin_settings:
-    hide_sidebar: true
 title: Tanja
 views:
 - icon: mdi:home
