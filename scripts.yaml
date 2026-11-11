@@ -200,40 +200,63 @@ reset_adaptive_lighting:
   mode: single
 color_loop_bathroom:
   alias: Color loop bathroom
-  description: >-
-    Cycle the bathroom lights through the colour wheel, one full turn per
-    minute. Turn the script on to start the loop. It stops when the script is
-    turned off or the bathroom lights are switched off. Replaces the old
-    time_pattern automation that fired every second.
+  description: Cycle the bathroom lights through the colour wheel, one full turn per
+    minute. Turn the script on to start the loop. It stops when the script is turned
+    off or the bathroom lights are switched off. Replaces the old time_pattern automation
+    that fired every second.
   icon: mdi:looks
   mode: single
   max_exceeded: silent
   variables:
     colors:
-    - [0.217, 0.077]
-    - [0.157, 0.05]
-    - [0.136, 0.04]
-    - [0.137, 0.065]
-    - [0.141, 0.137]
-    - [0.146, 0.238]
-    - [0.151, 0.343]
-    - [0.157, 0.457]
-    - [0.164, 0.591]
-    - [0.17, 0.703]
-    - [0.172, 0.747]
-    - [0.199, 0.724]
-    - [0.269, 0.665]
-    - [0.36, 0.588]
-    - [0.444, 0.517]
-    - [0.527, 0.447]
-    - [0.612, 0.374]
-    - [0.677, 0.319]
-    - [0.701, 0.299]
-    - [0.667, 0.284]
-    - [0.581, 0.245]
-    - [0.477, 0.196]
-    - [0.385, 0.155]
-    - [0.301, 0.116]
+    - - 0.217
+      - 0.077
+    - - 0.157
+      - 0.05
+    - - 0.136
+      - 0.04
+    - - 0.137
+      - 0.065
+    - - 0.141
+      - 0.137
+    - - 0.146
+      - 0.238
+    - - 0.151
+      - 0.343
+    - - 0.157
+      - 0.457
+    - - 0.164
+      - 0.591
+    - - 0.17
+      - 0.703
+    - - 0.172
+      - 0.747
+    - - 0.199
+      - 0.724
+    - - 0.269
+      - 0.665
+    - - 0.36
+      - 0.588
+    - - 0.444
+      - 0.517
+    - - 0.527
+      - 0.447
+    - - 0.612
+      - 0.374
+    - - 0.677
+      - 0.319
+    - - 0.701
+      - 0.299
+    - - 0.667
+      - 0.284
+    - - 0.581
+      - 0.245
+    - - 0.477
+      - 0.196
+    - - 0.385
+      - 0.155
+    - - 0.301
+      - 0.116
   sequence:
   - action: light.turn_on
     target:
@@ -261,3 +284,36 @@ color_loop_bathroom:
               transition: 2
           - delay:
               seconds: 2.5
+washing_machine_remote_start:
+  alias: Washing machine remote start
+  description: 'Sends the remote start to the Miele washing machine: miele.set_program
+    for Mobile Control (program_id > 0), otherwise button.washing_machine_start. The
+    Miele cloud often answers after more than 15 s, so the call raises a TimeoutError
+    while the machine still starts; callers run this with script.turn_on (fire and
+    forget) and confirm the start themselves via binary_sensor.washing_machine.'
+  fields:
+    program_id:
+      name: Program id
+      description: Miele program id for Mobile Control (Delicates 4, Cottons 1); 0
+        presses the start button.
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 99999
+          mode: box
+  sequence:
+  - if:
+    - condition: template
+      value_template: '{{ program_id | int(0) > 0 }}'
+    then:
+    - action: miele.set_program
+      data:
+        device_id: 8437f5e53ab041fbf2e4db4bd23cb420
+        program_id: '{{ program_id | int }}'
+    else:
+    - action: button.press
+      target:
+        entity_id: button.washing_machine_start
+  mode: single
+  icon: mdi:washing-machine
