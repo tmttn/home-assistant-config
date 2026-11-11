@@ -1,0 +1,152 @@
+---
+title: Tanja
+views:
+- icon: mdi:home
+  max_columns: 2
+  path: tanja
+  sections:
+  - cards:
+    - heading: Lights
+      type: heading
+    - entities:
+      - entities:
+        - entity: switch.shelly_kerstboom
+          icon: mdi:string-lights
+          name: Christmas tree
+        - light.living_room_playing_corner_lights
+        - light.living_room_dining_table_lights
+        - light.living_room_middle_lights
+        - switch.hue_plug
+        - entity: script.cozy_lights_living_room
+          icon_height: 20px
+          name: Cozy lights
+          show_icon: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: script.cozy_lights_living_room
+        - entity: script.white_lights_living_room
+          icon_height: 20px
+          name: White lights
+          show_icon: false
+          show_name: true
+          tap_action:
+            action: call-service
+            service: script.white_lights_living_room
+        head:
+          entity: light.living_room_lights
+          hide_when_off: false
+          name: Living
+        type: custom:fold-entity-row
+      - entity: light.upper_hall_lights
+        name: Hall
+      - entity: light.bathroom_lights
+        hide_when_off: false
+        name: Bathroom
+      - entities:
+        - light.bedroom_ceiling_lights
+        - light.bedroom_bedside_tom
+        head:
+          entity: light.bedroom_lights
+          hide_when_off: false
+          name: Bedroom
+        name: Bed
+        type: custom:fold-entity-row
+      - entities:
+        - light.guest_bedroom_bedside
+        head:
+          entity: light.guest_bedroom_lights
+          hide_when_off: false
+          name: Guest Bedroom
+        name: Bed
+        type: custom:fold-entity-row
+      - entities:
+        - entities:
+          - light.terrace_lights
+          head:
+            entity: light.automatic_lights
+            hide_when_off: false
+            name: Outside lights
+          type: custom:fold-entity-row
+        - light.kitchen_lights
+        - light.toilet
+        - entities:
+          - icon: mdi:human-edit
+            name: "{% set manual_control = (\n    (state_attr('switch.adaptive_lighting_default',\
+              \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_half_and_full',\
+              \ 'manual_control') or []) +\n    (state_attr('switch.adaptive_lighting_half_and_dim',\
+              \ 'manual_control') or [])\n) %} {% if manual_control %}\n  {{ manual_control\
+              \ | join(\", \") }}.\n{% else %}\n  Nothing is manually controlled.\n\
+              {% endif %}\n"
+            type: custom:template-entity-row
+          - entity: script.reset_adaptive_lighting
+          head:
+            label: Adaptive lighting
+            type: section
+          type: custom:fold-entity-row
+        head:
+          entity: light.automatic_lights
+          hide_when_off: false
+          name: Automatic
+        type: custom:fold-entity-row
+      show_header_toggle: false
+      type: entities
+  - cards:
+    - heading: Climate
+      type: heading
+    - entity: input_boolean.automatic_temperature
+      layout: horizontal
+      type: custom:mushroom-entity-card
+    - cards:
+      - collapsible_controls: false
+        entity: climate.living_room
+        icon: mdi:sofa
+        layout: horizontal
+        show_temperature_control: true
+        type: custom:mushroom-climate-card
+      - collapsible_controls: false
+        entity: climate.bathroom
+        icon: mdi:shower
+        layout: horizontal
+        show_temperature_control: true
+        type: custom:mushroom-climate-card
+      - collapsible_controls: false
+        entity: climate.bedroom
+        icon: mdi:bed
+        layout: horizontal
+        show_temperature_control: true
+        type: custom:mushroom-climate-card
+      - collapsible_controls: false
+        entity: climate.guest_bedroom
+        icon: mdi:bed-outline
+        layout: horizontal
+        show_temperature_control: true
+        type: custom:mushroom-climate-card
+      - collapsible_controls: false
+        entity: climate.kitchen
+        icon: mdi:stove
+        layout: horizontal
+        show_temperature_control: true
+        type: custom:mushroom-climate-card
+      - collapsible_controls: false
+        entity: climate.storage
+        icon: mdi:archive
+        layout: horizontal
+        show_temperature_control: true
+        type: custom:mushroom-climate-card
+      - collapsible_controls: false
+        entity: climate.bedroom_marthe
+        icon: mdi:baby-face-outline
+        layout: horizontal
+        show_temperature_control: true
+        type: custom:mushroom-climate-card
+      - collapsible_controls: false
+        entity: climate.hall
+        icon: mdi:stairs
+        layout: horizontal
+        show_temperature_control: true
+        type: custom:mushroom-climate-card
+      mode: vertical
+      type: custom:stack-in-card
+  title: Tanja
+  type: sections
