@@ -42,18 +42,27 @@ share one Memory.
 
 `miele.get_programs` lists the other programs and their ids.
 
-### Mobile Start with a program picked on the machine
+### Delayed start with a program picked on the machine (exact temperature and spin)
 
 1. Load the machine, pick a program, temperature and spin speed on the
-   machine and enable **Mobile Start** (`button.washing_machine_start`
-   becomes available). No program push is sent.
+   machine, set **Startuitstel** to the latest acceptable start and press
+   **Start/Stop** (manual, "Afstandsbediening": with remote control on, the
+   machine then accepts a remote start until the delay ends).
+   `sensor.washing_machine_status` becomes `waiting_to_start`;
+   `binary_sensor.washing_machine_mobile_start` stays off. No program push is
+   sent.
 2. Home Assistant plans the start and pushes "Washing machine will start at
    ~HH:MM on solar".
 3. At that moment it presses `button.washing_machine_start` and pushes
    "Washing machine started on …". If the machine is not running five minutes
    later, or Miele offers no start, the push says so.
 
-Turning Mobile Start off cancels the plan: every trigger requires it to be on.
+If the delay ends first, the machine starts itself, so the delay works as a
+second deadline.
+
+Every trigger requires the machine to accept a remote start
+(`binary_sensor.washing_machine_mobile_start` on, or status
+`waiting_to_start`); leaving that state cancels the plan.
 In Mobile Control without a chosen program the automation does nothing: it
 waits for the answer to the program push.
 
