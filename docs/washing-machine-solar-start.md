@@ -114,3 +114,13 @@ The run itself (start and done timestamps, energy, the "done" push) stays
 with **Utilities: track washing machine and espresso machine runs**, which
 sees the start through `binary_sensor.washing_machine`. This automation does
 not touch its helpers.
+
+## Sending the start
+
+Both starts (`miele.set_program` and `button.washing_machine_start`) go
+through `script.washing_machine_remote_start`, called with `script.turn_on`
+so the automation does not wait for it. The Miele cloud often answers after
+more than 15 s: the call then raises a `TimeoutError` while the machine does
+start (seen 2026-11-11: timeout at 14:28:43, running at 14:28:48). The
+automation confirms the start itself by waiting up to five minutes for
+`binary_sensor.washing_machine`.
