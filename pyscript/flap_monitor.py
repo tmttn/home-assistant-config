@@ -35,6 +35,15 @@ IGNORED_DOMAINS = {
     "update",
     "zone",
 }
+# Entities that drop to unavailable whenever a cloud API call fails, while the
+# device itself stays connected. Alerting on them says nothing about the
+# device's wifi or power.
+IGNORED_ENTITIES = {
+    # Miele polls filling levels from its cloud every 60 s; each timeout marks
+    # them unavailable. The washer's other entities use a push stream.
+    "sensor.washing_machine_twindos_1_level",
+    "sensor.washing_machine_twindos_2_level",
+}
 
 detector = FlapDetector(THRESHOLD, WINDOW_S, COOLDOWN_S)
 loaded_at = time.monotonic()
@@ -53,6 +62,8 @@ def flap_monitor_record(entity_id=None, new_state=None, **kwargs):
     if now - loaded_at < STARTUP_GRACE_S:
         return
     if entity_id.split(".", 1)[0] in IGNORED_DOMAINS:
+        return
+    if entity_id in IGNORED_ENTITIES:
         return
     if not detector.record(entity_id, now):
         return
