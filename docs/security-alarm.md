@@ -84,10 +84,12 @@ Google Home. The push carries `camera.front_door_snapshot` (ring-mqtt), so the i
 refreshing camera view on long-press. When the SHIELD (`media_player.shield_2`) is on, `remote.shield` gets
 `MEDIA_PAUSE` first (an explicit pause, not a toggle).
 
-Someone home: the Kitchen Display, and the SHIELD when it is already on, shows the live camera for 90 seconds.
+Someone home: the Kitchen Display, and the SHIELD when it is already on, shows the live camera until the front door
+opens (`door.opened` on `binary_sensor.openclose_front_door`), at most 90 seconds. The automation runs in `restart`
+mode, so a second ring starts the run (and the 90 seconds) again.
 It uses Home Assistant Cast (`cast.show_lovelace_view`) of the hidden Overview subview `doorbell`: a panel view
 with a `picture-entity` card (`camera.front_door_video`, the ring-mqtt RTSP stream, `camera_view: live`,
-`fit_mode: cover`, black background). After 90 s only screens still running the Home Assistant Lovelace app are
+`fit_mode: cover`, black background). Then only screens still running the Home Assistant Lovelace app are
 turned off, so the SHIELD returns to the paused app and a screen someone switched over is left alone. A ring
 never wakes a TV that was off.
 
