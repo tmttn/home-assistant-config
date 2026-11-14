@@ -66,3 +66,23 @@ This automation stays. It watches `binary_sensor.motion_detected`, the
 room-activity sensors that are not Ring devices, and offers a "Sound alarm"
 action. Ring only covers its own contact and motion sensors, so this still adds
 coverage when the alarm is armed away.
+
+## Tesla Sentry
+
+**Security: Tesla Sentry follows the alarm** turns `switch.bizzylectric_sentry_mode` on when the alarm goes to
+`armed_away` with the Tesla at home, and off on `disarmed` (only if it is on and the car is still home). Not on
+arm home (night): Sentry costs about 1 % battery per few hours.
+
+## Doorbell
+
+**Doorbell: the doorbell has been pressed** flashes the downstairs lights, pushes to all iPhones and speaks on the
+Google Home. The push carries `camera.front_door_snapshot` (ring-mqtt), so the iPhone shows the snapshot and a
+refreshing camera view on long-press. When the SHIELD (`media_player.shield_2`) is on, `remote.shield` gets
+`MEDIA_PAUSE` first (an explicit pause, not a toggle).
+
+Casting the live view to the Kitchen Display and SHIELD (`camera.play_stream` of `camera.front_door_video`, the
+ring-mqtt RTSP stream) is in the automation as a **disabled** step. Tested on 2026-11-14: the stream starts at Ring
+and HA serves the HLS playlist (H.264 High 4.0, AAC), but both Cast receivers stay `idle` and never play. Home
+Assistant serves low-latency HLS by default, which the Cast Default Media Receiver does not play, so
+`configuration.yaml` now sets `stream: ll_hls: false`. After the restart that loads it, test `camera.play_stream`
+again; enable the step only if the picture shows.

@@ -92,3 +92,26 @@ Flemish grid costs include a capacity tariff on the highest 15-minute average im
 300 W under that peak, so charging the car never raises it. When even 5 A does not fit (early in the month, when
 the peak is still near the 2.5 kW minimum, plus a big load such as the oven), boost pauses instead of setting a new peak.
 Native charging (smart charging off, session `idle`) is not steered; it only gets the amps-too-high push.
+
+## Car comfort and reminders
+
+Helpers: `input_boolean.ev_preheat_tomorrow` (armed by Tanja's answer), `input_datetime.ev_preheat_departure`
+(time only, default 06:35, Tanja's early-shift departure) and `input_number.ev_plug_reminder_below` (50 %).
+
+- **Car: ask Tanja to preheat the Tesla tomorrow** — 20:30, car home: if the hourly forecast is below 8 °C
+  around the departure time, push to Tanja only (`notify.mobile_app_t_phone`, tag `ev_preheat`) with
+  **Ja, voorverwarmen** (`EV_PREHEAT_YES`) / **Nee** (`EV_PREHEAT_NO`). Her shifts vary (early on some days, afternoon
+  on others), so it asks instead of following the workday calendar.
+- **Car: handle the preheat answer** — sets `input_boolean.ev_preheat_tomorrow`.
+- **Car: preheat the Tesla before departure** — 20 min before the departure time, when armed and the car is home:
+  `climate.bizzylectric_climate` → `heat_cool`, plus `switch.bizzylectric_defrost` below 3 °C outside. The car is on
+  the charger, so the heat comes from the grid. If the car has not left within 65 min, climate goes off and Tanja
+  gets a push. About 21 command credits per morning (wake + command).
+- **Energy: EV plug reminder** — 21:00, or 15 min after the car parks at home until 23:30: push (`notify.all`, tag
+  `ev_plug_reminder`) when the cable is out and the battery is below `ev_plug_reminder_below`. Without the cable
+  smart charging cannot use tomorrow's sun.
+- **Car: announce the Tesla is almost home** — template trigger on `device_tracker.bizzylectric_route` = `home`
+  (Teslemetry fills it from the navigation destination) and `sensor.bizzylectric_time_to_arrival` ≤ 10 min:
+  TTS on the Kitchen Display. Only when someone is home, sleep mode off, 07:00–22:00. Without navigation there is
+  no ETA, so no announcement.
+- **Security: Tesla Sentry follows the alarm** — see [security-alarm.md](security-alarm.md#tesla-sentry).
