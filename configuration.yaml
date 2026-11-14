@@ -38,3 +38,7 @@ spotcast: !include includes/spotcast.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
+# Temporary: keeps Ring doorbell push events alive (firebase-messaging 0.4.5
+# "Incorrect padding" bug, home-assistant/core#191852). Remove with the folder
+# custom_components/fcm_padding_fix once HA ships the fix; it says so itself.
+fcm_padding_fix:

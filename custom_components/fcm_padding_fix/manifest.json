@@ -1,0 +1,10 @@
+{
+  "domain": "fcm_padding_fix",
+  "name": "FCM padding fix (temporary)",
+  "codeowners": [],
+  "dependencies": [],
+  "documentation": "https://github.com/home-assistant/core/issues/191852",
+  "iot_class": "local_push",
+  "requirements": [],
+  "version": "1.0.0"
+}
