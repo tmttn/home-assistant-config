@@ -84,9 +84,14 @@ Google Home. The push carries `camera.front_door_snapshot` (ring-mqtt), so the i
 refreshing camera view on long-press. When the SHIELD (`media_player.shield_2`) is on, `remote.shield` gets
 `MEDIA_PAUSE` first (an explicit pause, not a toggle).
 
-Casting the live view to the Kitchen Display and SHIELD (`camera.play_stream` of `camera.front_door_video`, the
-ring-mqtt RTSP stream) is in the automation as a **disabled** step. Tested on 2026-11-14: the stream starts at Ring
-and HA serves the HLS playlist (H.264 High 4.0, AAC), but both Cast receivers stay `idle` and never play. Home
-Assistant serves low-latency HLS by default, which the Cast Default Media Receiver does not play, so
-`configuration.yaml` now sets `stream: ll_hls: false`. After the restart that loads it, test `camera.play_stream`
-again; enable the step only if the picture shows.
+Someone home: the Kitchen Display, and the SHIELD when it is already on, shows the live camera for 90 seconds.
+It uses Home Assistant Cast (`cast.show_lovelace_view`) of the hidden Overview subview `doorbell`: a panel view
+with a `picture-entity` card (`camera.front_door_video`, the ring-mqtt RTSP stream, `camera_view: live`,
+`fit_mode: cover`, black background). After 90 s only screens still running the Home Assistant Lovelace app are
+turned off, so the SHIELD returns to the paused app and a screen someone switched over is left alone. A ring
+never wakes a TV that was off.
+
+Casting the raw stream with `camera.play_stream` was tried first (2026-11-14) and does not work here: the
+Cast Default Media Receiver loads HA's HLS playlist (H.264 High 4.0, AAC) but stays `idle`. The HA Cast app plays
+the stream inside the frontend instead, which does work on both the Nest Hub and the SHIELD. The remaining
+black bars come from the camera's aspect ratio versus the screen.
