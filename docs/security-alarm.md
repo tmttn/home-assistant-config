@@ -92,7 +92,9 @@ It uses Home Assistant Cast (`cast.show_lovelace_view`) of the hidden Overview s
 with a `picture-entity` card (`camera.front_door_video`, the ring-mqtt RTSP stream, `camera_view: live`,
 `fit_mode: cover`, black background). Then only screens still running the Home Assistant Lovelace app are
 turned off, so the SHIELD returns to the paused app and a screen someone switched over is left alone. A ring
-never wakes a TV that was off.
+never wakes a TV that was off. The SHIELD is cast 8 s after the Kitchen Display: the first viewer starts the Ring live
+stream (about 2 s), and a second viewer that joins while ring-mqtt is still starting it gets an empty camera card
+(seen on the first live test, 2026-11-14 16:12).
 
 Casting the raw stream with `camera.play_stream` does not work here (tested 2026-11-14): the Cast Default
 Media Receiver gets HA's HLS playlist (H.264 High 4.0, AAC, fMP4 segments) but reports `LOAD_FAILED` ("Failed to
