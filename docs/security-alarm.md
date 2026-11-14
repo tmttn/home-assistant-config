@@ -91,7 +91,9 @@ with a `picture-entity` card (`camera.front_door_video`, the ring-mqtt RTSP stre
 turned off, so the SHIELD returns to the paused app and a screen someone switched over is left alone. A ring
 never wakes a TV that was off.
 
-Casting the raw stream with `camera.play_stream` was tried first (2026-11-14) and does not work here: the
-Cast Default Media Receiver loads HA's HLS playlist (H.264 High 4.0, AAC) but stays `idle`. The HA Cast app plays
+Casting the raw stream with `camera.play_stream` does not work here (tested 2026-11-14): the Cast Default
+Media Receiver gets HA's HLS playlist (H.264 High 4.0, AAC, fMP4 segments) but reports `LOAD_FAILED` ("Failed to
+cast media" in the log) and stays `idle`. Also tried without effect: plain HLS (`stream: ll_hls: false`, verified
+no `EXT-X-PART`), the `hlsSegmentFormat: fmp4` hint via `extra.media_info`, and the HTTPS external URL. The HA Cast app plays
 the stream inside the frontend instead, which does work on both the Nest Hub and the SHIELD. The remaining
 black bars come from the camera's aspect ratio versus the screen.
