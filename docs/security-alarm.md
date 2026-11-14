@@ -86,7 +86,8 @@ refreshing camera view on long-press. When the SHIELD (`media_player.shield_2`) 
 
 Someone home: the Kitchen Display, and the SHIELD when it is already on, shows the live camera until the front door
 opens (`door.opened` on `binary_sensor.openclose_front_door`), at most 90 seconds. The automation runs in `restart`
-mode, so a second ring starts the run (and the 90 seconds) again.
+mode, so a second ring starts the run (and the 90 seconds) again. Ring delivers each press as two pushes about 2 s
+apart, so a trigger within 15 s of the previous run is ignored (cooldown condition on `this.attributes.last_triggered`).
 It uses Home Assistant Cast (`cast.show_lovelace_view`) of the hidden Overview subview `doorbell`: a panel view
 with a `picture-entity` card (`camera.front_door_video`, the ring-mqtt RTSP stream, `camera_view: live`,
 `fit_mode: cover`, black background). Then only screens still running the Home Assistant Lovelace app are
@@ -115,4 +116,6 @@ client at startup: it decodes only the `dh=` / `salt=` value with padding added 
 instead of stopping the listener. It only patches firebase-messaging 0.4.5 or older. Once HA ships a newer
 version it does nothing and raises a persistent notification asking to delete the folder and the
 configuration line. Tested against the real library in the HA container: the original decrypt fails with
-`Incorrect padding` on a Ring-shaped push, the patched one decrypts it.
+`Incorrect padding` on a Ring-shaped push, the patched one decrypts it. Live on 2026-11-14 16:12: a doorbell
+press updated `event.front_door_ding` at once, the automation ran and the Kitchen Display and SHIELD showed the
+camera; no FcmPushClient crash since the patch.
