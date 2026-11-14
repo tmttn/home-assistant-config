@@ -13,6 +13,10 @@
 default_config:
 frontend:
   themes: !include_dir_merge_named themes
+# Plain HLS: the Cast Default Media Receiver (Kitchen Display, SHIELD) does not
+# play Home Assistant's low-latency HLS, so camera.play_stream stayed idle.
+stream:
+  ll_hls: false
 homeassistant:
   allowlist_external_dirs:
     - "/config/.storage"
