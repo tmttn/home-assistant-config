@@ -1,13 +1,4 @@
 ---
-#-
-#  _                _                            _
-# | | _____   _____| | __ _  ___ ___       _   _(_)
-# | |/ _ \ \ / / _ \ |/ _` |/ __/ _ \_____| | | | |
-# | | (_) \ V /  __/ | (_| | (_|  __/_____| |_| | |
-# |_|\___/ \_/ \___|_|\__,_|\___\___|      \__,_|_|
-#
-#
-#- from github.com/tmttn/home-assistant-config
 background: var(--background-image)
 decluttering_templates:
   automation_template:
@@ -1027,10 +1018,15 @@ views:
   subview: true
   title: Vacuum
   type: sections
-- back_path: /lovelace/0
+- back_path: /lovelace/default_view
+  background: black
   cards:
-  - camera_view: live
+  - aspect_ratio: 1024x600
+    camera_view: live
+    card_mod:
+      style: 'ha-card { border-radius: 0; border: none; background: black; }'
     entity: camera.front_door_video
+    fit_mode: cover
     show_name: false
     show_state: false
     tap_action:
