@@ -14,7 +14,7 @@ the automations below work alongside it.
 | Trigger | Extra conditions | Action |
 | --- | --- | --- |
 | `binary_sensor.no_one_home` on for 5 minutes | guest mode off, still no one home, alarm disarmed or armed home | arm away |
-| `input_select.sleep_mode` → `total` | someone home, alarm disarmed | arm home |
+| `input_select.sleep_mode` → `total` | guest mode off, someone home, alarm disarmed | arm home |
 
 - When a Ring door contact (`binary_sensor.openclose_*`) is open, it does not
   try to arm (Ring rejects it, and bypass is set to "Never"); it pushes which
@@ -28,6 +28,10 @@ the automations below work alongside it.
 - It uses `input_select.sleep_mode`, the helper the dashboard's "Go to sleep" /
   "Wake up" buttons set. (An unused `input_boolean.sleep_mode` leftover was
   deleted.) `half` means someone is still up, so only `total` arms.
+
+Guest mode (`input_boolean.guest_mode`) blocks both: guests may come and go, or walk
+downstairs at night, and would set the alarm off. Every leaving-home automation
+(turn everything off, lower the heating, vacuum, arm away, Tesla Sentry) checks it.
 
 ## Security: disarm the alarm when someone arrives or night mode ends
 
@@ -70,7 +74,7 @@ coverage when the alarm is armed away.
 ## Tesla Sentry
 
 **Security: Tesla Sentry follows the alarm** turns `switch.bizzylectric_sentry_mode` on when the alarm goes to
-`armed_away` with the Tesla at home, and off on `disarmed` (only if it is on and the car is still home). Not on
+`armed_away` with the Tesla at home and guest mode off, and off on `disarmed` (only if it is on and the car is still home). Not on
 arm home (night): Sentry costs about 1 % battery per few hours.
 
 ## Doorbell
