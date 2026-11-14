@@ -99,3 +99,20 @@ cast media" in the log) and stays `idle`. Also tried without effect: plain HLS (
 no `EXT-X-PART`), the `hlsSegmentFormat: fmp4` hint via `extra.media_info`, and the HTTPS external URL. The HA Cast app plays
 the stream inside the frontend instead, which does work on both the Nest Hub and the SHIELD. The remaining
 black bars come from the camera's aspect ratio versus the screen.
+
+### Ring push bug and the temporary patch
+
+Since about October 2026 doorbell presses no longer reached Home Assistant: Ring stored them (they show up in
+`sensor.front_door_last_activity` after about 2 minutes of polling) but the push listener crashed on each one:
+`[firebase_messaging.fcmpushclient] Unknown error: Incorrect padding, shutting down FcmPushClient`
+(firebase-messaging 0.4.5, ring-doorbell 0.9.14; open upstream as home-assistant/core#191852 and #189885). The
+push's `crypto-key` header arrives unpadded and with an extra `p256ecdsa=` parameter, and any error stops the
+client until the integration reloads. Re-authenticating does not help. ring-mqtt has the same kind of bug in
+`@eneris/push-receiver` 4.3.0 (since 2026-10-28), so its `binary_sensor.front_door_ding` is not live either.
+
+`custom_components/fcm_padding_fix` (enabled with `fcm_padding_fix:` in `configuration.yaml`) patches the
+client at startup: it decodes only the `dh=` / `salt=` value with padding added and skips an undecryptable push
+instead of stopping the listener. It only patches firebase-messaging 0.4.5 or older. Once HA ships a newer
+version it does nothing and raises a persistent notification asking to delete the folder and the
+configuration line. Tested against the real library in the HA container: the original decrypt fails with
+`Incorrect padding` on a Ring-shaped push, the patched one decrypts it.
