@@ -25,13 +25,14 @@ bedroom lights off 5 s after selecting the mode, with a 4 s transition.
 | Tesla windows open (home only) | `binary_sensor.bizzylectric_windows`, `cover.bizzylectric_windows` | 🪟 Tesla-ramen open | Ramen dicht → `cover.close_cover` |
 | Tesla trunk open (home only) | `cover.bizzylectric_trunk` | 🚗 Tesla-koffer open | Koffer dicht → `cover.close_cover` |
 | Tesla frunk open (home only) | `cover.bizzylectric_frunk` | 🚗 Tesla-frunk open | — (cannot be closed remotely) |
-| Downstairs/outside lights on | living room (+ sub-groups), terrace, kitchen (manual only) | 💡 Licht aan: Woonkamer, … | Lichten uit → `light.turn_off` |
+| Downstairs lights on | living room (+ sub-groups), kitchen (manual only) | 💡 Licht aan: Woonkamer, … | Lichten uit → `light.turn_off` |
 | Waste next morning | `sensor.limburg_net_morgen` (00:00–06:00: `sensor.limburg_net_vandaag`) ≠ `Geen` | 🗑️ Morgen afval: … (buiten gezet?) | — |
 
 "Home" means `device_tracker.bizzylectric_location_tracker` is `home`.
 
-Terrace lights are skipped before midnight: "Light: turn off outside lights" switches
-`light.outside_lights` off at 00:00, so reporting them would be noise. After midnight they are reported.
+Terrace lights are never reported, and the "Lichten uit" button leaves them on. The terrace is
+meant to stay on in the evening; switching it off at bedtime would show outsiders when we go to sleep.
+"Light: turn off outside lights" switches `light.outside_lights` off at 00:00 on its own schedule.
 
 Lights that switch off by themselves are not reported: the toilet (motion + 5 min timer), the Ring
 front garden and porch lights (own motion sensor and timer), and the kitchen when motion turned it on
