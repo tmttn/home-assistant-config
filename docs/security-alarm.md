@@ -84,6 +84,12 @@ Google Home. The push carries `camera.front_door_snapshot` (ring-mqtt), so the i
 refreshing camera view on long-press. When the SHIELD (`media_player.shield_2`) is on, `remote.shield` gets
 `MEDIA_PAUSE` first (an explicit pause, not a toggle).
 
+The announcement ("Er is iemand aan de voordeur.", `tts.google_translate_nl_com` on `media_player.google_home` in the
+living room) plays at 60% volume; at its usual 36% it went unnoticed (2026-11-15). The previous volume is put back
+once the speaker stops playing. A `scene.create` snapshot cannot do this: while the Google Home is idle it reports
+`off` without a `volume_level` attribute, so the automation keeps the volume in a variable and falls back to 0.36.
+The announcement runs in a `parallel` branch next to the live view, so the screens don't wait for the speech.
+
 Someone home: the Kitchen Display, and the SHIELD when it is already on, shows the live camera until the front door
 opens (`door.opened` on `binary_sensor.openclose_front_door`), at most 90 seconds. The automation runs in `restart`
 mode, so a second ring starts the run (and the 90 seconds) again. Ring delivers each press as two pushes about 2 s
