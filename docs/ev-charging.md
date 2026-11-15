@@ -62,6 +62,9 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 | `input_boolean.ev_charge_full_now` | Boost: keep the car charging up to its charge limit now (or from the next plug-in at home), at peak-safe amps. Turns itself off when the session ends. |
 | `input_select.ev_charging_session` | Current session: `idle`, `solar`, `night`, `boost`. Restart-safe state. |
 | `input_number.ev_minimum_battery` | Night fallback when the battery is below this (default 30 %). |
+| `input_number.ev_morning_target_battery` | Morning target: the battery has at least this much by the morning target time (default 50 %). |
+| `input_datetime.ev_morning_target_time` | Time the morning target must be reached (default 06:00). |
+| `binary_sensor.ev_morning_target_charge_needed` | Template helper: on once charging must start to reach the morning target in time. Assumes ~0.28 %/h per amp (measured 2026-11-10: ~12 A gave ~3.75 %/h) at the amps that fit under this month's peak minus 300 W and ~400 W house load (5 A up to the charger max), plus 30 min margin. At 13 A: 5 % → start 17:08, 15 % → 19:53, 25 % → 22:37. |
 | `input_number.ev_minimum_solar_forecast` | Night fallback when the coming day's Forecast.Solar estimate is below this (default 8 kWh). |
 | `sensor.ev_peak_safe_charging_amps` | Template helper: highest amps that keep grid import under this month's peak demand (min 2.5 kW) minus 300 W, capped at the charger's max. House load = grid minus `sensor.bizzylectric_charger_current` × 230 W while charging. |
 
@@ -69,7 +72,12 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 
 - **Energy: EV smart charging** — session state machine.
   - Solar: start after 5 min of >1.2 kW export, stop after 10 min of >300 W import.
-  - Night (22:00–07:00): only when battery or forecast is below the minimum; ends at 07:00 once the battery is above the minimum.
+  - Night (22:00–07:00): only when the battery is below the minimum or the morning target, or the forecast is below the minimum; ends at 07:00 once the battery is above the minimum.
+  - Morning target (since 2026-11-15): plugged in at home with less than `ev_morning_target_battery`, the car reaches it by
+    `ev_morning_target_time`. A night session starts at 22:00, or earlier (at the price of day-rate power) as soon as
+    `binary_sensor.ev_morning_target_charge_needed` turns on, also checked after an HA restart. When the coming day's
+    forecast is at least the minimum, the night session stops as soon as the target is reached, so the rest comes from
+    solar; with a poor forecast it keeps charging until 07:00 as before.
   - Boost: `ev_charge_full_now` on → charge until full, no sun/night rules, at peak-safe amps; charging is switched back on if it stops for 2 min. Turning it off returns to smart charging.
   - Boost peak guard: when even the 5 A minimum would set a new monthly peak
     (`sensor.ev_peak_safe_charging_amps` below 5 for 2 min, or already at boost start), charging pauses
