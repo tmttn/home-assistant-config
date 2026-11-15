@@ -38,11 +38,20 @@ downstairs at night, and would set the alarm off. Every leaving-home automation
 | Trigger | Extra conditions | Action |
 | --- | --- | --- |
 | `binary_sensor.anyone_home` occupancy detected | alarm arming, armed away or armed home | disarm |
-| `input_select.sleep_mode` `half`/`total` → `off` | someone home, alarm armed home | disarm |
+| First motion downstairs (hall, kitchen, toilet Zigbee sensors) | someone home, alarm armed home, and sleep mode went `off` *after* the alarm was armed, or 05:00–12:00 | disarm |
 
-Sleep mode turns off when the wake-up alarm stops, or at 09:00 ("Night mode:
-automatically turn off when alarm turns off or at 9AM"). An alarm that was
-armed away stays armed then. The automation waits up to 60 seconds for
+Sleep mode turning off alone (wake-up alarm, 09:00 fallback) does not disarm;
+the first motion downstairs afterwards does. An alarm that was armed away stays
+armed then.
+
+"Sleep mode is off" is not enough on its own: Ring's schedule arms home at
+23:15 even when nobody pressed "Go to sleep", so sleep mode is still `off`.
+On 2026-11-15 that let evening motion in the hall disarm the alarm two minutes
+after Ring armed it. The condition therefore also checks that
+`input_select.sleep_mode` last changed after `alarm_control_panel.bunderhome_alarm`
+(a template condition; no native condition compares two entities' timestamps).
+After an HA restart both reset to the restart time, so only the 05:00–12:00
+window disarms until sleep mode changes again. The automation waits up to 60 seconds for
 `disarmed` and pushes the result.
 
 The disarm call passes a `code`. The ring-mqtt app has a `disarm_code` option,
