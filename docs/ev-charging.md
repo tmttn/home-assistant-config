@@ -86,6 +86,11 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
     A long pause can let the car sleep, so the resume command may cost a wake (20 credits).
   - Plugged in at home with no need → native charging is paused and a push
     (`notify.all`, tag `ev_plugged_in`) offers **Nu volladen** (`EV_CHARGE_FULL`), which turns boost on.
+  - Every plug-in at home gets one push on tag `ev_plugged_in` (since 2026-11-15; before, only the paused
+    case did, so a plug-in that started a night session stayed silent): paused waiting for sun, charging
+    now on solar (start amps), charging now in a night session (battery, the reasons: below minimum /
+    below morning target / poor forecast / deadline, and whether it stops at the target or runs to 07:00),
+    or charging full under boost. Solar and night pushes also offer **Nu volladen**.
   - Ends on unplug, `complete`, car leaving home.
 - **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min, never above the charger max. Target −100 W (solar) or the peak cap (night, boost). Each change is one Teslemetry command credit.
 - **Energy: EV charging amps too high** — push (`notify.all`) when the car charges at home above `sensor.ev_peak_safe_charging_amps` for 3 min while charging natively (`idle`), with a button to lower to the peak-safe amps or to pause. Boost no longer pushes here: it pauses itself. Max one push per 30 min.
