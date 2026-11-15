@@ -62,9 +62,9 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 | `input_boolean.ev_charge_full_now` | Boost: keep the car charging up to its charge limit now (or from the next plug-in at home), at peak-safe amps. Turns itself off when the session ends. |
 | `input_select.ev_charging_session` | Current session: `idle`, `solar`, `night`, `boost`. Restart-safe state. |
 | `input_number.ev_minimum_battery` | Night fallback when the battery is below this (default 30 %). |
-| `input_number.ev_morning_target_battery` | Morning target: the battery has at least this much by the morning target time (default 50 %). |
+| `input_number.ev_morning_target_battery` | Morning target: the battery has at least this much by the morning target time (default 60 %, raised from 50 % on 2026-11-15). |
 | `input_datetime.ev_morning_target_time` | Time the morning target must be reached (default 06:00). |
-| `binary_sensor.ev_morning_target_charge_needed` | Template helper: on once charging must start to reach the morning target in time. Assumes ~0.28 %/h per amp (measured 2026-11-10: ~12 A gave ~3.75 %/h) at the amps that fit under this month's peak minus 300 W and ~400 W house load (5 A up to the charger max), plus 30 min margin. At 13 A: 5 % → start 17:08, 15 % → 19:53, 25 % → 22:37. |
+| `binary_sensor.ev_morning_target_charge_needed` | Template helper: on once charging must start to reach the morning target in time. Assumes ~0.28 %/h per amp (measured 2026-11-10: ~12 A gave ~3.75 %/h) at the amps that fit under this month's peak minus 300 W and ~400 W house load (5 A up to the charger max), plus 30 min margin. At 13 A with the 60 % target: 5 % → start 14:23, 15 % → 17:08, 25 % → 19:53. |
 | `input_number.ev_minimum_solar_forecast` | Night fallback when the coming day's Forecast.Solar estimate is below this (default 8 kWh). |
 | `sensor.ev_peak_safe_charging_amps` | Template helper: highest amps that keep grid import under this month's peak demand (min 2.5 kW) minus 300 W, capped at the charger's max. House load = grid minus `sensor.bizzylectric_charger_current` × 230 W while charging. |
 
