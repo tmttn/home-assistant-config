@@ -72,12 +72,17 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 
 - **Energy: EV smart charging** — session state machine.
   - Solar: start after 5 min of >1.2 kW export, stop after 10 min of >300 W import.
-  - Night (22:00–07:00): only when the battery is below the minimum or the morning target, or the forecast is below the minimum; ends at 07:00 once the battery is above the minimum.
+  - Night (22:00–07:00): only when the battery is below the minimum or the morning target, or the forecast is below the minimum; ends at 07:00 once the battery is above the minimum and the morning target.
   - Morning target (since 2026-11-15): plugged in at home with less than `ev_morning_target_battery`, the car reaches it by
     `ev_morning_target_time`. A night session starts at 22:00, or earlier (at the price of day-rate power) as soon as
     `binary_sensor.ev_morning_target_charge_needed` turns on, also checked after an HA restart. When the coming day's
     forecast is at least the minimum, the night session stops as soon as the target is reached, so the rest comes from
     solar; with a poor forecast it keeps charging until 07:00 as before.
+  - Missed morning target (since 2026-11-16): plugged in too late or too low to make it (e.g. 16 % at 22:32 with a
+    60 % target: 13 A ≈ 3.6 %/h gave 43 % by 06:00, 47 % by 07:00), the night session no longer stops at 07:00 but
+    keeps charging at peak-safe amps until the target is reached, then stops whatever the forecast. The night
+    plug-in push estimates the battery at the target time (same ~0.28 %/h per amp model as the deadline sensor) and
+    says when the target will not be made in time.
   - Boost: `ev_charge_full_now` on → charge until full, no sun/night rules, at peak-safe amps; charging is switched back on if it stops for 2 min. Turning it off returns to smart charging.
   - Boost peak guard: when even the 5 A minimum would set a new monthly peak
     (`sensor.ev_peak_safe_charging_amps` below 5 for 2 min, or already at boost start), charging pauses
