@@ -61,7 +61,7 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 | `input_boolean.ev_smart_charging` | Master switch for solar/night charging. Off = the car charges natively on plug-in. |
 | `input_boolean.ev_charge_full_now` | Boost: keep the car charging up to its charge limit now (or from the next plug-in at home), at peak-safe amps. Turns itself off when the session ends. |
 | `input_select.ev_charging_session` | Current session: `idle`, `solar`, `night`, `boost`. Restart-safe state. |
-| `input_number.ev_minimum_battery` | Night fallback when the battery is below this (default 30 %). |
+| `input_number.ev_minimum_battery` | Floor (60 % since 2026-11-16, was 30 %): below it the car charges from the grid at once, day or night, up to this level; above it, daytime charging only uses solar surplus. |
 | `input_number.ev_morning_target_battery` | Morning target: the battery has at least this much by the morning target time (default 50 %). |
 | `input_datetime.ev_morning_target_time` | Time the morning target must be reached (default 06:00). |
 | `binary_sensor.ev_morning_target_charge_needed` | Template helper: on once charging must start to reach the morning target in time. Assumes ~0.28 %/h per amp (measured 2026-11-10: ~12 A gave ~3.75 %/h) at the amps that fit under this month's peak minus 300 W and ~400 W house load (5 A up to the charger max), plus 30 min margin. At 13 A: 5 % → start 17:08, 15 % → 19:53, 25 % → 22:37. |
@@ -72,7 +72,13 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 
 - **Energy: EV smart charging** — session state machine.
   - Solar: start after 5 min of >1.2 kW export, stop after 10 min of >300 W import.
-  - Night (22:00–07:00): only when the battery is below the minimum or the morning target, or the forecast is below the minimum; ends at 07:00 once the battery is above the minimum and the morning target.
+  - Night (22:00–07:00): when the battery is below the minimum or the morning target, or the forecast is below the minimum; ends at 07:00 once the battery is above the minimum and the morning target.
+  - Minimum battery at any time (since 2026-11-16): plugged in at home below `ev_minimum_battery` (60 %), a grid
+    session (session `night`, peak-safe amps) starts at once, also during the day, and stops as soon as the battery
+    is above the minimum and the morning target. The rest up to the charge limit (82 %) comes from solar surplus.
+    Before, below the minimum the car only charged at night (22:00–07:00) or on the morning-target deadline.
+    Changing the minimum while plugged in re-checks at once. At night with a good forecast the session now also
+    stops at the minimum when that is above the morning target (trigger `battery_ok` on the target-reached stop).
   - Morning target (since 2026-11-15): plugged in at home with less than `ev_morning_target_battery`, the car reaches it by
     `ev_morning_target_time`. A night session starts at 22:00, or earlier (at the price of day-rate power) as soon as
     `binary_sensor.ev_morning_target_charge_needed` turns on, also checked after an HA restart. When the coming day's
