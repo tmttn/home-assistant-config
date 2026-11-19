@@ -13,7 +13,8 @@ the automations below work alongside it.
 
 | Trigger | Extra conditions | Action |
 | --- | --- | --- |
-| `binary_sensor.no_one_home` on for 5 minutes | guest mode off, still no one home, alarm disarmed or armed home | arm away |
+| `binary_sensor.no_one_home` on for 5 minutes | guest mode off, cleaner schedule off, still no one home, alarm disarmed or armed home | arm away |
+| `schedule.huishoudhulp` on → off (cleaner leaves) | same as above | arm away |
 | `input_select.sleep_mode` → `total` | guest mode off, someone home, alarm disarmed | arm home |
 
 - When a Ring door contact (`binary_sensor.openclose_*`) is open, it does not
@@ -32,6 +33,21 @@ the automations below work alongside it.
 Guest mode (`input_boolean.guest_mode`) blocks both: guests may come and go, or walk
 downstairs at night, and would set the alarm off. Every leaving-home automation
 (turn everything off, lower the heating, vacuum, arm away, Tesla Sentry) checks it.
+
+### Cleaner
+
+The cleaner (huishoudhulp) comes on Thursday from 12:00 to 17:00. During that
+block `schedule.huishoudhulp` (schedule helper, Settings → Helpers) is on and
+the alarm does not arm away when everyone leaves; she is not tracked as a
+person, so `binary_sensor.no_one_home` would turn on while she is inside.
+When the block ends and still no one is home, the same automation arms away
+(the door check and the Ring confirmation push apply as usual).
+
+Exceptions are handled in the schedule helper itself: drag or delete the
+Thursday block, or add an extra block for another day. A schedule only knows
+weekly blocks, so put a moved or cancelled visit back afterwards. Arming by
+hand in the Ring app is not blocked. Ring's own 23:15 "Nacht" schedule is
+outside the block and unaffected.
 
 ## Security: disarm the alarm when someone arrives or night mode ends
 
