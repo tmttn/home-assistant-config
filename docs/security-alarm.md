@@ -13,8 +13,8 @@ the automations below work alongside it.
 
 | Trigger | Extra conditions | Action |
 | --- | --- | --- |
-| `binary_sensor.no_one_home` on for 5 minutes | guest mode off, cleaner schedule off, still no one home, alarm disarmed or armed home | arm away |
-| `schedule.huishoudhulp` on → off (cleaner leaves) | same as above | arm away |
+| `binary_sensor.no_one_home` on for 5 minutes | guest mode off, cleaner schedule off for 15 minutes, still no one home, alarm disarmed or armed home | arm away |
+| `schedule.huishoudhulp` off for 15 minutes (cleaner has left) | same as above | arm away |
 | `input_select.sleep_mode` → `total` | guest mode off, someone home, alarm disarmed | arm home |
 
 - When a Ring door contact (`binary_sensor.openclose_*`) is open, it does not
@@ -40,8 +40,11 @@ The cleaner (huishoudhulp) comes on Thursday from 12:00 to 17:00. During that
 block `schedule.huishoudhulp` (schedule helper, Settings → Helpers) is on and
 the alarm does not arm away when everyone leaves; she is not tracked as a
 person, so `binary_sensor.no_one_home` would turn on while she is inside.
-When the block ends and still no one is home, the same automation arms away
-(the door check and the Ring confirmation push apply as usual).
+She gets 15 minutes after the block to finish and leave: the schedule must
+have been off that long before the alarm arms away. If still no one is home
+at 17:15, the same automation arms away then (the door check and the Ring
+confirmation push apply as usual). After an HA restart that 15-minute clock
+starts again, so arming away can wait up to 15 minutes longer.
 
 Exceptions are handled in the schedule helper itself: drag or delete the
 Thursday block, or add an extra block for another day. A schedule only knows
