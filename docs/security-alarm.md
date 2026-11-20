@@ -112,6 +112,14 @@ Google Home. The push carries `camera.front_door_snapshot` (ring-mqtt), so the i
 refreshing camera view on long-press. When the SHIELD (`media_player.shield_2`) is on, `remote.shield` gets
 `MEDIA_PAUSE` first (an explicit pause, not a toggle).
 
+The flash (`light.turn_on` with `flash: short` on `light.living_room_lights` and `light.kitchen_lights`) is a call
+from outside Adaptive Lighting, so with `take_over_control` on, `switch.adaptive_lighting_default` marked every
+flashed light that was on as manually controlled, and they stopped adapting (reproduced 2026-11-20; a light that was
+off is not marked). The automation now records the switch's `manual_control` list before the flash and, 5 s later,
+calls `adaptive_lighting.set_manual_control` with `manual_control: false` for only the lights the flash added. A
+light someone set by hand before the ring stays manual. The call is skipped when nothing was added: an empty
+`lights` list would unmark every light on the switch.
+
 The announcement ("Er is iemand aan de voordeur.", `tts.google_translate_nl_com` on `media_player.google_home` in the
 living room) plays at 60% volume; at its usual 36% it went unnoticed (2026-11-15). The previous volume is put back
 once the speaker stops playing. A `scene.create` snapshot cannot do this: while the Google Home is idle it reports
