@@ -39,3 +39,15 @@ gas, Tesla charging (`sensor.bizzylectric_energy_added`), an estimated cost and 
 totals come from `recorder.get_statistics` (period `week`, type `change`) on the Energy dashboard statistics, so
 restarts don't matter. Cost = import × the tariff sensors + gas × `sensor.gas_price` − export ×
 `sensor.electricity_price_injection`; fixed costs and the capacity tariff are left out.
+
+## Climate: away setback with a "turn back on" button
+
+After 45 min with nobody home, "Climate: lower the heating when everyone has left" drops the heating to
+`input_number.temperature_low` and pushes to `notify.all_iphones` (tag `heating_away_setback`). The push has a
+"Verwarming terug aanzetten" button (action `HEATING_AWAY_RESTORE`) for short trips.
+
+"Climate: restore the heating when someone comes home" handles the button with an event trigger, so it works hours
+later and survives restarts (no `wait_for_trigger`). It restores the schedule setpoint: high 11:00–23:30, moderate
+05:00–11:00, and moderate at night (arrival alone does nothing at night). It only raises, never lowers, and
+replaces the push with "Verwarming staat terug aan". Coming home later still runs the normal arrival restore; the
+setback does not fire again until the house is occupied and then empty for 45 min.
