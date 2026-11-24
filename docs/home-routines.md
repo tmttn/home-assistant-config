@@ -56,8 +56,8 @@ setback does not fire again until the house is occupied and then empty for 45 mi
 
 Added on 2026-11-24. iOS gives no app (the HA Companion app included) access to the Clock alarms; only Shortcuts can
 read them. A Shortcut on Tom's iPhone writes the times of all enabled alarms into `input_text.tom_iphone_alarms`
-as `HH:mm,HH:mm` (empty = no alarm set, `never` = not synced yet). Home Assistant works out which one is next, so
-the Shortcut needs no date logic.
+(empty = no alarm set, `never` = not synced yet). Every `H:MM` in the text counts, so the date format the phone
+adds does not matter. Home Assistant works out which one is next, so the Shortcut needs no date logic.
 
 `sensor.next_alarm` (template helper) now picks:
 
