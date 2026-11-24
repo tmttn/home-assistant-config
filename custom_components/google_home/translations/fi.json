@@ -43,36 +43,17 @@
           "homes": "Valitse vähintään yksi koti. Kaiuttimet ja näytöt lisätään myös kodeista, joiden jäseneksi tilisi tulee myöhemmin."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Kirjaudu uudelleen",
-        "description": "Google ei enää hyväksy tallennettuja kirjautumistietoja ({name}). Kirjaudu uudelleen samalle Google-tilille: laitteesi, entiteettisi ja automaatiosi säilyvät ennallaan. Siihen asti laitteidesi entiteetit voivat näyttää vanhentuneita arvoja, tai ne eivät välttämättä ole käytettävissä.",
-        "menu_options": {
-          "browser": "Kirjautuminen selaimella (suositeltu)",
-          "master_token": "Päätunniste"
-        },
-        "menu_option_descriptions": {
-          "browser": "Kirjaudu Googleen tietokoneen selaimella ja liitä sitten eväste.",
-          "master_token": "Liitä päätunniste, joka sinulla jo on."
-        }
-      },
-      "reauth_browser": {
-        "title": "Kirjautuminen selaimella",
-        "description": "1. Avaa tietokoneella {embedded_setup_url} selaimen yksityisessä ikkunassa, esimerkiksi incognito-ikkunassa, ja kirjaudu sisään samalle Google-tilille. Hyväksymisen jälkeen sivu saattaa jatkaa lataamista; tämä on normaalia.\n2. Avaa selaimen kehittäjätyökalut ja etsi sivuston `accounts.google.com` evästeet.\n3. Kopioi `oauth_token`-evästeen arvo ja liitä se heti alle. Se voi vanhentua nopeasti ja toimii vain kerran.\n\nVaiheittaiset ohjeet: {browser_docs_url}",
+        "description": "Kirjaudu uudelleen Google-tilille, jota {name} käyttää. Laitteesi, entiteettisi ja automaatiosi säilyvät ennallaan. Siihen asti laitteidesi entiteetit voivat näyttää vanhentuneita arvoja, tai ne eivät välttämättä ole käytettävissä.",
         "data": {
-          "oauth_token": "oauth_token-eväste"
-        },
-        "data_description": {
-          "oauth_token": "Alkaa merkkijonolla oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Päätunniste",
-        "description": "Liitä saman Google-tilin päätunniste, jonka olet saanut esimerkiksi toisella työkalulla.",
-        "data": {
+          "sign_in_method": "Kirjautumistapa",
+          "oauth_token": "oauth_token-eväste",
           "master_token": "Google-tilin päätunniste"
         },
         "data_description": {
-          "master_token": "Alkaa merkkijonolla aas_et/"
+          "oauth_token": "1. Avaa tietokoneella {embedded_setup_url} selaimen yksityisessä ikkunassa, esimerkiksi incognito-ikkunassa, ja kirjaudu sisään samalle Google-tilille. Hyväksymisen jälkeen sivu saattaa jatkaa lataamista; tämä on normaalia.\n2. Avaa selaimen kehittäjätyökalut ja etsi sivuston `accounts.google.com` evästeet.\n3. Kopioi `oauth_token`-evästeen arvo ja liitä se heti tähän kenttään. Se voi vanhentua nopeasti ja toimii vain kerran.\n\nVaiheittaiset ohjeet: {browser_docs_url}\n\nAlkaa merkkijonolla oauth2_4/",
+          "master_token": "Liitä saman Google-tilin päätunniste, jonka olet saanut esimerkiksi toisella työkalulla.\n\nAlkaa merkkijonolla aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google ei hyväksynyt kirjautumista. Lisätietoja on Home Assistantin lokeissa.",
       "google-unreachable": "Googleen ei saatu yhteyttä. Tarkista, että Home Assistant on yhteydessä internetiin, ja yritä sitten uudelleen.",
       "google-busy": "Google on ruuhkautunut tai rajoittaa kirjautumisia. Odota muutama minuutti ja kirjaudu sitten uudelleen.",
-      "oauth-token-format": "Tämä ei ole oauth_token-eväste. Sen arvo alkaa merkkijonolla oauth2_4/.",
-      "master-token-format": "Päätunniste alkaa merkkijonolla aas_et/ ja on {token_length} merkkiä pitkä. Kopioi koko tunniste.",
+      "oauth-token-format": "Evästeen arvon on alettava merkkijonolla oauth2_4/. Kopioi oauth_token-evästeen koko arvo ja liitä se tähän.",
+      "master-token-format": "Päätunnisteen on alettava merkkijonolla aas_et/. Kopioi koko tunniste ja liitä se tähän.",
+      "master-token-empty": "Syötit vain merkkijonon aas_et/. Kopioi koko päätunniste ja liitä se tähän.",
+      "master-token-characters": "Päätunniste sisältää välilyöntejä, rivinvaihtoja tai merkkejä, joita ei tueta. Kopioi koko tunniste uudelleen ja liitä se tähän yhdelle riville.",
+      "master-token-too-short": "Päätunnisteessa on oltava vähintään 200 merkkiä. Kopioi koko tunniste. Pituus: {token_length} merkkiä.",
       "other-account": "Kirjauduit eri Google-tilille, joten mitään ei muutettu. Kirjaudu tilille, jota tämä integraatio käyttää. Jos haluat käyttää sen sijaan toista tiliä, poista integraatio ja lisää se uudelleen.",
       "no-home-selected": "Valitse vähintään yksi koti."
     },
     "abort": {
-      "no-home": "Googlen mukaan tämä tili ei ole minkään kodin jäsen, joten lisättäviä kaiuttimia tai näyttöjä ei ole. Kutsu Google Home ‑sovelluksessa tili kotiin, jossa laitteesi ovat, hyväksy kutsu ja lisää sitten integraatio uudelleen. Google Workspace ‑tiliä ei voi kutsua, joten lisää integraatio sen sijaan Gmail-tilillä, joka on kodin jäsen. Lisätietoja on osoitteessa {docs_url}."
+      "no-home": "Googlen mukaan tämä tili ei ole minkään kodin jäsen, joten lisättäviä kaiuttimia tai näyttöjä ei ole. Kutsu Google Home ‑sovelluksessa tili kotiin, jossa laitteesi ovat, hyväksy kutsu ja lisää sitten integraatio uudelleen. Google Workspace ‑tiliä ei voi kutsua, joten lisää integraatio sen sijaan Gmail-tilillä, joka on kodin jäsen. Lisätietoja on osoitteessa {docs_url}.",
+      "unsupported-ha-version": "Tämä Google Home ‑integraation versio vaatii Home Assistantin version {required_version} tai uudemman, mutta tässä järjestelmässä on versio {current_version}. Päivitä Home Assistant ja lisää sitten integraatio uudelleen. Jos haluat sen sijaan pysyä Home Assistantin versiossa {current_version}, asenna integraation aiempi julkaisu. Ohjeet ovat osoitteessa {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Seuraavat laitteet eivät vahvistaneet käynnistyvänsä uudelleen: {devices}. Tarkista, että laitteet ovat verkossa, ja yritä myöhemmin uudelleen."
     },
+    "saved_sign_in_invalid": {
+      "message": "Tallennetut kirjautumistiedot puuttuvat tai ne ovat virheelliset. Kirjaudu uudelleen."
+    },
     "sign_in_rejected": {
       "message": "Google ei hyväksynyt kirjautumista ({reason}). Kirjaudu uudelleen."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google ei ilmoita tilillesi yhtään kotia",
       "description": "Googlen mukaan tili, jolla integraatio kirjautui, ei ole minkään kodin jäsen, joten lisättäviä kaiuttimia tai näyttöjä ei ole. Kutsu Google Home ‑sovelluksessa tämä tili kotiin, jossa laitteesi ovat, ja hyväksy kutsu. Lataa sitten [Google Home ‑integraatio]({integration_url}) uudelleen: valitse **⋮** > **Lataa uudelleen**.\n\nJos pidät integraation tarkoituksella, esimerkiksi muuton aikana, valitse **Sivuta**. Jos et enää tarvitse sitä, voit poistaa sen samalla sivulla."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home vaatii Home Assistantin version {required_version} tai uudemman",
+      "description": "Tämä Google Home ‑integraation versio vaatii Home Assistantin version {required_version} tai uudemman, mutta tässä järjestelmässä on versio {current_version}, joten integraatiota ei otettu käyttöön. Sen asetukset säilyvät, ja se käynnistyy niillä, kun päivität Home Assistantin.\n\nJos haluat sen sijaan pysyä Home Assistantin versiossa {current_version}, asenna integraation aiempi julkaisu. Ohjeet ovat osoitteessa {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Seuraa Bluetooth-laitetta",
-          "description": "Anna puhelimen IRK tai sellaisen laitteen MAC-osoite, jonka osoite ei koskaan muutu, kuten jotkin kellot ja paikannustagit. Puhelimet vaihtavat osoitettaan muutaman minuutin välein, joten seuraa niitä IRK:n avulla. Ohjeet IRK:n löytämiseen: {docs_url}.",
+          "description": "Anna puhelimen IRK tai sellaisen laitteen MAC-osoite, jonka osoite ei koskaan muutu, kuten jotkin kellot ja paikannustagit. Puhelimet vaihtavat osoitettaan ajoittain, joten seuraa niitä IRK:n avulla. Ohjeet IRK:n löytämiseen: {docs_url}.",
           "data": {
             "name": "Nimi",
             "irk_or_mac": "IRK tai MAC-osoite",
@@ -414,6 +406,12 @@
         "60": "60 sekuntia",
         "90": "90 sekuntia",
         "120": "120 sekuntia"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Kirjautuminen selaimella (suositeltu)",
+        "master_token": "Päätunniste"
       }
     }
   }

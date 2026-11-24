@@ -43,36 +43,17 @@
           "homes": "家を 1 つ以上選択してください。お使いのアカウントが今後メンバーになる家のスピーカーとディスプレイも追加されます。"
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "再度ログイン",
-        "description": "Google が {name} の保存済みログイン情報を受け付けなくなりました。同じ Google アカウントにもう一度ログインしてください。デバイス、エンティティ、オートメーションはそのまま残ります。ログインし直すまで、デバイスのエンティティに古い値が表示されたり、エンティティが利用できなくなったりすることがあります。",
-        "menu_options": {
-          "browser": "ブラウザでログイン（推奨）",
-          "master_token": "マスタートークン"
-        },
-        "menu_option_descriptions": {
-          "browser": "パソコンのブラウザで Google にログインし、Cookie を貼り付けます。",
-          "master_token": "取得済みのマスタートークンを貼り付けます。"
-        }
-      },
-      "reauth_browser": {
-        "title": "ブラウザでログイン",
-        "description": "1. パソコンのブラウザでプライベート ウィンドウ（シークレット ウィンドウなど）を開き、{embedded_setup_url} にアクセスして同じ Google アカウントにログインします。同意した後もページの読み込みが続く場合がありますが、問題ありません。\n2. ブラウザの開発者ツールを開き、`accounts.google.com` の Cookie を探します。\n3. `oauth_token` Cookie の値をコピーして、すぐに下の欄に貼り付けてください。すぐに有効期限が切れることがあり、1 回しか使用できません。\n\n詳しい手順: {browser_docs_url}",
+        "description": "{name} が使用している Google アカウントにもう一度ログインしてください。デバイス、エンティティ、オートメーションはそのまま残ります。ログインし直すまで、デバイスのエンティティに古い値が表示されたり、エンティティが利用できなくなったりすることがあります。",
         "data": {
-          "oauth_token": "oauth_token Cookie"
-        },
-        "data_description": {
-          "oauth_token": "oauth2_4/ で始まります"
-        }
-      },
-      "reauth_master_token": {
-        "title": "マスタートークン",
-        "description": "別のツールなどで取得した、同じ Google アカウントのマスタートークンを貼り付けてください。",
-        "data": {
+          "sign_in_method": "ログイン方法",
+          "oauth_token": "oauth_token Cookie",
           "master_token": "Google アカウントのマスタートークン"
         },
         "data_description": {
-          "master_token": "aas_et/ で始まります"
+          "oauth_token": "1. パソコンのブラウザでプライベート ウィンドウ（シークレット ウィンドウなど）を開き、{embedded_setup_url} にアクセスして同じ Google アカウントにログインします。同意した後もページの読み込みが続く場合がありますが、問題ありません。\n2. ブラウザの開発者ツールを開き、`accounts.google.com` の Cookie を探します。\n3. `oauth_token` Cookie の値をコピーして、すぐにこの欄に貼り付けてください。すぐに有効期限が切れることがあり、1 回しか使用できません。\n\n詳しい手順: {browser_docs_url}\n\noauth2_4/ で始まります",
+          "master_token": "別のツールなどで取得した、同じ Google アカウントのマスタートークンを貼り付けてください。\n\naas_et/ で始まります"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google がログインを受け付けませんでした。詳細は Home Assistant のログを確認してください。",
       "google-unreachable": "Google に接続できませんでした。Home Assistant がインターネットに接続されていることを確認してから、もう一度お試しください。",
       "google-busy": "Google が混雑しているか、ログインを制限しています。数分待ってから、再度ログインしてください。",
-      "oauth-token-format": "これは oauth_token Cookie ではありません。値は oauth2_4/ で始まります。",
-      "master-token-format": "マスタートークンは aas_et/ で始まる {token_length} 文字の文字列です。トークン全体をコピーしてください。",
+      "oauth-token-format": "Cookie の値は oauth2_4/ で始まる必要があります。oauth_token Cookie の値をすべてコピーして、ここに貼り付けてください。",
+      "master-token-format": "マスタートークンは aas_et/ で始まる必要があります。トークン全体をコピーして、ここに貼り付けてください。",
+      "master-token-empty": "aas_et/ だけが入力されています。マスタートークン全体をコピーして、ここに貼り付けてください。",
+      "master-token-characters": "マスタートークンに空白、改行、または対応していない文字が含まれています。トークン全体をもう一度コピーし、1 行でここに貼り付けてください。",
+      "master-token-too-short": "マスタートークンは 200 文字以上である必要があります。トークン全体をコピーしてください。文字数: {token_length}。",
       "other-account": "別の Google アカウントでログインしたため、何も変更されていません。この統合で使用しているアカウントでログインしてください。代わりに今回ログインしたアカウントを使用するには、統合を削除して追加し直してください。",
       "no-home-selected": "家を 1 つ以上選択してください。"
     },
     "abort": {
-      "no-home": "Google によると、このアカウントはどの家のメンバーでもないため、追加できるスピーカーやディスプレイはありません。Google Home アプリで、デバイスがある家にこのアカウントを招待して招待を承諾し、統合を追加し直してください。Google Workspace アカウントは招待できないため、代わりに家のメンバーである Gmail アカウントで統合を追加してください。詳しくは {docs_url} をご覧ください。"
+      "no-home": "Google によると、このアカウントはどの家のメンバーでもないため、追加できるスピーカーやディスプレイはありません。Google Home アプリで、デバイスがある家にこのアカウントを招待して招待を承諾し、統合を追加し直してください。Google Workspace アカウントは招待できないため、代わりに家のメンバーである Gmail アカウントで統合を追加してください。詳しくは {docs_url} をご覧ください。",
+      "unsupported-ha-version": "このバージョンの Google Home 統合には Home Assistant {required_version} 以降が必要ですが、このシステムでは {current_version} が動作しています。Home Assistant を更新してから、統合を追加し直してください。Home Assistant {current_version} を使い続ける場合は、統合の以前のリリースをインストールしてください。手順は {docs_url} をご覧ください。"
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "次のデバイスから再起動するという確認が得られませんでした: {devices}。これらのデバイスがオンラインであることを確認し、しばらくしてからもう一度お試しください。"
     },
+    "saved_sign_in_invalid": {
+      "message": "保存されているログイン情報が見つからないか、無効です。再度ログインしてください。"
+    },
     "sign_in_rejected": {
       "message": "Google がログインを受け付けませんでした（{reason}）。再度ログインしてください。"
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google からアカウントの家が報告されていません",
       "description": "Google によると、統合がログインしているアカウントはどの家のメンバーでもないため、追加できるスピーカーやディスプレイはありません。Google Home アプリで、デバイスがある家にこのアカウントを招待し、招待を承諾してください。その後、[Google Home 統合]({integration_url})を再読み込みします。「**⋮**」>「**再読込**」を選択してください。\n\n引っ越し中など、意図的に統合を残しておく場合は、「**無視**」を選択してください。不要になった場合は、同じページで統合を削除できます。"
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home には Home Assistant {required_version} 以降が必要です",
+      "description": "このバージョンの Google Home 統合には Home Assistant {required_version} 以降が必要ですが、このシステムでは {current_version} が動作しているため、統合はセットアップされませんでした。統合の設定は保持されており、Home Assistant を更新すると、その設定で起動します。\n\nHome Assistant {current_version} を使い続ける場合は、統合の以前のリリースをインストールしてください。手順は {docs_url} をご覧ください。"
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Bluetooth デバイスを追跡",
-          "description": "スマートフォンの IRK、またはアドレスが変わらないデバイス (一部の腕時計やタグなど) の MAC アドレスを入力してください。スマートフォンは数分ごとにアドレスを変えるため、IRK で追跡してください。IRK の確認方法は {docs_url} を参照してください。",
+          "description": "スマートフォンの IRK、またはアドレスが変わらないデバイス (一部の腕時計やタグなど) の MAC アドレスを入力してください。スマートフォンはときどきアドレスを変えるため、IRK で追跡してください。IRK の確認方法は {docs_url} を参照してください。",
           "data": {
             "name": "名前",
             "irk_or_mac": "IRK または MAC アドレス",
@@ -414,6 +406,12 @@
         "60": "60秒",
         "90": "90秒",
         "120": "120秒"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "ブラウザでログイン（推奨）",
+        "master_token": "マスタートークン"
       }
     }
   }

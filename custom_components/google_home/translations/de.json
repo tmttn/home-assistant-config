@@ -43,36 +43,17 @@
           "homes": "Wähle mindestens ein Zuhause aus. Lautsprecher und Displays in Zuhause, denen dein Konto später beitritt, werden ebenfalls hinzugefügt."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Erneut anmelden",
-        "description": "Google akzeptiert die für {name} gespeicherte Anmeldung nicht mehr. Melde dich erneut beim selben Google-Konto an: Deine Geräte, Entitäten und Automationen bleiben unverändert. Bis dahin können die Entitäten deiner Geräte veraltete Werte anzeigen oder nicht verfügbar sein.",
-        "menu_options": {
-          "browser": "Anmeldung im Browser (empfohlen)",
-          "master_token": "Master-Token"
-        },
-        "menu_option_descriptions": {
-          "browser": "Melde dich in einem Desktop-Browser bei Google an und füge dann ein Cookie ein.",
-          "master_token": "Füge ein Master-Token ein, das du bereits hast."
-        }
-      },
-      "reauth_browser": {
-        "title": "Anmeldung im Browser",
-        "description": "1. Öffne auf einem Computer {embedded_setup_url} in einem privaten Browserfenster und melde dich beim selben Google-Konto an. Nachdem du zugestimmt hast, lädt die Seite eventuell weiter; das ist normal.\n2. Öffne die Entwicklertools des Browsers und suche die Cookies für `accounts.google.com`.\n3. Kopiere den Wert des Cookies `oauth_token` und füge ihn sofort unten ein. Er kann schnell ablaufen und funktioniert nur einmal.\n\nSchritt-für-Schritt-Anleitung: {browser_docs_url}",
+        "description": "Melde dich erneut bei dem Google-Konto an, das {name} verwendet. Deine Geräte, Entitäten und Automationen bleiben unverändert. Bis dahin können die Entitäten deiner Geräte veraltete Werte anzeigen oder nicht verfügbar sein.",
         "data": {
-          "oauth_token": "Cookie oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Beginnt mit oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Master-Token",
-        "description": "Füge ein Master-Token für dasselbe Google-Konto ein, zum Beispiel eines, das du mit einem anderen Tool erhalten hast.",
-        "data": {
+          "sign_in_method": "Anmeldemethode",
+          "oauth_token": "Cookie oauth_token",
           "master_token": "Master-Token des Google-Kontos"
         },
         "data_description": {
-          "master_token": "Beginnt mit aas_et/"
+          "oauth_token": "1. Öffne auf einem Computer {embedded_setup_url} in einem privaten Browserfenster und melde dich beim selben Google-Konto an. Nachdem du zugestimmt hast, lädt die Seite eventuell weiter; das ist normal.\n2. Öffne die Entwicklertools des Browsers und suche die Cookies für `accounts.google.com`.\n3. Kopiere den Wert des Cookies `oauth_token` und füge ihn sofort in dieses Feld ein. Er kann schnell ablaufen und funktioniert nur einmal.\n\nSchritt-für-Schritt-Anleitung: {browser_docs_url}\n\nBeginnt mit oauth2_4/",
+          "master_token": "Füge ein Master-Token für dasselbe Google-Konto ein, zum Beispiel eines, das du mit einem anderen Tool erhalten hast.\n\nBeginnt mit aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google hat die Anmeldung nicht akzeptiert. Details findest du in den Protokollen von Home Assistant.",
       "google-unreachable": "Google konnte nicht erreicht werden. Prüfe, ob Home Assistant mit dem Internet verbunden ist, und versuche es dann erneut.",
       "google-busy": "Google ist ausgelastet oder begrenzt Anmeldungen. Warte ein paar Minuten und melde dich dann erneut an.",
-      "oauth-token-format": "Das ist nicht das Cookie oauth_token. Sein Wert beginnt mit oauth2_4/.",
-      "master-token-format": "Ein Master-Token beginnt mit aas_et/ und ist {token_length} Zeichen lang. Kopiere das vollständige Token.",
+      "oauth-token-format": "Der Wert des Cookies muss mit oauth2_4/ beginnen. Kopiere den vollständigen Wert des Cookies oauth_token und füge ihn hier ein.",
+      "master-token-format": "Das Master-Token muss mit aas_et/ beginnen. Kopiere das vollständige Token und füge es hier ein.",
+      "master-token-empty": "Du hast nur aas_et/ eingegeben. Kopiere das vollständige Master-Token und füge es hier ein.",
+      "master-token-characters": "Das Master-Token enthält Leerzeichen, Zeilenumbrüche oder nicht unterstützte Zeichen. Kopiere das vollständige Token erneut und füge es hier in einer Zeile ein.",
+      "master-token-too-short": "Das Master-Token muss mindestens 200 Zeichen lang sein. Kopiere das vollständige Token. Länge: {token_length} Zeichen.",
       "other-account": "Du hast dich bei einem anderen Google-Konto angemeldet, daher wurde nichts geändert. Melde dich mit dem Konto an, das diese Integration verwendet. Um stattdessen das andere Konto zu verwenden, lösche die Integration und füge sie erneut hinzu.",
       "no-home-selected": "Wähle mindestens ein Zuhause aus."
     },
     "abort": {
-      "no-home": "Google meldet, dass dieses Konto kein Mitglied eines Zuhauses ist, daher gibt es keine Lautsprecher oder Displays zum Hinzufügen. Lade das Konto in der Google Home App in das Zuhause ein, in dem sich deine Geräte befinden, nimm die Einladung an und füge die Integration dann erneut hinzu. Ein Google Workspace-Konto kann nicht eingeladen werden. Füge die Integration in dem Fall stattdessen mit einem Gmail-Konto hinzu, das Mitglied des Zuhauses ist. Weitere Informationen findest du unter {docs_url}."
+      "no-home": "Google meldet, dass dieses Konto kein Mitglied eines Zuhauses ist, daher gibt es keine Lautsprecher oder Displays zum Hinzufügen. Lade das Konto in der Google Home App in das Zuhause ein, in dem sich deine Geräte befinden, nimm die Einladung an und füge die Integration dann erneut hinzu. Ein Google Workspace-Konto kann nicht eingeladen werden. Füge die Integration in dem Fall stattdessen mit einem Gmail-Konto hinzu, das Mitglied des Zuhauses ist. Weitere Informationen findest du unter {docs_url}.",
+      "unsupported-ha-version": "Diese Version der Google Home-Integration benötigt Home Assistant {required_version} oder neuer, auf diesem System läuft aber {current_version}. Aktualisiere Home Assistant und füge die Integration dann erneut hinzu. Wenn du stattdessen bei Home Assistant {current_version} bleiben möchtest, installiere eine ältere Version der Integration. Die Schritte dazu findest du unter {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Die folgenden Geräte haben nicht bestätigt, dass sie neu starten: {devices}. Prüfe, ob sie online sind, und versuche es später erneut."
     },
+    "saved_sign_in_invalid": {
+      "message": "Die gespeicherten Anmeldedaten fehlen oder sind ungültig. Melde dich erneut an."
+    },
     "sign_in_rejected": {
       "message": "Google hat die Anmeldung nicht akzeptiert ({reason}). Melde dich erneut an."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google meldet kein Zuhause für dein Konto",
       "description": "Google meldet, dass das Konto, mit dem sich die Integration angemeldet hat, kein Mitglied eines Zuhauses ist, daher gibt es keine Lautsprecher oder Displays zum Hinzufügen. Lade dieses Konto in der Google Home App in das Zuhause ein, in dem sich deine Geräte befinden, und nimm die Einladung an. Lade danach die [Google Home-Integration]({integration_url}) neu: Wähle **⋮** > **Neu laden**.\n\nWenn du die Integration absichtlich behältst, zum Beispiel während eines Umzugs, wähle **Ignorieren**. Wenn du sie nicht mehr brauchst, kannst du sie auf derselben Seite löschen."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home benötigt Home Assistant {required_version} oder neuer",
+      "description": "Diese Version der Google Home-Integration benötigt Home Assistant {required_version} oder neuer, auf diesem System läuft aber {current_version}, daher wurde die Integration nicht eingerichtet. Ihre Einstellungen bleiben erhalten, und sie startet damit, sobald du Home Assistant aktualisierst.\n\nWenn du stattdessen bei Home Assistant {current_version} bleiben möchtest, installiere eine ältere Version der Integration. Die Schritte dazu findest du unter {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Bluetooth-Gerät verfolgen",
-          "description": "Gib den IRK eines Smartphones ein oder die MAC-Adresse eines Geräts, dessen Adresse sich nie ändert, etwa mancher Uhren und Bluetooth-Tags. Smartphones ändern ihre Adresse alle paar Minuten, verfolge sie daher per IRK. Wie du den IRK findest, steht unter {docs_url}.",
+          "description": "Gib den IRK eines Smartphones ein oder die MAC-Adresse eines Geräts, dessen Adresse sich nie ändert, etwa mancher Uhren und Bluetooth-Tags. Smartphones ändern ihre Adresse von Zeit zu Zeit, verfolge sie daher per IRK. Wie du den IRK findest, steht unter {docs_url}.",
           "data": {
             "name": "Name",
             "irk_or_mac": "IRK oder MAC-Adresse",
@@ -414,6 +406,12 @@
         "60": "60 Sekunden",
         "90": "90 Sekunden",
         "120": "120 Sekunden"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Anmeldung im Browser (empfohlen)",
+        "master_token": "Master-Token"
       }
     }
   }

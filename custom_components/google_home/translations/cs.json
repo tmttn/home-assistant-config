@@ -43,36 +43,17 @@
           "homes": "Označte alespoň jednu domácnost. Přidají se také reproduktory a displeje z domácností, jejichž členem se váš účet stane později."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Opětovné přihlášení",
-        "description": "Google už nepřijímá přihlašovací údaje uložené pro {name}. Znovu se přihlaste ke stejnému účtu Google: vaše zařízení, entity a automatizace zůstanou beze změny. Dokud to neuděláte, mohou entity vašich zařízení zobrazovat zastaralé hodnoty nebo být nedostupné.",
-        "menu_options": {
-          "browser": "Přihlášení přes prohlížeč (doporučeno)",
-          "master_token": "Hlavní token"
-        },
-        "menu_option_descriptions": {
-          "browser": "Přihlaste se ke Googlu v prohlížeči na počítači a poté vložte soubor cookie.",
-          "master_token": "Vložte hlavní token, který již máte."
-        }
-      },
-      "reauth_browser": {
-        "title": "Přihlášení přes prohlížeč",
-        "description": "1. Na počítači otevřete {embedded_setup_url} v anonymním okně prohlížeče a přihlaste se ke stejnému účtu Google. Po potvrzení souhlasu se stránka může stále načítat; to je v pořádku.\n2. Otevřete vývojářské nástroje prohlížeče a najděte soubory cookie pro `accounts.google.com`.\n3. Zkopírujte hodnotu souboru cookie `oauth_token` a ihned ji vložte níže. Její platnost může rychle vypršet a lze ji použít pouze jednou.\n\nPodrobný návod: {browser_docs_url}",
+        "description": "Znovu se přihlaste k účtu Google, který používá {name}. Vaše zařízení, entity a automatizace zůstanou beze změny. Dokud to neuděláte, mohou entity vašich zařízení zobrazovat zastaralé hodnoty nebo být nedostupné.",
         "data": {
-          "oauth_token": "Soubor cookie oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Začíná na oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Hlavní token",
-        "description": "Vložte hlavní token ke stejnému účtu Google, například takový, který jste získali pomocí jiného nástroje.",
-        "data": {
+          "sign_in_method": "Způsob přihlášení",
+          "oauth_token": "Soubor cookie oauth_token",
           "master_token": "Hlavní token účtu Google"
         },
         "data_description": {
-          "master_token": "Začíná na aas_et/"
+          "oauth_token": "1. Na počítači otevřete {embedded_setup_url} v anonymním okně prohlížeče a přihlaste se ke stejnému účtu Google. Po potvrzení souhlasu se stránka může stále načítat; to je v pořádku.\n2. Otevřete vývojářské nástroje prohlížeče a najděte soubory cookie pro `accounts.google.com`.\n3. Zkopírujte hodnotu souboru cookie `oauth_token` a ihned ji vložte do tohoto pole. Její platnost může rychle vypršet a lze ji použít pouze jednou.\n\nPodrobný návod: {browser_docs_url}\n\nZačíná na oauth2_4/",
+          "master_token": "Vložte hlavní token ke stejnému účtu Google, například takový, který jste získali pomocí jiného nástroje.\n\nZačíná na aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google přihlášení nepřijal. Podrobnosti najdete v protokolech Home Assistanta.",
       "google-unreachable": "Nepodařilo se spojit s Googlem. Zkontrolujte, zda je Home Assistant připojen k internetu, a zkuste to znovu.",
       "google-busy": "Google je přetížený nebo omezuje přihlašování. Počkejte několik minut a pak se znovu přihlaste.",
-      "oauth-token-format": "Toto není soubor cookie oauth_token. Jeho hodnota začíná na oauth2_4/.",
-      "master-token-format": "Hlavní token začíná na aas_et/ a má {token_length} znaků. Zkopírujte celý token.",
+      "oauth-token-format": "Hodnota souboru cookie musí začínat řetězcem oauth2_4/. Zkopírujte celou hodnotu souboru cookie oauth_token a vložte ji sem.",
+      "master-token-format": "Hlavní token musí začínat řetězcem aas_et/. Zkopírujte celý token a vložte ho sem.",
+      "master-token-empty": "Zadali jste pouze aas_et/. Zkopírujte celý hlavní token a vložte ho sem.",
+      "master-token-characters": "Hlavní token obsahuje mezery, zalomení řádků nebo nepodporované znaky. Znovu zkopírujte celý token a vložte ho sem na jeden řádek.",
+      "master-token-too-short": "Hlavní token musí mít alespoň 200 znaků. Zkopírujte celý token. Počet znaků: {token_length}.",
       "other-account": "Přihlásili jste se k jinému účtu Google, proto se nic nezměnilo. Přihlaste se k účtu, který tato integrace používá. Pokud chcete místo toho používat ten druhý účet, integraci smažte a přidejte ji znovu.",
       "no-home-selected": "Vyberte alespoň jednu domácnost."
     },
     "abort": {
-      "no-home": "Google uvádí, že tento účet není členem žádné domácnosti, takže nejsou žádné reproduktory ani displeje k přidání. V aplikaci Google Home pozvěte tento účet do domácnosti, ve které jsou vaše zařízení, pozvánku přijměte a pak přidejte integraci znovu. Účet Google Workspace pozvat nelze, proto místo něj přidejte integraci s účtem Gmail, který je členem domácnosti. Podrobnosti najdete na {docs_url}."
+      "no-home": "Google uvádí, že tento účet není členem žádné domácnosti, takže nejsou žádné reproduktory ani displeje k přidání. V aplikaci Google Home pozvěte tento účet do domácnosti, ve které jsou vaše zařízení, pozvánku přijměte a pak přidejte integraci znovu. Účet Google Workspace pozvat nelze, proto místo něj přidejte integraci s účtem Gmail, který je členem domácnosti. Podrobnosti najdete na {docs_url}.",
+      "unsupported-ha-version": "Tato verze integrace Google Home vyžaduje Home Assistant {required_version} nebo novější, ale v tomto systému běží {current_version}. Aktualizujte Home Assistant a pak přidejte integraci znovu. Pokud chcete místo toho zůstat u verze Home Assistant {current_version}, nainstalujte starší vydání integrace. Postup najdete na {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Následující zařízení nepotvrdila, že se restartují: {devices}. Zkontrolujte, zda jsou zařízení online, a zkuste to znovu později."
     },
+    "saved_sign_in_invalid": {
+      "message": "Uložené přihlašovací údaje chybí nebo jsou neplatné. Přihlaste se znovu."
+    },
     "sign_in_rejected": {
       "message": "Google přihlášení nepřijal ({reason}). Přihlaste se znovu."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google pro váš účet neuvádí žádnou domácnost",
       "description": "Google uvádí, že účet, ke kterému se integrace přihlásila, není členem žádné domácnosti, takže nejsou žádné reproduktory ani displeje k přidání. V aplikaci Google Home pozvěte tento účet do domácnosti, ve které jsou vaše zařízení, a pozvánku přijměte. Pak znovu načtěte [integraci Google Home]({integration_url}): vyberte **⋮** > **Nově načíst**.\n\nPokud si integraci ponecháváte záměrně, například během stěhování, vyberte **Ignorovat**. Pokud ji už nepotřebujete, můžete ji na stejné stránce smazat."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home vyžaduje Home Assistant {required_version} nebo novější",
+      "description": "Tato verze integrace Google Home vyžaduje Home Assistant {required_version} nebo novější, ale v tomto systému běží {current_version}, proto integrace nebyla nastavena. Její nastavení zůstává zachováno a po aktualizaci Home Assistanta se s ním integrace spustí.\n\nPokud chcete místo toho zůstat u verze Home Assistant {current_version}, nainstalujte starší vydání integrace. Postup najdete na {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Sledovat zařízení Bluetooth",
-          "description": "Zadejte IRK telefonu nebo MAC adresu zařízení, jehož adresa se nikdy nemění, například některých hodinek a lokalizačních štítků. Telefony mění adresu každých několik minut, proto je sledujte podle IRK. Jak IRK najít, se dozvíte na {docs_url}.",
+          "description": "Zadejte IRK telefonu nebo MAC adresu zařízení, jehož adresa se nikdy nemění, například některých hodinek a lokalizačních štítků. Telefony čas od času mění adresu, proto je sledujte podle IRK. Jak IRK najít, se dozvíte na {docs_url}.",
           "data": {
             "name": "Název",
             "irk_or_mac": "IRK nebo MAC adresa",
@@ -414,6 +406,12 @@
         "60": "60 sekund",
         "90": "90 sekund",
         "120": "120 sekund"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Přihlášení přes prohlížeč (doporučeno)",
+        "master_token": "Hlavní token"
       }
     }
   }

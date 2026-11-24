@@ -43,36 +43,17 @@
           "homes": "Select at least one home. Speakers and displays in homes that your account joins later are also added."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Sign in again",
-        "description": "Google no longer accepts the sign-in saved for {name}. Sign in to the same Google account again: your devices, entities and automations stay as they are. Until you do, your devices' entities can show out-of-date values or be unavailable.",
-        "menu_options": {
-          "browser": "Browser sign-in (recommended)",
-          "master_token": "Master token"
-        },
-        "menu_option_descriptions": {
-          "browser": "Sign in to Google in a desktop browser, then paste a cookie.",
-          "master_token": "Paste a master token you already have."
-        }
-      },
-      "reauth_browser": {
-        "title": "Browser sign-in",
-        "description": "1. On a computer, open {embedded_setup_url} in a private browser window and sign in to the same Google account. After you accept, the page may keep loading; that is expected.\n2. Open the browser's developer tools and find the cookies for `accounts.google.com`.\n3. Copy the value of the `oauth_token` cookie and paste it below straight away. It can expire quickly and works only once.\n\nStep-by-step instructions: {browser_docs_url}",
+        "description": "Sign in again to the Google account used by {name}. Your devices, entities and automations stay as they are. Until you do, your devices' entities can show out-of-date values or be unavailable.",
         "data": {
-          "oauth_token": "oauth_token cookie"
-        },
-        "data_description": {
-          "oauth_token": "Starts with oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Master token",
-        "description": "Paste a master token for the same Google account, for example one that you got with another tool.",
-        "data": {
+          "sign_in_method": "Sign-in method",
+          "oauth_token": "oauth_token cookie",
           "master_token": "Google account master token"
         },
         "data_description": {
-          "master_token": "Starts with aas_et/"
+          "oauth_token": "1. On a computer, open {embedded_setup_url} in a private browser window and sign in to the same Google account. After you accept, the page may keep loading; that is expected.\n2. Open the browser's developer tools and find the cookies for `accounts.google.com`.\n3. Copy the value of the `oauth_token` cookie and paste it into this field straight away. It can expire quickly and works only once.\n\nStep-by-step instructions: {browser_docs_url}\n\nStarts with oauth2_4/",
+          "master_token": "Paste a master token for the same Google account, for example one that you got with another tool.\n\nStarts with aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google didn't accept the sign-in. For details, see the Home Assistant log.",
       "google-unreachable": "Couldn't reach Google. Check that Home Assistant is connected to the internet, then try again.",
       "google-busy": "Google is busy or is limiting sign-ins. Wait a few minutes, then sign in again.",
-      "oauth-token-format": "This isn't the oauth_token cookie. Its value starts with oauth2_4/.",
-      "master-token-format": "A master token starts with aas_et/ and is {token_length} characters long. Copy the whole token.",
+      "oauth-token-format": "The cookie value must start with oauth2_4/. Copy the whole value of the oauth_token cookie and paste it here.",
+      "master-token-format": "The master token must start with aas_et/. Copy the whole token and paste it here.",
+      "master-token-empty": "Only aas_et/ was entered. Copy the whole master token and paste it here.",
+      "master-token-characters": "The master token contains spaces, line breaks or unsupported characters. Copy the whole token again and paste it here on one line.",
+      "master-token-too-short": "The master token must be at least 200 characters long. Copy the whole token. Length: {token_length} characters.",
       "other-account": "You signed in to a different Google account, so nothing was changed. Sign in with the account this integration uses. To use the other account instead, delete the integration and add it again.",
       "no-home-selected": "Choose at least one home."
     },
     "abort": {
-      "no-home": "Google reports that this account isn't a member of any home, so there are no speakers or displays to add. In the Google Home app, invite the account to the home that your devices are in and accept the invitation, then add the integration again. A Google Workspace account can't be invited, so add the integration with a Gmail account that is a member of the home instead. For details, see {docs_url}."
+      "no-home": "Google reports that this account isn't a member of any home, so there are no speakers or displays to add. In the Google Home app, invite the account to the home that your devices are in and accept the invitation, then add the integration again. A Google Workspace account can't be invited, so add the integration with a Gmail account that is a member of the home instead. For details, see {docs_url}.",
+      "unsupported-ha-version": "This version of the Google Home integration needs Home Assistant {required_version} or later, but this system runs {current_version}. Update Home Assistant, then add the integration again. To stay on Home Assistant {current_version} instead, install an earlier release of the integration. For the steps, see {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "These devices didn't confirm that they'll reboot: {devices}. Check that they're online and try again later."
     },
+    "saved_sign_in_invalid": {
+      "message": "The saved sign-in details are missing or invalid. Sign in again."
+    },
     "sign_in_rejected": {
       "message": "Google didn't accept the sign-in ({reason}). Sign in again."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google reports no home for your account",
       "description": "Google reports that the account the integration signed in with isn't a member of any home, so there are no speakers or displays to add. In the Google Home app, invite this account to the home that your devices are in, and accept the invitation. Then reload the [Google Home integration]({integration_url}): select **⋮** > **Reload**.\n\nIf you're keeping the integration on purpose, for example while you're between homes, select **Ignore**. If you no longer need it, you can delete it on the same page."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home needs Home Assistant {required_version} or later",
+      "description": "This version of the Google Home integration needs Home Assistant {required_version} or later, but this system runs {current_version}, so the integration wasn't set up. Its settings are kept, and it starts with them once you update Home Assistant.\n\nTo stay on Home Assistant {current_version} instead, install an earlier release of the integration. For the steps, see {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Track a Bluetooth device",
-          "description": "Enter the IRK of a phone, or the MAC address of a device whose address never changes, such as some watches and tags. Phones change their address every few minutes, so track them by IRK. For how to find the IRK, see {docs_url}.",
+          "description": "Enter the IRK of a phone, or the MAC address of a device whose address never changes, such as some watches and tags. Phones change their address from time to time, so track them by IRK. For how to find the IRK, see {docs_url}.",
           "data": {
             "name": "Name",
             "irk_or_mac": "IRK or MAC address",
@@ -414,6 +406,12 @@
         "60": "60 seconds",
         "90": "90 seconds",
         "120": "120 seconds"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Browser sign-in (recommended)",
+        "master_token": "Master token"
       }
     }
   }

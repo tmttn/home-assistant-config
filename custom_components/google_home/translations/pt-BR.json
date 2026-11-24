@@ -43,36 +43,17 @@
           "homes": "Marque pelo menos uma casa. Se depois sua conta se tornar membro de outra casa, os alto-falantes e as telas dessa casa também serão adicionados."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Entrar novamente",
-        "description": "O Google não aceita mais os dados de login salvos para {name}. Faça login novamente na mesma conta do Google: seus dispositivos, entidades e automações continuam como estão. Até lá, as entidades dos seus dispositivos podem mostrar valores desatualizados ou ficar indisponíveis.",
-        "menu_options": {
-          "browser": "Login pelo navegador (recomendado)",
-          "master_token": "Token mestre"
-        },
-        "menu_option_descriptions": {
-          "browser": "Faça login no Google em um navegador de computador e depois cole um cookie.",
-          "master_token": "Cole um token mestre que você já tem."
-        }
-      },
-      "reauth_browser": {
-        "title": "Login pelo navegador",
-        "description": "1. Em um computador, abra {embedded_setup_url} em uma janela anônima do navegador e faça login na mesma conta do Google. Depois de aceitar, a página pode continuar carregando; isso é esperado.\n2. Abra as ferramentas de desenvolvedor do navegador e encontre os cookies de `accounts.google.com`.\n3. Copie o valor do cookie `oauth_token` e cole abaixo imediatamente. Ele pode expirar rapidamente e funciona apenas uma vez.\n\nInstruções passo a passo: {browser_docs_url}",
+        "description": "Faça login novamente na conta do Google usada por {name}. Seus dispositivos, entidades e automações continuam como estão. Até lá, as entidades dos seus dispositivos podem mostrar valores desatualizados ou ficar indisponíveis.",
         "data": {
-          "oauth_token": "Cookie oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Começa com oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Token mestre",
-        "description": "Cole um token mestre da mesma conta do Google, por exemplo um que você obteve com outra ferramenta.",
-        "data": {
+          "sign_in_method": "Método de login",
+          "oauth_token": "Cookie oauth_token",
           "master_token": "Token mestre da conta do Google"
         },
         "data_description": {
-          "master_token": "Começa com aas_et/"
+          "oauth_token": "1. Em um computador, abra {embedded_setup_url} em uma janela anônima do navegador e faça login na mesma conta do Google. Depois de aceitar, a página pode continuar carregando; isso é esperado.\n2. Abra as ferramentas de desenvolvedor do navegador e encontre os cookies de `accounts.google.com`.\n3. Copie o valor do cookie `oauth_token` e cole imediatamente neste campo. Ele pode expirar rapidamente e funciona apenas uma vez.\n\nInstruções passo a passo: {browser_docs_url}\n\nComeça com oauth2_4/",
+          "master_token": "Cole um token mestre da mesma conta do Google, por exemplo um que você obteve com outra ferramenta.\n\nComeça com aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "O Google não aceitou o login. Para ver os detalhes, consulte os logs do Home Assistant.",
       "google-unreachable": "Não foi possível se conectar ao Google. Verifique se o Home Assistant está conectado à internet e tente novamente.",
       "google-busy": "O Google está ocupado ou limitando os logins. Aguarde alguns minutos e entre novamente.",
-      "oauth-token-format": "Este não é o cookie oauth_token. O valor dele começa com oauth2_4/.",
-      "master-token-format": "Um token mestre começa com aas_et/ e tem {token_length} caracteres. Copie o token completo.",
+      "oauth-token-format": "O valor do cookie deve começar com oauth2_4/. Copie o valor completo do cookie oauth_token e cole aqui.",
+      "master-token-format": "O token mestre deve começar com aas_et/. Copie o token inteiro e cole aqui.",
+      "master-token-empty": "Você inseriu apenas aas_et/. Copie o token mestre inteiro e cole aqui.",
+      "master-token-characters": "O token mestre contém espaços, quebras de linha ou caracteres não compatíveis. Copie o token inteiro novamente e cole aqui em uma única linha.",
+      "master-token-too-short": "O token mestre deve ter pelo menos 200 caracteres. Copie o token inteiro. Comprimento: {token_length} caracteres.",
       "other-account": "Você fez login em outra conta do Google, então nada foi alterado. Faça login com a conta que esta integração usa. Para usar essa outra conta, exclua a integração e adicione-a novamente.",
       "no-home-selected": "Escolha pelo menos uma casa."
     },
     "abort": {
-      "no-home": "O Google informa que esta conta não é membro de nenhuma casa, então não há alto-falantes nem telas para adicionar. No app Google Home, convide a conta para a casa em que seus dispositivos estão, aceite o convite e adicione a integração novamente. Uma conta do Google Workspace não pode ser convidada, então adicione a integração com uma conta do Gmail que seja membro da casa. Para mais detalhes, consulte {docs_url}."
+      "no-home": "O Google informa que esta conta não é membro de nenhuma casa, então não há alto-falantes nem telas para adicionar. No app Google Home, convide a conta para a casa em que seus dispositivos estão, aceite o convite e adicione a integração novamente. Uma conta do Google Workspace não pode ser convidada, então adicione a integração com uma conta do Gmail que seja membro da casa. Para mais detalhes, consulte {docs_url}.",
+      "unsupported-ha-version": "Esta versão da integração Google Home precisa do Home Assistant {required_version} ou posterior, mas este sistema usa a versão {current_version}. Atualize o Home Assistant e adicione a integração novamente. Se preferir continuar no Home Assistant {current_version}, instale uma versão anterior da integração. Para ver o passo a passo, consulte {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Os seguintes dispositivos não confirmaram que vão reiniciar: {devices}. Verifique se os dispositivos estão online e tente novamente mais tarde."
     },
+    "saved_sign_in_invalid": {
+      "message": "Os dados de login salvos estão ausentes ou são inválidos. Entre novamente."
+    },
     "sign_in_rejected": {
       "message": "O Google não aceitou o login ({reason}). Entre novamente."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "O Google não informa nenhuma casa para sua conta",
       "description": "O Google informa que a conta com que a integração entrou não é membro de nenhuma casa, então não há alto-falantes nem telas para adicionar. No app Google Home, convide esta conta para a casa em que seus dispositivos estão e aceite o convite. Depois, recarregue a [integração Google Home]({integration_url}): selecione **⋮** > **Recarregar**.\n\nSe você está mantendo a integração de propósito, por exemplo durante uma mudança, selecione **Ignorar**. Se não precisar mais dela, você pode excluí-la na mesma página."
+    },
+    "unsupported_ha_version": {
+      "title": "O Google Home precisa do Home Assistant {required_version} ou posterior",
+      "description": "Esta versão da integração Google Home precisa do Home Assistant {required_version} ou posterior, mas este sistema usa a versão {current_version}, então a integração não foi configurada. As configurações dela são mantidas, e ela vai iniciar com elas assim que você atualizar o Home Assistant.\n\nSe preferir continuar no Home Assistant {current_version}, instale uma versão anterior da integração. Para ver o passo a passo, consulte {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Rastrear um dispositivo Bluetooth",
-          "description": "Insira a IRK de um celular ou o endereço MAC de um dispositivo cujo endereço nunca muda, como alguns relógios e tags. Os celulares mudam de endereço a cada poucos minutos, então rastreie-os pela IRK. Para saber como encontrar a IRK, consulte {docs_url}.",
+          "description": "Insira a IRK de um celular ou o endereço MAC de um dispositivo cujo endereço nunca muda, como alguns relógios e tags. Os celulares mudam de endereço de tempos em tempos, então rastreie-os pela IRK. Para saber como encontrar a IRK, consulte {docs_url}.",
           "data": {
             "name": "Nome",
             "irk_or_mac": "IRK ou endereço MAC",
@@ -414,6 +406,12 @@
         "60": "60 segundos",
         "90": "90 segundos",
         "120": "120 segundos"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Login pelo navegador (recomendado)",
+        "master_token": "Token mestre"
       }
     }
   }

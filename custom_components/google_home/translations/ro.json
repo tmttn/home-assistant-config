@@ -43,36 +43,17 @@
           "homes": "Bifează cel puțin o casă. Dacă mai târziu contul tău devine membru al altei case, difuzoarele și ecranele din acea casă sunt adăugate și ele."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Conectează-te din nou",
-        "description": "Google nu mai acceptă datele de conectare salvate pentru {name}. Conectează-te din nou la același cont Google: dispozitivele, entitățile și automatizările tale rămân neschimbate. Până atunci, entitățile dispozitivelor tale pot afișa valori neactualizate sau pot fi indisponibile.",
-        "menu_options": {
-          "browser": "Conectare prin browser (recomandată)",
-          "master_token": "Token principal"
-        },
-        "menu_option_descriptions": {
-          "browser": "Conectează-te la Google într-un browser de pe computer, apoi lipește un cookie.",
-          "master_token": "Lipește un token principal pe care îl ai deja."
-        }
-      },
-      "reauth_browser": {
-        "title": "Conectare prin browser",
-        "description": "1. Pe un computer, deschide {embedded_setup_url} într-o fereastră de navigare privată a browserului, de exemplu o fereastră incognito, și conectează-te la același cont Google. După ce accepți, pagina poate continua să se încarce; acest lucru este normal.\n2. Deschide instrumentele pentru dezvoltatori ale browserului și găsește cookie-urile pentru `accounts.google.com`.\n3. Copiază valoarea cookie-ului `oauth_token` și lipește-o imediat mai jos. Poate expira rapid și poate fi folosită o singură dată.\n\nInstrucțiuni pas cu pas: {browser_docs_url}",
+        "description": "Conectează-te din nou la contul Google folosit de {name}. Dispozitivele, entitățile și automatizările tale rămân neschimbate. Până atunci, entitățile dispozitivelor tale pot afișa valori neactualizate sau pot fi indisponibile.",
         "data": {
-          "oauth_token": "Cookie oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Începe cu oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Token principal",
-        "description": "Lipește un token principal pentru același cont Google, de exemplu unul pe care l-ai obținut cu un alt instrument.",
-        "data": {
+          "sign_in_method": "Metodă de conectare",
+          "oauth_token": "Cookie oauth_token",
           "master_token": "Token principal al contului Google"
         },
         "data_description": {
-          "master_token": "Începe cu aas_et/"
+          "oauth_token": "1. Pe un computer, deschide {embedded_setup_url} într-o fereastră de navigare privată a browserului, de exemplu o fereastră incognito, și conectează-te la același cont Google. După ce accepți, pagina poate continua să se încarce; acest lucru este normal.\n2. Deschide instrumentele pentru dezvoltatori ale browserului și găsește cookie-urile pentru `accounts.google.com`.\n3. Copiază valoarea cookie-ului `oauth_token` și lipește-o imediat în acest câmp. Poate expira rapid și poate fi folosită o singură dată.\n\nInstrucțiuni pas cu pas: {browser_docs_url}\n\nÎncepe cu oauth2_4/",
+          "master_token": "Lipește un token principal pentru același cont Google, de exemplu unul pe care l-ai obținut cu un alt instrument.\n\nÎncepe cu aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google nu a acceptat conectarea. Pentru detalii, consultă jurnalele Home Assistant.",
       "google-unreachable": "Nu s-a putut contacta Google. Verifică dacă Home Assistant este conectat la internet, apoi încearcă din nou.",
       "google-busy": "Google este ocupat sau limitează numărul de conectări. Așteaptă câteva minute, apoi conectează-te din nou.",
-      "oauth-token-format": "Acesta nu este cookie-ul oauth_token. Valoarea lui începe cu oauth2_4/.",
-      "master-token-format": "Un token principal începe cu aas_et/. Numărul necesar de caractere: {token_length}. Copiază tokenul complet.",
+      "oauth-token-format": "Valoarea cookie-ului trebuie să înceapă cu oauth2_4/. Copiază întreaga valoare a cookie-ului oauth_token și lipește-o aici.",
+      "master-token-format": "Tokenul principal trebuie să înceapă cu aas_et/. Copiază tokenul complet și lipește-l aici.",
+      "master-token-empty": "Ai introdus doar aas_et/. Copiază tokenul principal complet și lipește-l aici.",
+      "master-token-characters": "Tokenul principal conține spații, întreruperi de rând sau caractere neacceptate. Copiază din nou tokenul complet și lipește-l aici pe un singur rând.",
+      "master-token-too-short": "Tokenul principal trebuie să conțină cel puțin 200 de caractere. Copiază întregul token. Număr de caractere: {token_length}.",
       "other-account": "Te-ai conectat la un alt cont Google, așa că nu s-a modificat nimic. Conectează-te cu contul pe care îl folosește această integrare. Pentru a folosi în schimb celălalt cont, șterge integrarea și adaug-o din nou.",
       "no-home-selected": "Alege cel puțin o casă."
     },
     "abort": {
-      "no-home": "Google raportează că acest cont nu este membru al niciunei case, așa că nu există difuzoare sau ecrane de adăugat. În aplicația Google Home, invită contul în casa în care se află dispozitivele tale, acceptă invitația, apoi adaugă din nou integrarea. Un cont Google Workspace nu poate fi invitat, așa că adaugă integrarea cu un cont Gmail care este membru al casei. Pentru detalii, consultă {docs_url}."
+      "no-home": "Google raportează că acest cont nu este membru al niciunei case, așa că nu există difuzoare sau ecrane de adăugat. În aplicația Google Home, invită contul în casa în care se află dispozitivele tale, acceptă invitația, apoi adaugă din nou integrarea. Un cont Google Workspace nu poate fi invitat, așa că adaugă integrarea cu un cont Gmail care este membru al casei. Pentru detalii, consultă {docs_url}.",
+      "unsupported-ha-version": "Această versiune a integrării Google Home necesită Home Assistant {required_version} sau o versiune mai nouă, dar pe acest sistem rulează versiunea {current_version}. Actualizează Home Assistant, apoi adaugă din nou integrarea. Dacă preferi să rămâi la Home Assistant {current_version}, instalează o versiune anterioară a integrării. Pentru pașii necesari, consultă {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Următoarele dispozitive nu au confirmat că vor reporni: {devices}. Verifică dacă dispozitivele sunt online și încearcă din nou mai târziu."
     },
+    "saved_sign_in_invalid": {
+      "message": "Datele de conectare salvate lipsesc sau nu sunt valide. Conectează-te din nou."
+    },
     "sign_in_rejected": {
       "message": "Google nu a acceptat conectarea ({reason}). Conectează-te din nou."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google nu raportează nicio casă pentru contul tău",
       "description": "Google raportează că contul cu care s-a conectat integrarea nu este membru al niciunei case, așa că nu există difuzoare sau ecrane de adăugat. În aplicația Google Home, invită acest cont în casa în care se află dispozitivele tale și acceptă invitația. Apoi reîncarcă [integrarea Google Home]({integration_url}): selectează **⋮** > **Reîncarcă**.\n\nDacă păstrezi integrarea intenționat, de exemplu în timpul unei mutări, selectează **Ignoră**. Dacă nu mai ai nevoie de ea, o poți șterge din aceeași pagină."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home necesită Home Assistant {required_version} sau o versiune mai nouă",
+      "description": "Această versiune a integrării Google Home necesită Home Assistant {required_version} sau o versiune mai nouă, dar pe acest sistem rulează versiunea {current_version}, așa că integrarea nu a fost configurată. Setările ei se păstrează, iar integrarea va porni cu ele după ce actualizezi Home Assistant.\n\nDacă preferi să rămâi la Home Assistant {current_version}, instalează o versiune anterioară a integrării. Pentru pașii necesari, consultă {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Urmărește un dispozitiv Bluetooth",
-          "description": "Introdu IRK-ul unui telefon sau adresa MAC a unui dispozitiv a cărui adresă nu se schimbă niciodată, cum ar fi unele ceasuri și etichete de localizare. Telefoanele își schimbă adresa la fiecare câteva minute, așa că urmărește-le după IRK. Pentru a afla cum găsești IRK-ul, consultă {docs_url}.",
+          "description": "Introdu IRK-ul unui telefon sau adresa MAC a unui dispozitiv a cărui adresă nu se schimbă niciodată, cum ar fi unele ceasuri și etichete de localizare. Telefoanele își schimbă adresa din când în când, așa că urmărește-le după IRK. Pentru a afla cum găsești IRK-ul, consultă {docs_url}.",
           "data": {
             "name": "Nume",
             "irk_or_mac": "IRK sau adresă MAC",
@@ -414,6 +406,12 @@
         "60": "60 de secunde",
         "90": "90 de secunde",
         "120": "120 de secunde"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Conectare prin browser (recomandată)",
+        "master_token": "Token principal"
       }
     }
   }

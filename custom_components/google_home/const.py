@@ -2,6 +2,8 @@
 
 from typing import Final
 
+from ghome_local_api import const as local_api
+
 from homeassistant.util.dt import DATE_STR_FORMAT
 
 # Base component constants
@@ -82,6 +84,16 @@ INTEGRATION_PAGE_URL: Final = f"/config/integrations/integration/{DOMAIN}"
 NO_DEVICES_DOCS_URL: Final = (
     "https://ha-google-home.pages.dev/troubleshooting/#no-devices-appear"
 )
+# The oldest Home Assistant release that this version sets up on, as (year, month).
+# hacs.json declares it too. Its betas count: 2026.11.0b0 has what this version needs.
+MIN_HA_VERSION: Final = (2026, 11)
+# The repair shown when Home Assistant is older, and the docs that its text links to,
+# which say how to install an earlier release with HACS or by hand
+ISSUE_UNSUPPORTED_HA: Final = "unsupported_ha_version"
+UNSUPPORTED_HA_DOCS_URL: Final = (
+    "https://ha-google-home.pages.dev/troubleshooting/"
+    "#the-integration-doesnt-load-after-an-update"
+)
 
 # Configuration and options
 CONF_ANDROID_ID: Final = "android_id"
@@ -107,33 +119,17 @@ LABEL_UPTIME: Final = "uptime"
 LABEL_WIFI_NETWORK: Final = "Wi-Fi network"
 LABEL_WIFI_SIGNAL: Final = "Wi-Fi signal"
 
-# DEVICE PORT
-PORT: Final = 8443
+# The device's paths and headers, as the local API library sends them
+API_ENDPOINT_ALARMS: Final = local_api.API_ENDPOINT_ALARMS
+API_ENDPOINT_ALARM_DELETE: Final = local_api.API_ENDPOINT_ALARM_DELETE
+API_ENDPOINT_ALARM_VOLUME: Final = local_api.API_ENDPOINT_ALARM_VOLUME
+API_ENDPOINT_REBOOT: Final = local_api.API_ENDPOINT_REBOOT
+API_ENDPOINT_DO_NOT_DISTURB: Final = local_api.API_ENDPOINT_DO_NOT_DISTURB
+API_ENDPOINT_EUREKA_INFO: Final = local_api.API_ENDPOINT_EUREKA_INFO
+API_ENDPOINT_BUILD_INFO: Final = local_api.API_ENDPOINT_BUILD_INFO
+API_ENDPOINT_UPDATE_INFO: Final = local_api.API_ENDPOINT_UPDATE_INFO
+HEADER_CAST_LOCAL_AUTH: Final = local_api.HEADER_CAST_LOCAL_AUTH
 
-# API
-API_ENDPOINT_ALARMS: Final = "setup/assistant/alarms"
-API_ENDPOINT_ALARM_DELETE: Final = "setup/assistant/alarms/delete"
-API_ENDPOINT_ALARM_VOLUME: Final = "setup/assistant/alarms/volume"
-API_ENDPOINT_REBOOT: Final = "setup/reboot"
-API_ENDPOINT_DO_NOT_DISTURB: Final = "setup/assistant/notifications"
-# Answers without a local auth token, so it identifies a known host and shows
-# whether a device whose alarms answer "not found" has Google Assistant
-API_ENDPOINT_EUREKA_INFO: Final = "setup/eureka_info?params=name,device_info"
-# The device's firmware versions, which also answer without a token. A display's
-# system version is only here.
-API_ENDPOINT_BUILD_INFO: Final = "setup/eureka_info?params=build_info"
-# Without params, the info has whether the device has a firmware update waiting, which
-# no params give. It also has the device's Wi-Fi network and signal strength, which are
-# kept, and its location and IDs, which aren't.
-API_ENDPOINT_UPDATE_INFO: Final = "setup/eureka_info"
-
-# HEADERS
-HEADER_CAST_LOCAL_AUTH: Final = "cast-local-authorization-token"
-HEADER_CONTENT_TYPE: Final = "content-type"
-
-# How long a device has to answer a request, in seconds. A busy device can take
-# more than 2 seconds.
-TIMEOUT: Final = 5
 # A device's alarms and timers sensors, Do Not Disturb switch and alarm volume are
 # unavailable once it hasn't answered this many updates in a row. In logs at a
 # 10-second interval, speakers that restarted at night missed 2 or 3.
@@ -201,9 +197,6 @@ SUPPORT_CHECK_DELAY: Final = 10 * 60  # sec
 # often, counted from the start of the last check. Firmware changes rarely.
 FIRMWARE_CHECK_INTERVAL: Final = 20 * 60  # sec
 
-# Bluetooth scans of the speakers, for Bluetooth tracking
-API_ENDPOINT_BLUETOOTH_SCAN: Final = "setup/bluetooth/scan"
-API_ENDPOINT_BLUETOOTH_RESULTS: Final = "setup/bluetooth/scan_results"
 # Bluetooth tracking, in seconds unless noted. Each update asks every speaker for
 # a scan of up to this long, and the next update reads its results and starts the
 # next scan.
@@ -239,7 +232,7 @@ BLUETOOTH_RSSI_WINDOW: Final = 300
 BLUETOOTH_RSSI_MIN_SCANS: Final = 2
 
 # JSON parameter values when retrieving information from devices
-JSON_ALARM: Final = "alarm"
-JSON_TIMER: Final = "timer"
-JSON_NOTIFICATIONS_ENABLED: Final = "notifications_enabled"
-JSON_ALARM_VOLUME: Final = "volume"
+JSON_ALARM: Final = local_api.JSON_ALARM
+JSON_TIMER: Final = local_api.JSON_TIMER
+JSON_NOTIFICATIONS_ENABLED: Final = local_api.JSON_NOTIFICATIONS_ENABLED
+JSON_ALARM_VOLUME: Final = local_api.JSON_ALARM_VOLUME

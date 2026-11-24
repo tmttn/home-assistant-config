@@ -43,36 +43,17 @@
           "homes": "Sélectionnez au moins une maison. Les enceintes et écrans des maisons que votre compte rejoindra plus tard seront également ajoutés."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Se reconnecter",
-        "description": "Google n'accepte plus les identifiants de connexion enregistrés pour {name}. Reconnectez-vous au même compte Google : vos appareils, entités et automatisations restent tels quels. D'ici là, les entités de vos appareils peuvent afficher des valeurs obsolètes ou être indisponibles.",
-        "menu_options": {
-          "browser": "Connexion via le navigateur (recommandée)",
-          "master_token": "Jeton maître"
-        },
-        "menu_option_descriptions": {
-          "browser": "Connectez-vous à Google dans un navigateur sur ordinateur, puis collez un cookie.",
-          "master_token": "Collez un jeton maître que vous avez déjà."
-        }
-      },
-      "reauth_browser": {
-        "title": "Connexion via le navigateur",
-        "description": "1. Sur un ordinateur, ouvrez {embedded_setup_url} dans une fenêtre de navigation privée et connectez-vous au même compte Google. Une fois que vous avez accepté, la page peut continuer à charger ; c'est normal.\n2. Ouvrez les outils de développement du navigateur et trouvez les cookies de `accounts.google.com`.\n3. Copiez la valeur du cookie `oauth_token` et collez-la ci-dessous immédiatement. Il peut expirer rapidement et ne fonctionne qu'une seule fois.\n\nInstructions détaillées : {browser_docs_url}",
+        "description": "Reconnectez-vous au compte Google utilisé par {name}. Vos appareils, entités et automatisations restent tels quels. D'ici là, les entités de vos appareils peuvent afficher des valeurs obsolètes ou être indisponibles.",
         "data": {
-          "oauth_token": "Cookie oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Commence par oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Jeton maître",
-        "description": "Collez un jeton maître du même compte Google, par exemple un jeton obtenu avec un autre outil.",
-        "data": {
+          "sign_in_method": "Méthode de connexion",
+          "oauth_token": "Cookie oauth_token",
           "master_token": "Jeton maître du compte Google"
         },
         "data_description": {
-          "master_token": "Commence par aas_et/"
+          "oauth_token": "1. Sur un ordinateur, ouvrez {embedded_setup_url} dans une fenêtre de navigation privée et connectez-vous au même compte Google. Une fois que vous avez accepté, la page peut continuer à charger ; c'est normal.\n2. Ouvrez les outils de développement du navigateur et trouvez les cookies de `accounts.google.com`.\n3. Copiez la valeur du cookie `oauth_token` et collez-la immédiatement dans ce champ. Il peut expirer rapidement et ne fonctionne qu'une seule fois.\n\nInstructions détaillées : {browser_docs_url}\n\nCommence par oauth2_4/",
+          "master_token": "Collez un jeton maître du même compte Google, par exemple un jeton obtenu avec un autre outil.\n\nCommence par aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google n'a pas accepté la connexion. Pour en savoir plus, consultez les journaux de Home Assistant.",
       "google-unreachable": "Impossible de joindre Google. Vérifiez que Home Assistant est connecté à Internet, puis réessayez.",
       "google-busy": "Google est occupé ou limite les connexions. Patientez quelques minutes, puis reconnectez-vous.",
-      "oauth-token-format": "Ce n'est pas le cookie oauth_token. Sa valeur commence par oauth2_4/.",
-      "master-token-format": "Un jeton maître commence par aas_et/ et comporte {token_length} caractères. Copiez le jeton complet.",
+      "oauth-token-format": "La valeur du cookie doit commencer par oauth2_4/. Copiez la valeur complète du cookie oauth_token et collez-la ici.",
+      "master-token-format": "Le jeton maître doit commencer par aas_et/. Copiez le jeton entier et collez-le ici.",
+      "master-token-empty": "Vous avez saisi uniquement aas_et/. Copiez le jeton maître entier et collez-le ici.",
+      "master-token-characters": "Le jeton maître contient des espaces, des sauts de ligne ou des caractères non pris en charge. Copiez de nouveau le jeton entier et collez-le ici sur une seule ligne.",
+      "master-token-too-short": "Le jeton maître doit contenir au moins 200 caractères. Copiez le jeton en entier. Longueur : {token_length} caractères.",
       "other-account": "Vous avez utilisé un autre compte Google pour vous connecter, rien n'a donc été modifié. Connectez-vous avec le compte qu'utilise cette intégration. Pour utiliser plutôt cet autre compte, supprimez l'intégration et ajoutez-la à nouveau.",
       "no-home-selected": "Choisissez au moins une maison."
     },
     "abort": {
-      "no-home": "Google indique que ce compte n'est membre d'aucune maison, il n'y a donc aucune enceinte ni aucun écran à ajouter. Dans l'application Google Home, invitez le compte dans la maison où se trouvent vos appareils, acceptez l'invitation, puis ajoutez à nouveau l'intégration. Un compte Google Workspace ne pouvant pas être invité, ajoutez plutôt l'intégration avec un compte Gmail membre de la maison. Pour en savoir plus, consultez {docs_url}."
+      "no-home": "Google indique que ce compte n'est membre d'aucune maison, il n'y a donc aucune enceinte ni aucun écran à ajouter. Dans l'application Google Home, invitez le compte dans la maison où se trouvent vos appareils, acceptez l'invitation, puis ajoutez à nouveau l'intégration. Un compte Google Workspace ne pouvant pas être invité, ajoutez plutôt l'intégration avec un compte Gmail membre de la maison. Pour en savoir plus, consultez {docs_url}.",
+      "unsupported-ha-version": "Cette version de l'intégration Google Home nécessite Home Assistant {required_version} ou une version ultérieure, mais ce système utilise la version {current_version}. Mettez à jour Home Assistant, puis ajoutez à nouveau l'intégration. Si vous préférez rester sur Home Assistant {current_version}, installez une version antérieure de l'intégration. Pour connaître la marche à suivre, consultez {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Les appareils suivants n'ont pas confirmé qu'ils vont redémarrer : {devices}. Vérifiez qu'ils sont en ligne et réessayez plus tard."
     },
+    "saved_sign_in_invalid": {
+      "message": "Les informations de connexion enregistrées sont manquantes ou non valides. Reconnectez-vous."
+    },
     "sign_in_rejected": {
       "message": "Google n'a pas accepté la connexion ({reason}). Reconnectez-vous."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google n'indique aucune maison pour votre compte",
       "description": "Google indique que le compte avec lequel l'intégration s'est connectée n'est membre d'aucune maison, il n'y a donc aucune enceinte ni aucun écran à ajouter. Dans l'application Google Home, invitez ce compte dans la maison où se trouvent vos appareils, puis acceptez l'invitation. Rechargez ensuite l'[intégration Google Home]({integration_url}) : sélectionnez **⋮** > **Recharger**.\n\nSi vous gardez l'intégration volontairement, par exemple pendant un déménagement, sélectionnez **Ignorer**. Si vous n'en avez plus besoin, vous pouvez la supprimer sur la même page."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home nécessite Home Assistant {required_version} ou une version ultérieure",
+      "description": "Cette version de l'intégration Google Home nécessite Home Assistant {required_version} ou une version ultérieure, mais ce système utilise la version {current_version}, l'intégration n'a donc pas été configurée. Ses paramètres sont conservés, et elle démarrera avec ceux-ci dès que vous aurez mis à jour Home Assistant.\n\nSi vous préférez rester sur Home Assistant {current_version}, installez une version antérieure de l'intégration. Pour connaître la marche à suivre, consultez {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Suivre un appareil Bluetooth",
-          "description": "Saisissez l'IRK d'un téléphone, ou l'adresse MAC d'un appareil dont l'adresse ne change jamais, comme certaines montres et balises. Les téléphones changent d'adresse toutes les quelques minutes : suivez-les donc par leur IRK. Pour savoir comment trouver l'IRK, consultez {docs_url}.",
+          "description": "Saisissez l'IRK d'un téléphone, ou l'adresse MAC d'un appareil dont l'adresse ne change jamais, comme certaines montres et balises. Les téléphones changent d'adresse de temps en temps : suivez-les donc par leur IRK. Pour savoir comment trouver l'IRK, consultez {docs_url}.",
           "data": {
             "name": "Nom",
             "irk_or_mac": "IRK ou adresse MAC",
@@ -414,6 +406,12 @@
         "60": "60 secondes",
         "90": "90 secondes",
         "120": "120 secondes"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Connexion via le navigateur (recommandée)",
+        "master_token": "Jeton maître"
       }
     }
   }

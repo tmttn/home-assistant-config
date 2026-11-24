@@ -43,36 +43,17 @@
           "homes": "Marca al menos una casa. También se añaden los altavoces y pantallas de las casas a las que tu cuenta se una más adelante."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Volver a iniciar sesión",
-        "description": "Google ya no acepta los datos de inicio de sesión guardados para {name}. Vuelve a iniciar sesión en la misma cuenta de Google: tus dispositivos, entidades y automatizaciones se mantienen como están. Hasta que lo hagas, las entidades de tus dispositivos pueden mostrar valores desactualizados o no estar disponibles.",
-        "menu_options": {
-          "browser": "Inicio de sesión en el navegador (recomendado)",
-          "master_token": "Token maestro"
-        },
-        "menu_option_descriptions": {
-          "browser": "Inicia sesión en Google en un navegador de ordenador y después pega una cookie.",
-          "master_token": "Pega un token maestro que ya tengas."
-        }
-      },
-      "reauth_browser": {
-        "title": "Inicio de sesión en el navegador",
-        "description": "1. En un ordenador, abre {embedded_setup_url} en una ventana de navegación privada e inicia sesión en la misma cuenta de Google. Después de aceptar, puede que la página siga cargando; es normal.\n2. Abre las herramientas para desarrolladores del navegador y busca las cookies de `accounts.google.com`.\n3. Copia el valor de la cookie `oauth_token` y pégalo abajo enseguida. Puede caducar rápidamente y solo funciona una vez.\n\nInstrucciones paso a paso (en inglés): {browser_docs_url}",
+        "description": "Vuelve a iniciar sesión en la cuenta de Google que usa {name}. Tus dispositivos, entidades y automatizaciones se mantienen como están. Hasta que lo hagas, las entidades de tus dispositivos pueden mostrar valores desactualizados o no estar disponibles.",
         "data": {
-          "oauth_token": "Cookie oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Empieza por oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Token maestro",
-        "description": "Pega un token maestro de la misma cuenta de Google, por ejemplo uno que hayas obtenido con otra herramienta.",
-        "data": {
+          "sign_in_method": "Método de inicio de sesión",
+          "oauth_token": "Cookie oauth_token",
           "master_token": "Token maestro de Google"
         },
         "data_description": {
-          "master_token": "Empieza por aas_et/"
+          "oauth_token": "1. En un ordenador, abre {embedded_setup_url} en una ventana de navegación privada e inicia sesión en la misma cuenta de Google. Después de aceptar, puede que la página siga cargando; es normal.\n2. Abre las herramientas para desarrolladores del navegador y busca las cookies de `accounts.google.com`.\n3. Copia el valor de la cookie `oauth_token` y pégalo enseguida en este campo. Puede caducar rápidamente y solo funciona una vez.\n\nInstrucciones paso a paso (en inglés): {browser_docs_url}\n\nEmpieza por oauth2_4/",
+          "master_token": "Pega un token maestro de la misma cuenta de Google, por ejemplo uno que hayas obtenido con otra herramienta.\n\nEmpieza por aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google no ha aceptado el inicio de sesión. Para ver los detalles, consulta los registros de Home Assistant.",
       "google-unreachable": "No se ha podido conectar con Google. Comprueba que Home Assistant esté conectado a Internet y vuelve a intentarlo.",
       "google-busy": "Google está ocupado o está limitando los inicios de sesión. Espera unos minutos y vuelve a iniciar sesión.",
-      "oauth-token-format": "Esta no es la cookie oauth_token. Su valor empieza por oauth2_4/.",
-      "master-token-format": "Un token maestro empieza por aas_et/ y tiene {token_length} caracteres. Copia el token completo.",
+      "oauth-token-format": "El valor de la cookie debe empezar por oauth2_4/. Copia el valor completo de la cookie oauth_token y pégalo aquí.",
+      "master-token-format": "El token maestro debe empezar por aas_et/. Copia el token completo y pégalo aquí.",
+      "master-token-empty": "Solo has introducido aas_et/. Copia el token maestro completo y pégalo aquí.",
+      "master-token-characters": "El token maestro contiene espacios, saltos de línea o caracteres no admitidos. Vuelve a copiar el token completo y pégalo aquí en una sola línea.",
+      "master-token-too-short": "El token maestro debe tener al menos 200 caracteres. Copia el token completo. Longitud: {token_length} caracteres.",
       "other-account": "Has iniciado sesión en otra cuenta de Google, por lo que no se ha cambiado nada. Inicia sesión con la cuenta que usa esta integración. Para usar esa otra cuenta, elimina la integración y vuelve a añadirla.",
       "no-home-selected": "Elige al menos una casa."
     },
     "abort": {
-      "no-home": "Google indica que esta cuenta no es miembro de ninguna casa, así que no hay altavoces ni pantallas que añadir. En la aplicación Google Home, invita a la cuenta a la casa en la que están tus dispositivos, acepta la invitación y vuelve a añadir la integración. Una cuenta de Google Workspace no se puede invitar, así que añade la integración con una cuenta de Gmail que sea miembro de la casa. Para más información, consulta {docs_url}."
+      "no-home": "Google indica que esta cuenta no es miembro de ninguna casa, así que no hay altavoces ni pantallas que añadir. En la aplicación Google Home, invita a la cuenta a la casa en la que están tus dispositivos, acepta la invitación y vuelve a añadir la integración. Una cuenta de Google Workspace no se puede invitar, así que añade la integración con una cuenta de Gmail que sea miembro de la casa. Para más información, consulta {docs_url}.",
+      "unsupported-ha-version": "Esta versión de la integración Google Home necesita Home Assistant {required_version} o posterior, pero este sistema usa la versión {current_version}. Actualiza Home Assistant y vuelve a añadir la integración. Si prefieres seguir con Home Assistant {current_version}, instala una versión anterior de la integración. Para ver los pasos, consulta {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Estos dispositivos no han confirmado que se vayan a reiniciar: {devices}. Comprueba que estén en línea y vuelve a intentarlo más tarde."
     },
+    "saved_sign_in_invalid": {
+      "message": "Faltan los datos de inicio de sesión guardados o no son válidos. Vuelve a iniciar sesión."
+    },
     "sign_in_rejected": {
       "message": "Google no ha aceptado el inicio de sesión ({reason}). Vuelve a iniciar sesión."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google no indica ninguna casa para tu cuenta",
       "description": "Google indica que la cuenta con la que la integración inició sesión no es miembro de ninguna casa, así que no hay altavoces ni pantallas que añadir. En la aplicación Google Home, invita a esta cuenta a la casa en la que están tus dispositivos y acepta la invitación. Después, recarga la [integración Google Home]({integration_url}): selecciona **⋮** > **Recargar**.\n\nSi mantienes la integración a propósito, por ejemplo mientras te mudas, selecciona **Ignorar**. Si ya no la necesitas, puedes eliminarla en la misma página."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home necesita Home Assistant {required_version} o posterior",
+      "description": "Esta versión de la integración Google Home necesita Home Assistant {required_version} o posterior, pero este sistema usa la versión {current_version}, así que la integración no se ha configurado. Su configuración se conserva, y la integración se iniciará con ella cuando actualices Home Assistant.\n\nSi prefieres seguir con Home Assistant {current_version}, instala una versión anterior de la integración. Para ver los pasos, consulta {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Rastrear un dispositivo Bluetooth",
-          "description": "Introduce la IRK de un teléfono o la dirección MAC de un dispositivo cuya dirección nunca cambia, como algunos relojes y etiquetas localizadoras. Los teléfonos cambian de dirección cada pocos minutos, así que rastréalos por su IRK. Para saber cómo encontrar la IRK, consulta {docs_url}.",
+          "description": "Introduce la IRK de un teléfono o la dirección MAC de un dispositivo cuya dirección nunca cambia, como algunos relojes y etiquetas localizadoras. Los teléfonos cambian de dirección de vez en cuando, así que rastréalos por su IRK. Para saber cómo encontrar la IRK, consulta {docs_url}.",
           "data": {
             "name": "Nombre",
             "irk_or_mac": "IRK o dirección MAC",
@@ -414,6 +406,12 @@
         "60": "60 segundos",
         "90": "90 segundos",
         "120": "120 segundos"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Inicio de sesión en el navegador (recomendado)",
+        "master_token": "Token maestro"
       }
     }
   }

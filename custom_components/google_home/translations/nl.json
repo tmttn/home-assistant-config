@@ -43,36 +43,17 @@
           "homes": "Selecteer ten minste één huis. Speakers en schermen in huizen waar je account later lid van wordt, worden ook toegevoegd."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Opnieuw inloggen",
-        "description": "Google accepteert de opgeslagen inloggegevens voor {name} niet meer. Log opnieuw in met hetzelfde Google-account: je apparaten, entiteiten en automatiseringen blijven zoals ze zijn. Tot je dat doet, kunnen de entiteiten van je apparaten verouderde waarden tonen of niet beschikbaar zijn.",
-        "menu_options": {
-          "browser": "Inloggen via de browser (aanbevolen)",
-          "master_token": "Mastertoken"
-        },
-        "menu_option_descriptions": {
-          "browser": "Log in bij Google in een desktopbrowser en plak daarna een cookie.",
-          "master_token": "Plak een mastertoken dat je al hebt."
-        }
-      },
-      "reauth_browser": {
-        "title": "Inloggen via de browser",
-        "description": "1. Open op een computer {embedded_setup_url} in een privévenster en log in met hetzelfde Google-account. Nadat je hebt geaccepteerd, kan de pagina blijven laden; dat is normaal.\n2. Open de ontwikkelaarstools van de browser en zoek de cookies voor `accounts.google.com`.\n3. Kopieer de waarde van de cookie `oauth_token` en plak deze meteen hieronder. De cookie kan snel verlopen en werkt maar één keer.\n\nStapsgewijze instructies: {browser_docs_url}",
+        "description": "Log opnieuw in met het Google-account dat {name} gebruikt. Je apparaten, entiteiten en automatiseringen blijven zoals ze zijn. Tot je dat doet, kunnen de entiteiten van je apparaten verouderde waarden tonen of niet beschikbaar zijn.",
         "data": {
-          "oauth_token": "Cookie oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Begint met oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Mastertoken",
-        "description": "Plak een mastertoken voor hetzelfde Google-account, bijvoorbeeld een dat je met een ander hulpmiddel hebt verkregen.",
-        "data": {
+          "sign_in_method": "Inlogmethode",
+          "oauth_token": "Cookie oauth_token",
           "master_token": "Mastertoken van Google-account"
         },
         "data_description": {
-          "master_token": "Begint met aas_et/"
+          "oauth_token": "1. Open op een computer {embedded_setup_url} in een privévenster en log in met hetzelfde Google-account. Nadat je hebt geaccepteerd, kan de pagina blijven laden; dat is normaal.\n2. Open de ontwikkelaarstools van de browser en zoek de cookies voor `accounts.google.com`.\n3. Kopieer de waarde van de cookie `oauth_token` en plak deze meteen in dit veld. De cookie kan snel verlopen en werkt maar één keer.\n\nStapsgewijze instructies: {browser_docs_url}\n\nBegint met oauth2_4/",
+          "master_token": "Plak een mastertoken voor hetzelfde Google-account, bijvoorbeeld een dat je met een ander hulpmiddel hebt verkregen.\n\nBegint met aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google heeft de inlogpoging niet geaccepteerd. Bekijk de logboeken van Home Assistant voor details.",
       "google-unreachable": "Google kon niet worden bereikt. Controleer of Home Assistant met internet is verbonden en probeer het daarna opnieuw.",
       "google-busy": "Google is overbelast of beperkt het aantal inlogpogingen. Wacht een paar minuten en log daarna opnieuw in.",
-      "oauth-token-format": "Dit is niet de cookie oauth_token. De waarde begint met oauth2_4/.",
-      "master-token-format": "Een mastertoken begint met aas_et/ en is {token_length} tekens lang. Kopieer het volledige token.",
+      "oauth-token-format": "De waarde van de cookie moet beginnen met oauth2_4/. Kopieer de volledige waarde van de cookie oauth_token en plak deze hier.",
+      "master-token-format": "Het mastertoken moet beginnen met aas_et/. Kopieer het volledige token en plak het hier.",
+      "master-token-empty": "Je hebt alleen aas_et/ ingevoerd. Kopieer het volledige mastertoken en plak het hier.",
+      "master-token-characters": "Het mastertoken bevat spaties, regeleinden of niet-ondersteunde tekens. Kopieer het volledige token opnieuw en plak het hier op één regel.",
+      "master-token-too-short": "Het mastertoken moet minstens 200 tekens lang zijn. Kopieer het hele token. Lengte: {token_length} tekens.",
       "other-account": "Je bent ingelogd met een ander Google-account, dus er is niets gewijzigd. Log in met het account dat deze integratie gebruikt. Om in plaats daarvan dat andere account te gebruiken, verwijder je de integratie en voeg je deze opnieuw toe.",
       "no-home-selected": "Kies ten minste één huis."
     },
     "abort": {
-      "no-home": "Google meldt dat dit account geen lid is van een huis, dus er zijn geen speakers of schermen om toe te voegen. Nodig het account in de Google Home-app uit voor het huis waarin je apparaten staan, accepteer de uitnodiging en voeg de integratie daarna opnieuw toe. Een Google Workspace-account kan niet worden uitgenodigd, dus voeg de integratie in dat geval toe met een Gmail-account dat lid is van het huis. Zie {docs_url} voor meer informatie."
+      "no-home": "Google meldt dat dit account geen lid is van een huis, dus er zijn geen speakers of schermen om toe te voegen. Nodig het account in de Google Home-app uit voor het huis waarin je apparaten staan, accepteer de uitnodiging en voeg de integratie daarna opnieuw toe. Een Google Workspace-account kan niet worden uitgenodigd, dus voeg de integratie in dat geval toe met een Gmail-account dat lid is van het huis. Zie {docs_url} voor meer informatie.",
+      "unsupported-ha-version": "Deze versie van de Google Home-integratie heeft Home Assistant {required_version} of nieuwer nodig, maar op dit systeem draait {current_version}. Werk Home Assistant bij en voeg de integratie daarna opnieuw toe. Wil je liever bij Home Assistant {current_version} blijven, installeer dan een eerdere versie van de integratie. Raadpleeg {docs_url} voor de stappen."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "De volgende apparaten hebben niet bevestigd dat ze herstarten: {devices}. Controleer of de apparaten online zijn en probeer het later opnieuw."
     },
+    "saved_sign_in_invalid": {
+      "message": "De opgeslagen inloggegevens ontbreken of zijn ongeldig. Log opnieuw in."
+    },
     "sign_in_rejected": {
       "message": "Google heeft de inlogpoging niet geaccepteerd ({reason}). Log opnieuw in."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google meldt geen huis voor je account",
       "description": "Google meldt dat het account waarmee de integratie is ingelogd geen lid is van een huis, dus er zijn geen speakers of schermen om toe te voegen. Nodig dit account in de Google Home-app uit voor het huis waarin je apparaten staan, en accepteer de uitnodiging. Herlaad daarna de [Google Home-integratie]({integration_url}): selecteer **⋮** > **Herladen**.\n\nAls je de integratie bewust houdt, bijvoorbeeld tijdens een verhuizing, selecteer je **Negeer**. Als je de integratie niet meer nodig hebt, kun je deze op dezelfde pagina verwijderen."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home heeft Home Assistant {required_version} of nieuwer nodig",
+      "description": "Deze versie van de Google Home-integratie heeft Home Assistant {required_version} of nieuwer nodig, maar op dit systeem draait {current_version}, daarom is de integratie niet ingesteld. De instellingen blijven bewaard en de integratie start ermee zodra je Home Assistant bijwerkt.\n\nWil je liever bij Home Assistant {current_version} blijven, installeer dan een eerdere versie van de integratie. Raadpleeg {docs_url} voor de stappen."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Een Bluetooth-apparaat volgen",
-          "description": "Voer de IRK van een telefoon in, of het MAC-adres van een apparaat waarvan het adres nooit verandert, zoals sommige horloges en tags. Telefoons wijzigen hun adres om de paar minuten, dus volg ze via de IRK. Zie {docs_url} voor hoe je de IRK vindt.",
+          "description": "Voer de IRK van een telefoon in, of het MAC-adres van een apparaat waarvan het adres nooit verandert, zoals sommige horloges en tags. Telefoons wijzigen hun adres van tijd tot tijd, dus volg ze via de IRK. Zie {docs_url} voor hoe je de IRK vindt.",
           "data": {
             "name": "Naam",
             "irk_or_mac": "IRK of MAC-adres",
@@ -414,6 +406,12 @@
         "60": "60 seconden",
         "90": "90 seconden",
         "120": "120 seconden"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Inloggen via de browser (aanbevolen)",
+        "master_token": "Mastertoken"
       }
     }
   }

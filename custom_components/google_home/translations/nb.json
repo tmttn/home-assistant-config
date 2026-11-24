@@ -43,36 +43,17 @@
           "homes": "Velg minst ett hjem. Høyttalere og skjermer i hjem som kontoen din senere blir medlem av, legges også til."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Logg på igjen",
-        "description": "Google godtar ikke lenger den lagrede påloggingen for {name}. Logg på den samme Google-kontoen igjen: enhetene, entitetene og automatiseringene dine forblir som de er. Inntil du gjør det, kan entitetene til enhetene dine vise utdaterte verdier eller være utilgjengelige.",
-        "menu_options": {
-          "browser": "Pålogging i nettleseren (anbefalt)",
-          "master_token": "Master token"
-        },
-        "menu_option_descriptions": {
-          "browser": "Logg på Google i en nettleser på en datamaskin, og lim deretter inn en informasjonskapsel.",
-          "master_token": "Lim inn et master token du allerede har."
-        }
-      },
-      "reauth_browser": {
-        "title": "Pålogging i nettleseren",
-        "description": "1. Åpne {embedded_setup_url} i et privat nettleservindu på en datamaskin, og logg på den samme Google-kontoen. Etter at du har godtatt, kan siden fortsette å laste; det er forventet.\n2. Åpne utviklerverktøyene i nettleseren, og finn informasjonskapslene for `accounts.google.com`.\n3. Kopier verdien til informasjonskapselen `oauth_token`, og lim den inn nedenfor med en gang. Den kan utløpe raskt og fungerer bare én gang.\n\nTrinnvis veiledning: {browser_docs_url}",
+        "description": "Logg på igjen med Google-kontoen som {name} bruker. Enhetene, entitetene og automatiseringene dine forblir som de er. Inntil du gjør det, kan entitetene til enhetene dine vise utdaterte verdier eller være utilgjengelige.",
         "data": {
-          "oauth_token": "Informasjonskapselen oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Starter med oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Master token",
-        "description": "Lim inn et master token for den samme Google-kontoen, for eksempel et du har fått med et annet verktøy.",
-        "data": {
+          "sign_in_method": "Påloggingsmetode",
+          "oauth_token": "Informasjonskapselen oauth_token",
           "master_token": "Master token for Google-kontoen"
         },
         "data_description": {
-          "master_token": "Starter med aas_et/"
+          "oauth_token": "1. Åpne {embedded_setup_url} i et privat nettleservindu på en datamaskin, og logg på den samme Google-kontoen. Etter at du har godtatt, kan siden fortsette å laste; det er forventet.\n2. Åpne utviklerverktøyene i nettleseren, og finn informasjonskapslene for `accounts.google.com`.\n3. Kopier verdien til informasjonskapselen `oauth_token`, og lim den inn i dette feltet med en gang. Den kan utløpe raskt og fungerer bare én gang.\n\nTrinnvis veiledning: {browser_docs_url}\n\nStarter med oauth2_4/",
+          "master_token": "Lim inn et master token for den samme Google-kontoen, for eksempel et du har fått med et annet verktøy.\n\nStarter med aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google godtok ikke påloggingen. Se Home Assistant-loggene for detaljer.",
       "google-unreachable": "Kunne ikke nå Google. Kontroller at Home Assistant er koblet til internett, og prøv deretter igjen.",
       "google-busy": "Google har stor pågang eller begrenser pålogginger. Vent noen minutter, og logg deretter på igjen.",
-      "oauth-token-format": "Dette er ikke informasjonskapselen oauth_token. Verdien starter med oauth2_4/.",
-      "master-token-format": "Et master token starter med aas_et/ og er {token_length} tegn langt. Kopier hele tokenet.",
+      "oauth-token-format": "Verdien til informasjonskapselen må starte med oauth2_4/. Kopier hele verdien til informasjonskapselen oauth_token og lim den inn her.",
+      "master-token-format": "Master-tokenet må starte med aas_et/. Kopier hele tokenet og lim det inn her.",
+      "master-token-empty": "Du skrev bare inn aas_et/. Kopier hele master-tokenet og lim det inn her.",
+      "master-token-characters": "Master-tokenet inneholder mellomrom, linjeskift eller tegn som ikke støttes. Kopier hele tokenet på nytt og lim det inn her på én linje.",
+      "master-token-too-short": "Master-tokenet må være minst 200 tegn langt. Kopier hele tokenet. Lengde: {token_length} tegn.",
       "other-account": "Du logget på en annen Google-konto, så ingenting ble endret. Logg på med kontoen som denne integrasjonen bruker. For å bruke den andre kontoen i stedet, slett integrasjonen og legg den til på nytt.",
       "no-home-selected": "Velg minst ett hjem."
     },
     "abort": {
-      "no-home": "Google oppgir at denne kontoen ikke er medlem av noe hjem, så det finnes ingen høyttalere eller skjermer å legge til. I Google Home-appen inviterer du kontoen til hjemmet enhetene dine er i, godtar invitasjonen og legger deretter til integrasjonen på nytt. En Google Workspace-konto kan ikke inviteres, så legg i stedet til integrasjonen med en Gmail-konto som er medlem av hjemmet. Du finner mer informasjon på {docs_url}."
+      "no-home": "Google oppgir at denne kontoen ikke er medlem av noe hjem, så det finnes ingen høyttalere eller skjermer å legge til. I Google Home-appen inviterer du kontoen til hjemmet enhetene dine er i, godtar invitasjonen og legger deretter til integrasjonen på nytt. En Google Workspace-konto kan ikke inviteres, så legg i stedet til integrasjonen med en Gmail-konto som er medlem av hjemmet. Du finner mer informasjon på {docs_url}.",
+      "unsupported-ha-version": "Denne versjonen av Google Home-integrasjonen krever Home Assistant {required_version} eller nyere, men dette systemet kjører {current_version}. Oppdater Home Assistant, og legg deretter til integrasjonen på nytt. Hvis du heller vil bli på Home Assistant {current_version}, installerer du en tidligere utgivelse av integrasjonen. Se veiledningen her: {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Disse enhetene bekreftet ikke at de vil starte på nytt: {devices}. Kontroller at enhetene er på nett, og prøv igjen senere."
     },
+    "saved_sign_in_invalid": {
+      "message": "De lagrede påloggingsopplysningene mangler eller er ugyldige. Logg på igjen."
+    },
     "sign_in_rejected": {
       "message": "Google godtok ikke påloggingen ({reason}). Logg på igjen."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google oppgir ikke noe hjem for kontoen din",
       "description": "Google oppgir at kontoen integrasjonen er logget på med, ikke er medlem av noe hjem, så det finnes ingen høyttalere eller skjermer å legge til. I Google Home-appen inviterer du denne kontoen til hjemmet enhetene dine er i, og godtar invitasjonen. Last deretter inn [Google Home-integrasjonen]({integration_url}) på nytt: Velg **⋮** > **Last inn på nytt**.\n\nHvis du beholder integrasjonen med vilje, for eksempel mens du flytter, velger du **Ignorer**. Hvis du ikke trenger den lenger, kan du slette den på den samme siden."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home krever Home Assistant {required_version} eller nyere",
+      "description": "Denne versjonen av Google Home-integrasjonen krever Home Assistant {required_version} eller nyere, men dette systemet kjører {current_version}, så integrasjonen ble ikke satt opp. Innstillingene beholdes, og integrasjonen starter med dem når du oppdaterer Home Assistant.\n\nHvis du heller vil bli på Home Assistant {current_version}, installerer du en tidligere utgivelse av integrasjonen. Se veiledningen her: {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Spor en Bluetooth-enhet",
-          "description": "Skriv inn IRK-en til en telefon, eller MAC-adressen til en enhet med en adresse som aldri endres, for eksempel enkelte klokker og sporingsbrikker. Telefoner bytter adresse med noen minutters mellomrom, så spor dem med IRK. Se {docs_url} for hvordan du finner IRK-en.",
+          "description": "Skriv inn IRK-en til en telefon, eller MAC-adressen til en enhet med en adresse som aldri endres, for eksempel enkelte klokker og sporingsbrikker. Telefoner bytter adresse fra tid til annen, så spor dem med IRK. Se {docs_url} for hvordan du finner IRK-en.",
           "data": {
             "name": "Navn",
             "irk_or_mac": "IRK eller MAC-adresse",
@@ -414,6 +406,12 @@
         "60": "60 sekunder",
         "90": "90 sekunder",
         "120": "120 sekunder"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Pålogging i nettleseren (anbefalt)",
+        "master_token": "Master token"
       }
     }
   }

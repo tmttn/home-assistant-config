@@ -43,36 +43,17 @@
           "homes": "Jelöljön ki legalább egy otthont. Az integráció azoknak az otthonoknak a hangszóróit és kijelzőit is hozzáadja, amelyekhez Google-fiókja később csatlakozik."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Újbóli bejelentkezés",
-        "description": "A Google már nem fogadja el a mentett bejelentkezési adatokat ({name}). Jelentkezzen be újra ugyanabba a Google-fiókba: az eszközei, entitásai és automatizmusai változatlanok maradnak. Amíg ezt meg nem teszi, az eszközei entitásai elavult értékeket mutathatnak, vagy nem érhetők el.",
-        "menu_options": {
-          "browser": "Bejelentkezés böngészővel (ajánlott)",
-          "master_token": "Mestertoken"
-        },
-        "menu_option_descriptions": {
-          "browser": "Jelentkezzen be a Google-fiókjába egy számítógép böngészőjében, majd illesszen be egy cookie-t.",
-          "master_token": "Illesszen be egy már meglévő mestertokent."
-        }
-      },
-      "reauth_browser": {
-        "title": "Bejelentkezés böngészővel",
-        "description": "1. Számítógépen nyissa meg a {embedded_setup_url} címet a böngésző privát ablakában, például inkognitó ablakban, és jelentkezzen be ugyanabba a Google-fiókba. Az elfogadás után az oldal tovább töltődhet; ez normális.\n2. Nyissa meg a böngésző fejlesztői eszközeit, és keresse meg az `accounts.google.com` cookie-jait.\n3. Másolja ki az `oauth_token` cookie értékét, és azonnal illessze be alább. Gyorsan lejárhat, és csak egyszer használható.\n\nRészletes útmutató: {browser_docs_url}",
+        "description": "Jelentkezzen be újra a(z) {name} által használt Google-fiókba. Az eszközei, entitásai és automatizmusai változatlanok maradnak. Amíg ezt meg nem teszi, az eszközei entitásai elavult értékeket mutathatnak, vagy nem érhetők el.",
         "data": {
-          "oauth_token": "oauth_token cookie"
-        },
-        "data_description": {
-          "oauth_token": "oauth2_4/ kezdetű"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Mestertoken",
-        "description": "Illesszen be egy mestertokent ugyanahhoz a Google-fiókhoz, például egy másik eszközzel megszerzettet.",
-        "data": {
+          "sign_in_method": "Bejelentkezési mód",
+          "oauth_token": "oauth_token cookie",
           "master_token": "A Google-fiók mestertokenje"
         },
         "data_description": {
-          "master_token": "aas_et/ kezdetű"
+          "oauth_token": "1. Számítógépen nyissa meg a {embedded_setup_url} címet a böngésző privát ablakában, például inkognitó ablakban, és jelentkezzen be ugyanabba a Google-fiókba. Az elfogadás után az oldal tovább töltődhet; ez normális.\n2. Nyissa meg a böngésző fejlesztői eszközeit, és keresse meg az `accounts.google.com` cookie-jait.\n3. Másolja ki az `oauth_token` cookie értékét, és azonnal illessze be ebbe a mezőbe. Gyorsan lejárhat, és csak egyszer használható.\n\nRészletes útmutató: {browser_docs_url}\n\noauth2_4/ kezdetű",
+          "master_token": "Illesszen be egy mestertokent ugyanahhoz a Google-fiókhoz, például egy másik eszközzel megszerzettet.\n\naas_et/ kezdetű"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "A Google nem fogadta el a bejelentkezést. A részletekért tekintse meg a Home Assistant naplóját.",
       "google-unreachable": "Nem sikerült elérni a Google-t. Ellenőrizze, hogy a Home Assistant csatlakozik-e az internethez, majd próbálja újra.",
       "google-busy": "A Google túlterhelt, vagy korlátozza a bejelentkezéseket. Várjon néhány percet, majd jelentkezzen be újra.",
-      "oauth-token-format": "Ez nem az oauth_token cookie. Annak értéke oauth2_4/ kezdetű.",
-      "master-token-format": "A mestertoken aas_et/ kezdetű és {token_length} karakter hosszú. Másolja ki a teljes tokent.",
+      "oauth-token-format": "A cookie értékének oauth2_4/ kezdetűnek kell lennie. Másolja ki az oauth_token cookie teljes értékét, és illessze be ide.",
+      "master-token-format": "A mestertokennek aas_et/ kezdetűnek kell lennie. Másolja ki a teljes tokent, és illessze be ide.",
+      "master-token-empty": "Csak az aas_et/ előtagot adta meg. Másolja ki a teljes mestertokent, és illessze be ide.",
+      "master-token-characters": "A mestertoken szóközöket, sortöréseket vagy nem támogatott karaktereket tartalmaz. Másolja ki újra a teljes tokent, és illessze be ide egyetlen sorban.",
+      "master-token-too-short": "A mestertokennek legalább 200 karakterből kell állnia. Másolja ki a teljes tokent. Hossz: {token_length} karakter.",
       "other-account": "Egy másik Google-fiókba jelentkezett be, ezért semmi sem változott. Jelentkezzen be az integráció által használt fiókkal. Ha inkább azt a másik fiókot szeretné használni, törölje az integrációt, és adja hozzá újra.",
       "no-home-selected": "Válasszon ki legalább egy otthont."
     },
     "abort": {
-      "no-home": "A Google szerint ez a fiók egyetlen otthonnak sem tagja, így nincsenek hozzáadható hangszórók vagy kijelzők. A Google Home alkalmazásban hívja meg a fiókot abba az otthonba, amelyben az eszközei vannak, fogadja el a meghívást, majd adja hozzá újra az integrációt. Google Workspace-fiókot nem lehet meghívni, ezért ilyenkor egy olyan Gmail-fiókkal adja hozzá az integrációt, amely tagja az otthonnak. Részletek: {docs_url}."
+      "no-home": "A Google szerint ez a fiók egyetlen otthonnak sem tagja, így nincsenek hozzáadható hangszórók vagy kijelzők. A Google Home alkalmazásban hívja meg a fiókot abba az otthonba, amelyben az eszközei vannak, fogadja el a meghívást, majd adja hozzá újra az integrációt. Google Workspace-fiókot nem lehet meghívni, ezért ilyenkor egy olyan Gmail-fiókkal adja hozzá az integrációt, amely tagja az otthonnak. Részletek: {docs_url}.",
+      "unsupported-ha-version": "A Google Home-integráció ezen verziója a Home Assistant {required_version} vagy újabb verzióját igényli, de ezen a rendszeren a Home Assistant {current_version} verziója fut. Frissítse a Home Assistantot, majd adja hozzá újra az integrációt. Ha inkább a Home Assistant {current_version} verziójánál maradna, telepítse az integráció egy korábbi kiadását. A lépéseket itt találja: {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "A következő eszközök nem erősítették meg, hogy újraindulnak: {devices}. Ellenőrizze, hogy az eszközök online vannak-e, és próbálja újra később."
     },
+    "saved_sign_in_invalid": {
+      "message": "A mentett bejelentkezési adatok hiányoznak vagy érvénytelenek. Jelentkezzen be újra."
+    },
     "sign_in_rejected": {
       "message": "A Google nem fogadta el a bejelentkezést ({reason}). Jelentkezzen be újra."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "A Google nem jelez otthont a fiókjához",
       "description": "A Google szerint az a fiók, amellyel az integráció bejelentkezett, egyetlen otthonnak sem tagja, így nincsenek hozzáadható hangszórók vagy kijelzők. A Google Home alkalmazásban hívja meg ezt a fiókot abba az otthonba, amelyben az eszközei vannak, és fogadja el a meghívást. Ezután töltse újra a [Google Home-integrációt]({integration_url}): válassza a **⋮** > **Konfiguráció újratöltése** lehetőséget.\n\nHa szándékosan tartja meg az integrációt, például költözés közben, válassza a **Mellőzés** lehetőséget. Ha már nincs rá szüksége, ugyanezen az oldalon törölheti."
+    },
+    "unsupported_ha_version": {
+      "title": "A Google Home a Home Assistant {required_version} vagy újabb verzióját igényli",
+      "description": "A Google Home-integráció ezen verziója a Home Assistant {required_version} vagy újabb verzióját igényli, de ezen a rendszeren a Home Assistant {current_version} verziója fut, ezért az integráció nem lett beállítva. A beállításai megmaradnak, és a Home Assistant frissítése után ezekkel indul el.\n\nHa inkább a Home Assistant {current_version} verziójánál maradna, telepítse az integráció egy korábbi kiadását. A lépéseket itt találja: {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Bluetooth-eszköz követése",
-          "description": "Adja meg egy telefon IRK-ját, vagy egy olyan eszköz MAC-címét, amelynek címe soha nem változik, például egyes órákét és nyomkövető címkékét. A telefonok néhány percenként megváltoztatják a címüket, ezért IRK alapján kövesse őket. Az IRK megkeresésének módját lásd itt: {docs_url}.",
+          "description": "Adja meg egy telefon IRK-ját, vagy egy olyan eszköz MAC-címét, amelynek címe soha nem változik, például egyes órákét és nyomkövető címkékét. A telefonok időről időre megváltoztatják a címüket, ezért IRK alapján kövesse őket. Az IRK megkeresésének módját lásd itt: {docs_url}.",
           "data": {
             "name": "Név",
             "irk_or_mac": "IRK vagy MAC-cím",
@@ -414,6 +406,12 @@
         "60": "60 másodperc",
         "90": "90 másodperc",
         "120": "120 másodperc"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Bejelentkezés böngészővel (ajánlott)",
+        "master_token": "Mestertoken"
       }
     }
   }

@@ -43,36 +43,17 @@
           "homes": "Markera minst ett hem. Högtalare och skärmar i hem som ditt konto senare blir medlem i läggs också till."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Logga in igen",
-        "description": "Google godkänner inte längre den sparade inloggningen för {name}. Logga in på samma Google-konto igen: dina enheter, entiteter och automatiseringar förblir som de är. Tills dess kan entiteterna för dina enheter visa inaktuella värden eller vara otillgängliga.",
-        "menu_options": {
-          "browser": "Inloggning via webbläsare (rekommenderas)",
-          "master_token": "Master token"
-        },
-        "menu_option_descriptions": {
-          "browser": "Logga in på Google i en webbläsare på en dator och klistra sedan in en cookie.",
-          "master_token": "Klistra in en master token som du redan har."
-        }
-      },
-      "reauth_browser": {
-        "title": "Inloggning via webbläsare",
-        "description": "1. Öppna {embedded_setup_url} i ett privat webbläsarfönster på en dator och logga in på samma Google-konto. När du har godkänt kan sidan fortsätta att laddas. Det är normalt.\n2. Öppna webbläsarens utvecklarverktyg och leta upp cookies för `accounts.google.com`.\n3. Kopiera värdet för cookien `oauth_token` och klistra in det nedan direkt. Det kan snabbt upphöra att gälla och kan bara användas en gång.\n\nStegvisa instruktioner: {browser_docs_url}",
+        "description": "Logga in igen på det Google-konto som {name} använder. Dina enheter, entiteter och automatiseringar förblir som de är. Tills dess kan entiteterna för dina enheter visa inaktuella värden eller vara otillgängliga.",
         "data": {
-          "oauth_token": "Cookien oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Börjar med oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Master token",
-        "description": "Klistra in en master token för samma Google-konto, till exempel en som du har fått med ett annat verktyg.",
-        "data": {
+          "sign_in_method": "Inloggningsmetod",
+          "oauth_token": "Cookien oauth_token",
           "master_token": "Master token för Google-kontot"
         },
         "data_description": {
-          "master_token": "Börjar med aas_et/"
+          "oauth_token": "1. Öppna {embedded_setup_url} i ett privat webbläsarfönster på en dator och logga in på samma Google-konto. När du har godkänt kan sidan fortsätta att laddas. Det är normalt.\n2. Öppna webbläsarens utvecklarverktyg och leta upp cookies för `accounts.google.com`.\n3. Kopiera värdet för cookien `oauth_token` och klistra in det direkt i det här fältet. Det kan snabbt upphöra att gälla och kan bara användas en gång.\n\nStegvisa instruktioner: {browser_docs_url}\n\nBörjar med oauth2_4/",
+          "master_token": "Klistra in en master token för samma Google-konto, till exempel en som du har fått med ett annat verktyg.\n\nBörjar med aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google godkände inte inloggningen. Mer information finns i Home Assistants loggar.",
       "google-unreachable": "Det gick inte att nå Google. Kontrollera att Home Assistant har internetanslutning och försök sedan igen.",
       "google-busy": "Google har hög belastning eller begränsar inloggningar. Vänta några minuter och logga sedan in igen.",
-      "oauth-token-format": "Det här är inte cookien oauth_token. Dess värde börjar med oauth2_4/.",
-      "master-token-format": "En master token börjar med aas_et/ och är {token_length} tecken lång. Kopiera hela värdet.",
+      "oauth-token-format": "Cookiens värde måste börja med oauth2_4/. Kopiera hela värdet för cookien oauth_token och klistra in det här.",
+      "master-token-format": "Din mastertoken måste börja med aas_et/. Kopiera hela värdet och klistra in det här.",
+      "master-token-empty": "Du angav bara aas_et/. Kopiera hela din mastertoken och klistra in den här.",
+      "master-token-characters": "Din mastertoken innehåller mellanslag, radbrytningar eller tecken som inte stöds. Kopiera hela värdet igen och klistra in det här på en rad.",
+      "master-token-too-short": "Din mastertoken måste vara minst 200 tecken lång. Kopiera hela värdet. Längd: {token_length} tecken.",
       "other-account": "Du loggade in på ett annat Google-konto, så inget ändrades. Logga in med kontot som den här integrationen använder. Om du i stället vill använda det andra kontot raderar du integrationen och lägger till den igen.",
       "no-home-selected": "Välj minst ett hem."
     },
     "abort": {
-      "no-home": "Google rapporterar att det här kontot inte är medlem i något hem, så det finns inga högtalare eller skärmar att lägga till. I Google Home-appen bjuder du in kontot till hemmet där dina enheter finns, godkänner inbjudan och lägger sedan till integrationen igen. Ett Google Workspace-konto kan inte bjudas in, så lägg i stället till integrationen med ett Gmail-konto som är medlem i hemmet. Mer information finns på {docs_url}."
+      "no-home": "Google rapporterar att det här kontot inte är medlem i något hem, så det finns inga högtalare eller skärmar att lägga till. I Google Home-appen bjuder du in kontot till hemmet där dina enheter finns, godkänner inbjudan och lägger sedan till integrationen igen. Ett Google Workspace-konto kan inte bjudas in, så lägg i stället till integrationen med ett Gmail-konto som är medlem i hemmet. Mer information finns på {docs_url}.",
+      "unsupported-ha-version": "Den här versionen av Google Home-integrationen kräver Home Assistant {required_version} eller senare, men det här systemet kör {current_version}. Uppdatera Home Assistant och lägg sedan till integrationen igen. Om du hellre vill stanna på Home Assistant {current_version} installerar du en tidigare utgåva av integrationen. Anvisningar finns på {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Följande enheter bekräftade inte att de kommer att starta om: {devices}. Kontrollera att enheterna är online och försök igen senare."
     },
+    "saved_sign_in_invalid": {
+      "message": "De sparade inloggningsuppgifterna saknas eller är ogiltiga. Logga in igen."
+    },
     "sign_in_rejected": {
       "message": "Google godkände inte inloggningen ({reason}). Logga in igen."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google rapporterar inget hem för ditt konto",
       "description": "Google rapporterar att kontot som integrationen loggade in med inte är medlem i något hem, så det finns inga högtalare eller skärmar att lägga till. I Google Home-appen bjuder du in det här kontot till hemmet där dina enheter finns och godkänner inbjudan. Ladda sedan om [Google Home-integrationen]({integration_url}): välj **⋮** > **Ladda om**.\n\nOm du behåller integrationen med avsikt, till exempel medan du flyttar, väljer du **Ignorera**. Om du inte längre behöver den kan du ta bort den på samma sida."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home kräver Home Assistant {required_version} eller senare",
+      "description": "Den här versionen av Google Home-integrationen kräver Home Assistant {required_version} eller senare, men det här systemet kör {current_version}, så integrationen konfigurerades inte. Inställningarna finns kvar, och integrationen startar med dem när du uppdaterar Home Assistant.\n\nOm du hellre vill stanna på Home Assistant {current_version} installerar du en tidigare utgåva av integrationen. Anvisningar finns på {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Spåra en Bluetooth-enhet",
-          "description": "Ange IRK för en telefon, eller MAC-adressen för en enhet vars adress aldrig ändras, till exempel vissa klockor och taggar. Telefoner byter adress med några minuters mellanrum, så spåra dem med IRK. Se {docs_url} för hur du hittar IRK.",
+          "description": "Ange IRK för en telefon, eller MAC-adressen för en enhet vars adress aldrig ändras, till exempel vissa klockor och taggar. Telefoner byter adress då och då, så spåra dem med IRK. Se {docs_url} för hur du hittar IRK.",
           "data": {
             "name": "Namn",
             "irk_or_mac": "IRK eller MAC-adress",
@@ -414,6 +406,12 @@
         "60": "60 sekunder",
         "90": "90 sekunder",
         "120": "120 sekunder"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Inloggning via webbläsare (rekommenderas)",
+        "master_token": "Master token"
       }
     }
   }

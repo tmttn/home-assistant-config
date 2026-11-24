@@ -43,36 +43,17 @@
           "homes": "Pilih minimal satu rumah. Jika nanti akun Anda bergabung dengan rumah lain, speaker dan layar di rumah tersebut juga ditambahkan."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Login ulang",
-        "description": "Google tidak lagi menerima data login yang tersimpan untuk {name}. Login ulang ke akun Google yang sama: perangkat, entitas, dan otomasi Anda tetap seperti semula. Sebelum Anda melakukannya, entitas perangkat Anda mungkin menampilkan nilai yang tidak terbaru atau menjadi tidak tersedia.",
-        "menu_options": {
-          "browser": "Login melalui browser (direkomendasikan)",
-          "master_token": "Token master"
-        },
-        "menu_option_descriptions": {
-          "browser": "Login ke Google melalui browser di komputer, lalu tempelkan cookie.",
-          "master_token": "Tempelkan token master yang sudah Anda miliki."
-        }
-      },
-      "reauth_browser": {
-        "title": "Login melalui browser",
-        "description": "1. Di komputer, buka {embedded_setup_url} di jendela penjelajahan pribadi browser, misalnya jendela Samaran, lalu login ke akun Google yang sama. Setelah Anda menyetujui, halaman mungkin terus memuat; ini normal.\n2. Buka alat developer browser dan cari cookie untuk `accounts.google.com`.\n3. Salin nilai cookie `oauth_token` dan segera tempelkan di bawah. Nilai ini dapat kedaluwarsa dengan cepat dan hanya dapat digunakan sekali.\n\nPetunjuk langkah demi langkah: {browser_docs_url}",
+        "description": "Login ulang ke akun Google yang digunakan oleh {name}. Perangkat, entitas, dan otomasi Anda tetap seperti semula. Sebelum Anda melakukannya, entitas perangkat Anda mungkin menampilkan nilai yang tidak terbaru atau menjadi tidak tersedia.",
         "data": {
-          "oauth_token": "Cookie oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Diawali dengan oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Token master",
-        "description": "Tempelkan token master untuk akun Google yang sama, misalnya token yang Anda peroleh dengan alat lain.",
-        "data": {
+          "sign_in_method": "Metode login",
+          "oauth_token": "Cookie oauth_token",
           "master_token": "Token master akun Google"
         },
         "data_description": {
-          "master_token": "Diawali dengan aas_et/"
+          "oauth_token": "1. Di komputer, buka {embedded_setup_url} di jendela penjelajahan pribadi browser, misalnya jendela Samaran, lalu login ke akun Google yang sama. Setelah Anda menyetujui, halaman mungkin terus memuat; ini normal.\n2. Buka alat developer browser dan cari cookie untuk `accounts.google.com`.\n3. Salin nilai cookie `oauth_token` dan segera tempelkan di kolom ini. Nilai ini dapat kedaluwarsa dengan cepat dan hanya dapat digunakan sekali.\n\nPetunjuk langkah demi langkah: {browser_docs_url}\n\nDiawali dengan oauth2_4/",
+          "master_token": "Tempelkan token master untuk akun Google yang sama, misalnya token yang Anda peroleh dengan alat lain.\n\nDiawali dengan aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google tidak menerima login tersebut. Untuk detailnya, lihat log Home Assistant.",
       "google-unreachable": "Tidak dapat terhubung ke Google. Pastikan Home Assistant terhubung ke internet, lalu coba lagi.",
       "google-busy": "Google sedang sibuk atau membatasi login. Tunggu beberapa menit, lalu login ulang.",
-      "oauth-token-format": "Ini bukan cookie oauth_token. Nilainya diawali dengan oauth2_4/.",
-      "master-token-format": "Token master diawali dengan aas_et/ dan panjangnya {token_length} karakter. Salin seluruh token.",
+      "oauth-token-format": "Nilai cookie harus diawali dengan oauth2_4/. Salin seluruh nilai cookie oauth_token dan tempelkan di sini.",
+      "master-token-format": "Token master harus diawali dengan aas_et/. Salin seluruh token dan tempelkan di sini.",
+      "master-token-empty": "Anda hanya memasukkan aas_et/. Salin seluruh token master dan tempelkan di sini.",
+      "master-token-characters": "Token master mengandung spasi, jeda baris, atau karakter yang tidak didukung. Salin ulang seluruh token dan tempelkan di sini dalam satu baris.",
+      "master-token-too-short": "Token master harus terdiri dari setidaknya 200 karakter. Salin seluruh token. Panjang: {token_length} karakter.",
       "other-account": "Anda login ke akun Google yang berbeda, sehingga tidak ada yang diubah. Login dengan akun yang digunakan integrasi ini. Untuk menggunakan akun lain tersebut, hapus integrasi lalu tambahkan kembali.",
       "no-home-selected": "Pilih minimal satu rumah."
     },
     "abort": {
-      "no-home": "Google melaporkan bahwa akun ini bukan anggota rumah mana pun, sehingga tidak ada speaker atau layar yang dapat ditambahkan. Di aplikasi Google Home, undang akun ini ke rumah tempat perangkat Anda berada, terima undangannya, lalu tambahkan kembali integrasi. Akun Google Workspace tidak dapat diundang, jadi tambahkan integrasi dengan akun Gmail yang merupakan anggota rumah tersebut. Untuk detailnya, lihat {docs_url}."
+      "no-home": "Google melaporkan bahwa akun ini bukan anggota rumah mana pun, sehingga tidak ada speaker atau layar yang dapat ditambahkan. Di aplikasi Google Home, undang akun ini ke rumah tempat perangkat Anda berada, terima undangannya, lalu tambahkan kembali integrasi. Akun Google Workspace tidak dapat diundang, jadi tambahkan integrasi dengan akun Gmail yang merupakan anggota rumah tersebut. Untuk detailnya, lihat {docs_url}.",
+      "unsupported-ha-version": "Versi integrasi Google Home ini memerlukan Home Assistant {required_version} atau yang lebih baru, tetapi sistem ini menjalankan {current_version}. Perbarui Home Assistant, lalu tambahkan kembali integrasi. Jika Anda ingin tetap menggunakan Home Assistant {current_version}, instal rilis integrasi yang lebih lama. Untuk langkah-langkahnya, lihat {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Perangkat berikut tidak mengonfirmasi bahwa perangkat tersebut akan dimulai ulang: {devices}. Pastikan semuanya online dan coba lagi nanti."
     },
+    "saved_sign_in_invalid": {
+      "message": "Informasi login yang tersimpan tidak ditemukan atau tidak valid. Login ulang."
+    },
     "sign_in_rejected": {
       "message": "Google tidak menerima login tersebut ({reason}). Login ulang."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google tidak melaporkan rumah apa pun untuk akun Anda",
       "description": "Google melaporkan bahwa akun yang digunakan integrasi untuk login bukan anggota rumah mana pun, sehingga tidak ada speaker atau layar yang dapat ditambahkan. Di aplikasi Google Home, undang akun ini ke rumah tempat perangkat Anda berada, lalu terima undangannya. Kemudian, muat ulang [integrasi Google Home]({integration_url}): pilih **⋮** > **Muat Ulang**.\n\nJika Anda sengaja mempertahankan integrasi ini, misalnya saat sedang pindah rumah, pilih **Abaikan**. Jika tidak memerlukannya lagi, Anda dapat menghapusnya di halaman yang sama."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home memerlukan Home Assistant {required_version} atau yang lebih baru",
+      "description": "Versi integrasi Google Home ini memerlukan Home Assistant {required_version} atau yang lebih baru, tetapi sistem ini menjalankan {current_version}, sehingga integrasi tidak disiapkan. Pengaturannya tetap disimpan, dan integrasi akan dimulai dengan pengaturan tersebut setelah Anda memperbarui Home Assistant.\n\nJika Anda ingin tetap menggunakan Home Assistant {current_version}, instal rilis integrasi yang lebih lama. Untuk langkah-langkahnya, lihat {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Lacak perangkat Bluetooth",
-          "description": "Masukkan IRK ponsel, atau alamat MAC perangkat yang alamatnya tidak pernah berubah, seperti beberapa jam tangan dan tag pelacak. Ponsel mengganti alamatnya setiap beberapa menit, jadi lacak ponsel dengan IRK. Untuk cara menemukan IRK, lihat {docs_url}.",
+          "description": "Masukkan IRK ponsel, atau alamat MAC perangkat yang alamatnya tidak pernah berubah, seperti beberapa jam tangan dan tag pelacak. Ponsel mengganti alamatnya dari waktu ke waktu, jadi lacak ponsel dengan IRK. Untuk cara menemukan IRK, lihat {docs_url}.",
           "data": {
             "name": "Nama",
             "irk_or_mac": "IRK atau alamat MAC",
@@ -414,6 +406,12 @@
         "60": "60 detik",
         "90": "90 detik",
         "120": "120 detik"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Login melalui browser (direkomendasikan)",
+        "master_token": "Token master"
       }
     }
   }

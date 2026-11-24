@@ -43,36 +43,17 @@
           "homes": "Vælg mindst ét hjem. Højttalere og skærme i hjem, som din konto senere bliver medlem af, tilføjes også."
         }
       },
-      "reauth": {
+      "reauth_confirm": {
         "title": "Log ind igen",
-        "description": "Google accepterer ikke længere det gemte login for {name}. Log ind på den samme Google-konto igen: dine enheder, entiteter og automatiseringer forbliver, som de er. Indtil du gør det, kan dine enheders entiteter vise forældede værdier eller være utilgængelige.",
-        "menu_options": {
-          "browser": "Login via browser (anbefalet)",
-          "master_token": "Master token"
-        },
-        "menu_option_descriptions": {
-          "browser": "Log ind på Google i en browser på en computer, og indsæt derefter en cookie.",
-          "master_token": "Indsæt et master token, du allerede har."
-        }
-      },
-      "reauth_browser": {
-        "title": "Login via browser",
-        "description": "1. Åbn {embedded_setup_url} i et privat browservindue på en computer, og log ind på den samme Google-konto. Når du har accepteret, bliver siden måske ved med at indlæse; det er forventet.\n2. Åbn browserens udviklerværktøjer, og find cookies for `accounts.google.com`.\n3. Kopiér værdien af cookien `oauth_token`, og indsæt den nedenfor med det samme. Den kan udløbe hurtigt og virker kun én gang.\n\nTrin-for-trin-vejledning: {browser_docs_url}",
+        "description": "Log ind igen på den Google-konto, som {name} bruger. Dine enheder, entiteter og automatiseringer forbliver, som de er. Indtil du gør det, kan dine enheders entiteter vise forældede værdier eller være utilgængelige.",
         "data": {
-          "oauth_token": "Cookien oauth_token"
-        },
-        "data_description": {
-          "oauth_token": "Starter med oauth2_4/"
-        }
-      },
-      "reauth_master_token": {
-        "title": "Master token",
-        "description": "Indsæt et master token til den samme Google-konto, f.eks. et, som du har fået med et andet værktøj.",
-        "data": {
+          "sign_in_method": "Loginmetode",
+          "oauth_token": "Cookien oauth_token",
           "master_token": "Master token til Google-konto"
         },
         "data_description": {
-          "master_token": "Starter med aas_et/"
+          "oauth_token": "1. Åbn {embedded_setup_url} i et privat browservindue på en computer, og log ind på den samme Google-konto. Når du har accepteret, bliver siden måske ved med at indlæse; det er forventet.\n2. Åbn browserens udviklerværktøjer, og find cookies for `accounts.google.com`.\n3. Kopiér værdien af cookien `oauth_token`, og indsæt den i dette felt med det samme. Den kan udløbe hurtigt og virker kun én gang.\n\nTrin-for-trin-vejledning: {browser_docs_url}\n\nStarter med oauth2_4/",
+          "master_token": "Indsæt et master token til den samme Google-konto, f.eks. et, som du har fået med et andet værktøj.\n\nStarter med aas_et/"
         }
       }
     },
@@ -82,13 +63,17 @@
       "google-rejected": "Google accepterede ikke loginet. Du kan se detaljerne i logfilerne i Home Assistant.",
       "google-unreachable": "Kunne ikke oprette forbindelse til Google. Kontrollér, at Home Assistant har forbindelse til internettet, og prøv derefter igen.",
       "google-busy": "Google er overbelastet eller begrænser loginforsøg. Vent et par minutter, og log derefter ind igen.",
-      "oauth-token-format": "Dette er ikke cookien oauth_token. Dens værdi starter med oauth2_4/.",
-      "master-token-format": "Et master token starter med aas_et/ og er {token_length} tegn langt. Kopiér hele tokenet.",
+      "oauth-token-format": "Cookiens værdi skal starte med oauth2_4/. Kopiér hele værdien af cookien oauth_token, og indsæt den her.",
+      "master-token-format": "Master-tokenet skal starte med aas_et/. Kopiér hele tokenet, og indsæt det her.",
+      "master-token-empty": "Du har kun indtastet aas_et/. Kopiér hele master-tokenet, og indsæt det her.",
+      "master-token-characters": "Master-tokenet indeholder mellemrum, linjeskift eller ikke-understøttede tegn. Kopiér hele tokenet igen, og indsæt det her på én linje.",
+      "master-token-too-short": "Master-tokenet skal være mindst 200 tegn langt. Kopiér hele tokenet. Længde: {token_length} tegn.",
       "other-account": "Du loggede ind på en anden Google-konto, så der blev ikke ændret noget. Log ind med den konto, som denne integration bruger. Hvis du i stedet vil bruge den anden konto, skal du slette integrationen og tilføje den igen.",
       "no-home-selected": "Vælg mindst ét hjem."
     },
     "abort": {
-      "no-home": "Google angiver, at denne konto ikke er medlem af noget hjem, så der er ingen højttalere eller skærme at tilføje. I Google Home-appen skal du invitere kontoen til det hjem, dine enheder er i, acceptere invitationen og derefter tilføje integrationen igen. En Google Workspace-konto kan ikke inviteres, så tilføj i stedet integrationen med en Gmail-konto, der er medlem af hjemmet. Du kan læse mere på {docs_url}."
+      "no-home": "Google angiver, at denne konto ikke er medlem af noget hjem, så der er ingen højttalere eller skærme at tilføje. I Google Home-appen skal du invitere kontoen til det hjem, dine enheder er i, acceptere invitationen og derefter tilføje integrationen igen. En Google Workspace-konto kan ikke inviteres, så tilføj i stedet integrationen med en Gmail-konto, der er medlem af hjemmet. Du kan læse mere på {docs_url}.",
+      "unsupported-ha-version": "Denne version af Google Home-integrationen kræver Home Assistant {required_version} eller nyere, men dette system kører {current_version}. Opdater Home Assistant, og tilføj derefter integrationen igen. Hvis du i stedet vil blive på Home Assistant {current_version}, skal du installere en tidligere udgivelse af integrationen. Se vejledningen her: {docs_url}."
     }
   },
   "entity": {
@@ -202,6 +187,9 @@
     "devices_not_rebooted": {
       "message": "Disse enheder bekræftede ikke, at de genstarter: {devices}. Kontrollér, at de er online, og prøv igen senere."
     },
+    "saved_sign_in_invalid": {
+      "message": "De gemte loginoplysninger mangler eller er ugyldige. Log ind igen."
+    },
     "sign_in_rejected": {
       "message": "Google accepterede ikke loginet ({reason}). Log ind igen."
     }
@@ -247,6 +235,10 @@
     "no_home": {
       "title": "Google angiver intet hjem for din konto",
       "description": "Google angiver, at den konto, integrationen er logget ind med, ikke er medlem af noget hjem, så der er ingen højttalere eller skærme at tilføje. I Google Home-appen skal du invitere denne konto til det hjem, dine enheder er i, og acceptere invitationen. Genindlæs derefter [Google Home-integrationen]({integration_url}): Vælg **⋮** > **Genindlæs**.\n\nHvis du beholder integrationen med vilje, f.eks. mens du flytter, skal du vælge **Ignorér**. Hvis du ikke længere har brug for den, kan du slette den på samme side."
+    },
+    "unsupported_ha_version": {
+      "title": "Google Home kræver Home Assistant {required_version} eller nyere",
+      "description": "Denne version af Google Home-integrationen kræver Home Assistant {required_version} eller nyere, men dette system kører {current_version}, så integrationen blev ikke sat op. Dens indstillinger bevares, og den starter med dem, når du opdaterer Home Assistant.\n\nHvis du i stedet vil blive på Home Assistant {current_version}, skal du installere en tidligere udgivelse af integrationen. Se vejledningen her: {docs_url}."
     }
   },
   "config_subentries": {
@@ -258,7 +250,7 @@
       "step": {
         "user": {
           "title": "Spor en Bluetooth-enhed",
-          "description": "Angiv en telefons IRK eller MAC-adressen på en enhed, hvis adresse aldrig ændres, f.eks. visse ure og tags. Telefoner skifter adresse med få minutters mellemrum, så spor dem via IRK. Se {docs_url} for at finde ud af, hvordan du finder IRK'en.",
+          "description": "Angiv en telefons IRK eller MAC-adressen på en enhed, hvis adresse aldrig ændres, f.eks. visse ure og tags. Telefoner skifter adresse fra tid til anden, så spor dem via IRK. Se {docs_url} for at finde ud af, hvordan du finder IRK'en.",
           "data": {
             "name": "Navn",
             "irk_or_mac": "IRK eller MAC-adresse",
@@ -414,6 +406,12 @@
         "60": "60 sekunder",
         "90": "90 sekunder",
         "120": "120 sekunder"
+      }
+    },
+    "sign_in_method": {
+      "options": {
+        "browser": "Login via browser (anbefalet)",
+        "master_token": "Master token"
       }
     }
   }
