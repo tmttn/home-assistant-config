@@ -51,3 +51,37 @@ later and survives restarts (no `wait_for_trigger`). It restores the schedule se
 05:00–11:00, and moderate at night (arrival alone does nothing at night). It only raises, never lowers, and
 replaces the push with "Verwarming staat terug aan". Coming home later still runs the normal arrival restore; the
 setback does not fire again until the house is occupied and then empty for 45 min.
+
+## Alarm clock: follow Tom's iPhone alarm
+
+Added on 2026-11-24. iOS gives no app (the HA Companion app included) access to the Clock alarms; only Shortcuts can
+read them. A Shortcut on Tom's iPhone writes the next enabled alarm into `input_datetime.tom_iphone_next_alarm`.
+
+`sensor.next_alarm` (template helper) now picks:
+
+1. the iPhone value, when it was written in the last 36 h (`last_reported`) and is not `1970-01-01` (never synced).
+   `2000-01-01 00:00:00` means "no alarm set" and makes the sensor `unknown`. The value stays for 1 h after it
+   passes, so time triggers on the sensor are not cancelled at the alarm minute;
+2. otherwise the next block of `schedule.alarm_clock_schedule`, as before.
+
+Consumers: "Alarm clock: wake up with light" fires at `sensor.next_alarm` (was `schedule.block_started`), the
+espresso machine 10 min before it (was the block start, despite its name), the heating 30 min before it (unchanged).
+
+### iPhone Shortcut "Wekker naar HA"
+
+1. Clock → **Get All Alarms**; keep the ones that are enabled.
+2. For each: take its time today; if that is earlier than now, add 1 day. Keep the earliest.
+3. None found → use `2000-01-01 00:00:00`.
+4. **Format Date** with custom format `yyyy-MM-dd HH:mm:ss`.
+5. Home Assistant → **Perform Action** `input_datetime.set_datetime` with data
+   `{"entity_id": "input_datetime.tom_iphone_next_alarm", "datetime": "<formatted date>"}`.
+
+Personal automations (Run Immediately): daily at 22:00 and when the Sleep focus turns on. A repeating alarm that
+skips tomorrow's weekday is taken as tomorrow's alarm; rerunning at bedtime keeps that rare.
+
+## Medication: Apple Health reminder from the kitchen button
+
+Added on 2026-11-24. The first press of the day of the kitchen medication button now also pushes to Tom
+(`notify.mobile_app_bizzyphone`, tag `medication_health_log`) with a tap that opens Health (`x-apple-health://`);
+the dose is logged there under Browse → Medications. Logging it automatically is not possible: Shortcuts has no
+medication action and the HealthKit medications API (WWDC25) is documented for reading medications and doses, not logging them.
