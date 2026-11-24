@@ -63,6 +63,10 @@ Tom uses the Shortcut from the HA community thread "Sync iOS 26+ sleep alarm to 
 unchanged except for the helper name in its dictionary: `input_datetime.tom_iphone_sleep_alarm`. It toggles the sleep
 alarm twice, reads the next wake-up time and sends it with `input_datetime.set_datetime`.
 
+iPhone automation (Run Immediately): daily at 04:00, so changes made in the evening or after midnight still count.
+The heating starts 30 min before the alarm, so an alarm before about 04:35 is synced too late for it; until the
+04:00 run the sensor keeps the previous sync's time.
+
 `sensor.next_alarm` (template helper) now picks:
 
 1. the next occurrence of the helper's **time** (its date is ignored, since the Shortcut's date can be off), when
