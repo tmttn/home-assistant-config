@@ -96,9 +96,13 @@ kitchen press also replaces an open reminder.
 ## Night mode: ask to sleep when Tom's Sleep focus starts
 
 Added on 2026-11-24. When Tom's iPhone turns on a Focus (`binary_sensor.bizzyphone_focus`) between 20:00 and 03:00,
-sleep mode is off, Tom is home and guest mode is off, it pushes "Slapen?" with a "Ga slapen" button
-(`SLEEP_FOCUS_GO`) that runs `script.going_to_sleep`. It asks instead of acting because someone else may still be up.
-The push (tag `sleep_focus_prompt`) is cleared once sleep mode turns on, however that happens.
+Tom is home and guest mode is off, it pushes "Slapen?" (tag `sleep_focus_prompt`):
+
+- sleep mode off: "Iedereen slaapt" (`SLEEP_FOCUS_TOTAL`, runs `script.going_to_sleep`) and "Alleen ik (half)"
+  (`SLEEP_FOCUS_HALF`, sets `half`: Tom goes up, others stay up downstairs);
+- sleep mode already half: only "Iedereen slaapt".
+
+It asks instead of acting because someone else may still be up. The push is cleared once sleep mode reaches total.
 
 iOS does not share the focus name (`sensor.bizzyphone_focus_name` stays empty), so the time window stands in for "it
 is the Sleep focus". In the week before, the focus turned on between 22:39 and 23:18 and sleep mode was set by hand
@@ -106,3 +110,16 @@ is the Sleep focus". In the week before, the focus turned on between 22:39 and 2
 
 Not built: Wi-Fi (`sensor.bizzyphone_ssid`) as a faster arrival signal. Over 7 days GPS reported home 30 s to 4 min
 before the phone joined "MetGen Net", so it would not speed anything up.
+
+## Night mode: half vs total
+
+`half` = someone went to bed while others are still up downstairs; `total` = everyone sleeps. Adjusted on 2026-11-24:
+
+- "Night mode: goodnight check" now runs when sleep mode reaches `total` (from off or half), not on `half`. At half,
+  open doors and downstairs lights are expected; the check belongs to the moment the last one goes to bed, including
+  the automatic half -> total after 1 h without activity outside the bedroom. That late push uses the default level,
+  which the Sleep focus silences.
+- "Car: announce the Tesla is almost home" also speaks at `half` (the Kitchen Display is downstairs, where someone is
+  still up); it stays silent at `total` and after 22:00.
+- Unchanged, already right for half: arming the alarm (home) and the low heating setpoint only happen at `total`;
+  adaptive lighting has its own half profile.
