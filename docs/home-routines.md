@@ -55,13 +55,15 @@ setback does not fire again until the house is occupied and then empty for 45 mi
 ## Alarm clock: follow Tom's iPhone alarm
 
 Added on 2026-11-24. iOS gives no app (the HA Companion app included) access to the Clock alarms; only Shortcuts can
-read them. A Shortcut on Tom's iPhone writes the next enabled alarm into `input_datetime.tom_iphone_next_alarm`.
+read them. A Shortcut on Tom's iPhone writes the times of all enabled alarms into `input_text.tom_iphone_alarms`
+as `HH:mm,HH:mm` (empty = no alarm set, `never` = not synced yet). Home Assistant works out which one is next, so
+the Shortcut needs no date logic.
 
 `sensor.next_alarm` (template helper) now picks:
 
-1. the iPhone value, when it was written in the last 36 h (`last_reported`) and is not `1970-01-01` (never synced).
-   `2000-01-01 00:00:00` means "no alarm set" and makes the sensor `unknown`. The value stays for 1 h after it
-   passes, so time triggers on the sensor are not cancelled at the alarm minute;
+1. the earliest upcoming time from the iPhone list, when it was written in the last 36 h (`last_reported`). A time
+   stays "today" until 1 h after it passes, so time triggers on the sensor are not cancelled at the alarm minute.
+   An empty list makes the sensor `unknown`;
 2. otherwise the next block of `schedule.alarm_clock_schedule`, as before.
 
 Consumers: "Alarm clock: wake up with light" fires at `sensor.next_alarm` (was `schedule.block_started`), the
@@ -69,15 +71,14 @@ espresso machine 10 min before it (was the block start, despite its name), the h
 
 ### iPhone Shortcut "Wekker naar HA"
 
-1. Clock → **Get All Alarms**; keep the ones that are enabled.
-2. For each: take its time today; if that is earlier than now, add 1 day. Keep the earliest.
-3. None found → use `2000-01-01 00:00:00`.
-4. **Format Date** with custom format `yyyy-MM-dd HH:mm:ss`.
-5. Home Assistant → **Perform Action** `input_datetime.set_datetime` with data
-   `{"entity_id": "input_datetime.tom_iphone_next_alarm", "datetime": "<formatted date>"}`.
+1. **Zoek wekkers** waarbij *Is ingeschakeld*.
+2. **Herhaal met elk** item in Wekkers: **Formatteer datum** of *Herhaal-item → Tijd*, custom format `HH:mm`.
+3. **Combineer tekst** *Herhaalresultaten* with custom separator `,`.
+4. Home Assistant → **Perform Action** `input_text.set_value` with data
+   `{"entity_id": "input_text.tom_iphone_alarms", "value": "<Gecombineerde tekst>"}`.
 
-Personal automations (Run Immediately): daily at 22:00 and when the Sleep focus turns on. A repeating alarm that
-skips tomorrow's weekday is taken as tomorrow's alarm; rerunning at bedtime keeps that rare.
+Triggers (Run Immediately): daily at 22:00 and when the Sleep focus turns on. Repeat days are not read: an
+enabled alarm that skips tomorrow's weekday still counts as tomorrow's alarm.
 
 ## Medication: Apple Health reminder from the kitchen button
 
