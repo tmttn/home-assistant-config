@@ -87,3 +87,22 @@ Added on 2026-11-24. The first press of the day of the kitchen medication button
 (`notify.mobile_app_bizzyphone`, tag `medication_health_log`) with a tap that opens Health (`x-apple-health://`);
 the dose is logged there under Browse → Medications. Logging it automatically is not possible: Shortcuts has no
 medication action and the HealthKit medications API (WWDC25) is documented for reading medications and doses, not logging them.
+
+The 12:15 reminder push ("Medication: Tom medication reminder") has a "Genomen" button (`MEDICATION_TAKEN`).
+"Medication: Tom medication taken from the phone" marks `input_boolean.tom_medication` like the kitchen button and
+replaces the reminder with the same tap-to-open-Health push. All three pushes share tag `medication_health_log`, so a
+kitchen press also replaces an open reminder.
+
+## Night mode: ask to sleep when Tom's Sleep focus starts
+
+Added on 2026-11-24. When Tom's iPhone turns on a Focus (`binary_sensor.bizzyphone_focus`) between 20:00 and 03:00,
+sleep mode is off, Tom is home and guest mode is off, it pushes "Slapen?" with a "Ga slapen" button
+(`SLEEP_FOCUS_GO`) that runs `script.going_to_sleep`. It asks instead of acting because someone else may still be up.
+The push (tag `sleep_focus_prompt`) is cleared once sleep mode turns on, however that happens.
+
+iOS does not share the focus name (`sensor.bizzyphone_focus_name` stays empty), so the time window stands in for "it
+is the Sleep focus". In the week before, the focus turned on between 22:39 and 23:18 and sleep mode was set by hand
+10 min to 2 h later (one night not at all).
+
+Not built: Wi-Fi (`sensor.bizzyphone_ssid`) as a faster arrival signal. Over 7 days GPS reported home 30 s to 4 min
+before the phone joined "MetGen Net", so it would not speed anything up.
