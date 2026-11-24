@@ -55,16 +55,16 @@ setback does not fire again until the house is occupied and then empty for 45 mi
 ## Alarm clock: follow Tom's iPhone alarm
 
 Added on 2026-11-24. iOS gives no app (the HA Companion app included) access to the Clock alarms; only Shortcuts can
-read them. A Shortcut on Tom's iPhone writes the times of all enabled alarms into `input_text.tom_iphone_alarms`
-(empty = no alarm set, `never` = not synced yet). Every `H:MM` in the text counts, so the date format the phone
+read them. A Shortcut on Tom's iPhone writes the times of all enabled alarms into `input_text.tom_iphone_alarms`. Every `H:MM` in the text counts, so the date format the phone
 adds does not matter. Home Assistant works out which one is next, so the Shortcut needs no date logic.
 
 `sensor.next_alarm` (template helper) now picks:
 
 1. the earliest upcoming time from the iPhone list, when it was written in the last 36 h (`last_reported`). A time
-   stays "today" until 1 h after it passes, so time triggers on the sensor are not cancelled at the alarm minute.
-   An empty list makes the sensor `unknown`;
-2. otherwise the next block of `schedule.alarm_clock_schedule`, as before.
+   stays "today" until 1 h after it passes, so time triggers on the sensor are not cancelled at the alarm minute;
+2. otherwise the next block of `schedule.alarm_clock_schedule`, as before. An empty sync also falls back: a Shortcut
+   that silently reads no alarms looks the same as "no alarm set", and skipping the morning routine is the worse
+   failure.
 
 Consumers: "Alarm clock: wake up with light" fires at `sensor.next_alarm` (was `schedule.block_started`), the
 espresso machine 10 min before it (was the block start, despite its name), the heating 30 min before it (unchanged).
