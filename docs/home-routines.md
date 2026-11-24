@@ -71,14 +71,18 @@ espresso machine 10 min before it (was the block start, despite its name), the h
 
 ### iPhone Shortcut "Wekker naar HA"
 
-1. **Zoek wekkers** waarbij *Is ingeschakeld*.
-2. **Herhaal met elk** item in Wekkers: **Formatteer datum** of *Herhaal-item → Tijd*, custom format `HH:mm`.
-3. **Combineer tekst** *Herhaalresultaten* with custom separator `,`.
-4. Home Assistant → **Perform Action** `input_text.set_value` with data
-   `{"entity_id": "input_text.tom_iphone_alarms", "value": "<Gecombineerde tekst>"}`.
+Tom's alarm is the **sleep schedule** wake-up alarm. Shortcuts' **Find Alarms** leaves that one out, so the first
+sync attempt sent an empty list. Since iOS 26 the Clock actions include the sleep alarm on its own; it returns the
+next wake-up time without a date, which is fine because `sensor.next_alarm` works out the date.
 
-Triggers (Run Immediately): daily at 22:00 and when the Sleep focus turns on. Repeat days are not read: an
-enabled alarm that skips tomorrow's weekday still counts as tomorrow's alarm.
+1. Clock → the sleep alarm action (search "slaap" / "sleep" in the action list).
+2. **Formatteer datum** of that result, custom format `HH:mm`.
+3. Home Assistant → **Actie uitvoeren** `input_text.set_value` with data
+   `{"entity_id": "input_text.tom_iphone_alarms", "value": "<Geformatteerde datum>"}`.
+
+Triggers (Run Immediately): daily at 22:00 and when the Sleep focus turns on. Changes made after the last sync are
+picked up at the next one. Source for the sleep alarm action: the HA community thread
+"Sync iOS 26+ sleep alarm to HA (companion app 2026.7+)".
 
 ## Medication: Apple Health reminder from the kitchen button
 
