@@ -81,6 +81,10 @@ Known risks from that thread and the Apple Developer Forums: on a day the schedu
 change) the second toggle can leave the alarm off, and the Perform action step can turn into "unknown action" after
 iOS or app updates (delete and re-add it). A sync that stops falls back to the schedule after 36 h.
 
+"Alarm clock: warn when the iPhone alarm sync did not run" checks at 04:30: if the helper has synced before but was
+not written in the last hour, Tom gets a passive push with the time HA now uses and a hint to look for "Onbekende
+taak" in the Shortcut. A Home Assistant restart between 03:30 and 04:30 resets `last_reported` and hides one miss.
+
 ## Medication: Apple Health reminder from the kitchen button
 
 Added on 2026-11-24. The first press of the day of the kitchen medication button now also pushes to Tom
@@ -93,20 +97,24 @@ The 12:15 reminder push ("Medication: Tom medication reminder") has a "Genomen" 
 replaces the reminder with the same tap-to-open-Health push. All three pushes share tag `medication_health_log`, so a
 kitchen press also replaces an open reminder.
 
-## Night mode: ask to sleep when Tom's Sleep focus starts
+## Night mode: ask to sleep when a Sleep focus starts
 
-Added on 2026-11-24. When Tom's iPhone turns on a Focus (`binary_sensor.bizzyphone_focus`) between 20:00 and 03:00,
-Tom is home and guest mode is off, it pushes "Slapen?" (tag `sleep_focus_prompt`):
+Added on 2026-11-24. When Tom's or Tanja's iPhone turns on a Focus (`binary_sensor.bizzyphone_focus`,
+`binary_sensor.t_phone_focus`) between 20:00 and 03:00 and guest mode is off, that phone gets "Slapen?" (tag
+`sleep_focus_prompt`), if its owner is home:
 
 - sleep mode off: "Iedereen slaapt" (`SLEEP_FOCUS_TOTAL`, runs `script.going_to_sleep`) and "Alleen ik (half)"
-  (`SLEEP_FOCUS_HALF`, sets `half`: Tom goes up, others stay up downstairs);
+  (`SLEEP_FOCUS_HALF`, sets `half`: one goes up, others stay up downstairs);
 - sleep mode already half: only "Iedereen slaapt".
 
-It asks instead of acting because someone else may still be up. The push is cleared once sleep mode reaches total.
+It asks instead of acting because someone else may still be up. Pushes are cleared on both phones once sleep mode
+reaches total. Tom's push adds a line when his battery is below 30 % and not charging (the alarm and the 04:00 sync
+need the phone); it is sent on its own when there is nothing to ask. Tanja's phone reports no battery sensor.
 
 iOS does not share the focus name (`sensor.bizzyphone_focus_name` stays empty), so the time window stands in for "it
-is the Sleep focus". In the week before, the focus turned on between 22:39 and 23:18 and sleep mode was set by hand
-10 min to 2 h later (one night not at all).
+is the Sleep focus". In the week before, Tom's focus turned on between 22:39 and 23:18 and sleep mode was set by hand
+10 min to 2 h later (one night not at all). Tanja's turned on between 22:02 and 22:15; on 3 of 7 nights her daytime
+Focus ran on into the night, so there was no evening off -> on and no question.
 
 Not built: Wi-Fi (`sensor.bizzyphone_ssid`) as a faster arrival signal. Over 7 days GPS reported home 30 s to 4 min
 before the phone joined "MetGen Net", so it would not speed anything up.
