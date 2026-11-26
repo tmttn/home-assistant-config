@@ -52,32 +52,37 @@ later and survives restarts (no `wait_for_trigger`). It restores the schedule se
 replaces the push with "Verwarming staat terug aan". Coming home later still runs the normal arrival restore; the
 setback does not fire again until the house is occupied and then empty for 45 min.
 
-## Alarm clock: follow Tom's iPhone alarm
+## Alarm clock: follow Tom's iPhone sleep alarm
 
-Added on 2026-11-24. iOS gives no app (the HA Companion app included) access to the Clock alarms; only Shortcuts can
-read them. A Shortcut on Tom's iPhone writes the next enabled alarm into `input_datetime.tom_iphone_next_alarm`.
+Added on 2026-11-24. iOS gives no app (the HA Companion app included) access to the Clock alarms, and the
+sleep-schedule alarm is not even returned by Shortcuts' Find Alarms. Only "Edit/Toggle Sleep Alarm" returns it.
+The community Shortcut "Sync iOS 26+ sleep alarm to HA (companion app 2026.7+)" (renamed "HA sync iOS 27 sleep
+alarm" on Tom's iPhone) uses that and writes the alarm into `input_datetime.tom_iphone_sleep_alarm`. A personal
+iPhone automation runs it daily at 04:00 (Run Immediately), so late changes the evening before are caught.
 
-`sensor.next_alarm` (template helper) now picks:
+The Shortcut's date is one day ahead: at 04:00 on day D it writes D+1, but the time is D's alarm (checked on
+2026-11-26: written "27 Nov 07:00", iPhone rang 26 Nov 07:00). `sensor.next_alarm` (template helper) therefore
+uses only the hour and minute:
 
-1. the iPhone value, when it was written in the last 36 h (`last_reported`) and is not `1970-01-01` (never synced).
-   `2000-01-01 00:00:00` means "no alarm set" and makes the sensor `unknown`. The value stays for 1 h after it
-   passes, so time triggers on the sensor are not cancelled at the alarm minute;
-2. otherwise the next block of `schedule.alarm_clock_schedule`, as before.
+1. when the helper has synced (year >= 2000) and was written in the last 36 h (`last_reported`): that time today,
+   or tomorrow once it is more than 1 h past (the 1 h keeps time triggers on the sensor from being cancelled at
+   the alarm minute);
+2. otherwise the next block of `schedule.alarm_clock_schedule`.
 
-Consumers: "Alarm clock: wake up with light" fires at `sensor.next_alarm` (was `schedule.block_started`), the
-espresso machine 10 min before it (was the block start, despite its name), the heating 30 min before it (unchanged).
+Consumers: "Alarm clock: wake up with light" fires at `sensor.next_alarm`, the espresso machine 10 min before it,
+the heating 30 min before it. "Alarm clock: warn when the iPhone alarm sync did not run" sends a passive push at
+04:30 when the helper was not written in the last hour. Shared copies of the Shortcut show its Home Assistant step
+as "Onbekende taak": re-add "Perform Action" `input_datetime.set_datetime` with the Dictionary variable as data.
 
-### iPhone Shortcut "Wekker naar HA"
+## Night mode: ask to sleep when a Sleep focus starts
 
-1. Clock → **Get All Alarms**; keep the ones that are enabled.
-2. For each: take its time today; if that is earlier than now, add 1 day. Keep the earliest.
-3. None found → use `2000-01-01 00:00:00`.
-4. **Format Date** with custom format `yyyy-MM-dd HH:mm:ss`.
-5. Home Assistant → **Perform Action** `input_datetime.set_datetime` with data
-   `{"entity_id": "input_datetime.tom_iphone_next_alarm", "datetime": "<formatted date>"}`.
-
-Personal automations (Run Immediately): daily at 22:00 and when the Sleep focus turns on. A repeating alarm that
-skips tomorrow's weekday is taken as tomorrow's alarm; rerunning at bedtime keeps that rare.
+When Tom's or Tanja's iPhone turns on a Focus between 20:00 and 03:00 (iOS does not share the Focus name), that
+phone gets a push "Slapen? 🌙" with "Iedereen slaapt" (`script.going_to_sleep`) and, when sleep mode is off,
+"Alleen ik (half)". It stays silent when sleep mode is already `total`, the person is not home, or guest mode is
+on. Tom's push adds a battery warning below 30 % when not charging (the 04:00 sync and the alarm need the phone),
+and that warning is sent on its own when there is nothing to ask. Once sleep mode reaches `total`, by a button or
+any other way, the push is cleared on both phones, so it disappears within seconds when sleep mode is set right
+after the Focus turns on.
 
 ## Medication: Apple Health reminder from the kitchen button
 
