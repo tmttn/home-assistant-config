@@ -15,16 +15,15 @@ start_spotify_playlist_of_nearest_person:
       description: entity_id of the speaker
       example: media_player.google_home
   sequence:
-  - data:
-      uri: 'spotify:playlist:{{ states("sensor.favorite_playlist_of_nearest_person")
-        }}
-
-        '
-      random_song: true
-      shuffle: true
-      start_volume: 35
-      entity_id: '{{ entity_id }}'
-    action: spotcast.start
+  - action: spotcast.play_media
+    data:
+      media_player:
+        entity_id: '{{ entity_id }}'
+      spotify_uri: 'spotify:playlist:{{ states("sensor.favorite_playlist_of_nearest_person") }}'
+      data:
+        random: true
+        shuffle: true
+        volume: 35
 cozy_lights_living_room:
   alias: Set cozy lights in the living room
   mode: parallel
