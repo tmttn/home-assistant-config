@@ -816,10 +816,10 @@ views:
       tap_action:
         action: toggle
       type: custom:mushroom-entity-card
-    - entity: automation.color_loop_bathroom
+    - entity: script.color_loop_bathroom
       fill_container: true
       icon: mdi:palette
-      icon_color: '{% if is_state(''automation.color_loop_bathroom'', ''on'') %}cyan{%
+      icon_color: '{% if is_state(''script.color_loop_bathroom'', ''on'') %}cyan{%
         else %}disabled{% endif %}'
       layout: vertical
       name: Light therapy
