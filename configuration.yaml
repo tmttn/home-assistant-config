@@ -34,7 +34,6 @@ group: !include includes/groups.yaml
 shell_command: !include includes/shell_commands.yaml
 notify: !include includes/notify.yaml
 evohome: !include includes/evohome.yaml
-spotcast: !include includes/spotcast.yaml
 
 # Custom components
 pyscript: !include includes/pyscript.yaml
