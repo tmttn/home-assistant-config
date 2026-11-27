@@ -201,8 +201,10 @@ color_loop_bathroom:
   alias: Color loop bathroom
   description: Cycle the bathroom lights through the colour wheel, one full turn per
     minute. Turn the script on to start the loop. It stops when the script is turned
-    off or the bathroom lights are switched off. Replaces the old time_pattern automation
-    that fired every second.
+    off or the bathroom lights are switched off. When it stops, the UI automation
+    "Light: color loop bathroom restore" hands the lights back to Adaptive Lighting
+    (a cancelled script cannot run cleanup steps itself). Replaces the old time_pattern
+    automation that fired every second.
   icon: mdi:looks
   mode: single
   max_exceeded: silent
