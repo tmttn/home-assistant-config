@@ -82,6 +82,11 @@ brightness-only bedside lamp. `input_boolean.wake_up_light` is on while it runs.
 sunrise, and it is skipped in guest mode. Until 2026-11-27 nothing ran it: the automation only turned the boolean
 on, which an AppDaemon app removed in November 2023 used to watch.
 
+Before the first step it marks the lights as manually controlled in Adaptive Lighting, so AL does not hold them at
+its sleep brightness during the sunrise. At the alarm the sleep mode change hands them back to AL (sleep mode
+changes reset manual control); turning the light off does too. pyscript cannot run generator expressions
+(`any(x for x in ...)`): the first run on 2026-11-27 crashed after one step on that, so use plain loops.
+
 ## Night mode: ask to sleep when a Sleep focus starts
 
 When Tom's or Tanja's iPhone turns on a Focus between 20:00 and 03:00 (iOS does not share the Focus name), that
