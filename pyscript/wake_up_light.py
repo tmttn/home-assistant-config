@@ -8,6 +8,13 @@ brightness get the converted value from Home Assistant.
 The routine can be triggered a service `pyscript.wake_up_light`.
 
 The sequence is canceled by turning the light off.
+
+Adaptive Lighting is told the lights are manually controlled before the
+first step, so it does not pull them to its own (sleep) brightness while
+the sunrise runs. Turning the light off, or a sleep mode change such as
+the one at the alarm, hands the lights back to Adaptive Lighting.
+
+pyscript does not support generator expressions; use plain loops.
 """
 import sys
 sys.path.append("/config/pyscript")
@@ -28,6 +35,10 @@ RGB_SEQUENCE = [
 
 MIN_TIME_STEP = 2  # time between settings
 
+# Any Adaptive Lighting switch works: manual control is tracked per light
+# across all switches. Light groups are expanded to their members.
+AL_SWITCH = "switch.adaptive_lighting_default"
+
 
 def _as_list(value):
     if isinstance(value, (list, tuple)):
@@ -36,7 +47,21 @@ def _as_list(value):
 
 
 def _canceled(lamps):
-    return any(state.get(lamp) == "off" for lamp in lamps)
+    for lamp in lamps:
+        if state.get(lamp) == "off":
+            return True
+    return False
+
+
+def _hold_adaptive_lighting(lamps):
+    try:
+        adaptive_lighting.set_manual_control(
+            entity_id=AL_SWITCH,
+            lights=lamps,
+            manual_control=True,
+        )
+    except Exception as exc:
+        log.warning(f"wake_up_light: could not pause Adaptive Lighting: {exc}")
 
 
 @service
@@ -60,6 +85,7 @@ fields:
     rgb, brightness = rgb_and_brightness(total_time, RGB_SEQUENCE)
     steps = min(total_time // MIN_TIME_STEP, 255) + 1
     transition = total_time / (steps - 1)
+    _hold_adaptive_lighting(lamps)
     t = 0
     for step in range(steps):
         if step > 0 and _canceled(lamps):
