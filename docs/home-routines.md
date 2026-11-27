@@ -69,10 +69,18 @@ uses only the hour and minute:
    the alarm minute);
 2. otherwise the next block of `schedule.alarm_clock_schedule`.
 
-Consumers: "Alarm clock: wake up with light" fires at `sensor.next_alarm`, the espresso machine 10 min before it,
-the heating 30 min before it. "Alarm clock: warn when the iPhone alarm sync did not run" sends a passive push at
+Consumers: "Alarm clock: wake up with light" starts the guest bedroom sunrise 10 min before `sensor.next_alarm` and
+ends sleep mode at it, the espresso machine starts 10 min before it, the heating 30 min before it. "Alarm clock: warn when the iPhone alarm sync did not run" sends a passive push at
 04:30 when the helper was not written in the last hour. Shared copies of the Shortcut show its Home Assistant step
 as "Onbekende taak": re-add "Perform Action" `input_datetime.set_datetime` with the Dictionary variable as data.
+
+## Alarm clock: wake-up light in the guest bedroom
+
+`pyscript.wake_up_light` (`pyscript/wake_up_light.py`) raises `light.guest_bedroom_lights` over 600 s from dim red
+to warm white; Home Assistant converts the colour for the colour-temperature ceiling lights and the
+brightness-only bedside lamp. `input_boolean.wake_up_light` is on while it runs. Turning the light off stops the
+sunrise, and it is skipped in guest mode. Until 2026-11-27 nothing ran it: the automation only turned the boolean
+on, which an AppDaemon app removed in November 2023 used to watch.
 
 ## Night mode: ask to sleep when a Sleep focus starts
 
