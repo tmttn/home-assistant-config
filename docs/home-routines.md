@@ -103,3 +103,26 @@ Added on 2026-11-24. The first press of the day of the kitchen medication button
 (`notify.mobile_app_bizzyphone`, tag `medication_health_log`) with a tap that opens Health (`x-apple-health://`);
 the dose is logged there under Browse → Medications. Logging it automatically is not possible: Shortcuts has no
 medication action and the HealthKit medications API (WWDC25) is documented for reading medications and doses, not logging them.
+
+## Light: brighten the back door light on porch motion at night
+
+Added on 2026-11-27. When the Ring porch camera reports motion (`event.porch_motion`, Ring integration; ring-mqtt's
+`binary_sensor.porch_motion_2` never reports motion) while the sun is below 1° elevation, `light.terrace_backdoor`
+goes to 100 % at 2700 K. Every new motion within 3 minutes extends it; 3 minutes after the last motion the light
+goes back: to Adaptive Lighting's night level (~2 %) when it was on, or off when it was off (after the 00:00
+turn-off). Mode `single` with a wait loop keeps the state from before the first motion; a restarted run would see
+the boosted light as "on".
+
+Adaptive Lighting "outside" runs every 30 s on the Zigbee2MQTT group `light.terrace_lights` and tracks manual
+control on that group, not on the member, so the automation marks both before the boost. When the light was on it
+unmarks them and applies the adaptive level. When it was off it only switches it off and leaves the mark: unmarking
+while the group still reads "on" makes Adaptive Lighting send `light.turn_on` to the group, and Zigbee2MQTT then
+switches every terrace light on (seen twice in testing). Adaptive Lighting drops the mark itself once the group is
+off. "Adaptive lighting: notify manual_control" skips its push while this automation runs.
+
+A Home Assistant restart mid-boost kills the run. Before 00:00 nothing is needed: all terrace lights are on and
+Adaptive Lighting dims them back itself (the restart empties its manual-control list). Between 00:00 and sunrise − 2 h
+the restart leaves the back door light on, and Adaptive Lighting then adapts the group, which switches every terrace
+light on (seen on 2026-11-27 after a Git pull restart). A `homeassistant` start trigger therefore switches
+`light.terrace_lights` off one minute after start in that window. Trade-off: terrace lights switched on on purpose
+after 00:00 also go off after a restart.
