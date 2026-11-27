@@ -38,7 +38,8 @@ Sunday 20:00, `notify.all` (tag `weekly_house_report`): solar yield and self-con
 gas, Tesla charging (`sensor.bizzylectric_energy_added`), an estimated cost and this month's peak demand. Week
 totals come from `recorder.get_statistics` (period `week`, type `change`) on the Energy dashboard statistics, so
 restarts don't matter. Cost = import × the tariff sensors + gas × `sensor.gas_price` − export ×
-`sensor.electricity_price_injection`; fixed costs and the capacity tariff are left out.
+`sensor.electricity_price_injection`; fixed costs and the capacity tariff are left out. The tariff sensors follow
+the live supplier cards, see [energy-prices.md](energy-prices.md).
 
 ## Climate: away setback with a "turn back on" button
 
