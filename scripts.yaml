@@ -199,7 +199,8 @@ reset_adaptive_lighting:
   mode: single
 color_loop_bathroom:
   alias: Color loop bathroom
-  description: Cycle the bathroom lights through the colour wheel, one full turn per
+  description: >-
+    Cycle the bathroom lights through the colour wheel, one full turn per
     minute. Turn the script on to start the loop. It stops when the script is turned
     off or the bathroom lights are switched off. When it stops, the UI automation
     "Light: color loop bathroom restore" hands the lights back to Adaptive Lighting
