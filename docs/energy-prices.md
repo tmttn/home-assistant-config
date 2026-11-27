@@ -27,8 +27,8 @@ contract entry needs no template edit:
 The Energy dashboard water source is priced with `sensor.de_watergroep_all_in_basis_rate` (basis block; the comfort
 block starts above 30 + 30 × residents m³ a year).
 
-`input_number.tariff_electricity`, `_injection`, `_gas` and `_fixed_energy_costs` are no longer read by anything.
-`input_number.tariff_electricity_capacity` still feeds `sensor.electricity_capacity_tariff`, which
+The hand-typed `input_number.tariff_electricity`, `_injection`, `_gas` and `_fixed_energy_costs` were deleted on
+2026-11-27. `input_number.tariff_electricity_capacity` still feeds `sensor.electricity_capacity_tariff`, which
 `sensor.monthly_power_cost_last_period` uses.
 
 ## Contract changes
