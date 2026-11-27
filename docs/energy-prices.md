@@ -4,7 +4,7 @@ All-in prices (energy + network + levies + VAT) come from three Marketplace inte
 in the UI on 2026-11-27. They read each supplier's published tariff card live, so no price is typed by hand.
 
 | Integration | Entry | Notes |
-|---|---|---|
+| --- | --- | --- |
 | `be_electricity_prices` | Frank Energie Variabel JN, Fluvius Limburg | Mono meter, keyless day-ahead (energy-charts), capacity peak from `sensor.p1_meter_peak_demand_current_month`, 3.0 kVA solar on the injection tariff, P1 T1/T2 registers. Signing rate typed from the October 2025 card: factor 1.113, base 0.01272 EUR/kWh, fee 27.96 EUR/yr. Contract start 2025-11-01 is an assumption. |
 | `be_gas_prices` | Frank Energie Gas Variabel JN | Postcode 3740, `sensor.p1_meter_total_gas`, m³ → kWh on the Atrias value of GOS Fluvius - Hasselt. |
 | `be_water_prices` | De Watergroep, Bilzen | 3 registered residents, `sensor.water_meter_water`. |
@@ -16,7 +16,7 @@ read the integrations. They find the integration's entity by suffix with `integr
 contract entry needs no template edit:
 
 | Sensor | Source |
-|---|---|
+| --- | --- |
 | `sensor.electricity_price_peak` / `_offpeak` | `*_current_price` (mono meter: same value) |
 | `sensor.electricity_price_injection` | `*_injection_price` |
 | `sensor.gas_price` | `*_current_price_per_m3` |
