@@ -1,0 +1,717 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""OCTA+ gas tariff card extractor.
+
+OCTA+ publishes one card per residential gas product and region at a stable
+URL, overwritten in place every month:
+
+    https://files.octaplus.be/tariffs/G_OCTA_<SLUG>_RE_<VL|WL>_FR.pdf
+
+Residential gas is sold in Flanders and Wallonia only: the Brussels cards the
+tariff page links are professional ones. Since October 2026 the slugs are
+BASICONLINE, BOOSTFLEX, ECOBOOSTFLEX, SMARTVARIABLE, BOOSTFIX and
+ECOBOOSTFIX. Flux, Eco Flux, Fixed and Eco Fixed were withdrawn that month,
+and their past cards are still read from the archive for the households
+still under contract on them.
+The tariff page links every product's cards, which is what discover reads
+for the live check.
+
+Both regional cards print the same energy figures and both regions' DSO
+tables; the Walloon one adds the connection fee column. Every figure is VAT
+inclusive ("TVAC"), but no card states the rate, so the formulas are grossed
+up by the statutory residential rate.
+
+Every variable product indexes on "ZTP RLP M", the RLP-weighted mean
+of the ZTP day-ahead quotes of the delivery month, known only once the month
+is over. The card prints the formula excluding VAT, in EUR/MWh until October
+2026 and in c€/kWh since, and a price that
+is not the formula at the last known value but a twelve-month estimate at the
+forward "V-test" value OCTA+ publishes at octaplus.be/prixattendus. That
+estimate is the only price the card prints, so it is the one the snapshot
+carries. The realised monthly values are published at octaplus.be/prixgaz,
+which is what :func:`fetch_index` reads.
+
+The site's archive is two JSON endpoints: getTarifArchive names the cards a
+month had for a region, and getTariffSheet hands one back as a base64 data URL.
+The current template starts with the June 2026 cards. The ones from
+September 2025 to May 2026 are an older template, set in spaced glyphs, of
+which only the energy leg is read (:func:`parse_older`): it prices a
+contract signed on one, and no DSO row is.
+"""
+
+from __future__ import annotations
+
+import base64
+import re
+from dataclasses import dataclass
+from datetime import date
+from typing import Any
+from urllib.parse import urlencode
+
+import aiohttp
+from homeassistant.util import dt as dt_util
+
+from ..const import DSO_RESA, REGION_FLANDERS, REGION_WALLONIA, VAT_RATE_REDUCED
+from ._network import (
+    FLUVIUS_LABELS,
+    METERING,
+    ORES_LABELS,
+    T1_FIXED,
+    T1_PROP,
+    T2_FIXED,
+    T2_PROP,
+    TRANSPORT,
+    excise_bands,
+    read_dsos,
+    require_region,
+)
+from ._parse import SIGN_CHARS, fold_accents, month_date, parse_sign, require_contract, to_float
+from ._pdf import (
+    MONTH_NAMES,
+    fetch_pdf_text_layout,
+    fetch_text,
+    head_freshness_key,
+    is_pdf_payload,
+    parse_json,
+    render_pdf,
+    shown_text,
+    strip_pdf_prefix,
+)
+from ._pdf_render import (
+    extract_pdf_text_layout,
+    extract_pdf_text_rows,
+)
+from ._rates import Contract, FixedRates, IndexedRates, TariffKind
+from ._validity import end_of_month, month_card
+from .base import (
+    DsoOverlay,
+    ExtractorError,
+    IndexTable,
+    SupplierExtractor,
+    SupplierSnapshot,
+    TaxOverlay,
+)
+
+_BASE_URL = "https://files.octaplus.be/tariffs"
+_ARCHIVE_LISTING_URL = "https://srv.octaplus.be/websiterest/getTarifArchive"
+_ARCHIVE_SHEET_URL = "https://srv.octaplus.be/websiterest/getTariffSheet"
+# The short link the cards name; it redirects to the parameter PDF, whose file
+# name is not something the cards promise.
+_INDEX_URL = "https://www.octaplus.be/prixgaz"
+# The tariff page, which links the card of every product sold.
+_TARIFS_URL = "https://www.octaplus.be/fr/electricite-gaz-naturel/tarifs"
+
+_REGION_TO_CODE: dict[str, str] = {
+    REGION_FLANDERS: "VL",
+    REGION_WALLONIA: "WL",
+}
+
+# The index the variable cards name in their formula. June 2026's Eco Flux
+# card alone names TTF RLP M, the TTF column of the same table.
+_INDEX = "ZTP RLP M"
+_TTF_INDEX = "TTF RLP M"
+
+
+@dataclass(frozen=True)
+class _ContractDef:
+    contract_id: str
+    label: str
+    kind: TariffKind
+    slug: str  # as the live file name spells it
+    # The first day OCTA+ no longer sold it. Only its past cards are read,
+    # from the archive, so its slug is spelled as the archive names it.
+    withdrawn: date | None = None
+
+
+# The day OCTA+'s October 2026 cards replaced Flux, Eco Flux, Fixed and Eco
+# Fixed with the Boost range: the archive names them up to September.
+_RANGE_REPLACED = date(2026, 10, 1)
+
+_CONTRACTS: tuple[_ContractDef, ...] = (
+    _ContractDef("octaplus_basiconline", "OCTA+ Basic Online", "indexed", "BASICONLINE"),
+    _ContractDef("octaplus_boostflex", "OCTA+ Boost Flex", "indexed", "BOOSTFLEX"),
+    _ContractDef("octaplus_ecoboostflex", "OCTA+ Eco Boost Flex", "indexed", "ECOBOOSTFLEX"),
+    _ContractDef("octaplus_smartvariable", "OCTA+ Smart Variable", "indexed", "SMARTVARIABLE"),
+    _ContractDef("octaplus_boostfix", "OCTA+ Boost Fix", "fixed", "BOOSTFIX"),
+    _ContractDef("octaplus_ecoboostfix", "OCTA+ Eco Boost Fix", "fixed", "ECOBOOSTFIX"),
+    _ContractDef("octaplus_flux", "OCTA+ Flux", "indexed", "FLUX", _RANGE_REPLACED),
+    _ContractDef("octaplus_ecoflux", "OCTA+ Eco Flux", "indexed", "ECOFLUX", _RANGE_REPLACED),
+    _ContractDef("octaplus_fixed", "OCTA+ Fixed", "fixed", "FIXED", _RANGE_REPLACED),
+    _ContractDef("octaplus_ecofixed", "OCTA+ Eco Fixed", "fixed", "ECOFIXED", _RANGE_REPLACED),
+)
+_CONTRACTS_BY_ID = {c.contract_id: c for c in _CONTRACTS}
+
+
+def _region_code(contract: _ContractDef, region: str) -> str:
+    code = _REGION_TO_CODE.get(region)
+    if code is None:
+        raise ExtractorError(f"OCTA+ {contract.contract_id}: not sold in region {region!r}")
+    return code
+
+
+def _card_url(contract: _ContractDef, code: str) -> str:
+    return f"{_BASE_URL}/G_OCTA_{contract.slug}_RE_{code}_FR.pdf"
+
+
+async def probe(session: aiohttp.ClientSession, contract_id: str, region: str) -> str | None:
+    """The card's Last-Modified, and the running month.
+
+    OCTA+ overwrites the card in place, so the header moves exactly when the
+    card does. The month is in the key because the card for the next month
+    may go up on the last day of the one before, when the running month's
+    card stands in for it, and must be read again once its month begins.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    code = _REGION_TO_CODE.get(region)
+    if contract is None or code is None or contract.withdrawn is not None:
+        return None
+    key = await head_freshness_key(session, _card_url(contract, code))
+    return None if key is None else f"{key} {dt_util.now().date():%Y-%m}"
+
+
+# Every residential gas card the tariff page links, by its slug.
+_LISTED_RE = re.compile(r"G_OCTA_([A-Z]+)_RE_(?:VL|WL)_FR\.pdf")
+
+
+def parse_catalog(page: str) -> set[str]:
+    """The gas products the tariff page links a card for, by contract id; a
+    slug no contract has is ``octaplus_<slug>``."""
+    by_slug = {c.slug: c.contract_id for c in _CONTRACTS}
+    return {by_slug.get(slug, f"octaplus_{slug.lower()}") for slug in _LISTED_RE.findall(page)}
+
+
+async def discover(session: aiohttp.ClientSession) -> set[str]:
+    """The gas products OCTA+ sells today, as its tariff page links them."""
+    return parse_catalog(await fetch_text(session, _TARIFS_URL))
+
+
+async def fetch(session: aiohttp.ClientSession, contract_id: str, region: str) -> SupplierSnapshot:
+    """The configured region's card as it stands online.
+
+    OCTA+ may put the next month's card up on the last day of the month
+    before; an installation is then priced on the running month's card from
+    the archive (``month_cards.current_card``).
+    """
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "OCTA+")
+    if contract.withdrawn is not None:
+        # Its file went on serving September's card: no current card exists.
+        raise ExtractorError(
+            f"OCTA+ withdrew {contract.label} on {contract.withdrawn:%Y-%m-%d}: "
+            "only its past cards are read"
+        )
+    url = _card_url(contract, _region_code(contract, region))
+    text = await fetch_pdf_text_layout(session, url)
+    return parse_snapshot(contract_id, region, text, source_url=url)
+
+
+def _archive_json(body: str, what: str) -> Any:
+    """The ``Response`` member of an archive reply, or raise.
+
+    A reply that is JSON of another shape must read as a failed fetch rather
+    than escape as a TypeError further down.
+    """
+    payload = parse_json(body, f"OCTA+ archive {what}")
+    if not isinstance(payload, dict) or "Response" not in payload:
+        raise ExtractorError(f"OCTA+ archive {what}: no Response in the reply")
+    return payload["Response"]
+
+
+def _collapse(name: str) -> str:
+    """``name`` with every run of one character reduced to one."""
+    return re.sub(r"(.)\1+", r"\1", name)
+
+
+def _pick_archive_name(
+    names: list[str], contract: _ContractDef, code: str, month: date
+) -> str | None:
+    """The archive's file name for ``contract`` in one month, or None.
+
+    The listing spells the name "2026-10 G OCTA+BOOSTFIX RE WL FR.pdf". The
+    March 2026 one named its fixed cards FIXEDD and ECOFIXEDD instead, the
+    Fixed one a revision valid from 16 March, so a name that differs only by a
+    doubled letter is taken when it is the only one: no two products fold onto
+    each other that way, and a month listing two such names is left unread
+    rather than guessed.
+    """
+    wanted = f"{month:%Y-%m} G OCTA+{contract.slug} RE {code} FR.pdf"
+    if wanted in names:
+        return wanted
+    near = [name for name in names if _collapse(name) == _collapse(wanted)]
+    return near[0] if len(near) == 1 else None
+
+
+def _sheet_url(name: str) -> str:
+    return f"{_ARCHIVE_SHEET_URL}?{urlencode({'Canal': 'website', 'RequestedPDF': name})}"
+
+
+async def _archive_name(
+    session: aiohttp.ClientSession, contract: _ContractDef, code: str, month: date
+) -> str | None:
+    query = {
+        "Lang": "FR",
+        "Region": code,
+        "AnneeMois": f"{month:%Y%m}",
+        "Nrj": "G",
+        "Canal": "website",
+        "TypeContrat": "RE",
+    }
+    rows = _archive_json(
+        await fetch_text(session, f"{_ARCHIVE_LISTING_URL}?{urlencode(query)}"), "listing"
+    )
+    if not isinstance(rows, list):
+        raise ExtractorError("OCTA+ archive listing: Response is not a list")
+    names = [
+        row["NomPdf"]
+        for row in rows
+        if isinstance(row, dict) and isinstance(row.get("NomPdf"), str)
+    ]
+    return _pick_archive_name(names, contract, code, month)
+
+
+def _archive_pdf(body: str, name: str) -> bytes:
+    """The card inside a getTariffSheet reply, as PDF bytes.
+
+    A name the archive does not hold is answered 200 with ``"Ok": "False"``,
+    which is a card that is not there rather than a failed fetch.
+    """
+    reply = _archive_json(body, "sheet")
+    sheet = reply.get("TariffSheet") if isinstance(reply, dict) else None
+    if not isinstance(sheet, str) or "base64," not in sheet:
+        raise ExtractorError(f"OCTA+ archive sheet: no card in the reply for {name!r}")
+    try:
+        payload = base64.b64decode(sheet.split("base64,", 1)[1], validate=True)
+    except ValueError as err:
+        # binascii.Error, or plain ValueError for text that is not ASCII.
+        raise ExtractorError(f"OCTA+ archive sheet: bad base64 for {name!r}") from err
+    if not is_pdf_payload(payload):
+        raise ExtractorError(f"OCTA+ archive sheet: {name!r} is not a PDF")
+    return strip_pdf_prefix(payload)
+
+
+async def fetch_for_month(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+    year_month: date,
+) -> SupplierSnapshot | None:
+    """The card OCTA+ published for a past month, or None.
+
+    The card arrives inside JSON rather than through a reader, so its bytes
+    go through the readers' render hook, where the card archiver keeps them.
+    A transient failure raises so the month cache retries it; any other
+    failure is a month with no card, and a card naming another month than
+    the one asked for is refused. A card from the older template gives its
+    energy leg alone.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    code = _REGION_TO_CODE.get(region)
+    if contract is None or code is None:
+        return None
+    return await month_card(_read_month(session, contract, code, region, year_month), year_month)
+
+
+async def _read_month(
+    session: aiohttp.ClientSession,
+    contract: _ContractDef,
+    code: str,
+    region: str,
+    year_month: date,
+) -> SupplierSnapshot | None:
+    name = await _archive_name(session, contract, code, year_month)
+    if name is None:
+        return None
+    snapshot, _revised = await _read_named(session, contract, region, name)
+    return snapshot
+
+
+async def _read_named(
+    session: aiohttp.ClientSession, contract: _ContractDef, region: str, name: str
+) -> tuple[SupplierSnapshot, date | None]:
+    """The archive's card ``name``, and the day it is valid from where it is
+    a revision ("valable à partir du 16/03/2026")."""
+    url = _sheet_url(name)
+    payload = _archive_pdf(await fetch_text(session, url, timeout=60), name)
+    text = await render_pdf("layout", url, payload, extract_pdf_text_layout)
+    if not text.startswith(_OLDER_TITLE):
+        return parse_snapshot(contract.contract_id, region, text, source_url=url), None
+    rows = await render_pdf("rows", url, payload, extract_pdf_text_rows)
+    revised = _OLDER_FROM_RE.search(rows.partition("\n")[0].rstrip())
+    since = None
+    if revised is not None:
+        since = date(int(revised.group(3)), int(revised.group(2)), int(revised.group(1)))
+    return parse_older(contract.contract_id, region, rows, source_url=url), since
+
+
+async def fetch_on_day(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+    day: date,
+) -> SupplierSnapshot | None:
+    """The card in force on ``day``, or None.
+
+    The archive lists March 2026's fixed cards as revisions valid from
+    16 March, and still serves the cards of the days before under the plain
+    names it no longer lists: Fixed at 5,50 c€/kWh before the 16th and 6,39
+    from it, Eco Fixed at 6,46 and 7,43. Any other month is its card
+    (:func:`fetch_for_month`).
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    code = _REGION_TO_CODE.get(region)
+    if contract is None or code is None:
+        return None
+    month = day.replace(day=1)
+    return await month_card(_read_on(session, contract, code, region, day), month)
+
+
+async def _read_on(
+    session: aiohttp.ClientSession, contract: _ContractDef, code: str, region: str, day: date
+) -> SupplierSnapshot | None:
+    month = day.replace(day=1)
+    name = await _archive_name(session, contract, code, month)
+    if name is None:
+        return None
+    snapshot, since = await _read_named(session, contract, region, name)
+    plain = f"{month:%Y-%m} G OCTA+{contract.slug} RE {code} FR.pdf"
+    if since is None or day >= since or name == plain:
+        return snapshot
+    earlier, _revised = await _read_named(session, contract, region, plain)
+    return earlier
+
+
+def parse_snapshot(
+    contract_id: str, region: str, text: str, *, source_url: str | None = None
+) -> SupplierSnapshot:
+    """Parse one regional card's text as pdfplumber lays it out."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "OCTA+")
+    code = _region_code(contract, region)
+    _check_product(text, contract)
+    card_month = _card_month(text)
+    return SupplierSnapshot(
+        supplier="octaplus",
+        contract=contract_id,
+        energy=_energy(text, contract),
+        dsos=_dsos(text, region),
+        taxes=_taxes(text, region),
+        source_url=source_url or _card_url(contract, code),
+        publication_label=f"{card_month:%Y-%m}",
+        valid_until=end_of_month(card_month.year, card_month.month),
+    )
+
+
+# The heading a card opens with, its product spaced out: "GAZ BOOST FLEX" up
+# to October 2026, "BOOST FLEX - GAZ" from the November cards. Words split by
+# single spaces, so a malformed line cannot send the match into backtracking.
+_HEADING_RE = re.compile(r"^(?:GAZ (\S+(?: \S+)*)|(\S+(?: \S+)*) - GAZ)[ \t]*$", re.MULTILINE)
+
+
+def _check_product(text: str, contract: _ContractDef) -> None:
+    """The card opens with its product, "SMARTVARIABLE", "BOOST FLEX" or
+    "ECO BOOST FIX": its slug, spaced out, in either heading order. The
+    archive match is loose enough to warrant making sure it found the
+    product asked for."""
+    match = _HEADING_RE.search(text)
+    if match is None:
+        raise ExtractorError(f"OCTA+ {contract.contract_id}: product heading not found")
+    product = match.group(1) or match.group(2)
+    if "".join(product.split()) != contract.slug:
+        raise ExtractorError(f"OCTA+ {contract.contract_id}: the card is for {product}")
+
+
+_CARD_MONTH_RE = re.compile(r"FICHE TARIFAIRE\s+(\S+)\s+(\d{4})")
+
+
+def _card_month(text: str) -> date:
+    """The month of the banner, "FICHE TARIFAIRE SEPTEMBRE 2026". The fixed
+    cards print no validity sentence, so the banner is what every card has."""
+    match = _CARD_MONTH_RE.search(text)
+    month = MONTH_NAMES.get(fold_accents(match.group(1))) if match else None
+    if match is None or month is None:
+        raise ExtractorError("OCTA+: card month not found")
+    return month_date(match.group(2), month, "OCTA+")
+
+
+_FEE_RE = re.compile(r"Redevance fixe \(€/an\)\s+(\d+,\d+)")
+_PRICE_RE = re.compile(r"Coût du gaz \(c€/kWh\)\s+(\d+,\d+)")
+# "ZTP RLP M * 1,010 + 2,160." on Flux and Eco Flux, "ZTP RLP M* 1,15+ 10
+# EUR/MWh." on Smart Variable, both in EUR/MWh. Only the first says HTVA, but
+# Smart Variable's printed estimate too is its formula grossed up by 6%.
+# A figure printed with a decimal point is read whole, not cut at the point.
+_FORMULA_RE = re.compile(
+    rf"({_INDEX}|{_TTF_INDEX})\s*\*\s*(\d+(?:[.,]\d+)?)\s*([{SIGN_CHARS}])\s*(\d+(?:[.,]\d+)?)"
+)
+# The unit of the formula, stated ahead of it since the August 2026 cards, "La
+# formule de prix est la suivante, en EUR/MWh HTVA :" and "en cEUR/kWh HTVA :"
+# from November, or after it on Smart Variable's, "+ 10 EUR/MWh".
+_UNIT_AHEAD_RE = re.compile(r"\ben\s+(c?)(?:EUR|€)\s*/\s*(MWh|kWh)\s+HTVA\s*:\s*$")
+_UNIT_AFTER_RE = re.compile(r"\s*(c?)(?:EUR|€)\s*/\s*(MWh|kWh)")
+# What the base is divided by to reach EUR/kWh, per unit stated. The November
+# cards add that a parameter published in EUR/MWh, as the index is, is divided
+# by 10 before their c€/kWh formula applies, which leaves the factor on the
+# index in EUR/MWh as it was.
+_BASE_DIVISORS = {("", "MWh"): 1000.0, ("c", "kWh"): 100.0}
+
+
+def _energy(text: str, contract: _ContractDef) -> FixedRates | IndexedRates:
+    fee = _FEE_RE.search(text)
+    price = _PRICE_RE.search(text)
+    if fee is None or price is None:
+        raise ExtractorError("OCTA+: energy block not found")
+    if contract.kind == "fixed":
+        return FixedRates(
+            price=to_float(price.group(1)) / 100.0,
+            yearly_fixed_fee=to_float(fee.group(1)),
+        )
+    formula = _FORMULA_RE.search(text)
+    if formula is None:
+        raise ExtractorError(f"OCTA+ {contract.contract_id}: {_INDEX} formula not found")
+    stated = _UNIT_AHEAD_RE.search(text, max(0, formula.start() - 60), formula.start())
+    stated = stated or _UNIT_AFTER_RE.match(text, formula.end())
+    if stated is None:
+        # Every card of this template states it. One that words it another
+        # way may have changed it too, as November 2026's did, and the card
+        # prints no price at a named value to hold the formula to.
+        raise ExtractorError(f"OCTA+ {contract.contract_id}: formula with no unit stated")
+    unit = (stated.group(1), stated.group(2))
+    divisor = _BASE_DIVISORS.get(unit)
+    if divisor is None:
+        raise ExtractorError(f"OCTA+ {contract.contract_id}: formula in {unit[0]}€/{unit[1]}")
+    vat = 1.0 + VAT_RATE_REDUCED
+    return IndexedRates(
+        factor=to_float(formula.group(2)) / 1000.0 * vat,
+        base=parse_sign(formula.group(3)) * to_float(formula.group(4)) / divisor * vat,
+        index=formula.group(1),
+        price=to_float(price.group(1)) / 100.0,
+        yearly_fixed_fee=to_float(fee.group(1)),
+        formula=formula.group(0),
+        vat_grossed=("factor", "base"),
+    )
+
+
+# The older template, September 2025 to May 2026: "Tarif : Eco Fixed" over
+# "Clients résidentiels en Wallonie - 02/2026 - Tarifs 6% TVAC". Its energy
+# block is set in spaced glyphs under drop capitals ("e d e v a n c e fix e
+# (€ / a n ) 6 5 ,0 0"), so it is matched with the spaces taken out, and the
+# first figure after "Coût du gaz" is the "Prix mensuels" column where a
+# variable card prints it beside the "Prix estimés" one. The formula line,
+# "ZTP RLP * 1,01 + 2,16 €/MWh.", is set plain; its "ZTP RLP" is the monthly
+# value ("indexé mensuellement"), the price at the month before's.
+_OLDER_TITLE = "Tarif : "
+# The March 2026 fixed cards are a revision, "Tarif : Fixed - valable à partir
+# du 16/03/2026", and the archive holds no card for the days before it.
+_OLDER_FROM_RE = re.compile(r" - valable à partir du (\d{2})/(\d{2})/(\d{4})$")
+_OLDER_MONTH_RE = re.compile(
+    r"^Clients résidentiels en (Flandre|Wallonie) - (\d{2})/(\d{4}) - Tarifs", re.MULTILINE
+)
+_OLDER_REGIONS = {"Flandre": REGION_FLANDERS, "Wallonie": REGION_WALLONIA}
+# Some Smart Variable cards leave "(€/an)" off the fee's label.
+_OLDER_FEE_RE = re.compile(r"edevancefixe(?:\(€/an\))?(\d+,\d{2})")
+_OLDER_PRICE_RE = re.compile(r"oûtdugaz(\d+,\d{2})")
+_OLDER_FORMULA_RE = re.compile(
+    rf"ZTP RLP(?: M)?\s*\*\s*(\d+(?:,\d+)?)\s*([{SIGN_CHARS}])\s*(\d+(?:,\d+)?)"
+)
+
+
+def parse_older(
+    contract_id: str, region: str, text: str, *, source_url: str | None = None
+) -> SupplierSnapshot:
+    """The energy leg of an older template card, read from pdfplumber's word
+    rows (:func:`extract_pdf_text_rows`), with no DSO row or levy: only a
+    contract signed on it is priced on it."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "OCTA+")
+    code = _region_code(contract, region)
+    title = text.partition("\n")[0].removeprefix(_OLDER_TITLE).rstrip()
+    revision = _OLDER_FROM_RE.search(title)
+    product = title if revision is None else title[: revision.start()]
+    if "".join(product.split()).upper() != contract.slug:
+        raise ExtractorError(f"OCTA+ {contract_id}: the card is for {title!r}")
+    month = _OLDER_MONTH_RE.search(text)
+    if month is None or _OLDER_REGIONS[month.group(1)] != region:
+        raise ExtractorError(f"OCTA+ {contract_id}: no {region} card month found")
+    card_month = month_date(month.group(3), int(month.group(2)), "OCTA+")
+    if revision is not None and (int(revision.group(3)), int(revision.group(2))) != (
+        card_month.year,
+        card_month.month,
+    ):
+        raise ExtractorError(f"OCTA+ {contract_id}: a revision of another month, {title!r}")
+    flat = "".join(text.split())
+    fee = _OLDER_FEE_RE.search(flat)
+    price = _OLDER_PRICE_RE.search(flat)
+    if fee is None or price is None:
+        raise ExtractorError("OCTA+: energy block not found")
+    energy: FixedRates | IndexedRates
+    if contract.kind == "fixed":
+        energy = FixedRates(
+            price=to_float(price.group(1)) / 100.0, yearly_fixed_fee=to_float(fee.group(1))
+        )
+    else:
+        formula = _OLDER_FORMULA_RE.search(text)
+        if formula is None:
+            raise ExtractorError(f"OCTA+ {contract_id}: ZTP RLP formula not found")
+        vat = 1.0 + VAT_RATE_REDUCED
+        energy = IndexedRates(
+            factor=to_float(formula.group(1)) / 1000.0 * vat,
+            base=parse_sign(formula.group(2)) * to_float(formula.group(3)) / 1000.0 * vat,
+            index=_INDEX,
+            price=to_float(price.group(1)) / 100.0,
+            yearly_fixed_fee=to_float(fee.group(1)),
+            formula=formula.group(0),
+            vat_grossed=("factor", "base"),
+        )
+    return SupplierSnapshot(
+        supplier="octaplus",
+        contract=contract_id,
+        energy=energy,
+        dsos={},
+        taxes=TaxOverlay(excise_bands=()),
+        source_url=source_url or _card_url(contract, code),
+        publication_label=f"{card_month:%Y-%m}",
+        valid_until=end_of_month(card_month.year, card_month.month),
+    )
+
+
+# Distribution per tier as fixed then proportional, the data management fee
+# ("-" in Wallonia), then transport. Each card prints both regions' tables.
+_COLUMNS = (T1_FIXED, T1_PROP, T2_FIXED, T2_PROP, METERING, TRANSPORT)
+_LABELS: dict[str, dict[str, str]] = {
+    REGION_FLANDERS: FLUVIUS_LABELS,
+    REGION_WALLONIA: {**ORES_LABELS, "RESA": DSO_RESA},
+}
+_BLOCKS: dict[str, tuple[str, str]] = {
+    REGION_FLANDERS: ("Région flamande", "Région wallonne"),
+    REGION_WALLONIA: ("Région wallonne", "LES SURCHARGES"),
+}
+
+
+def _dsos(text: str, region: str) -> dict[str, DsoOverlay]:
+    after, before = _BLOCKS[region]
+    dsos = read_dsos(text, _LABELS[region], _COLUMNS, supplier="OCTA+", after=after, before=before)
+    require_region(dsos, region, "OCTA+")
+    return dsos
+
+
+# The two excise rows carry the special excise, then the energy contribution,
+# then on the Walloon card only the connection fee, all in c EUR/kWh.
+_LOW_ROW_RE = re.compile(
+    r"^Consommation entre 0 & 12\.000 kWh[ \t]+(\d+,\d+)[ \t]+(\d+,\d+)(?:[ \t]+(\d+,\d+))?[ \t]*$",
+    re.MULTILINE,
+)
+_HIGH_ROW_RE = re.compile(
+    r"^Consommation > 12\.000 kWh[ \t]+(\d+,\d+)[ \t]+(\d+,\d+)[ \t]*$", re.MULTILINE
+)
+
+
+def _taxes(text: str, region: str) -> TaxOverlay:
+    """The levies as printed. The August and September 2026 cards still print
+    the energy contribution 0,1058 on the first slice (and 0,00 on the second)
+    although the law zeroed it in August; the delivery month's law corrects
+    it."""
+    low = _LOW_ROW_RE.search(text)
+    high = _HIGH_ROW_RE.search(text)
+    if low is None or high is None:
+        raise ExtractorError("OCTA+: excise rows not found")
+    connection_fee = 0.0
+    if region == REGION_WALLONIA:
+        if low.group(3) is None or "Redevance raccordement Wallonie" not in text:
+            raise ExtractorError("OCTA+: Walloon connection fee not found")
+        connection_fee = to_float(low.group(3)) / 100.0
+    return TaxOverlay(
+        excise_bands=excise_bands(to_float(low.group(1)) / 100.0, to_float(high.group(1)) / 100.0),
+        energy_contribution=to_float(low.group(2)) / 100.0,
+        connection_fee=connection_fee,
+    )
+
+
+# The table's heading, which says which column is which; the table is read
+# only while its heading reads exactly so.
+_INDEX_HEADER = "Periode TTF101 Mois TTF103 Trimestre TTF RLP Mois ZTP RLP Mois ZTP RLP Trimestre"
+_INDEX_ROW_RE = re.compile(
+    r"^(\d{2})/(\d{4})((?:[ \t]+(?:\d+(?:,\d+)?|-)){5})[ \t]*$", re.MULTILINE
+)
+_COLUMNS_READ = {_TTF_INDEX: 2, _INDEX: 3}
+# The table carries no unit. The document states it once, in its opening
+# sentence: "La formule de prix du Gaz Naturel d'OCTA+ est basée sur les
+# indices (€/MWh HTVA) avec les définitions suivantes". The values are read
+# only when that is the one unit it states: restated in c€/kWh, as the
+# cards' formulas were in November 2026, they would price a tenth.
+_INDEX_UNIT_RE = re.compile(r"basée sur les indices \(([^()]{0,40})\)")
+_INDEX_UNIT = "€/MWh HTVA"
+
+
+def parse_index(text: str) -> IndexTable:
+    """The monthly TTF RLP and ZTP RLP values of OCTA+'s parameter PDF, in
+    EUR/MWh.
+
+    One row per delivery month ("08/2026 53,734 45,112 61,729 61,899 -"); a
+    month not over yet prints "-". The other columns (TTF101, TTF103 and the
+    quarterly ZTP RLP) are no gas card's index and are not read. A document
+    stating its indices in another unit than EUR/MWh excluding VAT, or in
+    none, is refused.
+    """
+    flat = " ".join(text.split())
+    if _INDEX_HEADER not in flat:
+        raise ExtractorError("OCTA+: index table heading not found")
+    units = set(_INDEX_UNIT_RE.findall(flat))
+    if units != {_INDEX_UNIT}:
+        stated = shown_text(", ".join(sorted(units)) or "no unit")
+        raise ExtractorError(f"OCTA+: the index document states {stated}, expected {_INDEX_UNIT}")
+    table: IndexTable = {name: {} for name in _COLUMNS_READ}
+    for month, year, cells in _INDEX_ROW_RE.findall(text):
+        for name, column in _COLUMNS_READ.items():
+            cell = cells.split()[column]
+            if cell != "-":
+                table[name][f"{year}-{month}"] = to_float(cell)
+    if not table[_INDEX]:
+        raise ExtractorError(f"OCTA+: no {_INDEX} values in the index table")
+    return table
+
+
+async def fetch_index(session: aiohttp.ClientSession) -> IndexTable:
+    """OCTA+'s published ZTP RLP M and TTF RLP M values."""
+    return parse_index(await fetch_pdf_text_layout(session, _INDEX_URL))
+
+
+EXTRACTOR = SupplierExtractor(
+    id="octaplus",
+    label="OCTA+",
+    contracts=tuple(
+        Contract(
+            id=c.contract_id,
+            label=c.label,
+            kind=c.kind,
+            regions=frozenset(_REGION_TO_CODE),
+            withdrawn=c.withdrawn,
+        )
+        for c in _CONTRACTS
+    ),
+    fetch=fetch,
+    probe=probe,
+    fetch_for_month=fetch_for_month,
+    fetch_on_day=fetch_on_day,
+    fetch_index=fetch_index,
+    discover=discover,
+    sweep_cost_s=4.5,
+)

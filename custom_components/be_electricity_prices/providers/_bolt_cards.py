@@ -1,0 +1,989 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Bolt: the product legs its card prints.
+
+The energy formula and its coefficients, the older layout still held in the
+archive, the CWaPE band rates and the feed-in leg. This is what Bolt charges
+for power, as opposed to what it collects on someone else's behalf.
+"""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from dataclasses import dataclass, fields, replace
+from datetime import date
+from typing import Any
+
+from ..const import REGION_FLANDERS, VAT_RATE_REDUCED, VAT_RATE_STANDARD
+from ._bolt_formulas import (
+    _BELPEX_FORMULA_RE,
+    _IMPACT_INJECTION_ROW_RE,
+    _IMPACT_ROW_RE,
+    _PRICE_UNIT,
+    _fixed_price_unit,
+    _formula_in_mwh,
+    _impact_rows,
+)
+from ._parse import parse_sign, to_float
+from ._pdf import _MONTH_NAMES, vat_multiplier
+from ._rates import EnergyRates, FixedRates, InjectionRates, TariffKind, VariableRates
+from .base import ExtractorError
+
+
+def _consumption_formula(
+    text: str, *, professional: bool = False
+) -> tuple[float, float] | None:
+    """The card's consumption formula as (factor, base) in the EUR/kWh basis.
+
+    Bolt prints one tariff formula per card, ``Belpex * <factor> <sign>
+    <base>`` in EUR/MWh HTVA, and settles it either per quarter-hour or
+    against the RLP-weighted month depending on what the customer chose. Both
+    readings want the same pair, so it is parsed once here: the factor is a
+    dimensionless ratio (* VAT), the base goes EUR/MWh -> EUR/kWh (/1000 *
+    VAT). VAT is baked because the snapshot's vat_rate is 0.
+
+    ``None`` when the card carries no formula table, which is not an error:
+    the printed monthly rate is a complete variable card on its own, and
+    ``_with_slot_formula`` already handles the same absence on the injection
+    side ("no formula on this card generation: the printed figure is all
+    there is"). Raising here instead would fail the WHOLE snapshot for every
+    Bolt variable contract the day the row moved, turning a card that still
+    prices perfectly into a dead entry; the quarter-hourly settlement is the
+    only thing that actually needs the pair, and it goes inert without it
+    while the live check reports the loss.
+
+    The professional card prices everything excluding VAT, so there is
+    nothing to bake and the snapshot's vat_rate carries the 21% instead. It
+    also drops the "N% TVA" phrase the multiplier reads, which would
+    otherwise fall back to the residential 6% default and scale the formula
+    twice over. That one IS an error, because a formula was found and read.
+
+    A formula whose heading states another unit than €/MWh, or none, is no
+    formula either (``_formula_in_mwh``).
+    """
+    match = _BELPEX_FORMULA_RE.search(text)
+    if match is None:
+        return None
+    if professional:
+        if "HTVA" not in text:
+            raise ExtractorError("Bolt: professional card is not marked HTVA")
+        vat = 1.0
+    else:
+        # No residential Bolt card prints a "N% TVA" phrase: they read "TVAC"
+        # and mark the settlement formula "HTVA", so the multiplier is the
+        # residential rate by default rather than by reading, and it IS
+        # load-bearing here, since the settlement leg and the Impact bands
+        # below are grossed by it.
+        vat = vat_multiplier(text, _VAT_PHRASE_RE, default=_RESIDENTIAL_VAT)
+    if not _formula_in_mwh(text, match):
+        return None
+    factor_s, sign, base_s = match.groups()
+    base_eur_mwh = parse_sign(sign) * to_float(base_s)
+    return to_float(factor_s) * vat, base_eur_mwh / 1000.0 * vat
+
+
+def _extract_legacy_energy(
+    text: str, kind: TariffKind, yearly_fee: float
+) -> EnergyRates | None:
+    """Read a pre-April-2026 Bolt card, or ``None`` if this is not one.
+
+    Bolt redesigned its cards between March and April 2026. The archive PDFs
+    for the earlier months are still served, and ``fetch_for_month`` reaches
+    for them whenever a year-to-date walk crosses Q1 or a contract was signed
+    then, but they carry no ``Prix mensuel`` row: the rates sit under
+    ``Coût de l'énergie`` with one labelled line per meter type,
+
+        Coût de l'énergie Simple
+         c€13,27/kWh
+                       Jour
+         c€13,27/kWh
+                       Nuit
+         c€13,27/kWh
+                       Excl. nuit c€13,27/kWh
+
+    so ``parse_snapshot`` raised, ``fetch_for_month`` swallowed it, and every
+    Q1 month silently billed at the CURRENT card's rate instead.
+
+    Keyed on which anchor the card actually carries rather than on a date, so
+    it neither guesses at a boundary nor needs touching when Bolt redesigns
+    again. Returns ``None`` when the old anchor is absent too, leaving the
+    caller to raise its own error.
+    """
+    if not re.search(r"Co[ûu]t de l['’]énergie", text):
+        return None
+
+    def _rate(label: str) -> float | None:
+        # Values render as "c€13,27/kWh", the label sometimes on the line
+        # above and sometimes inline, so allow a bounded gap but never cross
+        # into another label's value.
+        #
+        # A later label on a line can only find a value the first one on it
+        # found, so a line is read once: tried from each, its rest was read
+        # again from every label and every place in it, the square of a long
+        # line.
+        tried = -1
+        for head in re.finditer(label, text, re.IGNORECASE):
+            if head.end() <= tried:
+                continue
+            m = _LEGACY_VALUE_RE.match(text, head.end())
+            if m is not None:
+                return to_float(m.group(1)) / 100.0
+            line_end = text.find("\n", head.end())
+            tried = len(text) if line_end < 0 else line_end
+        return None
+
+    mono = _rate(r"Co[ûu]t de l['’]énergie\s+Simple")
+    if mono is None:
+        return None
+    peak = _rate(r"\bJour\b") or mono
+    offpeak = _rate(r"\bNuit\b") or mono
+    excl = _rate(r"Excl\.?\s*nuit") or mono
+    if kind == "fixed":
+        return FixedRates(
+            single=mono,
+            peak=peak,
+            offpeak=offpeak,
+            exclusive_night=excl,
+            yearly_fixed_fee=yearly_fee,
+        )
+    if kind == "variable":
+        return VariableRates(
+            current=mono,
+            peak=peak,
+            offpeak=offpeak,
+            exclusive_night=excl,
+            yearly_fixed_fee=yearly_fee,
+        )
+    # Only the archived fix / variable families use this layout; a dynamic
+    # card is handled by its own formula branch before we get here.
+    return None
+
+
+def _extract_energy(
+    text: str, kind: TariffKind, *, professional: bool = False
+) -> EnergyRates:
+    yearly_fee = _extract_yearly_fee(text)
+    # Bolt's 'Prix mensuel' line is what a fixed card bills. On a variable
+    # card it is the formula at the last closed quarter's index ("Belpex Q3
+    # 2026"), an indicative for the quarter being billed (see the variable
+    # branch below). Variable cards also show 'Prix annuel estimé', ignored.
+    #
+    # The row renders in one of two shapes, and which one is a property of
+    # the individual card render rather than of the product: either two
+    # numbers (mono then Exclusif nuit, with the bi-horaire pair left to
+    # the "Prix de l'électricité verte" block below), or all four columns
+    # inline (mono, Jour, Nuit, Exclusif nuit). Reading the four-number
+    # shape with the two-number rule would take Jour for the
+    # exclusive-night rate and bill a night circuit at the day price.
+    match = re.search(r"Prix mensuel([^\n]*)", text)
+    if match is None:
+        legacy = _extract_legacy_energy(text, kind, yearly_fee)
+        if legacy is not None:
+            return legacy
+    numbers = re.findall(r"[\d.,]+", match.group(1)) if match else []
+    inline_bihourly = len(numbers) >= 4
+    if len(numbers) < 2:
+        raise ExtractorError(f"could not parse Bolt {kind} consumption block")
+    mono = to_float(numbers[0]) / 100.0
+    excl = to_float(numbers[3] if inline_bihourly else numbers[1]) / 100.0
+    # The "Prix de l'électricité verte" block prints two "Jour Nuit"
+    # subheads: the first is for consumption (with our bi-horaire
+    # row), the second is for injection. The bi-horaire row is always
+    # the LAST same-line adjacent-number pair between them. pdfplumber
+    # sometimes renders the annual-estimate column vertically above
+    # that row (variable cards) and sometimes drops it entirely (fixed
+    # cards), so we can't anchor on a fixed offset; restricting to the
+    # span between the two subheads is the stable invariant.
+    span = _green_block(text)
+    pairs = (
+        re.findall(
+            r"^[ \t]*([\d.,]+)[ \t]+([\d.,]+)[ \t]*$",
+            span,
+            re.MULTILINE,
+        )
+        if span is not None
+        else []
+    )
+    if inline_bihourly:
+        # The row already carried them, and is the more reliable source:
+        # the span anchor below walks into the DSO table on the renders
+        # that inline the pair.
+        peak = to_float(numbers[1]) / 100.0
+        offpeak = to_float(numbers[2]) / 100.0
+    elif pairs:
+        peak = to_float(pairs[-1][0]) / 100.0
+        offpeak = to_float(pairs[-1][1]) / 100.0
+    elif kind == "fixed":
+        # Bolt fixed cards are mono == peak == offpeak and sometimes omit
+        # the bi-horaire row entirely; the single rate is the right value.
+        peak = offpeak = mono
+    else:
+        # Variable cards always publish distinct Jour / Nuit rates; a miss
+        # is a layout drift, not a mono contract. Fail loud rather than
+        # silently bill a bi-hourly user at the mono rate.
+        raise ExtractorError(f"could not parse Bolt {kind} bi-hourly Jour/Nuit rates")
+
+    if kind == "fixed":
+        # The fixed cards print a "Tarif Impact (Wallonie)" block too, and it is
+        # deliberately not read: its figures are the variable card's, digit for
+        # digit, with the formula column replaced by "Fixe" ("Eco consommation
+        # 9,91 65,59 Fixe" against the variable card's "... Belpex * 1,168 +
+        # 16,90"). A template left over from the variable card rather than a
+        # banded fixed price, so the one fixed price is billed in every band.
+        unit = _fixed_price_unit(text, match.span(1)) if match else None
+        if unit != _PRICE_UNIT:
+            raise ExtractorError(
+                f"Bolt: fixed price unit {unit!r}, expected {_PRICE_UNIT!r}"
+            )
+        return FixedRates(
+            single=mono,
+            peak=peak,
+            offpeak=offpeak,
+            exclusive_night=excl,
+            yearly_fixed_fee=yearly_fee,
+        )
+    if kind == "variable":
+        # A Walloon card prices this product two ways and lets the customer
+        # pick; the incitative bands ride on the same contract, selected by
+        # dso_tariff_mode, exactly as the DSO side already is.
+        # The professional cards print the Walloon Impact block too, priced
+        # HTVA like the rest of the card, so their bands are read with a 1.0
+        # factor and the snapshot's vat_rate carries the VAT.
+        bands = _impact_energy_bands(
+            text,
+            1.0
+            if professional
+            else vat_multiplier(text, _VAT_PHRASE_RE, default=_RESIDENTIAL_VAT),
+        )
+        # ``current`` is the printed Prix mensuel: the formula at the last
+        # closed quarter's RLP-weighted index, "Belpex Q3 2026 139,36" on the
+        # October 2026 card, which the card calls "le prix de vente base sur
+        # la valeur Belpex la plus recente". The bill is "calcule sur base de
+        # l'indice applicable pendant la periode pour laquelle vous etes
+        # facture", so the leg is quarter indexed: an entry with an ENTSO-E
+        # key re-prices the formula on the delivery quarter's index, and a
+        # keyless one bills the printed rates until the quarter closes and the
+        # next quarter's card settles it (bolt.settle_month). The coefficients
+        # are also the other settlement the card sells, per quarter-hour,
+        # which resolve_settlement_grid builds when the entry says so. Carried
+        # on every variable card, not only where the box is ticked, because
+        # the parser has no entry to consult and the pair is free to read.
+        #
+        # A card with no formula table still prices: the printed rate is the
+        # whole variable contract, and only the quarter-hourly settlement
+        # needs the pair. It goes inert rather than taking the entry down.
+        coefficients = _consumption_formula(text, professional=professional)
+        factor, base = coefficients or (None, None)
+        quarterly = coefficients is not None and _QUARTER_INDEX_RE.search(text)
+        return VariableRates(
+            current=mono,
+            peak=peak,
+            offpeak=offpeak,
+            exclusive_night=excl,
+            yearly_fixed_fee=yearly_fee,
+            formula=(
+                None if coefficients is None else f"Belpex * {factor:.6g} + {base:.6g}"
+            ),
+            formula_factor=factor,
+            formula_base=base,
+            impact_pic=bands.get("pic"),
+            impact_medium=bands.get("medium"),
+            impact_eco=bands.get("eco"),
+            # Quarter indexed and NOT month indexed: a version that predates
+            # the quarter flag reads month_indexed alone and would re-price
+            # the card on one month mean with no per-register spread, so it
+            # keeps billing the printed rates instead.
+            quarter_indexed=bool(quarterly),
+            rlp_indexed=bool(quarterly),
+            rlp_blend="wallonia",
+        )
+    # Bolt sells no tou / tou_impact product, and its dynamic settlement is a
+    # per-entry reading of the variable card rather than a kind of its own, so
+    # anything else here is a registry mistake.
+    raise ExtractorError(f"Bolt: unexpected contract kind {kind!r}")
+
+
+def _with_index_card_formula(
+    energy: EnergyRates, reference: EnergyRates
+) -> EnergyRates:
+    """``energy`` with ``reference``'s formula and Impact bands, while it prints
+    ``reference``'s monthly prices.
+
+    The French residential Plenty Online card of October 2026 prints the Online
+    card's monthly prices beside the professional cards' formula and Impact
+    bands. Its Dutch edition prints the Online card's formula and bands beside
+    the same prices, and so does the Online card in both languages, so those
+    are what the prices stand for. A card that stops printing the reference's
+    prices has a price of its own, and keeps everything it prints.
+    """
+    if not isinstance(energy, VariableRates) or not isinstance(
+        reference, VariableRates
+    ):
+        return energy
+    printed = (energy.current, energy.peak, energy.offpeak, energy.exclusive_night)
+    if printed != (
+        reference.current,
+        reference.peak,
+        reference.offpeak,
+        reference.exclusive_night,
+    ):
+        return energy
+    return replace(
+        energy,
+        **{
+            f.name: getattr(reference, f.name)
+            for f in fields(VariableRates)
+            if f.name.startswith(("formula", "impact_"))
+        },
+    )
+
+
+def _month_number(name: str) -> int | None:
+    """A French or Dutch month name's number, accents folded: the August 2026
+    cards spell it "Aôut"."""
+    folded = unicodedata.normalize("NFKD", name.lower())
+    return _MONTH_NAMES.get("".join(c for c in folded if c.isascii()))
+
+
+def _quarter_before(label: str) -> str | None:
+    """The quarter before the one a card's "<Month> <Year>" falls in, as its
+    index table names it ("Q3 2026" for "Octobre 2026"), or ``None``."""
+    parts = label.split()
+    if len(parts) != 2 or not parts[1].isdigit():
+        return None
+    number = _month_number(parts[0])
+    if number is None:
+        return None
+    year = int(parts[1])
+    previous = (number - 1) // 3
+    return f"Q{previous} {year}" if previous else f"Q4 {year - 1}"
+
+
+def check_quarter_table(text: str, energy: EnergyRates, label: str) -> None:
+    """Refuse a variable card whose index table is not the quarter its
+    monthly price was computed on.
+
+    The printed "Prix mensuel" is the formula at the single-meter index the
+    card's own table states, which is how every consistent card reads (Q1
+    2026: 1,1192 x 99,24 + 13,94 is 13,25 c/kWh with VAT). On 30 September
+    2026 Bolt served an Online edition whose price was already Q3's (19,05)
+    while its index table still said "Belpex Q2 2026", and replaced it in place
+    two days later. The Impact bands and the per-register spreads are read
+    off those tables, so such a card bills a Walloon Impact entry about
+    5 c/kWh low in every band. Refused rather than read, so the card held
+    before keeps serving until the supplier's copy is consistent again.
+
+    A price that misses its table is refused only when the table is not the
+    quarter before the card's month (``label``) either. Every consistent card
+    on file names that quarter, and the October edition named the one before
+    it. A change of VAT also parts price and table, since the formula is
+    grossed by the rate the parser assumes and the price carries the card's,
+    but it leaves the quarter right, so such a card is read whether or not
+    the new rate is known yet.
+    """
+    if (
+        not isinstance(energy, VariableRates)
+        or not energy.quarter_indexed
+        or energy.formula_factor is None
+    ):
+        return
+    found = _quarter_mono_index(text)
+    if found is None:
+        return
+    head, row = found
+    index = to_float(row.group(1)) / 1000.0
+    priced = energy.formula_factor * index + (energy.formula_base or 0.0)
+    named = " ".join(head.group(1).split())
+    if abs(priced - energy.current) > _TABLE_TOLERANCE and named != _quarter_before(
+        label
+    ):
+        raise ExtractorError(
+            f"Bolt: the card's index table ({named}) "
+            f"prices its monthly rate at {priced * 100.0:.2f} c/kWh, but it "
+            f"prints {energy.current * 100.0:.2f}"
+        )
+
+
+def _quarter_mono_index(text: str) -> tuple[re.Match[str], re.Match[str]] | None:
+    """The card's first quarter heading and the first single-meter row after
+    it, or ``None``.
+
+    Found one after the other: as one lazy pattern, a card naming the quarter
+    over and over with no row after it was read to its end again from each
+    heading. The first heading is the one to read from, since a row after a
+    later heading is after the first one too.
+    """
+    head = _QUARTER_INDEX_RE.search(text)
+    if head is None:
+        return None
+    row = _QUARTER_MONO_ROW_RE.search(text, head.end())
+    return None if row is None else (head, row)
+
+
+def quarter_indices(text: str) -> tuple[str, dict[str, float]] | None:
+    """The quarter a variable card's index table names ("Q3 2026"), and its
+    indices in EUR/kWh by the rate each prices, or ``None``.
+
+    The rates are ``VariableRates`` fields: ``current``, ``peak``,
+    ``offpeak`` and ``exclusive_night`` for the meter registers, and
+    ``impact_eco``, ``impact_medium`` and ``impact_pic`` for the CWaPE bands,
+    present only when all three read. ``None`` when the card prints no table
+    or one of its meter rows does not read. The card of the quarter after
+    prints the indices a quarter's months settle at (``bolt.settle_month``).
+    """
+    found = _quarter_mono_index(text)
+    if found is None:
+        return None
+    head = found[0]
+    table = text[head.start() :]
+    indices: dict[str, float] = {}
+    for field, label in _REGISTER_ROWS:
+        row = re.search(rf"^[ \t]*{label}\s+([\d.,]+)\s*€/MWh", table, re.M)
+        if row is None:
+            return None
+        indices[field] = to_float(row.group(1)) / 1000.0
+    bands = {
+        f"impact_{m.group(1).lower()}": to_float(m.group(3)) / 1000.0
+        for m in _impact_rows(text, _IMPACT_ROW_RE)
+    }
+    if len(bands) == 3:
+        indices |= bands
+    return " ".join(head.group(1).split()), indices
+
+
+def quarter_injection_indices(text: str) -> tuple[str, dict[str, float]] | None:
+    """The quarter a card's index table names, and the feed-in indices it
+    prints, in EUR/kWh, or ``None``.
+
+    The table's injection rows, "Injectie simple 78,09 €/MWh", "Injection
+    jour 96,66 €/MWh" and "Injection nuit 31,37 €/MWh", are the quarter's
+    SPP-weighted Belpex means of each meter register's hours: weighting the
+    third quarter of 2026 by Synergrid's SPP profile gives 79,08, 97,68 and
+    32,29 by the hour, the hour-against-quarter gap of
+    ``spot_stats._spp_month_mean``, where the consumption rows are RLP-weighted.
+    Keyed ``current``, ``peak`` and ``offpeak`` as the leg carries them;
+    ``None`` unless all three read. The Tarif Impact block beneath prints the
+    same per CWaPE band, "Eco injection 4,41 58,97 Belpex * 0,94 - 11,33" in
+    October 2026, keyed ``impact_eco``, ``impact_medium`` and ``impact_pic``
+    and present only when all three read.
+
+    The fixed cards print the same table, and the ones before April 2026
+    print it as a single row, "Belpex Q4 2025 (€/MWh) 74,54 83,26 52,27", in
+    the order of the feed-in figures beneath it, "Injection (c€/kWh) 5,87 6,69
+    3,78": the single register, then the day and night ones. Their label is
+    not to be trusted: the April 2026 fixed card as Bolt serves it now names
+    the second quarter over the first quarter's indices.
+    """
+    legacy = _LEGACY_INJECTION_TABLE_RE.search(text)
+    if legacy is not None:
+        label, *row = legacy.groups()
+        return " ".join(label.split()), {
+            field: to_float(index) / 1000.0
+            for (field, _label), index in zip(
+                _INJECTION_REGISTER_ROWS, row, strict=True
+            )
+        }
+    head = _QUARTER_INDEX_RE.search(text)
+    if head is None:
+        return None
+    table = text[head.start() :]
+    indices: dict[str, float] = {}
+    for field, label in _INJECTION_REGISTER_ROWS:
+        row_match = re.search(
+            rf"Inject(?:ie|ion)\s+{label}\s+(-?[\d.,]+)\s*€/MWh", table
+        )
+        if row_match is None:
+            return None
+        indices[field] = to_float(row_match.group(1)) / 1000.0
+    bands = {
+        f"impact_{m.group(1).lower()}": to_float(m.group(3)) / 1000.0
+        for m in _impact_rows(table, _IMPACT_INJECTION_ROW_RE)
+    }
+    if len(bands) == 3:
+        indices |= bands
+    return " ".join(head.group(1).split()), indices
+
+
+def _table_figures(injection: InjectionRates, text: str) -> dict[str, Any]:
+    """The feed-in figures the card's index table stands for, by the field
+    each prices: the leg's formula at each register's index. Empty where the
+    table or the formula does not read."""
+    table = quarter_injection_indices(text)
+    if table is None or injection.factor is None or injection.base is None:
+        return {}
+    return {
+        field: injection.factor * index + injection.base
+        for field, index in table[1].items()
+    }
+
+
+def with_table_figures(injection: InjectionRates, text: str) -> InjectionRates:
+    """A fixed card's feed-in leg carrying the figures its index table stands
+    for per register, beside the per-slot formula it bills.
+
+    Nothing here is credited to the fixed card itself, which bills its
+    feed-in per quarter-hour and reads ``peak`` and ``offpeak`` only on a
+    ``bi_hourly`` leg. The figures are the variable cards': the same table,
+    printed for the quarter before the card's, and a variable month no
+    archive holds is credited its quarter's off the fixed card of the quarter
+    after (``bolt.stand_in_reference``). ``current`` is the single
+    register's, the figure the card prints beside it on every consistent
+    card; the May 2025 one printed 9,56 c/kWh where its table and the June
+    card give 6,49.
+    """
+    return replace(injection, **_table_figures(injection, text))
+
+
+def with_spp_registers(
+    injection: InjectionRates, text: str, *, registers: bool, bands: bool = False
+) -> InjectionRates:
+    """A variable card's feed-in leg carrying the figures the card bills on
+    its variable settlement, beside the per-slot formula of its dynamic one
+    (``InjectionRates.spp_redistributed``).
+
+    Each register's figure is the formula at that register's SPP index,
+    which is what the card prints: 6,21, 7,95 and 1,82 c/kWh on the October
+    2026 cards, at 78,09, 96,66 and 31,37 EUR/MWh. A card whose table does
+    not read keeps its printed single-register figure alone.
+
+    The day and night indices are means over the Flemish and Brussels
+    registers' hours, the weekday 07:00-22:00 day: over the third quarter of
+    2026 they come to 97,68 and 32,29 on that schedule, the card's 96,66 and
+    31,37 less the same 1 EUR/MWh as its single index. Wallonia's night
+    register has also run 11:00-17:00 since 2026, which holds most of a
+    household's export, so the card's night figure is not its register's
+    mean there: 1,82 c/kWh against about 4,4 over those hours. Without
+    ``registers`` a two-register meter is credited the single figure, which
+    is within 3% of that mean over the quarter.
+
+    With ``bands``, which is a Walloon card, the leg carries the figures per
+    CWaPE band its Tarif Impact block prints too, 4,41 / 9,17 / 10,93 c/kWh
+    for Eco / Medium / Pic on the October 2026 cards against the single
+    6,21: an entry on that tariff is credited the band the hour falls in.
+    """
+    injection = replace(injection, spp_redistributed=True)
+    figures = _table_figures(injection, text)
+    if not figures:
+        return injection
+    kept = {"current"}
+    if registers:
+        kept |= {"peak", "offpeak"}
+    if bands:
+        kept |= set(_IMPACT_INJECTION_FIELDS)
+    return replace(injection, **{f: v for f, v in figures.items() if f in kept})
+
+
+def _impact_energy_bands(text: str, vat: float) -> dict[str, float]:
+    """The three CWaPE supplier-energy rates, or ``{}``.
+
+    Derived from each band's formula and its own index rather than read off
+    the printed column, because the card's own arithmetic disagrees with one
+    of them: at the Q2 2026 indices Eco resolves to 9,912 against a printed
+    9,91 and Pic to 19,232 against 19,23, but Medium resolves to 15,636
+    against a printed 14,64. One digit, and taking the printed value would
+    bake a supplier typo into every Medium hour.
+    """
+    out: dict[str, float] = {}
+    for m in _impact_rows(text, _IMPACT_ROW_RE):
+        if not _formula_in_mwh(text, m, 4):
+            continue
+        band, _printed, index, factor, sign, base = m.groups()
+        # EUR/MWh HTVA, as both headings state, so /1000 to EUR/kWh, then the
+        # card's VAT.
+        rate = (
+            (to_float(factor) * to_float(index) + parse_sign(sign) * to_float(base))
+            / 1000.0
+            * vat
+        )
+        out[band.lower()] = rate
+    return out if len(out) == 3 else {}
+
+
+def _with_slot_formula(text: str, current: float) -> InjectionRates:
+    """Injection leg for a non-dynamic card: the printed figure AND the
+    quarter-hourly formula stated beside it.
+
+    Bolt's fixed and variable cards carry the same Belpex formula table the
+    dynamic card does. The fixed card says the printed column is only an
+    illustration: *"Le tableau ci-dessus indique le prix de vente base sur
+    la valeur Belpex la plus recente. Dans la facturation, l'injection par
+    quart d'heure est multipliee par la valeur Belpex pour ce quart
+    d'heure."* and *"Contrairement au prix fixe de consommation pour
+    l'electricite, le prix pour l'injection est quant a lui variable selon
+    l'indice Belpex."* The variable card says the same of its dynamic
+    settlement only (``with_spp_registers``).
+
+    That printed value moves only when the QUARTERLY index does, and the
+    archive shows it: 202604, 202605 and 202606 all print 5,31; 202607 and
+    202608 both print 3,40. Crediting it flat misses every negative quarter
+    the contract really pays, and 15% of Apr-Aug 2026 quarters are negative.
+
+    The formula row is picked out by ``factor < 1``, the same discriminator
+    the dynamic branch uses: Bolt redistributes a fraction of the spot on the
+    injection side and marks it up on every consumption row. ``current`` is
+    kept as the fallback for an entry with no ENTSO-E key.
+    """
+    inj = next(
+        (m for m in _BELPEX_FORMULA_RE.finditer(text) if to_float(m.group(1)) < 1.0),
+        None,
+    )
+    if inj is None or not _formula_in_mwh(text, inj):
+        # No formula on this card generation, or one in a unit no card has
+        # stated: the printed figure is all there is, and crediting it is
+        # better than crediting nothing.
+        return InjectionRates(current=current, factor=None, base=None, formula=None)
+    factor, sign, base = inj.groups()
+    return InjectionRates(
+        current=current,
+        # Feed-in is VAT-exempt for residential, so no VAT bake; base goes
+        # EUR/MWh -> EUR/kWh.
+        factor=to_float(factor),
+        base=parse_sign(sign) * to_float(base) / 1000.0,
+        formula=f"Belpex * {factor} {sign} {base}",
+        slot_indexed=True,
+    )
+
+
+def _extract_injection(text: str) -> InjectionRates | None:
+    """The feed-in leg as the fixed card bills it, per quarter-hour.
+
+    The fixed card applies the injection formula per quarter-hour ("Dans la
+    facturation, l'injection par quart d'heure est multipliee par la valeur
+    Belpex pour ce quart d'heure"), and so does a variable card on its
+    dynamic settlement; on its variable one it credits the SPP-weighted
+    figures it prints per register, which ``with_spp_registers`` puts beside
+    this reading. ``_with_slot_formula`` keeps both halves: the printed
+    indicative, which is the fallback for an entry with no ENTSO-E key, and
+    the formula that is actually billed.
+
+    Injection is a flat monthly indicative ("Prix mensuel 5,31 4,03")
+    in the block that follows the "Injection" header, on both fix and
+    variable cards (the consumption "Prix mensuel" sits above it).
+    Anchored on the header rather than counting "Prix mensuel"
+    occurrences, so a third consumption-side row cannot shift the match.
+    The July 2026 fix cards print a NEGATIVE second ("Exclusif nuit")
+    column ("Prix mensuel 3,40 -0,43"); only the first column is billed
+    but the second is a required anchor token, so its optional minus sign
+    is allowed. The billed first column carries an optional minus too, so
+    a month that ever prints a negative feed-in indicative is captured
+    instead of failing the match and dropping the credit.
+    """
+    # The first row after the first "Injection": as one pattern, a card with
+    # no row after it was read to its end again from every later one.
+    head = _INJECTION_HEAD_RE.search(text)
+    m = None if head is None else _INJECTION_MONTHLY_RE.search(text, head.end())
+    if m:
+        current = to_float(m.group(1)) / 100.0
+        return _with_slot_formula(text, current)
+    # A pre-April-2026 archive card has no "Prix mensuel" row. It prints the
+    # indicative under the "Tarif d'injection (HTVA)" heading as
+    # "Injection (c€/kWh) 5,87 6,69 3,78". Missing it dropped the feed-in
+    # credit entirely for every archived month a year-to-date walk crosses.
+    #
+    # Those three columns are METER REGISTERS, not regions. Their header is
+    # "(*) TVA non applicable. Simple Jour Nuit", a few lines up, and the
+    # Belpex row above them uses the same three. The VL/WAL/BX headers on that
+    # page govern the TAX rows only. Reading them as regions credited Wallonia
+    # the Jour rate and Brussels the Nuit one, which is why the first column
+    # is taken here regardless of region: exactly what the current card's
+    # "Prix mensuel" branch above does with its own Simple / Exclusif-nuit
+    # pair. peak / offpeak stay None: they are consulted only for a
+    # TimeOfUseRates energy leg, and these are fixed and variable cards.
+    legacy = re.search(
+        r"Injection\s*\(c€/kWh\)\s*(-?[\d.,]+)",
+        text,
+    )
+    if not legacy:
+        return None
+    return _with_slot_formula(text, to_float(legacy.group(1)) / 100.0)
+
+
+# The variable card's index table, "Type de compteur Belpex Q3 2026 Formule
+# tarifaire". Its rows are the RLP-weighted quarter means of the Walloon
+# DSOs' curve, one per meter register and CWaPE band, which the card says is
+# "la moyenne ponderee par le RLP des prix par quart d'heure belges".
+_QUARTER_INDEX_RE = re.compile(r"Belpex\s+(Q[1-4]\s+\d{4})")
+# The fixed cards' table before April 2026, the feed-in indices alone on one
+# row: "Belpex Q4 2025 (€/MWh) 74,54 83,26 52,27".
+_LEGACY_INJECTION_TABLE_RE = re.compile(
+    r"Belpex\s+(Q[1-4]\s+\d{4})\s*\(€/MWh\)\s*(-?[\d,]+)\s+(-?[\d,]+)\s+(-?[\d,]+)"
+)
+# The same table's single-meter row, "Belpex Q3 2026 ... Simple 139,36 €/MWh":
+# its index, read after the quarter heading (``_quarter_mono_index``).
+_QUARTER_MONO_ROW_RE = re.compile(r"Simple\s+([\d.,]+)\s*€/MWh")
+# The table's meter rows, by the rate each prices: "Simple 139,36 €/MWh",
+# "Jour 147,78", "Nuit 132,12" and "Exclusif nuit 132,12" on the October 2026
+# card, each label at the start of its line, which keeps the injection rows
+# ("Injection jour") out.
+# The feed-in rows of the same table, by the field each prices.
+_INJECTION_REGISTER_ROWS = (
+    ("current", "simple"),
+    ("peak", "jour"),
+    ("offpeak", "nuit"),
+)
+_REGISTER_ROWS = (
+    ("current", "Simple"),
+    ("peak", "Jour"),
+    ("offpeak", "Nuit"),
+    ("exclusive_night", "Exclusif nuit"),
+)
+# How far the table's index through the formula may sit from the printed
+# monthly price: one step of the price's last printed digit, 0,01 c/kWh.
+_TABLE_TOLERANCE = 1e-4
+_IMPACT_INJECTION_FIELDS = ("impact_eco", "impact_medium", "impact_pic")
+# The residential VAT the settlement formula and the Impact bands are grossed
+# by. Named rather than left to the helper's default: the residential cards
+# print no "N% TVA" phrase for the multiplier to read, so this is the value
+# every residential entry bills on, and a helper default is where a reader
+# would not look for it.
+_RESIDENTIAL_VAT = 1.0 + VAT_RATE_REDUCED
+# Read from the start of the digits: tried from each digit of a long run, the
+# run was read again from every one.
+_VAT_PHRASE_RE = re.compile(r"(?<!\d)(\d+)\s*%\s*(?:TVA|BTW)", re.IGNORECASE)
+# A legacy card's value after its label: the first "c" of the line below, or
+# else the last "c€" on the label's own line that reads as one. Spelt
+# "[^\n]*\n?[^c\n]*c€", the two scans shared that line and each "c" was tried
+# again from every place before it.
+_LEGACY_VALUE_RE = re.compile(
+    r"(?:[^\n]*\n[^c\n]*|[^\n]*)c€\s*([\d.,]+)\s*/\s*kWh", re.IGNORECASE
+)
+# The "Prix de l'électricité verte" block and its two "Jour Nuit" subheads.
+_GREEN_BLOCK = "Prix de l'électricité verte"
+_JOUR_NUIT_RE = re.compile(r"Jour\s+Nuit")
+# The feed-in's "Prix mensuel" row, the first after its heading.
+_INJECTION_HEAD_RE = re.compile(r"Injection\b")
+_INJECTION_MONTHLY_RE = re.compile(r"Prix mensuel\s+(-?[\d.,]+)\s+-?[\d.,]+")
+
+
+def _green_block(text: str) -> str | None:
+    """What lies between the two "Jour Nuit" subheads of the first "Prix de
+    l'électricité verte" block, or ``None``.
+
+    The first subhead after the block and the first after that. As one
+    pattern, a card with no second subhead was read to its end again from
+    every later block heading and subhead.
+    """
+    at = text.find(_GREEN_BLOCK)
+    if at < 0:
+        return None
+    first = _JOUR_NUIT_RE.search(text, at + len(_GREEN_BLOCK))
+    if first is None:
+        return None
+    second = _JOUR_NUIT_RE.search(text, first.end())
+    return None if second is None else text[first.end() : second.start()]
+
+
+@dataclass(frozen=True)
+class Promotion:
+    """What a Plenty card grants a contract signed in its month.
+
+    Every figure is on the card's own basis: TVAC on a residential card and
+    excluding VAT on a professional one, which is the basis the snapshot
+    carries its welcome credit on and ``apply_vat`` moves.
+    """
+
+    month: date | None
+    flat_eur: float | None
+    per_kwh: float | None
+    injection_per_kwh: float | None
+
+
+# The Plenty cards print a new-signing offer under a "Reduction" heading, and
+# have stated it two ways. Until September 2026 it was a lump and a feed-in
+# bonus for the first year:
+#
+#   "Lorsque vous concluez un nouveau contrat Plenty Fixe en Flandre au cours
+#    du mois de septembre 2026 (...), vous beneficiez d'une reduction de €300
+#    (TVA incluse), ainsi que d'une indemnite d'injection supplementaire de
+#    1,0 c€/kWh (hors TVA), valable durant votre premiere annee de contrat."
+#
+# From October it is a cut in the energy price instead of the lump:
+#
+#   "Si vous souscrivez a un nouveau contrat Plenty Fixe en Flandre au cours du
+#    mois d'octobre 2026, vous beneficiez d'une reduction de 9,0 c€/kWh (TVA
+#    comprise), ainsi que d'une compensation d'injection supplementaire de
+#    1,0 c€/kWh (hors TVA) pendant toute la duree du contrat."
+#
+# The block shares its lines with another column, and pdfplumber interleaves
+# that column into the sentence, even between a figure and its unit:
+# "reduction de du lundi au vendredi, de 9 h a 17 h. / €300", "reduction de
+# 350 / <the payment terms> € (TVA incluse)", "de 0,5 / bonjour@boltenergie.be
+# / c€/kWh". So each part is searched for on its own past the anchor, bounded,
+# and a figure only counts with its currency at most two line breaks on, where
+# nothing between carries a currency sign of its own.
+_PROMO_ANCHOR_RE = re.compile(r"nouveau\s+contrat\s+Plenty", re.IGNORECASE)
+_PROMO_SPAN = 900
+# "au cours du mois de juillet 2026", "du mois d'octobre 2026". Only the tail
+# is matched, since the column break lands anywhere in the phrase, and a match
+# counts only on a real month name.
+_PROMO_MONTH_RE = re.compile(
+    r"\bmois\s+d(?:e\s+|['’]\s*)([^\W\d_]+)\s+(\d{4})", re.IGNORECASE
+)
+_PROMO_FLANDERS_RE = re.compile(r"\ben\s+Flandre\b", re.IGNORECASE)
+_PROMO_UNIT = r"(?:\s*\n[^\n€]*){0,2}?\s*"
+_PROMO_AMOUNT_RE = re.compile(
+    r"r[ée]duction\s+de\b.{0,120}?"
+    r"(?:€\s*(?P<lead>\d+(?:,\d+)?)"
+    rf"|(?P<amount>\d+(?:,\d+)?){_PROMO_UNIT}(?P<cent>c?)€)",
+    re.IGNORECASE | re.DOTALL,
+)
+_PROMO_INJECTION_RE = re.compile(
+    r"injection\b.{0,80}?suppl[ée]mentaire\b.{0,120}?"
+    rf"(\d+(?:,\d+)?){_PROMO_UNIT}c€",
+    re.IGNORECASE | re.DOTALL,
+)
+# The Dutch edition's sentence for the same offer: "geniet je van 10,0 c€/kWh
+# (excl. btw) korting" in October 2026, "van € 470 (incl. btw) korting" in
+# August. Only its basis is read, and only where its figure is the French
+# card's. The figure is read from the start of its digits: tried from each
+# digit of a long run, the run was read again from every one.
+_PROMO_DUTCH_RE = re.compile(
+    r"(?<!\d)(\d+(?:,\d+)?)\s*(?:c€\s*/\s*kWh\s*)?"
+    r"(\(\s*(?:incl|excl)\.?\s*btw\s*\))\s*korting",
+    re.IGNORECASE,
+)
+
+
+def _extract_promotion(
+    text: str,
+    region: str,
+    *,
+    professional: bool = False,
+    dutch_text: str | None = None,
+) -> Promotion | None:
+    """The card's new-signing offer, or ``None`` where it prints none.
+
+    ``None`` too when it is limited to another region: the October Plenty Fixe
+    cards sell it "en Flandre" only, as the Dutch cards ("in Vlaanderen") have
+    since the summer.
+
+    Granted at the yearly settlement, after a year of supply, so it is an
+    anniversary credit. The October wording runs it "pendant toute la duree du
+    contrat", whose conditions the same card fixes at one year in Flanders and
+    Wallonia, so it is carried as the first year's, the way the lump before it
+    was. The September cards cap the feed-in bonus at 12 MWh of export a year,
+    which only an installation far above a household's binds, and that cap is
+    not modelled.
+
+    The basis is read per figure, since the cards mix them: the consumption cut
+    is "TVA comprise" on the residential card. The French professional Plenty
+    Fixe card copies that sentence while every other figure on it is HTVA, and
+    its Dutch edition says "excl. btw" in October 2026 and "incl. btw" in
+    August, so on a professional card the basis is the one ``dutch_text``, the
+    Dutch edition of the same card, states for the same figure. Without it, or
+    where it states none, the French words are taken as printed.
+    """
+    anchor = _PROMO_ANCHOR_RE.search(text)
+    if anchor is None:
+        return None
+    span = text[anchor.start() : anchor.start() + _PROMO_SPAN]
+    month = None
+    head = span[:120]
+    for match in _PROMO_MONTH_RE.finditer(span):
+        number = _month_number(match.group(1))
+        if number is not None:
+            month = date(int(match.group(2)), number, 1)
+            head = span[: match.start()]
+            break
+    if _PROMO_FLANDERS_RE.search(head) and region != REGION_FLANDERS:
+        return None
+    amount = _PROMO_AMOUNT_RE.search(span)
+    injection = _PROMO_INJECTION_RE.search(span)
+    if amount is None and injection is None:
+        return None
+    flat = per_kwh = None
+    if amount is not None:
+        figure = to_float(amount.group("lead") or amount.group("amount"))
+        # What lies between the figure and the feed-in clause says which
+        # basis the figure is on, interleaved column or not.
+        tail = span[amount.end() : injection.start() if injection else None]
+        if professional and dutch_text is not None:
+            tail = _dutch_basis(dutch_text, figure) or tail
+        figure *= _promotion_basis(tail, professional=professional)
+        if amount.group("cent"):
+            per_kwh = figure / 100.0
+        else:
+            flat = figure
+    # "(hors TVA)" on every card: a residential feed-in carries no VAT, and a
+    # professional one is grossed by apply_vat with the rest of the feed-in.
+    bonus = None if injection is None else to_float(injection.group(1)) / 100.0
+    return Promotion(
+        month=month, flat_eur=flat, per_kwh=per_kwh, injection_per_kwh=bonus
+    )
+
+
+def _prints_promotion(text: str) -> bool:
+    """Whether the card prints a new-signing offer at all."""
+    return _PROMO_ANCHOR_RE.search(text) is not None
+
+
+def _dutch_basis(dutch_text: str, figure: float) -> str | None:
+    """The basis the Dutch edition states for ``figure``, as its words.
+
+    None where its sentence names another figure or none, which is a card the
+    two editions disagree on more than the label.
+    """
+    for match in _PROMO_DUTCH_RE.finditer(dutch_text.replace("\u2028", "\n")):
+        if to_float(match.group(1)) == figure:
+            return match.group(2)
+    return None
+
+
+def _promotion_basis(tail: str, *, professional: bool) -> float:
+    """What brings a consumption figure onto the card's own basis.
+
+    1.0 when the card states the figure on that basis already, otherwise the
+    VAT factor between the two. A figure stating neither is taken as printed.
+    Read in either language: "hors TVA" or "excl. btw", "TVA comprise" or
+    "incl. btw".
+    """
+    excluded = re.search(r"\b(?:hors|excl)\b", tail, re.IGNORECASE) is not None
+    included = (
+        re.search(r"\b(?:compris|inclus|incl)e?\b", tail, re.IGNORECASE) is not None
+    )
+    if professional and included and not excluded:
+        return 1.0 / (1.0 + VAT_RATE_STANDARD)
+    if not professional and excluded and not included:
+        return _RESIDENTIAL_VAT
+    return 1.0
+
+
+def _extract_yearly_fee(text: str) -> float:
+    """Bolt prints a monthly platform fee (``€ 10,99 / mois``); convert to /year.
+
+    The platform fee is the entire Bolt monetisation; a missing match is
+    a layout drift that would silently undercount the user's bill by
+    ~130 EUR/year, so raise instead of returning 0.
+
+    Make the decimal portion optional so a future round fee like
+    ``€ 11 / mois`` still parses; today every Bolt card prints two
+    decimals, but the strictness was a footgun rather than a feature.
+    """
+    match = re.search(r"€\s*(\d+(?:[.,]\d+)?)\s*/\s*mois", text)
+    if match is None:
+        raise ExtractorError("Bolt: '€ N[,NN] / mois' platform fee not found")
+    return to_float(match.group(1)) * 12.0

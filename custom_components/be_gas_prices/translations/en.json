@@ -1,0 +1,621 @@
+{
+  "title": "Belgian Gas Prices",
+  "config": {
+    "step": {
+      "postcode": {
+        "title": "Where is the gas connection?",
+        "description": "The postcode where your gas is delivered. It finds your region and network operator. Leave it empty to pick them yourself.",
+        "data": {
+          "postcode": "Postcode"
+        },
+        "data_description": {
+          "postcode": "4-digit Belgian postcode."
+        }
+      },
+      "unpriced_network": {
+        "title": "Part of this postcode is not covered",
+        "description": "Part of postcode {postcode} is supplied through {operators}, a network no Belgian tariff card prices, so this integration cannot bill it. Continue only if your gas comes through {dsos}."
+      },
+      "region": {
+        "title": "Region",
+        "description": "The region where your gas is delivered.",
+        "data": {
+          "region": "Region"
+        }
+      },
+      "supplier": {
+        "title": "Supplier",
+        "description": "Your gas supplier.",
+        "data": {
+          "supplier": "Supplier"
+        }
+      },
+      "contract": {
+        "title": "Contract",
+        "description": "Pick your product. The start date is optional: for a fixed or indexed contract, the price card of the month supply started gives the price you pay. If you signed on an earlier month's card, or on a card reissued within its month (Elegant's fixed card, Bolt's and OCTA+'s fixed cards of March 2026), set the day you signed under Advanced. A product marked † is no longer sold: pick it only if your contract still runs on it. It is then priced on its last card, or, with a start date, on the card of the month you signed.",
+        "data": {
+          "contract": "Contract",
+          "contract_start_date": "Contract start date"
+        },
+        "data_description": {
+          "contract_start_date": "The first day of supply, as on your bill."
+        },
+        "sections": {
+          "advanced": {
+            "name": "Advanced",
+            "description": "Most households can leave these as they are.",
+            "data": {
+              "tariff_card_date": "Tariff card date",
+              "contract_end_date": "Contract end date",
+              "ytd_from_contract_start": "Count this year's cost from the contract start",
+              "signed_rate": "Enter the figures of my contract"
+            },
+            "data_description": {
+              "tariff_card_date": "The day you signed, when your card is not the one of the month supply started. Elegant reissues its fixed card within a month, Bolt's and OCTA+'s fixed cards changed in the middle of March 2026 and EnergyVision's on 10 November 2026, so there the day picks which one. A TotalEnergies renewal is priced on the card of three months before it: give a day of that month.",
+              "contract_end_date": "Only used for a renewal reminder.",
+              "ytd_from_contract_start": "Off: the running cost and this year's consumption start on 1 January. On: they start at the contract start date when that is later.",
+              "signed_rate": "For a contract whose price differs from the supplier's card, or whose card cannot be found. The next step asks for them."
+            }
+          }
+        }
+      },
+      "dso": {
+        "title": "Network operator",
+        "description": "Your gas network operator, as named on your bill.",
+        "data": {
+          "dso": "Network operator"
+        }
+      },
+      "household": {
+        "title": "Household",
+        "description": "Fill in your yearly consumption and, if you have it, the conversion factor from your bill. The rest can stay as it is.",
+        "data": {
+          "annual_consumption_kwh": "Yearly consumption",
+          "caliber": "Gas meter size",
+          "gas_meter": "Gas meter",
+          "conversion_factor": "Conversion factor",
+          "card_archive": "Read the project's card archive",
+          "daily_compare": "Compare every contract once a day"
+        },
+        "data_description": {
+          "annual_consumption_kwh": "In kWh, from your last yearly bill. Used until your gas meter has a full year of readings.",
+          "caliber": "Printed on your gas meter; most homes have a G4 or G6. It sets a Brussels levy.",
+          "gas_meter": "The sensor that counts your gas use, in m³ or kWh. Leave it empty to use the one in the Energy dashboard.",
+          "conversion_factor": "How many kWh one m³ of gas is worth, printed on your bill (about 11 to 12, such as 11,6). Leave it empty if you don't have it: you then pick your gas reception station.",
+          "card_archive": "Fetch price cards from this project's archive on GitHub when the supplier's own cannot be read or are no longer published. Only the supplier, contract, region and month are sent. Also reads, once a day, the VAT rate the archived cards agree on, for the prices a card gives without one and the figures typed from a contract, the federal levies the archive kept for the months the law and FPS Finance's tariff no longer list, and, for a custom entry taking its network from its operator's tariff sheet, the network it kept for a month the sheet no longer gives. Off, the integration does not contact GitHub and keeps the tables it last read while this was on; a VAT rate a card does not state is otherwise 6%.",
+          "daily_compare": "Once a day, compare every contract in your region and show the best saving as a sensor."
+        }
+      },
+      "station": {
+        "title": "Gas reception station",
+        "description": "Pick the gas reception station nearest to you; some bills name it. Its monthly value, published by Atrias, converts m³ to kWh. It can count a few percent more kWh than your bill, which also corrects for the pressure and temperature at the meter.",
+        "data": {
+          "station": "Reception station"
+        }
+      },
+      "factor": {
+        "title": "Conversion factor",
+        "description": "How many kWh one m³ of gas is worth, printed on your bill (about 11 to 12 kWh/m³, such as 11,6). Leave it empty to pick your gas reception station instead.",
+        "data": {
+          "conversion_factor": "Conversion factor"
+        }
+      },
+      "signed_rate": {
+        "title": "Signing rate",
+        "description": "The figures printed on your contract. A field left empty keeps the card's figure. Price and base in c€/kWh excluding VAT, the factor in c€/kWh per €/MWh of index (a formula printed in €/MWh, such as \"ZTP x 1,010 + 2,160\", is a factor of 0,1010 and a base of 0,2160; one with the index in c€/kWh, such as \"ZTP x 1,08 + 1,15 c€/kWh\", a factor of 0,108 and a base of 1,15), the fee in € a year including VAT.",
+        "data": {
+          "manual_price": "Energy price (c€/kWh, excl. VAT)",
+          "manual_factor": "Index factor",
+          "manual_base": "Base (c€/kWh, excl. VAT)",
+          "manual_fee": "Yearly fee (€, incl. VAT)"
+        }
+      },
+      "custom_energy": {
+        "title": "Your contract's energy price",
+        "description": "Type the figures of your contract as your card or bill prints them, including VAT. You keep them current: there is no card to refresh.",
+        "data": {
+          "custom_price": "Energy price (c€/kWh, incl. VAT)",
+          "custom_fee": "Supplier fixed fee (€ a year, incl. VAT)"
+        }
+      },
+      "custom_network": {
+        "title": "Your network operator's tariff",
+        "description": "The regulated figures of your network operator and the levies, including VAT, as a card for your region prints them. Distribution tiers: T1 up to 5 000 kWh a year, T2 up to 150 000. The excise follows the law for the months the integration knows it; what you type for it counts outside those months. The energy contribution and the Walloon connection fee are the law's. On a Fluvius network, metering left at 0 is billed at the regulated data management fee of the delivery year. Tick the first box to take the T1 and T2 terms and the metering off your operator's published tariff sheet of each delivery year instead, Fluvius's for your area in Flanders, Brugel's in Brussels or the CWaPE's grid for your operator in Wallonia, which bills no metering: they then follow each yearly change by themselves, and the figures typed only stand in until the sheet is read. The transport, which no sheet prints, stays as typed.",
+        "data": {
+          "custom_network_from_sheet": "Take them from my operator's published tariff sheet",
+          "custom_t1_fixed": "T1 fixed term (€ a year)",
+          "custom_t1_prop": "T1 proportional term (c€/kWh)",
+          "custom_t2_fixed": "T2 fixed term (€ a year)",
+          "custom_t2_prop": "T2 proportional term (c€/kWh)",
+          "custom_transport": "Transport (c€/kWh)",
+          "custom_metering": "Metering or data management (€ a year)",
+          "custom_excise_low": "Excise up to 12 000 kWh (c€/kWh)",
+          "custom_excise_high": "Excise above 12 000 kWh (c€/kWh)",
+          "custom_levy": "Brussels per-meter levy for your meter (€ a year)"
+        }
+      }
+    },
+    "error": {
+      "unknown_postcode": "This is not a Belgian postcode the integration knows.",
+      "no_gas_network": "No gas network operator is designated for this postcode. Clear the postcode to pick the operator yourself.",
+      "end_before_start": "The contract end date must be after its start date.",
+      "start_date_in_future": "The contract start date cannot be in the future.",
+      "tariff_card_date_in_future": "The tariff card date cannot be in the future.",
+      "stations_unavailable": "The list of reception stations could not be read from Atrias; enter the factor from your bill instead.",
+      "invalid_factor": "Enter the factor as your bill prints it: a number from 9 to 13, such as 11,6.",
+      "invalid_number": "Type a number with a decimal comma or point, such as 8,25. It cannot be negative or higher than any card prints.",
+      "card_archive_needed": "A contract of this year is with a supplier that publishes its cards as images, which only the project's card archive reads: turn this option on."
+    }
+  },
+  "options": {
+    "step": {
+      "postcode": {
+        "title": "Where is the gas connection?",
+        "description": "The postcode where your gas is delivered. It finds your region and network operator. Leave it empty to pick them yourself.",
+        "data": {
+          "postcode": "Postcode"
+        },
+        "data_description": {
+          "postcode": "4-digit Belgian postcode."
+        }
+      },
+      "unpriced_network": {
+        "title": "Part of this postcode is not covered",
+        "description": "Part of postcode {postcode} is supplied through {operators}, a network no Belgian tariff card prices, so this integration cannot bill it. Continue only if your gas comes through {dsos}."
+      },
+      "region": {
+        "title": "Region",
+        "description": "The region where your gas is delivered.",
+        "data": {
+          "region": "Region"
+        }
+      },
+      "supplier": {
+        "title": "Supplier",
+        "description": "Your gas supplier.",
+        "data": {
+          "supplier": "Supplier"
+        }
+      },
+      "contract": {
+        "title": "Contract",
+        "description": "Pick your product. The start date is optional: for a fixed or indexed contract, the price card of the month supply started gives the price you pay. If you signed on an earlier month's card, or on a card reissued within its month (Elegant's fixed card, Bolt's and OCTA+'s fixed cards of March 2026), set the day you signed under Advanced. A product marked † is no longer sold: pick it only if your contract still runs on it. It is then priced on its last card, or, with a start date, on the card of the month you signed. Picking another product leaves out the dates and figures held for the one you have now, unless you change them.",
+        "data": {
+          "contract": "Contract",
+          "contract_start_date": "Contract start date"
+        },
+        "data_description": {
+          "contract_start_date": "The first day of supply, as on your bill."
+        },
+        "sections": {
+          "advanced": {
+            "name": "Advanced",
+            "description": "Most households can leave these as they are.",
+            "data": {
+              "tariff_card_date": "Tariff card date",
+              "contract_end_date": "Contract end date",
+              "ytd_from_contract_start": "Count this year's cost from the contract start",
+              "signed_rate": "Enter the figures of my contract"
+            },
+            "data_description": {
+              "tariff_card_date": "The day you signed, when your card is not the one of the month supply started. Elegant reissues its fixed card within a month, Bolt's and OCTA+'s fixed cards changed in the middle of March 2026 and EnergyVision's on 10 November 2026, so there the day picks which one. A TotalEnergies renewal is priced on the card of three months before it: give a day of that month.",
+              "contract_end_date": "Only used for a renewal reminder.",
+              "ytd_from_contract_start": "Off: the running cost and this year's consumption start on 1 January. On: they start at the contract start date when that is later.",
+              "signed_rate": "For a contract whose price differs from the supplier's card, or whose card cannot be found. The next step asks for them."
+            }
+          }
+        }
+      },
+      "dso": {
+        "title": "Network operator",
+        "description": "Your gas network operator, as named on your bill.",
+        "data": {
+          "dso": "Network operator"
+        }
+      },
+      "household": {
+        "title": "Household",
+        "description": "Fill in your yearly consumption and, if you have it, the conversion factor from your bill. The rest can stay as it is.",
+        "data": {
+          "annual_consumption_kwh": "Yearly consumption",
+          "caliber": "Gas meter size",
+          "gas_meter": "Gas meter",
+          "conversion_factor": "Conversion factor",
+          "card_archive": "Read the project's card archive",
+          "daily_compare": "Compare every contract once a day"
+        },
+        "data_description": {
+          "annual_consumption_kwh": "In kWh, from your last yearly bill. Used until your gas meter has a full year of readings.",
+          "caliber": "Printed on your gas meter; most homes have a G4 or G6. It sets a Brussels levy.",
+          "gas_meter": "The sensor that counts your gas use, in m³ or kWh. Leave it empty to use the one in the Energy dashboard.",
+          "conversion_factor": "How many kWh one m³ of gas is worth, printed on your bill (about 11 to 12, such as 11,6). Leave it empty if you don't have it: you then pick your gas reception station.",
+          "card_archive": "Fetch price cards from this project's archive on GitHub when the supplier's own cannot be read or are no longer published. Only the supplier, contract, region and month are sent. Also reads, once a day, the VAT rate the archived cards agree on, for the prices a card gives without one and the figures typed from a contract, the federal levies the archive kept for the months the law and FPS Finance's tariff no longer list, and, for a custom entry taking its network from its operator's tariff sheet, the network it kept for a month the sheet no longer gives. Off, the integration does not contact GitHub and keeps the tables it last read while this was on; a VAT rate a card does not state is otherwise 6%.",
+          "daily_compare": "Once a day, compare every contract in your region and show the best saving as a sensor."
+        }
+      },
+      "station": {
+        "title": "Gas reception station",
+        "description": "Pick the gas reception station nearest to you; some bills name it. Its monthly value, published by Atrias, converts m³ to kWh. It can count a few percent more kWh than your bill, which also corrects for the pressure and temperature at the meter.",
+        "data": {
+          "station": "Reception station"
+        }
+      },
+      "factor": {
+        "title": "Conversion factor",
+        "description": "How many kWh one m³ of gas is worth, printed on your bill (about 11 to 12 kWh/m³, such as 11,6). Leave it empty to pick your gas reception station instead.",
+        "data": {
+          "conversion_factor": "Conversion factor"
+        }
+      },
+      "init": {
+        "menu_options": {
+          "settings": "Edit settings",
+          "compare": "Compare another contract (one-off quote)",
+          "compare_all": "Compare every contract (ranked)",
+          "switch": "Record a change of contract this year",
+          "remove_switch": "Remove the last change of contract",
+          "bill": "Check an Eneco bill"
+        }
+      },
+      "compare": {
+        "title": "Compare another contract",
+        "description": "Pick the supplier to quote against your own contract.",
+        "data": {
+          "supplier": "Supplier"
+        }
+      },
+      "compare_contract": {
+        "title": "Contract to quote",
+        "description": "Both contracts are priced for your household: your annual volume, network operator and tier, on each card as published today. Your own contract is priced on the card your entry bills it on instead whenever the entry holds its card, with any signing rate or figures you entered.",
+        "data": {
+          "contract": "Contract"
+        }
+      },
+      "compare_result": {
+        "title": "Quote",
+        "description": "A year of {annual_kwh} kWh on each card as published today, all costs included; your own contract on the card and figures your entry bills it on whenever the entry holds its card. An indexed contract is priced at its index value for this month or, until its supplier publishes that, last month's, which most cards are set at; otherwise at the price its card prints. A ~ marks a price the month may still move. OCR marks a card published as images, priced on the card archive's reading of it.\n\n{table}"
+      },
+      "compare_all_result": {
+        "title": "Every contract, ranked",
+        "description": "A year of {annual_kwh} kWh on every card sold in your region as published today, cheapest first, your own contract in bold and, whenever your entry holds its card, priced on the card and figures the entry bills it on. An indexed contract is priced at its index value for this month or, until its supplier publishes that, last month's, which most cards are set at; otherwise at the price its card prints. A ~ marks a price the month may still move. OCR marks a card published as images, priced on the card archive's reading of it. Not reached within the time budget: {skipped}.\n\n{table}"
+      },
+      "compare_all_stored": {
+        "title": "Every contract, ranked",
+        "description": "The daily ranking of {day}: a year of {annual_kwh} kWh on every card sold in your region, cheapest first, your own contract in bold, priced as in the full comparison. A ~ marks a price the month may still move, OCR a card published as images and priced on the card archive's reading of it. A contract that could not be priced is left out. Tick the box to quote every contract again now, which takes about two minutes.\n\n{table}",
+        "data": {
+          "price_again": "Price every contract again now"
+        }
+      },
+      "switch": {
+        "title": "Record a change of contract",
+        "description": "Enter the first day the new contract supplied. The current settings are kept as the earlier contract up to the day before, billed on their own supplier's cards, and the next steps set up the new contract.",
+        "data": {
+          "switch_date": "First day of the new contract"
+        }
+      },
+      "remove_switch": {
+        "title": "Remove the last change of contract",
+        "description": "This removes the change recorded on {date}, when you left {contract}. {contract} becomes the current contract again, with the contract settings it had then; the household's settings (consumption, meter, conversion) stay as they are. A change keeps no end date for the contract it closes, so enter it again in the settings if {contract} has one. To correct a change date, remove the change, then record it again with the right date. Submit to remove it."
+      },
+      "signed_rate": {
+        "title": "Signing rate",
+        "description": "The figures printed on your contract. A field left empty keeps the card's figure. Price and base in c€/kWh excluding VAT, the factor in c€/kWh per €/MWh of index (a formula printed in €/MWh, such as \"ZTP x 1,010 + 2,160\", is a factor of 0,1010 and a base of 0,2160; one with the index in c€/kWh, such as \"ZTP x 1,08 + 1,15 c€/kWh\", a factor of 0,108 and a base of 1,15), the fee in € a year including VAT.",
+        "data": {
+          "manual_price": "Energy price (c€/kWh, excl. VAT)",
+          "manual_factor": "Index factor",
+          "manual_base": "Base (c€/kWh, excl. VAT)",
+          "manual_fee": "Yearly fee (€, incl. VAT)"
+        }
+      },
+      "custom_energy": {
+        "title": "Your contract's energy price",
+        "description": "Type the figures of your contract as your card or bill prints them, including VAT. You keep them current: there is no card to refresh.",
+        "data": {
+          "custom_price": "Energy price (c€/kWh, incl. VAT)",
+          "custom_fee": "Supplier fixed fee (€ a year, incl. VAT)"
+        }
+      },
+      "custom_network": {
+        "title": "Your network operator's tariff",
+        "description": "The regulated figures of your network operator and the levies, including VAT, as a card for your region prints them. Distribution tiers: T1 up to 5 000 kWh a year, T2 up to 150 000. The excise follows the law for the months the integration knows it; what you type for it counts outside those months. The energy contribution and the Walloon connection fee are the law's. On a Fluvius network, metering left at 0 is billed at the regulated data management fee of the delivery year. Tick the first box to take the T1 and T2 terms and the metering off your operator's published tariff sheet of each delivery year instead, Fluvius's for your area in Flanders, Brugel's in Brussels or the CWaPE's grid for your operator in Wallonia, which bills no metering: they then follow each yearly change by themselves, and the figures typed only stand in until the sheet is read. The transport, which no sheet prints, stays as typed.",
+        "data": {
+          "custom_network_from_sheet": "Take them from my operator's published tariff sheet",
+          "custom_t1_fixed": "T1 fixed term (€ a year)",
+          "custom_t1_prop": "T1 proportional term (c€/kWh)",
+          "custom_t2_fixed": "T2 fixed term (€ a year)",
+          "custom_t2_prop": "T2 proportional term (c€/kWh)",
+          "custom_transport": "Transport (c€/kWh)",
+          "custom_metering": "Metering or data management (€ a year)",
+          "custom_excise_low": "Excise up to 12 000 kWh (c€/kWh)",
+          "custom_excise_high": "Excise above 12 000 kWh (c€/kWh)",
+          "custom_levy": "Brussels per-meter levy for your meter (€ a year)"
+        }
+      },
+      "bill": {
+        "title": "Eneco bill",
+        "description": "Pick the Last yearly bill sensor of the Eneco integration to hold each line of that bill against the rate this integration prices for the line's own period. A Bill check sensor then counts the lines that are off. Leave it empty to check none.",
+        "data": {
+          "bill_entity": "Eneco bill"
+        },
+        "data_description": {
+          "bill_entity": "Only the lines of French gas bills are matched, by their label. A line billed over months priced here at different rates is not compared."
+        }
+      }
+    },
+    "error": {
+      "unknown_postcode": "This is not a Belgian postcode the integration knows.",
+      "no_gas_network": "No gas network operator is designated for this postcode. Clear the postcode to pick the operator yourself.",
+      "end_before_start": "The contract end date must be after its start date.",
+      "start_date_in_future": "The contract start date cannot be in the future.",
+      "tariff_card_date_in_future": "The tariff card date cannot be in the future.",
+      "start_date_before_switch": "The contract start date cannot be before the last change of contract recorded on this entry.",
+      "stations_unavailable": "The list of reception stations could not be read from Atrias; enter the factor from your bill instead.",
+      "invalid_factor": "Enter the factor as your bill prints it: a number from 9 to 13, such as 11,6.",
+      "invalid_number": "Type a number with a decimal comma or point, such as 8,25. It cannot be negative or higher than any card prints.",
+      "switch_date_invalid": "The new contract must start after 1 January, after the current contract started and after the last change recorded, and no later than today. A contract that started on 1 January is set in \"Edit settings\" instead.",
+      "card_archive_needed": "A contract of this year is with a supplier that publishes its cards as images, which only the project's card archive reads: turn this option on.",
+      "eneco_bill_not_a_bill": "Pick the Last yearly bill sensor of the Eneco integration: its other sensors carry no bill.",
+      "eneco_bill_other_energy": "That is the bill of an electricity meter: pick the Last yearly bill sensor of the gas meter."
+    },
+    "abort": {
+      "compare_done": "Comparison complete, nothing was changed.",
+      "no_switch_recorded": "No change of contract is recorded on this entry for this year."
+    },
+    "progress": {
+      "compare_all": "Quoting every contract sold in your region. This takes about two minutes, a little more while a slow card is still being read."
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "flanders": "Flanders",
+        "wallonia": "Wallonia",
+        "brussels": "Brussels"
+      }
+    },
+    "caliber": {
+      "options": {
+        "q10": "6 or 10 m³/h (G4, G6)",
+        "q16": "16 m³/h (G10)",
+        "q25": "25 m³/h (G16)",
+        "q40": "40 m³/h (G25)",
+        "q65": "65 m³/h (G40)",
+        "q100": "100 m³/h (G65)",
+        "q160": "160 m³/h (G100)",
+        "gt160": "Above 160 m³/h"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "current_price": {
+        "name": "Current price"
+      },
+      "current_price_m3": {
+        "name": "Current price per m³"
+      },
+      "energy_component": {
+        "name": "Energy component"
+      },
+      "network_component": {
+        "name": "Network component"
+      },
+      "taxes_component": {
+        "name": "Taxes component"
+      },
+      "fixed_costs_eur_per_year": {
+        "name": "Fixed costs per year"
+      },
+      "supplier_fixed_fee_eur_per_year": {
+        "name": "Supplier fixed fee per year"
+      },
+      "conversion_factor": {
+        "name": "Conversion factor"
+      },
+      "current_year_cost": {
+        "name": "Current year cost"
+      },
+      "current_month_cost": {
+        "name": "Current month cost"
+      },
+      "year_to_date_consumption": {
+        "name": "Year to date consumption"
+      },
+      "projected_year_cost": {
+        "name": "Rolling year cost"
+      },
+      "projected_year_end_cost": {
+        "name": "Projected year-end cost"
+      },
+      "projected_year_consumption": {
+        "name": "Projected year consumption"
+      },
+      "rolling_year_consumption": {
+        "name": "Rolling year consumption"
+      },
+      "contract_end_date": {
+        "name": "Contract end date"
+      },
+      "potential_saving": {
+        "name": "Potential saving"
+      },
+      "bill_check": {
+        "name": "Bill check"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Refresh tariff card"
+      }
+    }
+  },
+  "issues": {
+    "snapshot_stale": {
+      "title": "{supplier} tariff card is out of date",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "{supplier} tariff card is out of date",
+            "description": "The card {entry} prices on has not been refreshed for a week, or is for a month that ended over a week ago, so the prices may be wrong. Last error: {error}. Press submit to fetch it again now."
+          }
+        },
+        "abort": {
+          "still_stale": "The card still could not be refreshed. Last error: {error}. It is tried again every hour, and this repair stays until it is.",
+          "supplier_late": "The fetch worked, but {supplier} still serves the card of a month that ended over a week ago. It is asked again every hour, and this repair stays until a newer card is published."
+        }
+      }
+    },
+    "extractor_failed": {
+      "title": "{supplier} tariff card could not be read",
+      "description": "The card for {entry} failed to parse twice in a row: {error}. The last good card, if any, keeps pricing. If this persists the supplier probably changed its layout. Update the integration first: a newer version may already read the new card. If the latest version still shows this, check the open issues on GitHub before opening one with the diagnostics."
+    },
+    "card_missing": {
+      "title": "{supplier} tariff card is not available",
+      "description": "The card for {entry} failed twice in a row, the last time because the supplier's site has no card at the address the integration reads: {error}. The supplier may not have published this month's card yet, may have withdrawn the product or may have moved its cards. The last good card, if any, keeps pricing. This clears by itself once the card can be fetched again. If it lasts more than a few days while the supplier still sells the product, update the integration first: a newer version may already find the card. If the latest version still shows this, check the open issues on GitHub before opening one with the diagnostics."
+    },
+    "card_unreadable": {
+      "title": "{supplier} publishes its card as images",
+      "description": "The card for {entry} has no text layer, so it cannot be read here. The last good card, if any, keeps pricing; the project's card archive prices on its own reading of the card once it has one, where the entry lets it be read."
+    },
+    "card_read_by_ocr": {
+      "title": "{supplier} card read from its image",
+      "description": "{supplier} publishes the card of {entry} as page images. The project's card archive reads it every day with an OCR engine that knows the fonts these cards are set in, and {entry} prices on that reading: a line on which the engine was not sure of a mark is left out rather than guessed. The federal levies and the Walloon connection fee are billed from the law. This clears by itself when the supplier publishes a readable card again."
+    },
+    "meter_unit": {
+      "title": "Gas meter cannot be read",
+      "description": "The gas meter of {entry} cannot be used: {error}. The running costs keep the last figures read, or stay unknown when there are none, until it is fixed."
+    },
+    "several_meters": {
+      "title": "Several gas meters in the Energy dashboard",
+      "description": "The Energy dashboard lists {count} gas meters and {entry} bills the first one. Set the gas meter in the integration's options to choose."
+    },
+    "contract_withdrawn": {
+      "title": "{supplier} no longer sells {contract}",
+      "description": "{supplier} withdrew {contract}, so its tariff card is no longer published. {entry} keeps pricing your energy on the last card held for it, which will not change again. From the year after that card, its distribution and metering terms are taken from your network operator's tariffs as the regulator publishes them, while the card's own stand in until they are read. If {supplier} moves you to another product, choose \"Record a change of contract this year\" in the entry's options, enter the first day of the new product and pick it. \"Edit settings\" would price the whole year on the new product's cards. A new product from 1 January is set in \"Edit settings\" instead, since the withdrawn one supplied nothing this year."
+    },
+    "recorder_missing": {
+      "title": "Home Assistant's recorder is not running",
+      "description": "The costs and volumes of {entry} are read from the gas meter's history, which Home Assistant's recorder keeps, and the recorder is not loaded. They stay unknown until it runs; the price sensors are not affected.\n\nEnable the recorder (it is part of default_config, or add `recorder:` to configuration.yaml) and restart Home Assistant."
+    },
+    "bill_lines_off": {
+      "title": "Eneco bill lines differ from the rates priced here",
+      "description": "{count} lines of the Eneco bill issued {issued} for {entry} are billed at a unit price further from the one this integration prices for their period than the printing of either explains. The Bill check sensor lists every line with both prices."
+    }
+  },
+  "services": {
+    "refresh": {
+      "name": "Refresh",
+      "description": "Fetch the tariff card, the index values and the calorific values again now.",
+      "fields": {
+        "entry_id": {
+          "name": "Entry",
+          "description": "Only this entry; all entries when left out."
+        }
+      }
+    },
+    "backfill_statistics": {
+      "name": "Backfill statistics",
+      "description": "Write the price sensors' hourly statistics from a start date to the newest hour the recorder has compiled, and the year's cost from the start of the year's window.",
+      "fields": {
+        "entry_id": {
+          "name": "Entry",
+          "description": "Only this entry; all entries when left out."
+        },
+        "start_date": {
+          "name": "Start date",
+          "description": "Defaults to the start of the year's window. Never before the last recorded change of contract, nor before 1 January of last year, nor in the future. A month before the window is written only where its own card can be found."
+        },
+        "clear": {
+          "name": "Clear first",
+          "description": "Deletes the price sensors' statistics in full before writing; needs an entry. The year's cost is rewritten, not deleted."
+        }
+      }
+    },
+    "bill_cost": {
+      "name": "Bill cost",
+      "description": "Price the gas the meter recorded over a closed run of days the way the year's cost is priced, to hold a supplier's bill against. Returns the cost with VAT, the kWh and how much of the days the meter covers.",
+      "fields": {
+        "entry_id": {
+          "name": "Entry",
+          "description": "The entry whose prices are used."
+        },
+        "start": {
+          "name": "Start date",
+          "description": "The first day billed. No earlier than 1 January two years back, nor than the last recorded change of contract."
+        },
+        "end": {
+          "name": "End date",
+          "description": "The last day billed, before today."
+        }
+      }
+    },
+    "energy_rate": {
+      "name": "Energy rate",
+      "description": "Give the energy price of each month, VAT included, the way the contract is billed on its cards and index, to project a supplier's coming bill with. A month whose index is not out yet is priced at the latest one and marked provisional.",
+      "fields": {
+        "entry_id": {
+          "name": "Entry",
+          "description": "The entry whose prices are used."
+        },
+        "start": {
+          "name": "First month",
+          "description": "A day in the first month. No earlier than 1 January two years back, nor than the last recorded change of contract."
+        },
+        "end": {
+          "name": "Last month",
+          "description": "A day in the last month, at most 14 months after this one."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "unknown_entry": {
+      "message": "No loaded Belgian Gas Prices entry has the id {entry_id}."
+    },
+    "clear_needs_entry": {
+      "message": "Clearing statistics needs an entry: it deletes them in full."
+    },
+    "start_date_too_early": {
+      "message": "The start date can be no earlier than {earliest}: the index values some suppliers print only on their cards reach no further back."
+    },
+    "start_date_in_future": {
+      "message": "The start date cannot be in the future."
+    },
+    "card_archive_needed": {
+      "message": "{supplier} publishes its cards as images, which only the project's card archive reads, and this entry keeps the archive out. Turn the card archive option on in the entry's settings."
+    },
+    "refresh_pressed_recently": {
+      "message": "The tariff was last checked at {last}; the next check can start from {next}."
+    },
+    "window_reversed": {
+      "message": "The end date comes before the start date."
+    },
+    "window_not_closed": {
+      "message": "The end date has to be before today: only whole days the meter has recorded are priced."
+    },
+    "window_before_switch": {
+      "message": "The days start before {switched}, the day the current contract took over: only its own days are priced."
+    },
+    "nothing_priced_yet": {
+      "message": "The entry has not priced its card yet; try again after its first update."
+    },
+    "no_meter": {
+      "message": "No gas meter is read: choose one in the entry's settings or add one to the Energy dashboard."
+    },
+    "meter_not_read": {
+      "message": "The gas meter could not be read: {error}"
+    },
+    "no_conversion_factor": {
+      "message": "A month of those days holds gas, but no kWh per cubic metre is held for it."
+    },
+    "window_not_priced": {
+      "message": "Those days could not be priced: {error}"
+    },
+    "bill_start_too_early": {
+      "message": "The start date can be no earlier than {earliest}: the card archive keeps no older cards."
+    },
+    "rate_end_too_late": {
+      "message": "The last month cannot be after {latest}: no price can be projected that far."
+    }
+  }
+}

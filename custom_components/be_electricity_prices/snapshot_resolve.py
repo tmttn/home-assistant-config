@@ -1,0 +1,999 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Resolving a parsed card against the facts only one entry knows.
+
+A card is published for everyone; a bill is not. VAT treatment, the meter, how
+the household pays, the settlement grid and the yearly volume are answers this
+entry gave, and every one of them changes what the same card costs. They are
+applied ONCE here and baked into the snapshot each cost path then reads, for
+the reason each resolver's docstring gives: a transform that has to reach the
+live tick, the year-to-date walk, the backfill, both comparison quotes and the
+projection is a transform that will miss one of them if it is applied at the
+call sites.
+
+Split out of ``snapshot_store`` because it depends on nothing else there, and
+because the month cache below it needs to call it without importing the cache
+back.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from dataclasses import replace
+from datetime import date
+from typing import Any
+
+import aiohttp
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.util import dt as dt_util
+
+from .brugel import cached_network_terms, cached_power_term, ensure_power_term
+from .const import (
+    CONF_ANALOG_METER,
+    CONF_ANALOG_REPLACED,
+    CONF_ANNUAL_CONSUMPTION_KWH,
+    CONF_CONTRACT,
+    CONF_CUSTOM_DSO_FROM_BRUGEL,
+    CONF_CUSTOM_DSO_FROM_CWAPE,
+    CONF_CUSTOM_DSO_FROM_FLUVIUS,
+    CONF_CUSTOM_PROFESSIONAL,
+    CONF_CUSTOM_VAT_RATE,
+    CONF_DIRECT_DEBIT,
+    CONF_DSO,
+    CONF_DSO_TARIFF_MODE,
+    CONF_INCLUDE_VAT,
+    CONF_METER,
+    CONF_PREVIOUS_CONTRACTS,
+    CONF_QUARTER_HOURLY,
+    CONF_REGION,
+    CONF_SOLAR_REGIME,
+    CONF_SUPPLIER,
+    DEFAULT_ANNUAL_CONSUMPTION_KWH,
+    DEFAULT_DIRECT_DEBIT,
+    DEFAULT_INCLUDE_VAT,
+    DSO_MODE_IMPACT,
+    METER_BI,
+    METER_EXCLUSIVE_NIGHT,
+    METER_MONO,
+    REGION_BRUSSELS,
+    REGION_FLANDERS,
+    REGION_WALLONIA,
+    SOLAR_REGIME_INJECTION,
+    SUPPLIER_CUSTOM,
+    SUPPLIER_SOCIAL,
+)
+from .cwape import cached_network as cached_cwape_network
+from .cwape import ensure_network as ensure_cwape_network
+from .excise_law import household_schedule
+from .fluvius import (
+    cached_analog_surcharge,
+    cached_area_terms,
+    cached_network_ceiling,
+    ensure_area_terms,
+    tariff_sheet_held,
+)
+from .network_archive import fields_for as archived_network
+from .network_year import (
+    billed_outside_its_year,
+    delivery_year_network,
+    on_sheet,
+    own_year_sheet,
+)
+from .providers import (
+    is_professional,
+    offers_direct_debit,
+    offers_quarter_hourly,
+    prints_earlier_network,
+    withdrawn_on,
+)
+from .providers._rates import last_card_month
+from .providers._resolve import (
+    apply_vat,
+    on_card_basis,
+    resolve_brussels_power_term,
+    resolve_direct_debit,
+    resolve_excise_band,
+    resolve_federal_contribution,
+    resolve_federal_excise,
+    resolve_impact_feed_in,
+    resolve_vat_rate,
+    resolve_volume_tier,
+    resolve_vreg_network_ceiling,
+    resolve_welcome_credit_meter,
+)
+from .providers._settlement_grid import resolve_settlement_grid
+from .providers.base import SupplierSnapshot
+from .signing_month import resolve_signed_feed_in_floor
+
+# Where a compare-page proxy (``compare_inputs._quote_entry``) freezes the
+# household's measured yearly export. The proxy carries no coordinator, and no
+# key the user can type holds the figure, so it gets one of its own.
+QUOTED_ANNUAL_INJECTION_KWH = "quoted_annual_injection_kwh"
+
+
+def _include_vat(entry: ConfigEntry) -> bool:
+    """Whether this entry wants its prices VAT-inclusive.
+
+    Inert on a residential card, which prints VAT-inclusive already; it
+    only bites on a card published excluding VAT.
+
+    The expert custom supplier never asks: the VAT rate typed on its tax step
+    answers instead, 0 for a business that deducts it. Its own card bills the
+    same either way, since apply_vat leaves a 0 rate alone and grosses a
+    positive one as the default did, but a professional card quoted for it on
+    the compare page is put onto the basis the entry bills on.
+    """
+    data = entry.data
+    if CONF_INCLUDE_VAT not in data and data.get(CONF_SUPPLIER) == SUPPLIER_CUSTOM:
+        # Unset, the rate is the month's residential one, never zero.
+        rate = data.get(CONF_CUSTOM_VAT_RATE)
+        return rate is None or float(rate) > 0.0
+    return bool(data.get(CONF_INCLUDE_VAT, DEFAULT_INCLUDE_VAT))
+
+
+def _quarter_hourly(entry: ConfigEntry, snap: SupplierSnapshot) -> bool:
+    """Whether this snapshot should settle per quarter-hour for this entry.
+
+    Both halves have to agree, exactly as the injection and month-index
+    registry flags do. The stored answer alone would keep billing per quarter
+    after a supplier withdrew the option; the registry flag alone knows the
+    product offers a choice but not which side this household took.
+
+    The registry half is asked about the CARD in hand, not about the entry's
+    own contract, because the compare page resolves an alternative supplier's
+    snapshot through a proxy that carries the user's ``supplier`` /
+    ``contract``. Reading those would take a Frank customer's answer and
+    settle a Mega card per quarter-hour, which Mega does not sell. Asking the
+    snapshot keeps the entry's own card on exactly the same path (the two
+    contracts are the same one there) and carries the preference across only
+    where the target really offers the choice.
+    """
+    if not bool(entry.data.get(CONF_QUARTER_HOURLY, False)):
+        return False
+    return offers_quarter_hourly(snap.supplier, snap.contract)
+
+
+def _direct_debit(entry: ConfigEntry, snap: SupplierSnapshot) -> bool:
+    """Whether this entry's standing charge takes the card's direct-debit cut.
+
+    Both halves have to agree, for the reason :func:`_quarter_hourly` gives,
+    and the registry half is asked about the CARD in hand for the same one:
+    the compare page resolves an alternative supplier's snapshot through a
+    proxy carrying the user's own supplier and contract, and how a household
+    pays is a fact about the household, so it should follow it onto a target
+    whose card prices it, and nowhere else.
+    """
+    if not bool(entry.data.get(CONF_DIRECT_DEBIT, DEFAULT_DIRECT_DEBIT)):
+        return False
+    return offers_direct_debit(snap.supplier, snap.contract)
+
+
+def _custom_professional(entry: ConfigEntry, snap: SupplierSnapshot) -> bool:
+    """Whether a custom formula entry is a business keeping its typed levies.
+
+    The registry says which supplier cards are professional, and the expert
+    custom supplier has no card for it to describe: the household says so on
+    the tax step instead. A business there owes the professional excise and
+    energy contribution it typed, which the residential corrections below
+    would otherwise replace. Asked about the CARD in hand for the reason
+    :func:`_quarter_hourly` gives: the compare page resolves another
+    supplier's card through a proxy carrying this entry's data, and the
+    answer describes the levies typed here, not that card's.
+    """
+    if snap.supplier != SUPPLIER_CUSTOM:
+        return False
+    return bool(entry.data.get(CONF_CUSTOM_PROFESSIONAL, False))
+
+
+def offers_analog_meter(data: Mapping[str, Any]) -> bool:
+    """Whether this entry's meter may be one Fluvius still reads as analog.
+
+    A Flemish mono, bi-hourly or exclusive-night meter: a dynamic contract is
+    billed off a digital meter's quarter-hours, and only Fluvius bills the two
+    apart. On the custom supplier and the social tariff too: the network
+    figures of the first are the ones typed for the household's meter, unless
+    it takes Fluvius's (:func:`takes_fluvius_network`), and the CREG's network
+    component replaces the operator's tariffs on the second, so both cards
+    stay as they are (:func:`_resolve_analog_meter`), but the cards either is
+    compared with are quoted on the meter it has.
+    """
+    meter = data.get(CONF_METER, METER_MONO)
+    return data.get(CONF_REGION) == REGION_FLANDERS and meter in (
+        METER_MONO,
+        METER_BI,
+        METER_EXCLUSIVE_NIGHT,
+    )
+
+
+def analog_answer(data: Mapping[str, Any]) -> bool:
+    """The analog box as the entry answers it. A social-tariff entry that left
+    a commercial contract under 0.43.0 holds none, since its meter step did
+    not ask it then; the meter is the one the contract kept at that switch was
+    on, so that contract's answer stands until the box is answered."""
+    if CONF_ANALOG_METER in data or data.get(CONF_SUPPLIER) != SUPPLIER_SOCIAL:
+        return bool(data.get(CONF_ANALOG_METER, False))
+    kept = data.get(CONF_PREVIOUS_CONTRACTS) or [{}]
+    last = kept[-1].get("data") if isinstance(kept[-1], Mapping) else None
+    return isinstance(last, Mapping) and bool(last.get(CONF_ANALOG_METER, False))
+
+
+def analog_replaced_on(data: Mapping[str, Any]) -> date | None:
+    """The day Fluvius put a digital meter in place of the analog one, on an
+    entry whose box is unticked (``CONF_ANALOG_REPLACED``), else None, as on
+    one that answered there was none, which holds None."""
+    raw = data.get(CONF_ANALOG_REPLACED)
+    if not raw or analog_answer(data):
+        return None
+    try:
+        return date.fromisoformat(str(raw))
+    except ValueError:
+        return None
+
+
+def analog_meter(data: Mapping[str, Any], day: date | None = None) -> bool:
+    """Whether this entry is on a meter Fluvius still reads as analog, or with
+    ``day``, whether it was on that delivery day.
+
+    Fluvius cannot measure such a meter's peak: "Je betaalt dan een forfaitair
+    bedrag voor 2.5 kW als maandpiek en een aanvullend tarief voor je verbruik
+    in kWh". So the capacity tariff is billed on the minimum peak
+    (``_billed_peak_kw``), the maximumtarief does not apply, and every kWh,
+    normal or exclusive-night, carries the analog column's kWh rate in place of
+    the peak-metered one (:func:`_resolve_analog_meter`).
+
+    Asked of the entry's data, which a comparison proxy carries with the meter
+    the quote is priced on: a dynamic target is sold on a digital meter, so it
+    is quoted digital, on the minimum peak the household would start from.
+
+    The answer is one per entry, so a meter Fluvius replaced during the year
+    would bill every day of it on the digital one once the box is unticked,
+    the months before without their analog kWh rate and on the new meter's
+    mean. The day it was replaced is asked of an entry not analog
+    (:func:`analog_replaced_on`) and every day before it is still analog,
+    whatever meter the entry has picked since: the day is a fact about the
+    Flemish connection, so a dynamic meter or contract taken after it does not
+    undo it.
+    """
+    if offers_analog_meter(data) and analog_answer(data):
+        return True
+    replaced = analog_replaced_on(data)
+    if day is None or replaced is None or day >= replaced:
+        return False
+    return data.get(CONF_REGION) == REGION_FLANDERS
+
+
+def replaced_meter_facts(
+    settings: Mapping[str, Any], data: Mapping[str, Any]
+) -> dict[str, Any]:
+    """The entry's replacement day (:func:`analog_replaced_on`) on the
+    settings of a contract kept at a switch while its meter was still analog,
+    or before the box was asked: the meter is the one Fluvius replaced, so its
+    days before that day are analog and those from it digital, as the entry's
+    own are. Nothing on a copy that answered digital, which keeps its answer."""
+    if analog_replaced_on(data) is None or not settings.get(CONF_ANALOG_METER, True):
+        return {}
+    return {CONF_ANALOG_METER: False, CONF_ANALOG_REPLACED: data[CONF_ANALOG_REPLACED]}
+
+
+def meter_segment(data: Mapping[str, Any], day: date) -> date:
+    """The first day of the part of ``day``'s month billed on the meter
+    ``day`` was: the 1st, or the day the analog meter was replaced for a day
+    from it in that month. What a walk resolves and keeps a day's card under,
+    so the month of a replacement is billed per day on each side of it."""
+    first = day.replace(day=1)
+    replaced = analog_replaced_on(data)
+    if replaced is not None and first < replaced <= day:
+        return replaced
+    return first
+
+
+def last_card_year(supplier: str | None, contract: str | None) -> int | None:
+    """The year a withdrawn product's last card was printed for, or None for
+    a product still sold: that of the last day it was sold, the day before
+    ``Contract.withdrawn``, whose month's card is the last one published.
+    Every product registered agrees: GS's last card is of September 2025 and
+    it was withdrawn on 1 October, DATS 24's is of July 2026 and it was
+    withdrawn on 1 August, and the others were withdrawn on 1 or 30 October
+    or 1 November 2026, after a card of that year. One answer for the
+    resolver (:func:`past_last_card`) and the backfill's hold
+    (:func:`network_sheet_unread`), which has no card to read a date off."""
+    withdrawn = withdrawn_on(supplier, contract)
+    return None if withdrawn is None else last_card_month(withdrawn).year
+
+
+def past_last_card(
+    entry: ConfigEntry, snap: SupplierSnapshot, month: date, region: str
+) -> bool:
+    """Whether ``snap`` is billed in ``region`` for a calendar year after the
+    one whose network table it prints: a withdrawn product's card, or one
+    printing an earlier year's table.
+
+    A card prints its own year's network tariffs, and a withdrawn product has
+    no later card to bring the next year's: a product withdrawn in October
+    2026 would bill every month of 2027 on the 2026 table its last card
+    prints. Such a month takes its network off the regulator's sheet of its
+    own year, the one a custom entry can take it from, with the year before
+    standing in until that one is out, and the months of the card's own year
+    keep the card's table. The card's year is the last month the product was
+    sold (:func:`last_card_year`).
+
+    A card whose reader found it printing an earlier year's table is billed
+    the same way from the next year on, which is its own: Belvus's cards of
+    January to April 2026 print Fluvius's 2025 table
+    (``SupplierSnapshot.network_year``).
+
+    Asked of the card in hand rather than of the entry, for the reason
+    :func:`_quarter_hourly` gives: a compare-page proxy carries this entry's
+    contract and another supplier's card.
+    """
+    printed = snap.network_year
+    if printed is None:
+        printed = last_card_year(snap.supplier, snap.contract)
+    if printed is None or entry.data.get(CONF_REGION) != region:
+        return False
+    return month.year > printed
+
+
+def takes_fluvius_network(data: Mapping[str, Any]) -> bool:
+    """Whether this entry is a custom one taking its network rates off
+    Fluvius's sheet for its area rather than the figures it typed."""
+    return data.get(CONF_SUPPLIER) == SUPPLIER_CUSTOM and bool(
+        data.get(CONF_CUSTOM_DSO_FROM_FLUVIUS)
+    )
+
+
+def _resolve_fluvius_network(
+    entry: ConfigEntry, snap: SupplierSnapshot, month: date
+) -> SupplierSnapshot:
+    """A custom entry's network overlay as Fluvius's sheet of the delivery
+    year gives it for the entry's area, where the entry asks for it, and a
+    withdrawn product's past its card's year (:func:`past_last_card`).
+
+    While no sheet of that year or an earlier one is held, the month the card
+    archive kept stands in (network_archive.py), and without it the figures
+    typed into the entry, as they do for a key that is not a Fluvius area.
+    The sheet is excluding VAT and put on the basis the entry typed on, as
+    the ceiling is: a household typing VAT-inclusive figures at a 0 rate was
+    billed it 6% short. Transmission is included in its rates, and a
+    peak-metered connection pays one rate day and night, so a typed transport
+    and day/night split go with the typed figures. The ceiling and an analog
+    meter's surcharge are laid on after it, as on every card.
+    """
+    if not (
+        takes_fluvius_network(entry.data)
+        or past_last_card(entry, snap, month, REGION_FLANDERS)
+    ):
+        return delivery_year_network(entry.data, snap, month, REGION_FLANDERS)
+    dso = str(entry.data.get(CONF_DSO, ""))
+    return _with_sheet(snap, month, dso, _sheet_read(REGION_FLANDERS, month, dso))
+
+
+def takes_brugel_network(data: Mapping[str, Any]) -> bool:
+    """Whether this entry is a custom Brussels one taking its network rates
+    off Brugel's sheet rather than the figures it typed."""
+    return (
+        data.get(CONF_SUPPLIER) == SUPPLIER_CUSTOM
+        and data.get(CONF_REGION) == REGION_BRUSSELS
+        and bool(data.get(CONF_CUSTOM_DSO_FROM_BRUGEL))
+    )
+
+
+def _resolve_brugel_network(
+    entry: ConfigEntry, snap: SupplierSnapshot, month: date
+) -> SupplierSnapshot:
+    """A custom Brussels entry's network overlay as Brugel's sheet of the
+    delivery year gives it, where the entry asks for it, and a withdrawn
+    product's past its card's year (:func:`past_last_card`).
+
+    While no sheet of that year or an earlier one is held, the month the card
+    archive kept stands in, and without it the figures typed. The sheet is
+    excluding VAT and put on the basis the entry typed on, as Brugel's power
+    term is. A single meter pays the day rate and an exclusive-night circuit
+    the night one. The yearly charge carries the power term, with the band
+    above 13 kVA beside it, so :func:`resolve_brussels_power_term` leaves it
+    alone; the OSP fee typed stays, since the sheet does not print it.
+    """
+    if not (
+        takes_brugel_network(entry.data)
+        or past_last_card(entry, snap, month, REGION_BRUSSELS)
+    ):
+        return delivery_year_network(entry.data, snap, month, REGION_BRUSSELS)
+    dso = str(entry.data.get(CONF_DSO, ""))
+    return _with_sheet(snap, month, dso, _sheet_read(REGION_BRUSSELS, month, dso))
+
+
+def takes_cwape_network(data: Mapping[str, Any]) -> bool:
+    """Whether this entry is a custom Walloon one taking its network rates
+    off its operator's grid as the CWaPE publishes it rather than the
+    figures it typed."""
+    return (
+        data.get(CONF_SUPPLIER) == SUPPLIER_CUSTOM
+        and data.get(CONF_REGION) == REGION_WALLONIA
+        and bool(data.get(CONF_CUSTOM_DSO_FROM_CWAPE))
+    )
+
+
+def _resolve_cwape_network(
+    entry: ConfigEntry, snap: SupplierSnapshot, month: date
+) -> SupplierSnapshot:
+    """A custom Walloon entry's network overlay as its operator's grid valid
+    on the delivery month gives it, and the transport grid, where the entry
+    asks for it, and a withdrawn product's past its card's year
+    (:func:`past_last_card`).
+
+    Each stands on its own: for one not read yet, what the card archive kept
+    of the month stands in, and without it the figures typed, so a transport
+    grid published after the operator's leaves the transport typed until it
+    is. Excluding VAT, put on the basis the entry typed on. Every register
+    and Impact band is set, and the entry's meter and tariff mode decide
+    which it bills.
+    """
+    if not (
+        takes_cwape_network(entry.data)
+        or past_last_card(entry, snap, month, REGION_WALLONIA)
+    ):
+        return delivery_year_network(entry.data, snap, month, REGION_WALLONIA)
+    dso = str(entry.data.get(CONF_DSO, ""))
+    return _with_sheet(snap, month, dso, _sheet_read(REGION_WALLONIA, month, dso))
+
+
+def _sheet_read(region: str, month: date, dso: str) -> dict[str, float | None]:
+    """The overlay fields ``region``'s sheet held gives ``dso`` for ``month``,
+    excluding VAT, or nothing before one is read: Fluvius's area sheet,
+    Brugel's, or the operator's and the transport grid off the CWaPE's, each
+    of those standing on its own."""
+    read: dict[str, float | None] = {}
+    if region == REGION_WALLONIA:
+        for grid in cached_cwape_network(month, dso):
+            if grid is not None:
+                read.update(grid.overlay_fields())
+        return read
+    terms = (
+        cached_area_terms(month.year, dso)
+        if region == REGION_FLANDERS
+        else cached_network_terms(month.year)
+    )
+    return read if terms is None else terms.overlay_fields()
+
+
+def sheet_network(
+    data: Mapping[str, Any], month: date, snap: SupplierSnapshot | None = None
+) -> dict[str, float | None]:
+    """What this entry's region's sheet gives its area for ``month``, with
+    what the card archive kept of it beneath, or nothing for an entry that
+    reads none (:func:`_sheet_region`), unless ``snap`` is a card of another
+    year, which bills its area off the sheet of ``month``'s own year once
+    read (``network_year``). The coordinator stamps it, so a sheet
+    read after the card was resolved reaches the card on the next tick."""
+    region = _sheet_region(data)
+    dso = str(data.get(CONF_DSO, ""))
+    if region is None:
+        region = data.get(CONF_REGION)
+        if snap is None or not billed_outside_its_year(snap, month):
+            return {}
+        return own_year_sheet(region, month, dso) if isinstance(region, str) else {}
+    return {**archived_network(month, dso), **_sheet_read(region, month, dso)}
+
+
+def network_sheet_unread(data: Mapping[str, Any], month: date) -> bool:
+    """Whether an entry taking its network off its region's sheet has none of
+    it for ``month`` of this year: no sheet of that year or an earlier one
+    held, nor what the card archive kept, so the figures typed stand in, or
+    a withdrawn product's card's own table for a month past that card's year.
+
+    This year only, whose sheet every regulator publishes before it starts,
+    or else the year before's stands in: a read that failed just now may work
+    later. An earlier year keeps the figures typed, since a regulator may
+    never have published it (Brugel serves no final sheet for 2025, and the
+    CWaPE's grids are read from 2026). A withdrawn product's card year is
+    the last month it was sold, which is the year of its last card.
+    """
+    region = _sheet_region(data)
+    if region is None or month.year != dt_util.now().year:
+        return False
+    if not takes_sheet_network(data):
+        printed = last_card_year(data.get(CONF_SUPPLIER), data.get(CONF_CONTRACT))
+        if printed is None or month.year <= printed:
+            return False
+    dso = str(data.get(CONF_DSO, ""))
+    archived = archived_network(month, dso)
+    if region == REGION_WALLONIA:
+        grid, transport = cached_cwape_network(month, dso)
+        return (grid is None and "distribution_single" not in archived) or (
+            transport is None and "transport" not in archived
+        )
+    return not _sheet_read(region, month, dso) and not archived
+
+
+def takes_sheet_network(data: Mapping[str, Any]) -> bool:
+    """Whether this entry takes its network off its region's sheet."""
+    return (
+        takes_fluvius_network(data)
+        or takes_brugel_network(data)
+        or takes_cwape_network(data)
+    )
+
+
+def _sheet_region(data: Mapping[str, Any]) -> str | None:
+    """The region whose sheet this entry's network may come from, or None:
+    a custom entry's that takes it from one, a withdrawn product's, which
+    takes it for a year its last card does not cover, and that of a product
+    some of whose cards print an earlier year's table (:func:`past_last_card`)."""
+    if takes_fluvius_network(data):
+        return REGION_FLANDERS
+    if takes_brugel_network(data):
+        return REGION_BRUSSELS
+    if takes_cwape_network(data):
+        return REGION_WALLONIA
+    supplier, contract = data.get(CONF_SUPPLIER), data.get(CONF_CONTRACT)
+    if withdrawn_on(supplier, contract) is None and not prints_earlier_network(
+        supplier, contract
+    ):
+        return None
+    region = data.get(CONF_REGION)
+    return region if isinstance(region, str) else None
+
+
+def reads_network_sheet(data: Mapping[str, Any]) -> bool:
+    """Whether this entry reads its region's network sheet and what the card
+    archive kept of it (:func:`ensure_custom_network`)."""
+    return _sheet_region(data) is not None
+
+
+def _with_sheet(
+    snap: SupplierSnapshot,
+    month: date,
+    dso: str,
+    read: Mapping[str, float | None],
+) -> SupplierSnapshot:
+    """``snap`` with ``dso``'s overlay set from what its sheet gives for
+    ``month``: what the entry read, and for each field it did not, what the
+    card archive kept of the month (network_archive.py)."""
+    overlay = snap.dsos.get(dso)
+    fields = {**archived_network(month, dso), **read}
+    if overlay is None or not fields:
+        return snap
+    sheet = on_sheet(snap, month, overlay, fields)
+    return replace(snap, dsos={**snap.dsos, dso: sheet})
+
+
+async def ensure_custom_network(
+    session: aiohttp.ClientSession, data: Mapping[str, Any], year: int
+) -> None:
+    """Read the sheet an entry takes its network rates from for ``year``,
+    where it takes them from one (:func:`_sheet_region`): its area's off
+    Fluvius's listing, Brugel's, or its operator's and the transport grid off
+    the CWaPE's.
+
+    A withdrawn product's is read whatever year its card covers: the resolver
+    decides per month whether the card's table or the sheet bills it, and one
+    sheet a year is what the custom entries already read.
+
+    Before the card is resolved, which reads the caches synchronously and
+    cannot await. Never raises, as each reader promises.
+    """
+    region = _sheet_region(data)
+    if region is not None:
+        await _ensure_sheet(session, region, str(data.get(CONF_DSO, "")), year)
+
+
+async def ensure_delivery_year_sheet(
+    session: aiohttp.ClientSession,
+    data: Mapping[str, Any],
+    snap: SupplierSnapshot | None,
+    year: int,
+) -> None:
+    """Read ``year``'s sheet for this entry's area when the card it holds
+    prices another year, which bills its months of ``year`` off that sheet
+    once read (``network_year``). Nothing for an entry that reads its sheet
+    anyway (:func:`ensure_custom_network`). Never raises."""
+    region = data.get(CONF_REGION)
+    if (
+        snap is None
+        or _sheet_region(data) is not None
+        or not isinstance(region, str)
+        or not billed_outside_its_year(snap, date(year, 1, 1))
+    ):
+        return
+    await _ensure_sheet(session, region, str(data.get(CONF_DSO, "")), year)
+
+
+async def _ensure_sheet(
+    session: aiohttp.ClientSession, region: str, dso: str, year: int
+) -> None:
+    """Read ``region``'s sheet for ``dso`` and ``year``."""
+    if region == REGION_FLANDERS:
+        await ensure_area_terms(session, year, dso)
+    elif region == REGION_BRUSSELS:
+        await ensure_power_term(session, year)
+        # Brugel has no listing to find the year before on, as Fluvius does,
+        # and nothing it reads is kept over a restart, so until the year's
+        # final sheet is out the one before is read to stand in.
+        if cached_network_terms(year) is None:
+            await ensure_power_term(session, year - 1)
+    elif region == REGION_WALLONIA:
+        await ensure_cwape_network(session, year, dso)
+
+
+def entry_analog_surcharge(
+    entry: ConfigEntry, year: int, day: date | None = None
+) -> float | None:
+    """What this entry's analog meter pays per kWh over a peak-metered one in
+    ``year``, EUR/kWh excl. VAT, or ``None`` on a digital meter, on ``day``
+    when given (:func:`analog_meter`), or before the area's sheet has been
+    read (``fluvius.cached_analog_surcharge``)."""
+    if not analog_meter(entry.data, day):
+        return None
+    return cached_analog_surcharge(year, str(entry.data.get(CONF_DSO, "")))
+
+
+def meter_of_day(
+    entry: ConfigEntry, snap: SupplierSnapshot, day: date
+) -> SupplierSnapshot:
+    """``snap``, resolved for the meter the entry has now, as ``day`` was
+    billed: on the analog meter the replacement date says it still had
+    (:func:`analog_meter`). Identity on every other day and every other entry,
+    whose card :func:`_resolve_snapshot` already resolved for its meter."""
+    if analog_meter(entry.data) or not analog_meter(entry.data, day):
+        return snap
+    return _resolve_analog_meter(entry, snap, day.replace(day=1), day=day)
+
+
+def _resolve_analog_meter(
+    entry: ConfigEntry,
+    snap: SupplierSnapshot,
+    month: date,
+    *,
+    day: date | None = None,
+) -> SupplierSnapshot:
+    """The entry's own network overlay as an analog meter is billed.
+
+    Every distribution rate, the exclusive-night one included, takes the
+    analog surcharge of the delivery year, put onto the basis the card prints
+    on (``on_card_basis``), and the maximumtarief goes, since the regulator's
+    sheet sets none for an analog meter. The capacity rate stays: the charge is
+    billed on the minimum peak, the sheet's "Vaste term" to the cent.
+
+    Identity on a digital meter, before the sheet is read, and on a card whose
+    network is not Fluvius's tariffs: the custom supplier's, whose figures are
+    typed for the household's own meter unless it takes them off Fluvius's
+    sheet (:func:`takes_fluvius_network`), and the social tariff's. Only the
+    entry's own area, since the surcharge is that area's. On the meter the
+    entry has now, or the one ``day`` was billed on (:func:`meter_of_day`).
+    """
+    surcharge = entry_analog_surcharge(entry, month.year, day)
+    if (
+        surcharge is None
+        or snap.supplier == SUPPLIER_SOCIAL
+        or (snap.supplier == SUPPLIER_CUSTOM and not takes_fluvius_network(entry.data))
+    ):
+        return snap
+    dso = str(entry.data.get(CONF_DSO, ""))
+    overlay = snap.dsos.get(dso)
+    if overlay is None:
+        return snap
+    extra = on_card_basis(snap, month, surcharge)
+
+    def plus(rate: float | None) -> float | None:
+        return None if rate is None else rate + extra
+
+    analog = replace(
+        overlay,
+        distribution_single=overlay.distribution_single + extra,
+        distribution_peak=plus(overlay.distribution_peak),
+        distribution_offpeak=plus(overlay.distribution_offpeak),
+        distribution_exclusive_night=plus(overlay.distribution_exclusive_night),
+        network_ceiling_eur_per_kwh=None,
+    )
+    return replace(snap, dsos={**snap.dsos, dso: analog})
+
+
+def entry_annual_kwh(entry: ConfigEntry, coordinator: Any = None) -> float:
+    """How much this household uses in a year, in kWh. One answer for every leg.
+
+    Three legs resolve against a yearly volume: the degressive excise band,
+    the Flemish network ceiling and EnergyVision's volume tranche, and they
+    have to agree, or one card is priced against two different households.
+
+    Four answers in order, and the order is the point:
+
+    1. a FULL YEAR of meter, which beats anything stated;
+    2. the volume typed on the entry, which only a professional card asks for;
+    3. a shorter measurement scaled up to a year (90 days at least);
+    4. the 3.500 kWh household default.
+
+    The metered figure comes first because the typed one barely exists: the
+    config flow asks for a yearly volume on a PROFESSIONAL card only, and drops
+    the key again on a residential one, so every residential entry fell through
+    to the default whatever it really used. On a plain card that is harmless
+    (the excise has been flat since August 2026 and the ceiling only binds on a
+    very low-volume connection), but a volume-tiered card splits its tranche
+    against it: measured on the September GS1800V card at August's index, a
+    6.000 kWh household was billed 88 EUR/year under its own card and a 2.000
+    kWh one 53 EUR over it.
+
+    A typed volume sits ABOVE the scaled band rather than below it, which is
+    the one place a business notices. Its card bands the excise, and a
+    seasonally uncorrected extrapolation of a winter quarter can cross a band:
+    a 30.000 kWh entry whose 90 days scale to 52.000 crosses the 50.000 one and
+    pays about 19 EUR a year less excise than the figure it actually stated. A
+    full year of meter still wins, because that is a measurement of the year
+    the excise is billed on rather than an estimate of it.
+
+    The coordinator measures it once a day through ``_annual_volume``, the same
+    read the compare page quotes its rows from, so the price here and the
+    ranking beside it are built on one volume. Read off the entry the way the
+    RLP and SPP profiles are (``_coordinator_rlp_weights``), which is what
+    keeps the compare page's read-only entry proxy working: it carries no
+    coordinator, so a what-if falls back to the typed figure and then to the
+    default exactly as before.
+
+    ``coordinator`` is for the coordinator resolving its OWN card, and dates
+    from when setup assigned ``entry.runtime_data`` only after the first
+    refresh had returned: during that refresh the entry could not lead here,
+    so the first tick resolved a volume-tiered card against the household
+    default while believing it had used the measurement, and nothing
+    re-resolved it until the trailing-year figure next moved. Setup now
+    assigns the attribute before the first refresh, which is what lets the
+    month rows, the cohort card and the network ceiling, all of which arrive
+    here through the entry alone, see the measurement on that tick too.
+    """
+    if coordinator is None:
+        coordinator = getattr(entry, "runtime_data", None)
+    measured = getattr(coordinator, "_annual_kwh", None)
+    if measured and getattr(coordinator, "_annual_kwh_full_year", False):
+        return float(measured)
+    typed = entry.data.get(CONF_ANNUAL_CONSUMPTION_KWH)
+    if typed:
+        try:
+            return float(typed)
+        except (TypeError, ValueError):
+            pass
+    if measured:
+        return float(measured)
+    return float(DEFAULT_ANNUAL_CONSUMPTION_KWH)
+
+
+def entry_annual_injection_kwh(entry: ConfigEntry, coordinator: Any = None) -> float:
+    """How much this household SELLS back in a year, in kWh, or 0.0.
+
+    What a first-year feed-in bonus multiplies (Mega's "bonus ... pour votre
+    injection sur le reseau de distribution pour votre premiere annee de
+    souscription"). Only the injection regime sells its export; under
+    compensation it nets against the draw and there is no feed-in price for a
+    bonus to add to, and without solar there is nothing to sell.
+
+    A FULL trailing year of meter or nothing, the rule the projection already
+    holds its feed-in to: PV is too seasonal for a shorter window scaled by a
+    day count, and no typed figure or default exists for the export, so an
+    entry without a year of it is credited no bonus rather than a guess.
+    Measured once a day by the coordinator, beside the consumption volume.
+    A compare-page proxy has no coordinator and reads the figure its real
+    entry answered, frozen under :data:`QUOTED_ANNUAL_INJECTION_KWH`.
+    """
+    if entry.data.get(CONF_SOLAR_REGIME) != SOLAR_REGIME_INJECTION:
+        return 0.0
+    if coordinator is None:
+        coordinator = getattr(entry, "runtime_data", None)
+    measured = getattr(coordinator, "_annual_injection_kwh", None)
+    if measured is None:
+        measured = entry.data.get(QUOTED_ANNUAL_INJECTION_KWH)
+    return float(measured) if measured else 0.0
+
+
+def _stand_in_levies(snap: SupplierSnapshot, month: date) -> SupplierSnapshot:
+    """The federal levies of a month ``snap`` stands in for, where the law's
+    archived household wording covers it (``household_schedule``): its
+    excise schedule and energy contribution, on the card's basis, since the
+    card prints another month's. Not for a protected customer, whose rates
+    are its own, and not for a month's own card, which is billed as printed:
+    that wording leaves out the rates a transition or a quarterly notice set.
+    A card printing neither levy (``federal_levies_unread``) has nothing of
+    its own to bill, so its month takes them here too.
+    """
+    schedule = household_schedule(month)
+    if schedule is None or snap.supplier == SUPPLIER_SOCIAL:
+        return snap
+    bands = tuple(
+        (upper, on_card_basis(snap, month, rate)) for upper, rate in schedule.bands
+    )
+    taxes = replace(
+        snap.taxes,
+        federal_excise=bands[0][1],
+        federal_excise_bands=bands,
+        energy_contribution=on_card_basis(snap, month, schedule.contribution),
+        federal_levies_unread=False,
+    )
+    return replace(snap, taxes=taxes)
+
+
+def _resolve_snapshot(
+    entry: ConfigEntry,
+    snap: SupplierSnapshot,
+    *,
+    annual_kwh: float | None = None,
+    delivery_month: date | None = None,
+    stand_in: bool = False,
+) -> SupplierSnapshot:
+    """Resolve a card against the site facts only this entry knows.
+
+    ``annual_kwh`` is the yearly volume to resolve the excise band, the network
+    ceiling and a volume tranche against, ``entry_annual_kwh(entry)`` when
+    omitted. The coordinator passes the figure it resolved itself, because on
+    its first tick the entry cannot lead to the coordinator yet (see
+    :func:`entry_annual_kwh`); every other caller leaves it to the entry.
+
+    Every step is identity on a card that carries none of them, so this is
+    free for every existing entry. Order matters only around ``apply_vat``,
+    which settles the card's VAT basis for the entry: what has to be put onto
+    the basis the card printed on goes before it, and a step after it that
+    needs that basis reads ``published_vat_rate``, which ``apply_vat`` keeps
+    when it zeroes ``vat_rate``. The excise band and the volume tier are both
+    per-kWh rates, which ``apply_vat`` never touches (it grosses the fees and
+    the feed-in leg), and the settlement grid moves no rate at all.
+
+    ``delivery_month`` is the month being billed, which decides both federal
+    levies: whether the energy contribution is owed at all, and what the
+    special excise is. Today's when omitted, since every caller but the month
+    rows prices the running month. ``stand_in`` says the card is not that
+    month's own but stands in for it (``_proxy_for_month``), so the levies it
+    prints are another month's (``_stand_in_levies``).
+
+    The tranche is dropped rather than folded on an exclusive-night entry: the
+    cards that carry one put it on the single register, or split it 900/900
+    across a day/night pair, and say in the same footnote that it is "niet van
+    toepassing op het exclusief nacht tarief". Folding it there billed a night
+    circuit a share of a tranche it never receives.
+    """
+    month = delivery_month or dt_util.now().date()
+    professional = is_professional(snap.supplier, snap.contract)
+    # First: every figure below is put onto the card's VAT basis, which is
+    # the month's rate where the card's own was an assumption.
+    resolved = resolve_vat_rate(snap, month, professional=professional)
+    # A custom entry's network off its region's sheet of the delivery year,
+    # where it asks for it: before Brugel's power term, which a Brussels sheet
+    # already carries, and the ceiling and the analog surcharge laid on after.
+    resolved = _resolve_fluvius_network(entry, resolved, month)
+    resolved = _resolve_brugel_network(entry, resolved, month)
+    resolved = _resolve_cwape_network(entry, resolved, month)
+    # Before apply_vat, which resolves the card's own basis away: the term
+    # Brugel publishes is stated excluding VAT and has to be put onto the
+    # basis the card printed on before anything else moves it.
+    resolved = resolve_brussels_power_term(
+        resolved, terms=cached_power_term(month.year), month=month
+    )
+    # Before apply_vat for the same reason, and the month decides it the way
+    # it decides the two federal levies below: the VREG sets one ceiling for
+    # all of Flanders per calendar year, so a card stating another one is out
+    # of date rather than different. Until the year's sheet is held, a card
+    # stating a higher one is ahead of the year before's standing in.
+    resolved = resolve_vreg_network_ceiling(
+        resolved,
+        month,
+        cached_network_ceiling(month.year),
+        stand_in=not tariff_sheet_held(month.year),
+    )
+    # After the ceiling, which an analog meter does not have, and before
+    # apply_vat for the reason Brugel's term goes first.
+    resolved = _resolve_analog_meter(entry, resolved, month)
+    resolved = apply_vat(resolved, include_vat=_include_vat(entry))
+    # The two federal levies, both defined by the month being billed rather
+    # than by the card that prints them. A business on the custom supplier
+    # keeps the professional ones it typed; its VAT rate is its own and stays
+    # out of resolve_vat_rate's professional branch above.
+    levies_professional = professional or _custom_professional(entry, snap)
+    # A card printing neither levy takes the month's from the law: here the
+    # archived wording's for a month it covers, before the two steps below,
+    # which bill the text in force over it for a later month.
+    if resolved.taxes.federal_levies_unread and not levies_professional:
+        resolved = _stand_in_levies(resolved, month)
+    resolved = resolve_federal_contribution(
+        resolved, month, professional=levies_professional
+    )
+    resolved = resolve_federal_excise(resolved, month, professional=levies_professional)
+    if stand_in and not levies_professional:
+        resolved = _stand_in_levies(resolved, month)
+    if annual_kwh is None:
+        annual_kwh = entry_annual_kwh(entry)
+    # Before the tranche, which can turn a spot-monthly leg into a fixed one:
+    # the fee travels across that conversion but a reduction still waiting to
+    # be applied would not.
+    resolved = resolve_direct_debit(resolved, direct_debit=_direct_debit(entry, snap))
+    # Beside the direct-debit answer and for the same reason: which meter the
+    # entry has decides whether the card grants the credit at all, and baking
+    # it here keeps the six cost paths reading one credit.
+    resolved = resolve_welcome_credit_meter(
+        resolved, entry.data.get(CONF_METER, METER_MONO)
+    )
+    # And the feed-in floor of the card the household signed, where the card
+    # read for every month is a later one (Goedkope stroom's 0925).
+    resolved = resolve_signed_feed_in_floor(entry, resolved)
+    resolved = resolve_volume_tier(
+        resolve_excise_band(resolved, annual_kwh),
+        annual_kwh,
+        meter=entry.data.get(CONF_METER, METER_MONO),
+    )
+    # Whether the entry is on Impact decides a feed-in pair a card credits per
+    # band, for the same reason: the paths that credit it know only the meter.
+    impact = entry.data.get(CONF_DSO_TARIFF_MODE) == DSO_MODE_IMPACT
+    return resolve_settlement_grid(
+        resolve_impact_feed_in(resolved, impact=impact),
+        quarter_hourly=_quarter_hourly(entry, snap),
+        impact=impact,
+    )
+
+
+def _proxy_for_month(
+    entry: ConfigEntry,
+    current: SupplierSnapshot,
+    raw: SupplierSnapshot,
+    year_month: date,
+) -> SupplierSnapshot:
+    """``current`` standing in for ``year_month``, with the federal levies
+    that month owes, and a withdrawn product's network as that month's year
+    bills it.
+
+    ``current`` was resolved for today: no energy contribution from August
+    2026 and the flat August excise, which a January to July month did not
+    owe. ``raw`` resolved for that month as a stand-in bills the household
+    schedule and contribution the law then set, once its archived wording is
+    read, the card's own until then. Only those two figures are taken from
+    it, where they differ from ``raw`` resolved for today, so all else the
+    caller applied to ``current`` stands: identity where they match.
+
+    A withdrawn product's card takes the network of a month after its own
+    year off that year's sheet (:func:`past_last_card`), and ``current``
+    holds today's, so the entry's own overlay is taken from the month as
+    well, where it differs: otherwise a walk in January 2027 would bill
+    December 2026 of a 2026 card on the 2027 sheet rather than the card's
+    table. The same holds for a card billed in a year other than its own
+    off that year's sheet (``network_year``): held into a later year, or
+    standing in for a month of an earlier one, which bills that month off
+    its own year's sheet where ``current`` holds the card's table.
+    """
+    today = _resolve_snapshot(entry, raw)
+    month = _resolve_snapshot(entry, raw, delivery_month=year_month, stand_in=True)
+    changes = {
+        name: getattr(month.taxes, name)
+        for name in ("energy_contribution", "federal_excise")
+        if getattr(month.taxes, name) != getattr(today.taxes, name)
+    }
+    out = current
+    if changes:
+        out = replace(out, taxes=replace(out.taxes, **changes))
+    dso = str(entry.data.get(CONF_DSO, ""))
+    network = month.dsos.get(dso)
+    if (
+        network is not None
+        and network != today.dsos.get(dso)
+        and (
+            withdrawn_on(raw.supplier, raw.contract) is not None
+            or billed_outside_its_year(raw, year_month)
+            or billed_outside_its_year(raw, dt_util.now().date())
+        )
+    ):
+        out = replace(out, dsos={**out.dsos, dso: network})
+    return out

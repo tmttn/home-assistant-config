@@ -1,0 +1,244 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Prix de l'eau en Belgique",
+        "description": "Entrez votre code postal et nous identifierons votre compagnie des eaux. Si la résolution échoue, vous choisirez à l'étape suivante.",
+        "data": {
+          "postcode": "Code postal"
+        }
+      },
+      "manual": {
+        "title": "Choisissez votre compagnie",
+        "description": "Aucune compagnie n'a pu être identifiée pour ce code postal. Sélectionnez la vôtre ci-dessous.",
+        "data": {
+          "utility": "Compagnie"
+        }
+      },
+      "choose": {
+        "title": "Choisissez votre compagnie",
+        "description": "Votre code postal est desservi par plusieurs compagnies -- chacune couvre des rues différentes. Sélectionnez celle qui vous facture (consultez votre dernière facture d'eau en cas de doute).",
+        "data": {
+          "utility": "Compagnie"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigurer la compagnie des eaux",
+        "description": "Choisissez comment mettre à jour cette entrée. Réidentifier par code postal convient après un déménagement ; choisissez la compagnie directement si l'identification automatique a sélectionné la mauvaise.",
+        "menu_options": {
+          "reconfigure_postcode": "Mettre à jour le code postal et réidentifier la compagnie",
+          "reconfigure_manual": "Choisir la compagnie directement"
+        }
+      },
+      "reconfigure_postcode": {
+        "title": "Mettre à jour le code postal",
+        "description": "Entrez le nouveau code postal pour cette entrée. Nous identifierons à nouveau la compagnie et rechargerons l'intégration. La consommation annuelle et le capteur de compteur d'eau sont conservés. Les personnes domiciliées et l'option sociale valent en Flandre et à Bruxelles : elles survivent à un changement de compagnie au sein de la Flandre, sont supprimées lors d'un passage vers la Wallonie, et sont demandées à nouveau lors d'un passage vers la Flandre ou Bruxelles ; la commune enregistrée est effacée si la compagnie identifiée change (la nouvelle compagnie utilise des identifiants de commune différents) ou si le code postal diffère de celui enregistré, sauf si vous choisissez une commune à l'étape suivante (là où la compagnie facture le nouveau code postal sur une commune précise, celle-ci y est présélectionnée).",
+        "data": {
+          "postcode": "Code postal"
+        }
+      },
+      "reconfigure_manual": {
+        "title": "Choisissez votre compagnie",
+        "description": "Sélectionnez la compagnie qui vous dessert. La consommation annuelle et le capteur de compteur d'eau sont conservés. Les personnes domiciliées et l'option sociale valent en Flandre et à Bruxelles : elles survivent à un changement de compagnie au sein de la Flandre, sont supprimées lors d'un passage vers la Wallonie, et sont demandées à nouveau lors d'un passage vers la Flandre ou Bruxelles ; la commune enregistrée est effacée si vous choisissez une autre compagnie (les identifiants de commune ne sont pas interchangeables). Les compagnies à tarif par commune (De Watergroep / Farys / Pidpa / Water-link) vous demandent ensuite la commune.",
+        "data": {
+          "utility": "Compagnie"
+        }
+      },
+      "reconfigure_choose": {
+        "title": "Choisissez votre compagnie",
+        "description": "Votre code postal est desservi par plusieurs compagnies -- chacune couvre des rues différentes. Sélectionnez celle qui vous facture. La consommation annuelle et le capteur de compteur d'eau sont conservés. Les personnes domiciliées et l'option sociale valent en Flandre et à Bruxelles : elles survivent à un changement de compagnie au sein de la Flandre, sont supprimées lors d'un passage vers la Wallonie, et sont demandées à nouveau lors d'un passage vers la Flandre ou Bruxelles ; la commune enregistrée est effacée si vous choisissez une autre compagnie ou si le code postal diffère de celui enregistré, sauf si vous choisissez une commune à l'étape suivante.",
+        "data": {
+          "utility": "Compagnie"
+        }
+      },
+      "reconfigure_household": {
+        "title": "Votre ménage",
+        "description": "La nouvelle compagnie est en Flandre ou à Bruxelles, où la facture dépend du nombre de personnes domiciliées à l'adresse et d'une option sociale : le tarif social flamand, ou à Bruxelles l'intervention sociale de la Région pour un ménage dont un membre a le statut BIM au 1er janvier. Indiquez-les ici ; les deux peuvent être modifiés plus tard dans les options de l'entrée.",
+        "data": {
+          "gedomicilieerd_persons": "Personnes domiciliées",
+          "social_tariff": "Tarif social (Flandre) / statut BIM (Bruxelles)"
+        },
+        "data_description": {
+          "social_tariff": "Flandre : le tarif social VMM, 80% de réduction sur toute la facture. Bruxelles : un membre du ménage avait le statut BIM au 1er janvier ; l'intervention sociale annuelle de la Région, que VIVAQUA verse sur votre compte, est déduite des capteurs de coût."
+        }
+      },
+      "reconfigure_commune": {
+        "title": "Choisissez votre commune",
+        "description": "Sélectionnez la commune de cette adresse. Les compagnies à tarif par commune (De Watergroep / Farys / Pidpa / Water-link) appliquent des tarifs légèrement différents selon la commune ; laissez vide pour utiliser le tarif par défaut de la compagnie, sauf exception ci-dessous, et choisir plus tard via les options de l'entrée.",
+        "data": {
+          "commune": "Commune"
+        },
+        "data_description": {
+          "commune": "Là où le distributeur facture votre code postal sur une commune précise, celle-ci est présélectionnée, et la vider ne tient pas : elle revient au prochain rechargement. Choisissez une autre commune pour être tarifé sur une autre carte."
+        }
+      },
+      "options": {
+        "title": "Consommation annuelle",
+        "description": "Votre consommation annuelle d'eau en mètres cubes. Utilisée par le capteur de coût annuel projeté ; 80 m³/an par défaut. Pour les distributeurs flamands et bruxellois, indiquez aussi le nombre de personnes domiciliées (en Flandre il détermine le volume du tarif de base, à Bruxelles l'intervention sociale) et l'option sociale : le tarif social VMM en Flandre, le statut BIM au 1er janvier à Bruxelles. Optionnel : pointez un capteur compteur d'eau (cumulatif m³, device_class=water) pour que le capteur de coût annuel lise la consommation depuis le 1er janvier depuis l'historique Home Assistant.",
+        "data": {
+          "consumption_m3_per_year": "Consommation (m³ / an)",
+          "gedomicilieerd_persons": "Personnes domiciliées (Flandre et Bruxelles)",
+          "social_tariff": "Tarif social (Flandre, réduction 80%) / statut BIM au 1er janvier (Bruxelles, intervention sociale)",
+          "water_meter_sensor": "Capteur de compteur d'eau (optionnel ; auto-détecté depuis le tableau de bord Énergie si vide)",
+          "card_archive": "Lire l'archive des cartes du projet quand le distributeur est injoignable et que la carte en cache manque, est périmée ou est celle de l'an dernier (la requête nomme votre distributeur et votre commune)",
+          "commune": "Commune (uniquement pour les distributeurs par commune : De Watergroep / Farys / Pidpa / Water-link)"
+        },
+        "data_description": {
+          "commune": "Là où le distributeur facture votre code postal sur une commune précise, celle-ci est présélectionnée, et la vider ne tient pas : elle revient au prochain rechargement. Choisissez une autre commune pour être tarifé sur une autre carte.",
+          "social_tariff": "Flandre : le tarif social VMM, 80% de réduction sur toute la facture. Bruxelles : un membre du ménage avait le statut BIM au 1er janvier ; l'intervention sociale annuelle de la Région, que VIVAQUA verse sur votre compte, est déduite des capteurs de coût."
+        }
+      }
+    },
+    "abort": {
+      "already_configured": "Cette compagnie est déjà configurée.",
+      "already_in_progress": "Cette compagnie est déjà en cours de configuration dans une autre fenêtre.",
+      "entry_removed": "Cette entrée a été supprimée pendant que la fenêtre était ouverte ; rien n'a été modifié.",
+      "invalid_flow_state": "La configuration a été interrompue ; recommencez depuis le début.",
+      "reconfigure_successful": "L'entrée a été mise à jour et rechargée."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Consommation annuelle",
+        "data": {
+          "consumption_m3_per_year": "Consommation (m³ / an)",
+          "gedomicilieerd_persons": "Personnes domiciliées (Flandre et Bruxelles)",
+          "social_tariff": "Tarif social (Flandre, réduction 80%) / statut BIM au 1er janvier (Bruxelles, intervention sociale)",
+          "water_meter_sensor": "Capteur de compteur d'eau (optionnel ; auto-détecté depuis le tableau de bord Énergie si vide)",
+          "card_archive": "Lire l'archive des cartes du projet quand le distributeur est injoignable et que la carte en cache manque, est périmée ou est celle de l'an dernier (la requête nomme votre distributeur et votre commune)",
+          "commune": "Commune (uniquement pour les distributeurs par commune : De Watergroep / Farys / Pidpa / Water-link)"
+        },
+        "data_description": {
+          "commune": "Là où le distributeur facture votre code postal sur une commune précise, celle-ci est présélectionnée, et la vider ne tient pas : elle revient au prochain rechargement. Choisissez une autre commune pour être tarifé sur une autre carte.",
+          "social_tariff": "Flandre : le tarif social VMM, 80% de réduction sur toute la facture. Bruxelles : un membre du ménage avait le statut BIM au 1er janvier ; l'intervention sociale annuelle de la Région, que VIVAQUA verse sur votre compte, est déduite des capteurs de coût."
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "yearly_fee": {
+        "name": "Redevance annuelle"
+      },
+      "basis_rate": {
+        "name": "Tarif de base"
+      },
+      "comfort_rate": {
+        "name": "Tarif confort"
+      },
+      "sanering_rate": {
+        "name": "Assainissement"
+      },
+      "all_in_basis": {
+        "name": "Tarif tout compris"
+      },
+      "projected_annual_cost": {
+        "name": "Coût annuel projeté"
+      },
+      "current_year_cost": {
+        "name": "Coût depuis le 1er janvier"
+      },
+      "ytd_consumption": {
+        "name": "Consommation depuis le 1er janvier"
+      },
+      "rolling_year_consumption": {
+        "name": "Consommation sur 12 mois glissants"
+      },
+      "rolling_year_cost": {
+        "name": "Coût sur 12 mois glissants"
+      },
+      "projected_year_consumption": {
+        "name": "Consommation annuelle prévue"
+      },
+      "projected_year_end_cost": {
+        "name": "Coût prévu en fin d'année"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Rafraîchir le tarif"
+      }
+    }
+  },
+  "services": {
+    "refresh": {
+      "name": "Rafraîchir le tarif",
+      "description": "Récupère à nouveau le tarif de la compagnie maintenant plutôt qu'au prochain rafraîchissement quotidien.",
+      "fields": {
+        "entry_id": {
+          "name": "Entrée de configuration",
+          "description": "Optionnel. L'entrée de configuration à rafraîchir. Laissez vide pour rafraîchir chaque entrée chargée."
+        }
+      }
+    },
+    "backfill_prices": {
+      "name": "Backfill de l'historique des prix",
+      "description": "Importe des lignes long-term-statistics horaires pour les capteurs de prix de cette intégration, afin que les tableaux de bord History et Energy affichent une courbe de tarif remontant avant la date d'installation. Réservé aux administrateurs.",
+      "fields": {
+        "entry_id": {
+          "name": "Entrée de configuration",
+          "description": "Optionnel. L'entrée de configuration à backfiller. Laissez vide pour traiter chaque entrée chargée. Obligatoire lorsque Effacer avant l'import est actif."
+        },
+        "start_date": {
+          "name": "Date de début",
+          "description": "Optionnel. Date la plus ancienne à backfiller. Par défaut le 1er janvier de l'année en cours. Bornée par valid_from du snapshot de tarif."
+        },
+        "clear": {
+          "name": "Effacer avant import",
+          "description": "Si actif, efface les long-term-statistics existantes pour les capteurs ciblés avant l'import. Désactivé par défaut. Nécessite une entrée de configuration : tout effacer d'un coup est irréversible, cette combinaison est donc refusée."
+        }
+      }
+    }
+  },
+  "issues": {
+    "operator_moved": {
+      "title": "{utility} : votre code postal renvoie maintenant vers un autre distributeur",
+      "description": "Le code postal enregistré sur cette entrée correspond à {resolved} et non à {utility}. Soit la table des codes postaux a été corrigée après la création de cette entrée, soit {utility} a été choisi à la main dans une version antérieure, qui ne retenait pas ce choix. Dans les deux cas, le tarif de {utility} est toujours récupéré et votre facture calculée dessus.\n\nVérifiez-le et changez si c'est correct : Paramètres > Appareils et services > {utility} > les trois points > Reconfigurer. Rien n'est modifié à votre place, car changer de distributeur efface aussi la commune et, lors d'un passage vers une autre région, les réglages de ménage.\n\nSi {utility} est correct, choisissez Reconfigurer > Choisir la compagnie directement et choisissez à nouveau {utility} : il est conservé et cet avis disparaît."
+    },
+    "several_water_meters": {
+      "title": "{utility} : plusieurs compteurs d'eau sur le tableau de bord \u00c9nergie",
+      "description": "Le tableau de bord \u00c9nergie contient {count} sources d'eau, et cette int\u00e9gration facture un seul compteur. Elle utilise actuellement celle que le tableau de bord enregistre en premier, ce qui refl\u00e8te l'ordre d'ajout et non le compteur que votre distributeur facture.\n\nChoisissez le compteur dans les options de l'int\u00e9gration (Param\u00e8tres > Appareils et services > {utility} > Configurer > Capteur de compteur d'eau). Cet avis dispara\u00eet d\u00e8s qu'un compteur est d\u00e9fini."
+    },
+    "snapshot_stale": {
+      "title": "Snapshot de tarif {utility} obsolète",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Réessayer la récupération du tarif {utility}",
+            "description": "Le dernier tarif {utility} récupéré avec succès a {age_days} jours (valable jusqu'au {valid_until}). Dernière erreur : {last_error}.\n\nCliquez sur Soumettre pour déclencher un rafraîchissement immédiat. La carte Repair disparaît automatiquement si la prochaine récupération renvoie un nouveau snapshot ; sinon elle reste affichée pour réessayer ou investiguer la cause sous-jacente (consultez les issues GitHub ou le run quotidien de la workflow live-check)."
+          }
+        },
+        "abort": {
+          "still_stale": "Le rafraîchissement a été effectué, mais le snapshot {utility} est toujours obsolète, la carte Repair reste donc affichée. Réessayez plus tard, ou consultez les issues GitHub et le run quotidien de la workflow live-check pour la cause sous-jacente.",
+          "utility_late": "Le rafraîchissement a réussi, mais {utility} propose toujours un tarif dont la période s'est terminée le {valid_until}. Il est redemandé chaque jour, et cette carte Repair reste affichée jusqu'à la publication d'un tarif plus récent."
+        }
+      }
+    },
+    "projection_outdated": {
+      "title": "La projection {utility} utilise une consommation obsolète",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Utiliser votre consommation {year} pour la projection {utility}",
+            "description": "Votre compteur d'eau a mesuré {metered} m³ sur toute l'année {year}. Le capteur de coût annuel projeté est toujours réglé sur {configured} m³ par an.\n\nCliquez sur Soumettre pour remplacer la valeur configurée par {metered} m³. Le coût projeté est mis à jour immédiatement. Les capteurs depuis le 1er janvier ne changent pas dans les deux cas, car ils lisent toujours le compteur et non ce réglage.\n\nIgnorez cette carte pour conserver {configured} m³."
+          }
+        },
+        "abort": {
+          "cannot_apply": "L'entrée {utility} ne peut plus être mise à jour, rien n'a donc été modifié. Elle a probablement été supprimée pendant que cette carte était ouverte."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "unknown_entry": {
+      "message": "Aucune entrée chargée de Prix de l'eau en Belgique n'a l'identifiant {entry_id}."
+    },
+    "clear_needs_entry": {
+      "message": "Effacer avant import nécessite une entrée de configuration : tout effacer d'un coup est irréversible."
+    },
+    "refresh_pressed_recently": {
+      "message": "Le tarif a été récupéré pour la dernière fois à {last} ; la prochaine récupération peut commencer à partir de {next}."
+    }
+  }
+}

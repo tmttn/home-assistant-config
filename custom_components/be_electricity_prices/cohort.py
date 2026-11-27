@@ -1,0 +1,836 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Signing-cohort resolution: what a contract signed in a past month bills at.
+
+Split out of coordinator.py. A fixed or dynamic contract is billed at the rate
+it locked in at signing, not today's card; a variable one re-prices its own
+coefficients against the current month's index. Resolution order is a
+hand-entered signing rate, then the archived signing-month card, then the
+current card: per field, because only the user knows whether they signed at
+the card rate or a negotiated one."""
+
+from __future__ import annotations
+
+import logging
+from collections.abc import Awaitable, Callable
+from dataclasses import replace
+from datetime import date
+from typing import NamedTuple
+
+import aiohttp
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
+
+from .cohort_legs import (
+    _at_forward_index,
+    _cohort_card,
+    _cohort_energy_from_archived,
+    _cohort_injection_from_archived,
+    _manual_energy_leg,
+    _month_indexed_leg,
+    _on_settled_quarter,
+    _with_billed_impact_rule,
+    _with_standing_charge,
+)
+from .const import (
+    CONF_CONTRACT,
+    CONF_CONTRACT_START_DATE,
+    CONF_SUPPLIER,
+    CONF_YTD_FROM_CONTRACT_START,
+    SUPPLIER_CUSTOM,
+    SUPPLIER_SOCIAL,
+)
+from .providers import takes_signing_rate
+from .providers._rates import (
+    DynamicRates,
+    EnergyRates,
+    InjectionRates,
+    SpotMonthlyRates,
+    rescale_vat,
+)
+from .providers._resolve import card_residential_vat, without_welcome_credit
+from .providers.base import (
+    SupplierExtractor,
+    SupplierSnapshot,
+)
+from .quarter_indices import on_published_quarters, published_quarter_index
+from .signing_month import _parse_iso_date, _tariff_card_month
+from .snapshot_months import (
+    _month_card_retrievable,
+    _snapshot_for_month,
+    month_card,
+    month_card_cached,
+)
+from .snapshot_resolve import meter_of_day, meter_segment
+from .spot_stats import spots_available
+from .vat_rates import residential_vat
+from .year_ahead import YEAR_AHEAD
+
+_LOGGER = logging.getLogger(__name__)
+
+# The resolution last logged per contract, start date and whether the month
+# billed has settled. The legs are resolved once for every month a walk
+# prices, about forty times a tick on a year to date, and the line is only
+# news when its answer changes.
+_LOGGED_SOURCE: dict[tuple[str, date | None, bool], str] = {}
+
+
+def _cohort_first_month(entry: ConfigEntry, card_month: date) -> date:
+    """First-of-month the signed formula bills from: the later of
+    ``card_month`` and the contract start date's month.
+
+    Neither alone will do. A switcher signs on the card of the month before
+    supply begins, so on June's card supplied from August, July was not on the
+    contract yet. A renewal re-signs a supply that began years ago onto this
+    month's card, so on August's card supplied since 2020, July was on the
+    terms it renewed, not a card published after it.
+    """
+    d = _parse_iso_date(entry.data.get(CONF_CONTRACT_START_DATE))
+    return card_month if d is None else max(card_month, date(d.year, d.month, 1))
+
+
+def ytd_window_start(entry: ConfigEntry, today: date) -> date:
+    """First day ``current_year_cost`` accumulates from, for ``today``'s year.
+
+    1 January unless the entry opted into billing from its contract start date
+    (CONF_YTD_FROM_CONTRACT_START) and carries one, in which case the later of
+    the two. Everything that walks the year-to-date reads this: the per-hour
+    and per-day energy walks, the fee proration, the historical spot fetch,
+    the statistics backfill, and the ``last_reset`` the sensor publishes.
+
+    Clamped to 1 January of ``today``'s year rather than returning the raw
+    start date. The sensor is a TOTAL whose ``last_reset`` the recorder uses
+    to bucket one period per calendar year, and a window reaching back into a
+    previous year does not survive that: the compiler would see a reset that
+    never happened and add a year's reading on top. So a contract signed in an
+    earlier year is billed from 1 January exactly as it is today, and the
+    option only changes the contract's first calendar year.
+
+    The sensor's ``last_reset`` is ``coordinator_data.ytd_window_reset``,
+    which starts here but stays on an earlier contract's start date once a
+    recorded switch unticks the box.
+    """
+    jan1 = date(today.year, 1, 1)
+    if not entry.data.get(CONF_YTD_FROM_CONTRACT_START):
+        return jan1
+    start = _parse_iso_date(entry.data.get(CONF_CONTRACT_START_DATE))
+    if start is None:
+        return jan1
+    return max(jan1, start)
+
+
+class _CohortLegs(NamedTuple):
+    """What a signing cohort bills at, both halves of it.
+
+    ``None`` on either means "no override, keep the current card's leg".
+    ``card`` names the card they were read off, for the sensor attribute;
+    empty when the entry names no cohort month and nothing was resolved.
+    """
+
+    energy: EnergyRates | None
+    injection: InjectionRates | None
+    card: str = ""
+    # The residential VAT rate the energy leg's coefficients carry: the rate
+    # of the card and month it was read off. None where it carries none to
+    # move (a leg read off the card of the month being billed, or a card
+    # priced excluding VAT, which the engine grosses at the month's rate).
+    vat_rate: float | None = None
+
+    def energy_on(
+        self, snapshot: SupplierSnapshot, delivery_month: date
+    ) -> EnergyRates | None:
+        """The energy leg put onto ``snapshot``'s VAT basis and settlement
+        grid for ``delivery_month``.
+
+        A cohort keeps the coefficients it signed for, not the VAT of the
+        month it signed in: VAT is owed at the rate of the month delivered,
+        so a leg read off an earlier card is moved onto that one's rate.
+        Identity while the two rates agree, which is every month today.
+
+        Nor does it keep the market's settlement grid. Ecopower settled per
+        hour until September 2025 and per quarter-hour since, and every
+        signing month before the switch reads the January 2025 card, so a
+        dynamic leg carried its grid across and priced today on the hour.
+
+        And how a Tarif Impact connection pays the day/night pair is a rule
+        of the month billed as much as of the signing card: either card
+        stating it binds (``_with_billed_impact_rule``).
+        """
+        energy = self.energy
+        if energy is None:
+            return None
+        card = snapshot.energy
+        energy = _with_billed_impact_rule(energy, card)
+        if (
+            isinstance(energy, DynamicRates)
+            and isinstance(card, DynamicRates)
+            and energy.quarter_hourly != card.quarter_hourly
+        ):
+            energy = replace(energy, quarter_hourly=card.quarter_hourly)
+        if self.vat_rate is None:
+            return energy
+        taxes = snapshot.taxes
+        if taxes.published_vat_rate or taxes.vat_rate:
+            return energy
+        rate = card_residential_vat(snapshot, delivery_month)
+        return rescale_vat(energy, (1.0 + rate) / (1.0 + self.vat_rate))
+
+    def splice(
+        self, snapshot: SupplierSnapshot, delivery_month: date | None = None
+    ) -> SupplierSnapshot:
+        """``snapshot`` billed on this cohort: each leg it overrides replaced,
+        the rest of the card kept. The same object back when there is nothing
+        to override, so a caller can tell the no-op by identity.
+        ``delivery_month`` is the month billed, today's when None."""
+        if self.energy is None and self.injection is None:
+            return snapshot
+        energy = self.energy_on(snapshot, delivery_month or dt_util.now().date())
+        return replace(
+            snapshot,
+            energy=snapshot.energy if energy is None else energy,
+            injection=snapshot.injection if self.injection is None else self.injection,
+        )
+
+
+async def _cohort_legs(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    extractor: SupplierExtractor,
+    contract: str,
+    region: str,
+    entry: ConfigEntry,
+    current_snapshot: SupplierSnapshot,
+    month_snapshot: SupplierSnapshot | None = None,
+    year_month: date | None = None,
+) -> _CohortLegs:
+    """Resolve the legs a contract actually bills at.
+
+    A fixed / dynamic contract signed months ago is billed at the rate it
+    locked in at signing, not today's card, and its feed-in formula locks with
+    it (issue #85). This returns both legs off the signing-month card, for the
+    caller to splice onto the delivery month's DSO / tax overlays
+    (:meth:`_CohortLegs.splice`), and names the card they came off. A leg left
+    ``None`` means "no cohort override, keep the card's own": nothing to
+    re-price with (no signing rate typed and no archived card). A variable
+    cohort with no ENTSO-E key to resolve its monthly mean, in a month whose
+    card does not carry the index it settled at, keeps that card's printed
+    rate with the standing charge it signed. With no cohort
+    month there is no lock, so the feed-in leg is ``None`` and the energy leg
+    is the delivery month's card re-priced on its monthly mean when that card
+    is month indexed and the entry has a key (:func:`_month_indexed_leg`),
+    ``None`` otherwise. A month before the later of the card month and the
+    contract start date's (``year_month``, the month ``month_snapshot`` is the
+    card of) is billed the same way: the contract was not signed or not
+    supplying yet, so nothing on the signing card applies
+    (:func:`_cohort_first_month`).
+
+    Resolution order is a hand-entered signing rate, then the archive, then
+    the card of the month being billed (``month_snapshot``, the current card
+    on the live path). What the user typed wins per field: only they know
+    whether they signed at the card rate or at a promotional, brokered or
+    negotiated one, and the form that collected the value promises to price
+    the contract with it. The archived signing-month card fills in every field
+    left blank when an archive holds it: the supplier's own, or the
+    repository's, which from August 2026 also holds the cards of suppliers
+    that keep none (TotalEnergies, Ecofix, Dots Energy). Asking the supplier's
+    alone left those cohorts billed on each month's card. The month's own
+    card fills in otherwise.
+
+    Both legs are ``None`` for a ``contract`` that isn't the entry's own (the
+    OptionsFlow compare path walks an alternative contract with no signing
+    history, so it must always price at the current card).
+    """
+    if contract != entry.data.get(CONF_CONTRACT):
+        return _CohortLegs(None, None)
+    if entry.data.get(CONF_SUPPLIER) == SUPPLIER_CUSTOM:
+        # The custom supplier's rate IS what the user typed on the
+        # custom_energy step, so there is nothing for a signing rate to
+        # improve on and the signing-rate step is never offered for it
+        # (_needs_manual_rate). But an entry EDITED onto the custom supplier
+        # keeps whatever manual rate and start date it carried from its
+        # previous life, and nothing pops them: only async_step_signed_rate
+        # does that, and it no longer runs. The overlay then quietly replaced
+        # the typed formula with the old supplier's rate - measured at +0,09
+        # EUR/kWh and +60 EUR of fee on one such entry, in whichever direction
+        # the old supplier happened to charge.
+        #
+        # Guarding here rather than only popping the keys in the flow is what
+        # heals the entries already holding them.
+        return _CohortLegs(None, None)
+    if entry.data.get(CONF_SUPPLIER) == SUPPLIER_SOCIAL:
+        # The social tariff is one card for every protected customer each
+        # month, whenever they signed: the CREG's quarter for the energy and
+        # Engie's month formulas for the feed-in. Freezing the signing card's
+        # feed-in coefficients credited a start-dated entry on a formula the
+        # supplier no longer applies, and dropped the day and night pairs.
+        return _CohortLegs(None, None)
+    start = _tariff_card_month(entry)
+    if start is None or (
+        year_month is not None and year_month < _cohort_first_month(entry, start)
+    ):
+        # No signing month named, so there is no cohort lock and every month is
+        # billed on its own card. ``month_snapshot`` is the card that was in
+        # force for the delivery month; the live path leaves it unset, where
+        # the current card IS that card.
+        #
+        # A month before the signing month or the start date's is in the same
+        # position: the year to date counts it from 1 January unless the entry
+        # bills from its start date, and whatever the household was on then,
+        # it was not this cohort's formula. Billing it on the signing card put
+        # an Engie Direct Online contract signed in August 13 EUR under its
+        # own cards over January to July at 3500 kWh a year, keyed or not.
+        #
+        # Taking the leg from the current card regardless billed a past month
+        # on today's coefficients. They move every month on these products:
+        # Engie's January card reads "2,4016 + (0,1200 x EPEXDAM)" against
+        # September's "1,8432 + (0,1177 x EPEXDAM)", so a year-to-date walk
+        # re-priced January on September's formula. Measured at about 12 EUR a
+        # year on Direct Online and up to 29 on the professional Flow, and it
+        # reached only entries that had typed an ENTSO-E key, which is to say
+        # the option offered to make past months MORE accurate made them less.
+        return _CohortLegs(
+            _month_indexed_leg(month_snapshot or current_snapshot, entry), None
+        )
+    now = dt_util.now()
+    this_month = date(now.year, now.month, 1)
+    # Resolve the archived signing-month card first, as the base the typed
+    # rate overlays onto. Fixed / dynamic re-price from its leg directly (the
+    # locked value); variable re-prices from the cohort's parsed coefficients
+    # against the current month's mean (see _cohort_energy_from_archived).
+    # TOU / Impact are not re-priced yet. Signed this month (the step accepts
+    # any date up to today) or dated in the future: the current card already
+    # is the signing-month card, so there is nothing to retrieve. A typed
+    # signing rate still applies, and used to sit unread until the month
+    # rolled over and the price jumped under the user.
+    archived: EnergyRates | None = None
+    archived_snap: SupplierSnapshot | None = None
+    # A signed leg left unbilled for want of an index, whose standing charge
+    # still is the contract's.
+    unindexed: EnergyRates | None = None
+    # What a retrieved signing card does not price and why, for its label.
+    unbilled = "not re-priced: no formula on it to re-price"
+    # The index the month being billed settled at, None on the live tick.
+    settled = (
+        None
+        if month_snapshot is None
+        else getattr(month_snapshot.energy, "index_realised", None)
+    )
+    if start < this_month and _month_card_retrievable(
+        extractor, start, now.date(), entry
+    ):
+        snap_start = await month_card(
+            hass, session, extractor, contract, region, start, entry
+        )
+        # None when no archive holds the signing month's card.
+        if snap_start is not None:
+            archived_snap = snap_start
+            # A settled month of a later Bolt quarter bills each register on
+            # that quarter's own spread, not the one the signing card prints.
+            cohort = _cohort_energy_from_archived(
+                _on_settled_quarter(snap_start, month_snapshot or current_snapshot)
+            )
+            if (
+                cohort is not None
+                and month_snapshot is not None
+                and year_month is not None
+                and on_published_quarters(extractor, cohort, month_snapshot)
+            ):
+                # Signed on a quarterly card, billed on a month's: the month's
+                # index is another one, and the quarter's is the supplier's.
+                settled = await published_quarter_index(
+                    hass, session, extractor, month_snapshot, year_month
+                )
+            # A SpotMonthlyRates leg bills at the current month's mean spot,
+            # which needs an ENTSO-E key. Only the dynamic and spot-monthly
+            # contract kinds are asked for one, so a variable cohort can reach
+            # here without a key: keep the current card's printed rate instead
+            # of tearing the entry down over a key the user was never prompted
+            # for.
+            #
+            # Unless the month being billed has settled: its card then carries
+            # the index the month closed at (``index_realised``), which the leg
+            # bills with no spot at all, so a keyless cohort is billed that
+            # month on the coefficients it signed, as a keyed one is. Keeping
+            # the month's stated figure there billed the energy off one card
+            # while the feed-in, frozen below, was credited on the signing
+            # card's formula at that same index: a Mega Cosy Flex contract
+            # signed in January 2026 was billed 0,26 c/kWh under its own
+            # formula in August and in September. Only on a month walk
+            # (``month_snapshot``): the live tick bills the running month,
+            # which has not settled, and a leg there would send it to the spot
+            # fetch whatever card stands in for it.
+            #
+            # An archived DynamicRates leg needs a spot just as much, and is
+            # deliberately not gated here: every extractor derives the energy
+            # shape from the static catalogue kind rather than from the card
+            # text, so a dynamic leg implies kind == "dynamic", which always
+            # collected a key. Flipping an existing contract's kind in place,
+            # or sniffing the shape out of the card, would break that and let
+            # a keyless entry reach the spot fetch again.
+            # The index the leg carries is the month billed's, keyed or not.
+            # A spot-monthly signing card carries its own month's, and on the
+            # live tick that reached the static day and night sensors, which
+            # fall back on it while the running month has no mean: a Trevion
+            # Groene Stroom Flex cohort signed in March showed March's price
+            # through a cold start or an ENTSO-E outage.
+            if isinstance(cohort, SpotMonthlyRates):
+                if settled is None and not spots_available(entry.data):
+                    unindexed, cohort = cohort, None
+                    unbilled = "not re-priced while the month runs: no ENTSO-E key"
+                else:
+                    cohort = replace(cohort, index_realised=settled)
+            elif getattr(snap_start.energy, "forward_indexed", False):
+                # A forward index is named on the month's own card, the running
+                # month's too, so the cohort is priced on the card of the month
+                # billed: the current one on the live tick. One naming none
+                # keeps its printed rate with the standing charge signed for.
+                cohort = _at_forward_index(
+                    snap_start.energy, month_snapshot or current_snapshot
+                )
+                if cohort is None:
+                    unindexed = snap_start.energy
+                    unbilled = "not re-priced: the month's card names no index"
+            archived = cohort
+    # The typed rate overlays whichever card was retrieved, so a user who
+    # filled in only some boxes keeps the archived signing-month values for
+    # the rest rather than today's. ``_manual_energy_leg`` returns None when
+    # every box was left blank, which leaves the archive (or the current card)
+    # billing as before.
+    # The card's published rate travels ON the snapshot, so every caller of
+    # this function gets it without threading a parameter through eight
+    # signatures, which is how the conversion previously reached the live
+    # tick only, leaving the year-to-date and monthly paths 21 EUR/yr adrift
+    # on the same entry. Fall back to vat_rate for a raw (unresolved) card.
+    #
+    # Only on a contract the signing-rate step is asked for. Popping the keys
+    # in the flow keeps a new one from being left behind, and this is what
+    # heals the entries already holding one: a Mega Dynamic signer who moved
+    # to Smart Flex kept the Dynamic coefficients, and a Smart Flex cohort
+    # re-priced to a spot-monthly leg billed them, 113 to 130 EUR a year of
+    # energy plus the old contract's standing charge.
+    taxes = current_snapshot.taxes
+    manual = (
+        _manual_energy_leg(
+            entry,
+            current_snapshot.energy if archived is None else archived,
+            taxes.published_vat_rate or taxes.vat_rate,
+        )
+        if takes_signing_rate(entry.data)
+        else None
+    )
+    energy = manual if manual is not None else archived
+    if energy is None:
+        # Nothing to freeze a rate from. Four ways, not the three this used
+        # to list: signed this month, a supplier with no archive, a month the
+        # archive does not hold, and a card that WAS retrieved but exposes no
+        # re-priceable leg (_cohort_energy_from_archived returns None for a
+        # variable card whose coefficients would not parse and for a TOU or
+        # Impact card printing resolved bands with no formula behind them, and
+        # a spot-monthly leg is dropped above without a key in a month that
+        # has not settled).
+        #
+        # With no signing rate to hold, the month is billed on its own card,
+        # as it is for an entry that names no cohort month at all: the card of
+        # the month being billed (``month_snapshot``), or the current card on
+        # the live path, where it is that card. Today's coefficients for a
+        # past month re-priced it on a formula that moves every month on
+        # these products. Re-priced on the month's mean rather than its
+        # printed figure, which is LAST month's index by the card's own
+        # words. In the keyless case _month_indexed_leg returns None, so the
+        # entry keeps the printed rate, the same answer the gate above
+        # reached.
+        energy = _month_indexed_leg(month_snapshot or current_snapshot, entry)
+    if energy is None and unindexed is not None:
+        # The rate a keyless cohort cannot re-price stays printed, and only
+        # that: the standing charge does not depend on the index, and a keyed
+        # cohort pays the signing card's every month. The running month and
+        # the projections kept the current card's instead, so a Mega Cosy
+        # Flex contract signed in January 2026 paid 90,10 EUR a year on its
+        # settled months and 105,00 on October.
+        energy = _with_standing_charge(
+            (month_snapshot or current_snapshot).energy, unindexed
+        )
+    if manual is not None:
+        source = "hand-entered signing rate"
+    elif archived is not None:
+        source = "archived signing-month card"
+    elif unindexed is not None:
+        source = "card's printed rate, standing charge off the signing-month card"
+    elif energy is not None:
+        source = "billed month's card, re-priced on its own index"
+    else:
+        source = "current card (no cohort rate available)"
+    # Which resolution won is otherwise invisible: the sensors publish a
+    # price, not its provenance, so "my signing rate does nothing" was
+    # unanswerable without reading the source.
+    #
+    # Remembered apart for a settled month, since a keyless cohort answers
+    # differently there than on the running month and the live tick, and one
+    # key for both logged the line on every tick, several times.
+    logged = (contract, start, settled is not None)
+    if _LOGGED_SOURCE.get(logged) != source:
+        _LOGGED_SOURCE[logged] = source
+        _LOGGER.debug(
+            "%s: contract started %s, %s energy priced from the %s",
+            contract,
+            start,
+            "a settled month's" if settled is not None else "the",
+            source,
+        )
+    # The feed-in leg locks with the offtake leg, so it is resolved from the
+    # same archived card rather than left on the current one (issue #85), and
+    # laid onto the card of the month being billed.
+    injection = (
+        None
+        if archived_snap is None
+        else _cohort_injection_from_archived(
+            archived_snap, month_snapshot or current_snapshot
+        )
+    )
+    # The VAT the leg's coefficients carry: the signing month's, on the card
+    # retrieved for it or, for a rate typed off the household's own contract
+    # with no card retrieved, the month it was signed in whatever today's card
+    # states; none to move on the card of the month being billed; today's on
+    # the current card's own leg.
+    vat_rate: float | None
+    if archived_snap is not None and (manual is not None or archived is not None):
+        vat_rate = _leg_vat(archived_snap, start)
+    elif manual is not None:
+        vat_rate = (
+            None
+            if _leg_vat(current_snapshot, start) is None
+            else residential_vat(start)
+        )
+    elif month_snapshot is not None:
+        vat_rate = None
+    else:
+        vat_rate = _leg_vat(current_snapshot, now.date())
+    # A frozen feed-in leg bills off the signing card only where it is not
+    # the printed figure: fixed for the term, or resolved on spots.
+    billed_off_archive = (
+        manual is not None
+        or archived is not None
+        or (
+            injection is not None
+            and (injection.fixed_for_term or spots_available(entry.data))
+        )
+    )
+    return _CohortLegs(
+        energy=energy,
+        injection=injection,
+        card=_cohort_card(
+            start,
+            this_month,
+            archived_snap,
+            current_snapshot,
+            None if billed_off_archive else unbilled,
+        ),
+        vat_rate=vat_rate,
+    )
+
+
+def _leg_vat(snapshot: SupplierSnapshot, month: date) -> float | None:
+    """The residential rate a leg read off ``snapshot`` carries, or None on a
+    card priced excluding VAT, whose legs carry none."""
+    taxes = snapshot.taxes
+    if taxes.published_vat_rate or taxes.vat_rate:
+        return None
+    return card_residential_vat(snapshot, month)
+
+
+async def _cohort_energy_leg(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    extractor: SupplierExtractor,
+    contract: str,
+    region: str,
+    entry: ConfigEntry,
+    current_snapshot: SupplierSnapshot,
+) -> EnergyRates | None:
+    """The energy half of :func:`_cohort_legs`, for callers that price only
+    the offtake side."""
+    legs = await _cohort_legs(
+        hass, session, extractor, contract, region, entry, current_snapshot
+    )
+    return legs.energy
+
+
+async def signing_month_snapshot(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    extractor: SupplierExtractor,
+    contract: str,
+    region: str,
+    entry: ConfigEntry,
+    current_snapshot: SupplierSnapshot,
+    *,
+    cached_only: bool = False,
+) -> SupplierSnapshot:
+    """The card published the month this contract was signed, or the current one.
+
+    Rates are not the only thing that belongs to the version signed. A welcome
+    credit does too, by its own terms ("enkel tijdens je eerste inschrijvingsjaar
+    voor deze productversie"), and EnergyVision moved that figure four times
+    between March and September 2026, so reading it off today's card credits a
+    March cohort 200 EUR where its own card promised 300.
+
+    The current snapshot comes back unchanged where there is nothing to
+    retrieve: a contract that is not the entry's own, no cohort month, a
+    cohort month inside the running month, or a month no archive can hold
+    (a supplier that keeps none, before the repository's first month).
+    Identity in those cases, so a caller can use the result unconditionally.
+
+    The own-contract gate is the same one :func:`_cohort_legs` opens with, and
+    for a sharper reason here. The compare sweep walks the year-to-date engine
+    once per candidate, and this would then resolve an archived card for each
+    of them, addressed by a signing month belonging to a different contract
+    entirely. The credit is gated again where it is used, so every one of those
+    lookups is discarded: a card fetch per candidate, off the sweep's budget,
+    for an answer nothing reads.
+    """
+    start = _tariff_card_month(entry)
+    if contract != entry.data.get(CONF_CONTRACT):
+        return _signed_in(current_snapshot, start)
+    if start is None:
+        return current_snapshot
+    now = dt_util.now()
+    if start >= date(now.year, now.month, 1):
+        # The current card IS the signing-month card.
+        return _signed_in(current_snapshot, start)
+    if not _month_card_retrievable(extractor, start, now.date(), entry):
+        return _signed_in(current_snapshot, start)
+    resolved = await month_card(
+        hass,
+        session,
+        extractor,
+        contract,
+        region,
+        start,
+        entry,
+        cached_only=cached_only,
+    )
+    if (
+        cached_only
+        and resolved is None
+        and not month_card_cached(hass, extractor.id, contract, region, start)
+    ):
+        # The setup path forbids a fetch, so this is today's card standing in
+        # for a month it is not the card of. That is the documented proxy and
+        # it is sound for RATES, which move slowly and whose stand-in is at
+        # worst a near miss. It is not sound for a welcome credit, which is
+        # the property of one month's card: Luminus's campaign exists only on
+        # the live card of the month it ran in, because the supplier archive
+        # strips it, so crediting a May cohort off September's card invents
+        # 100,43 EUR of campaign that cohort was never offered, and the figure
+        # then vanishes on the next tick when the archive answers properly.
+        #
+        # Withhold it until the real card arrives, which makes the cold tick
+        # agree with every tick after it. Only a month never fetched is
+        # withheld: one cached as None is the archive's final "no card for
+        # this month", which every warm tick answers off the current card
+        # too. A supplier with no archive, a contract with no cohort month and
+        # a signing month inside the running one all return above, so they
+        # keep reading the credit off the card they already had.
+        return without_welcome_credit(current_snapshot)
+    return _signed_in(current_snapshot if resolved is None else resolved, start)
+
+
+def _signed_in(snapshot: SupplierSnapshot, card_month: date | None) -> SupplierSnapshot:
+    """``snapshot``, less a welcome credit its card ties to another month.
+
+    A card that names the month a contract must be signed in grants nothing
+    to one signed in any other, whichever card ends up standing in for it.
+    That stand-in is the current card wherever the signing month's own cannot
+    be had: a Bolt variable card is addressed by version rather than by month,
+    so a Plenty Online contract signed in March read October's "reduction de
+    9,0 c€/kWh ... au cours du mois d'octobre 2026", about 315 EUR it was never
+    offered. A candidate on the compare page is credited as if signed when the
+    household signed its own, so the same rule holds for it.
+
+    No card month means no start date either, and the credit needs one, so
+    there is nothing to withhold.
+    """
+    month = snapshot.welcome_credit_signing_month
+    if month is None or card_month is None or month == card_month:
+        return snapshot
+    return without_welcome_credit(snapshot)
+
+
+async def _effective_snapshot_for_month(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    extractor: SupplierExtractor,
+    contract: str,
+    region: str,
+    year_month: date,
+    current_snapshot: SupplierSnapshot,
+    entry: ConfigEntry,
+    *,
+    cached_only: bool = False,
+    current_raw: SupplierSnapshot | None = None,
+) -> SupplierSnapshot:
+    """Delivery-month snapshot with the signing cohort's energy leg spliced in,
+    on the meter the day ``year_month`` was on.
+
+    Every archive-walking cost path calls this instead of
+    :func:`_snapshot_for_month`: it resolves the delivery month's regulated
+    DSO / tax overlays as before, then overlays the frozen signing-month
+    energy so a locked contract bills its own rate every month while network
+    tariffs and taxes still track the delivery month. A no-op (returns the
+    plain delivery-month snapshot) when there is no cohort override.
+
+    ``cached_only`` and ``current_raw`` are passed straight through to the
+    delivery-month lookup (see :func:`_snapshot_for_month`). The cohort leg
+    below is NOT gated by ``cached_only``: the signing month is what the live
+    price table is already built from on the same tick, so its row is in the
+    cache by the time this runs.
+
+    A month after the running one, read ahead for the year-end cost
+    (:mod:`year_ahead`), has no card anywhere yet and bills on the card as it
+    prices today, which nothing is fetched for.
+
+    ``year_month`` may be any day of the month: the month's snapshot is then
+    put onto the meter that day was on (``meter_of_day``), which differs from
+    the entry's own only before a recorded replacement of an analog meter.
+    Here rather than in each walk, since every walk billing a past day comes
+    through it, and one minding a month split by the replacement passes the
+    day (``meter_segment``).
+    """
+    day, year_month = year_month, year_month.replace(day=1)
+    ahead = YEAR_AHEAD.get()
+    if ahead is not None and year_month > ahead.pivot.replace(day=1):
+        return meter_of_day(entry, ahead.card, day)
+    snap_m = await _snapshot_for_month(
+        hass,
+        session,
+        extractor,
+        contract,
+        region,
+        year_month,
+        current_snapshot,
+        entry,
+        cached_only=cached_only,
+        current_raw=current_raw,
+    )
+    legs = await _cohort_legs(
+        hass,
+        session,
+        extractor,
+        contract,
+        region,
+        entry,
+        current_snapshot,
+        month_snapshot=snap_m,
+        year_month=year_month,
+    )
+    if legs.energy is None and legs.injection is None:
+        return meter_of_day(entry, snap_m, day)
+    # The month the contract was signed in bills what its supplier states the
+    # month settled at (Mega, whose figures are the next card's formulas at
+    # the month's index), keyed or not: the coefficients it locks apply from
+    # the month after. Only a variable card is so settled, and a variable
+    # card takes no typed signing rate.
+    signed = year_month == _tariff_card_month(entry)
+    changes: dict[str, object] = {}
+    energy = legs.energy_on(snap_m, year_month)
+    if signed and getattr(snap_m.energy, "settled_as_stated", False):
+        energy = None
+    if energy is not None:
+        if isinstance(energy, SpotMonthlyRates) and not on_published_quarters(
+            extractor, energy, snap_m
+        ):
+            # The month's own archived card may carry the value its index
+            # settled at (Eneco prints it on the next card). The cohort leg
+            # holds the contract's coefficients; the month supplies the index,
+            # unless the leg is on a quarter's the card does not carry, which
+            # _cohort_legs looked up.
+            energy = replace(
+                energy,
+                index_realised=getattr(snap_m.energy, "index_realised", None),
+            )
+        changes["energy"] = energy
+    if legs.injection is not None:
+        # The feed-in coefficients lock with the offtake ones, so the credit
+        # for a past month is billed off the signing card too (issue #85).
+        #
+        # The INDEX and the printed figure still belong to the delivery month,
+        # exactly as on the energy leg above: the signing card holds what the
+        # contract pays per unit of index, the month holds what the index
+        # settled at. _cohort_legs lays the coefficients onto this month's own
+        # leg for that reason. Carrying the signing month's index across made a
+        # cohort's credit swing on whether the Synergrid profile happened to be
+        # loaded, 62 EUR on a Trevion LifePowr entry signed in the spring, and
+        # carrying today's printed figure back credited every keyless month at
+        # September's rate.
+        changes["injection"] = legs.injection
+    if signed and snap_m.injection is not None and snap_m.injection.settled_as_stated:
+        changes.pop("injection", None)
+    return meter_of_day(entry, replace(snap_m, **changes), day)  # type: ignore[arg-type]
+
+
+def _month_snapshot_cache(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    extractor: SupplierExtractor,
+    contract: str,
+    region: str,
+    snapshot: SupplierSnapshot,
+    entry: ConfigEntry,
+    *,
+    cached_only: bool = False,
+    current_raw: SupplierSnapshot | None = None,
+) -> Callable[[date], Awaitable[SupplierSnapshot]]:
+    """Return a memoised ``snap_for(day)`` fetching the effective snapshot
+    of each delivery month, or each part of one billed on another meter
+    (``meter_segment``), once.
+
+    The live YTD cost and both backfill passes walk the same months
+    repeatedly; the per-call cache keeps archive fetches to at most one
+    per month. ``cached_only`` forwards the no-network mode the first
+    coordinator tick runs its year-to-date walk in, and ``current_raw`` the
+    card ``snapshot`` was resolved from (``_snapshot_for_month``).
+    """
+    cache: dict[date, SupplierSnapshot] = {}
+
+    async def _snap_for(day: date) -> SupplierSnapshot:
+        first = meter_segment(entry.data, day)
+        if first not in cache:
+            cache[first] = await _effective_snapshot_for_month(
+                hass,
+                session,
+                extractor,
+                contract,
+                region,
+                first,
+                snapshot,
+                entry,
+                cached_only=cached_only,
+                current_raw=current_raw,
+            )
+        return cache[first]
+
+    return _snap_for

@@ -1,0 +1,766 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Ecofix Gas & Power tariff card extractor.
+
+Ecofix publishes residential electricity tariff cards at stable URLs:
+
+    https://portal.ecofixgp.be/docs/prices/current/EL_Ecofix_<PRODUCT>_NL.pdf
+
+Four products are sold today:
+
+  - Motion         : dynamic, 15-min Belpex-indexed, phone customer service.
+  - Motion Online  : dynamic, 15-min Belpex-indexed, online-only.
+  - Flexy          : variable, monthly RLP-weighted Belpex average.
+  - Flexy Online   : variable, online-only, with its own coefficients and fee.
+
+Cards cover Flanders + Wallonia in one PDF (no Brussels rows). The same DSO
+and tax overlay is repeated across the three monthly cards; only the
+energy formula and yearly fixed fee differ between them.
+
+The PDF text layout requires pdfplumber's row reconstruction
+(``fetch_pdf_text_layout``); pypdf returns the Wallonia DSO block in
+column-major order which can't be matched by row-anchored regex.
+Filenames are overwrite-in-place: there is no public archive of past
+months, so ``fetch_for_month`` is omitted and the coordinator's
+proxy-forward fallback handles past consumption windows.
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+from dataclasses import dataclass
+from datetime import date
+
+import aiohttp
+
+from ..const import (
+    DSO_AIEG,
+    DSO_AIESH,
+    DSO_ORES,
+    DSO_RESA,
+    DSO_REW,
+    FLUVIUS_CARD_LABELS,
+    REGION_FLANDERS,
+    REGION_WALLONIA,
+)
+from ._ecofix_formulas import _extract_energy, _extract_injection
+from ._parse import (
+    TIER_BOUND,
+    excise_tier_bands,
+    numeric_row,
+    parse_prosumer_column,
+    require_contract,
+    require_every_area,
+    to_float,
+)
+from ._pdf import (
+    NL_MONTHS,
+    fetch_pdf_text_layout,
+    fetch_text,
+    head_freshness_key,
+    head_ok,
+    printed_vat_rate,
+    vat_multiplier,
+)
+from ._rates import (
+    Contract,
+    TariffKind,
+)
+from ._validity import scan_month_end
+from .base import (
+    DsoOverlay,
+    ExtractorError,
+    SupplierExtractor,
+    SupplierSnapshot,
+    TaxOverlay,
+    walloon_dso_overlay,
+    with_vat_basis,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+_BASE_URL = "https://portal.ecofixgp.be/docs/prices/current"
+# The public tariff-card page server-renders one anchor per card, so it is a
+# real discovery surface: measured 2026-09-05 it carries all four residential
+# electricity cards plus the two gas cards. /tarieven is server-rendered too
+# but links only Flexy and Motion, which is what the old docstring was
+# describing when it concluded no listing existed.
+_LISTING_URL = "https://www.ecofixgp.be/tarieven/tariefkaarten"
+
+
+@dataclass(frozen=True)
+class _ContractDef:
+    contract_id: str
+    label: str
+    kind: TariffKind
+    slug: str  # filename stem after EL_Ecofix_
+
+
+_CONTRACTS: tuple[_ContractDef, ...] = (
+    _ContractDef("ecofix_motion", "Ecofix Motion", "dynamic", "Motion"),
+    _ContractDef(
+        "ecofix_motion_online", "Ecofix Motion Online", "dynamic", "Motion_Online"
+    ),
+    _ContractDef("ecofix_flexy", "Ecofix Flexy", "variable", "Flexy"),
+    _ContractDef(
+        "ecofix_flexy_online", "Ecofix Flexy Online", "variable", "Flexy_Online"
+    ),
+)
+
+_CONTRACTS_BY_ID = {c.contract_id: c for c in _CONTRACTS}
+
+
+def _document_url(contract: _ContractDef) -> str:
+    return f"{_BASE_URL}/EL_Ecofix_{contract.slug}_NL.pdf"
+
+
+# The same filename read back off the listing. ``EL_`` is what separates a card
+# from the ``GAS_`` twin the listing links beside it, and the leading slash
+# keeps the match on a path rather than on prose. Digits and hyphens are in the
+# class deliberately: with a letters-only stem an Ecofix product named for its
+# term (EL_Ecofix_Flexy_24_NL.pdf) matches nothing and the catalogue check goes
+# green on it, which is the exact failure this replaces.
+_CARD_URL_RE = re.compile(r"/EL_Ecofix_([A-Za-z0-9_-]+)_NL\.pdf")
+
+
+_DUTCH_MONTHS: dict[str, int] = {name: i for i, name in enumerate(NL_MONTHS, 1)}
+
+
+# ---- top-level fetch / probe / discover --------------------------------------
+
+
+async def fetch(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+) -> SupplierSnapshot:
+    """Fetch and parse the published Ecofix PDF for ``contract_id``.
+
+    Same PDF carries Flanders + Wallonia overlays; the parser narrows
+    the snapshot down to ``region``.
+    """
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Ecofix")
+    url = _document_url(contract)
+    text = await fetch_pdf_text_layout(session, url)
+    snap = parse_snapshot(contract_id, text, region, url)
+    # Here and not in the reader: a card read for its own month keeps a
+    # short table.
+    require_every_area("Ecofix", snap, _areas(region))
+    return snap
+
+
+def _areas(region: str) -> tuple[str, ...]:
+    """The network areas a card of ``region`` prints a row for."""
+    if region == REGION_WALLONIA:
+        return (*(key for _, key in _WALLONIA_LABELS), DSO_ORES)
+    return tuple(_FLANDERS_LABELS.values())
+
+
+async def probe(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,  # URL is region-agnostic.
+) -> str | None:
+    """HEAD the per-contract PDF and return its freshness key.
+
+    Ecofix overwrites the card in place under a stable filename; the
+    response's ``Last-Modified`` (or ``ETag``) flips when a new month
+    is published.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    if contract is None:
+        return None
+    return await head_freshness_key(session, _document_url(contract))
+
+
+async def discover(session: aiohttp.ClientSession) -> set[str]:
+    """Return contract ids for every Ecofix PDF that currently 200s.
+
+    Read the tariefkaarten page, which server-renders one anchor per card.
+    HEAD-probing the registry's own URLs, which is what this did, cannot
+    surface a product the registry does not already know: ``discovered -
+    baseline`` was empty by construction, so the catalogue check reported
+    green for the whole time Flexy Online was on sale. A listing the
+    supplier maintains is the only thing that can answer the question.
+
+    Falls back to the probe when the page is unreachable, so a listing
+    outage degrades to the old behaviour instead of reporting that every
+    product has been withdrawn.
+    """
+    try:
+        listing = await fetch_text(session, _LISTING_URL)
+    except ExtractorError as err:
+        _LOGGER.warning("Ecofix discover: %s unreachable: %s", _LISTING_URL, err)
+        return await _head_probe_ids(session)
+    return {f"ecofix_{slug.lower()}" for slug in _CARD_URL_RE.findall(listing)}
+
+
+async def _head_probe_ids(session: aiohttp.ClientSession) -> set[str]:
+    """The registry's own URLs that still 200, the pre-listing behaviour."""
+    out: set[str] = set()
+    for contract in _CONTRACTS:
+        if await head_ok(session, _document_url(contract), timeout=10):
+            out.add(contract.contract_id)
+    return out
+
+
+# ---- pure parser -------------------------------------------------------------
+
+
+# "(Prijzen inclusief 6% BTW)" in the card header.
+_VAT_RE = re.compile(r"inclusief\s+(\d+)\s*%\s*BTW", re.IGNORECASE)
+
+
+def parse_snapshot(
+    contract_id: str, text: str, region: str, source_url: str = _BASE_URL
+) -> SupplierSnapshot:
+    """Parse one Ecofix tariff card into a region-narrowed snapshot."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Ecofix")
+
+    yearly_fee, flanders_renewables_eur_per_kwh = _extract_fee_and_flanders_renewables(
+        text, contract.kind
+    )
+    energy = _extract_energy(
+        text, contract.kind, yearly_fee, vat_multiplier(text, _VAT_RE)
+    )
+    injection = _extract_injection(text, contract.kind)
+    _require_block_units(text)
+    publication_label, valid_until = _extract_publication(text)
+
+    federal_excise, excise_bands, energy_contribution = _extract_federal_taxes(text)
+    region_connection_fee = (
+        _extract_wallonia_connection_fee(text) if region == REGION_WALLONIA else 0.0
+    )
+    flanders_renewables = (
+        flanders_renewables_eur_per_kwh if region == REGION_FLANDERS else 0.0
+    )
+    wallonia_renewables = (
+        _extract_wallonia_renewables(text) if region == REGION_WALLONIA else 0.0
+    )
+
+    if region == REGION_FLANDERS:
+        dsos = _extract_flanders_dsos(text, contract.kind)
+    elif region == REGION_WALLONIA:
+        dsos = _extract_wallonia_dsos(text)
+    else:
+        # Ecofix doesn't sell in Brussels; the registry's region filter
+        # should already prevent this, but keep the snapshot well-formed.
+        dsos = {}
+
+    return with_vat_basis(
+        SupplierSnapshot(
+            supplier="ecofix",
+            contract=contract_id,
+            energy=energy,
+            dsos=dsos,
+            taxes=TaxOverlay(
+                federal_excise=federal_excise,
+                federal_excise_bands=excise_bands,
+                energy_contribution=energy_contribution,
+                flanders_renewables=flanders_renewables,
+                wallonia_renewables=wallonia_renewables,
+                region_connection_fee=region_connection_fee,
+                energy_fund_eur_per_month=0.0,
+                vat_rate=0.0,
+            ),
+            source_url=source_url,
+            publication_label=publication_label,
+            valid_until=valid_until,
+            injection=injection,
+        ),
+        printed_vat_rate(text, _VAT_RE),
+    )
+
+
+# ---- energy + injection -----------------------------------------------------
+
+
+def _past(text: str, *pieces: str) -> tuple[int, re.Match[str]] | None:
+    """Where the first of ``pieces`` ends, and the match of the last, each
+    piece the first to start at least one character past the end of the one
+    before; ``None`` where one is missing.
+
+    This is what ``a[\\s\\S]+?b[\\s\\S]+?c`` finds, read one pass per piece:
+    a later piece missing past the first copy of an earlier one is missing
+    past every copy, so no other is tried. As one pattern, a card without the
+    later piece was read to its end again from every copy of the earlier.
+    """
+    match = re.search(pieces[0], text)
+    if match is None:
+        return None
+    start = match.end()
+    for piece in pieces[1:]:
+        match = re.compile(piece).search(text, match.end() + 1)
+        if match is None:
+            return None
+    return start, match
+
+
+def _flanders_energy_block(text: str) -> str:
+    """The Vlaanderen energy block runs from the ``Vlaanderen`` heading
+    down to ``Wallonië``; both yearly fee and FL renewables live there.
+    pdfplumber lays the two numbers out in different relative orders
+    across cards (Motion has ``60,00`` then ``Type gebruik 1,60``;
+    Motion Online has ``1,60`` then ``10,00 Type gebruik``), so callers
+    extract both numbers from this slice and disambiguate by magnitude.
+    """
+    found = _past(text, "Vlaanderen", "Wallonië")
+    if found is None:
+        raise ExtractorError("Ecofix: Vlaanderen / Wallonië energy block not found")
+    start, end = found
+    return text[start : end.start()]
+
+
+# The Vlaanderen block's headings are the only statement of the units of its
+# energy price and its fee: "Energieprijs (€ cent/kWh)" then "Vaste vergoeding
+# (€/jaar)", read as the block's first two brackets on every card held, Flexy
+# and Motion, May and August to November 2026. A price restated in €/kWh
+# would read a hundredth of itself and a fee restated a month a twelfth, so a
+# block headed otherwise, or with either left out, is refused. Blanks do not
+# count: the cards print "€cent/kWh" too.
+_BLOCK_UNIT_RE = re.compile(r"\(([^()\n]{0,30})\)")
+_BLOCK_UNITS = ("€cent/kWh", "€/jaar")
+
+
+def _require_block_units(text: str) -> None:
+    """Refuse a card whose Vlaanderen block does not head its price and its
+    fee in the units read."""
+    found = _BLOCK_UNIT_RE.findall(_flanders_energy_block(text))[: len(_BLOCK_UNITS)]
+    units = tuple("".join(unit.split()) for unit in found)
+    if units != _BLOCK_UNITS:
+        raise ExtractorError(
+            f"Ecofix: the Vlaanderen block is headed {units!r}, expected {_BLOCK_UNITS!r}"
+        )
+
+
+def _extract_fee_and_flanders_renewables(
+    text: str, kind: TariffKind
+) -> tuple[float, float]:
+    """Return ``(yearly_fee_eur, flanders_renewables_eur_per_kwh)``.
+
+    The Vlaanderen block prints both values in c€/kWh (renewables) and
+    €/jaar (fee) but with the relative order flipped between Motion
+    and Motion Online and a third layout for Flexy. Disambiguate by
+    magnitude: renewables on Belgian residential cards are < 5 c€/kWh
+    and yearly fees are ≥ 10 €/jaar, so the smaller token is always
+    the renewable and the larger one is the fee.
+    """
+    if kind == "variable":
+        # Flexy: yearly fee precedes "meter Piekuren"; FL renewables
+        # follow the Verbruik label on a single line:
+        #     60,00 meter Piekuren ...
+        #     Verbruik 1,60
+        # Anchor on the "Vaste ... Vlaanderen" header before the
+        # "meter Piekuren" hit, so a future stray integer earlier in
+        # the document can't shadow the fee.
+        fee_match = re.search(
+            r"Vaste\s+Energieprijs\s+Vlaanderen[\s\S]{0,400}?"
+            r"(\d+(?:,\d+)?)\s+meter Piekuren",
+            text,
+        )
+        # The July 2026 Flexy card re-rendered the Vlaanderen renewable
+        # onto its OWN line ABOVE the "Verbruik" label ("1,60\nVerbruik")
+        # instead of after it ("Verbruik 1,60"), which stopped the old
+        # same-line anchor from matching and took the whole card offline.
+        # Accept either order, scoped to the Vlaanderen block so the later
+        # federal "Verbruik tussen 0 & 3.000 kWh" row cannot shadow it. The
+        # value above the label is read from the start of its digits: tried
+        # from each digit of a long run, the run was read again from every one.
+        renew_match = re.search(
+            r"Verbruik\s+(\d+,\d+)|(?<!\d)(\d+,\d+)\s+Verbruik",
+            _flanders_energy_block(text),
+        )
+        if not fee_match:
+            raise ExtractorError("Ecofix Flexy: yearly fixed fee not found")
+        if not renew_match:
+            raise ExtractorError("Ecofix Flexy: Vlaanderen renewables not found")
+        fee = to_float(fee_match.group(1))
+        renewable_cents = to_float(renew_match.group(1) or renew_match.group(2))
+        # Both anchors here are positional, and the Online twin of a product is
+        # exactly what reflows this pair: Motion Online prints the fee and the
+        # renewable in the opposite order to Motion. The dynamic branch below
+        # absorbs that by taking max/min of one slice; two separate anchors
+        # cannot. Read swapped, the Flexy card bills a 1,60 EUR/jaar fee with
+        # 0,6000 EUR/kWh of Flemish renewables, measured at +1.985,60 EUR a
+        # year at 3.500 kWh and +2.861,60 at 5.000. Bound the renewable rather
+        # than compare it to the fee: the boundary this docstring already
+        # documents is "renewables under 5 c/kWh", while a fee-relative test
+        # would also reject a legitimate low or zero standing charge, which is
+        # a real Belgian online-only offer.
+        if renewable_cents >= 5.0:
+            raise ExtractorError(
+                "Ecofix Flexy: Vlaanderen renewable above 5 c/kWh, so the fee "
+                "and renewable columns swapped"
+            )
+        return fee, renewable_cents / 100.0
+
+    block = _flanders_energy_block(text)
+    # Two numbers live between "(€ cent/kWh)" (closing the WKK header)
+    # and the end of the Vlaanderen block: yearly fee + FL renewable.
+    # Anchor on the SECOND "(€ cent/kWh)" inside the block to skip the
+    # Energieprijs unit row, then collect both numbers.
+    cent_marker = _past(block, r"&\s*WKK", r"\(€\s*cent/kWh\)")
+    if cent_marker is None or cent_marker[1].end() == len(block):
+        raise ExtractorError("Ecofix dynamic: '& WKK / (€ cent/kWh)' anchor missing")
+    numbers = re.findall(r"\b\d+,\d+\b", block[cent_marker[1].end() :])
+    if len(numbers) < 2:
+        raise ExtractorError(
+            "Ecofix dynamic: expected fee + FL renewables in the Vlaanderen block"
+        )
+    parsed = [to_float(n) for n in numbers[:2]]
+    fee = max(parsed)
+    renewable_cents = min(parsed)
+    return fee, renewable_cents / 100.0
+
+
+# ---- publication / validity --------------------------------------------------
+
+
+def _extract_publication(text: str) -> tuple[str, date | None]:
+    """Return (publication_label, valid_until_last_day_of_month).
+
+    The card prints e.g. "Mei 2026" right under the product name. It has
+    no validity-keyword anchor (``geldig`` / ``valable``) so the shared
+    helper in ``_validity.parse_valid_until`` would return ``None``; parse
+    the Dutch month name + year directly. ``valid_until`` is the last
+    day of that month so the binary sensor reflects monthly rotation.
+    """
+    # scan_month_end skips a shadowing edition marker ("... Versie 2026")
+    # that the header prints above the month line, returning the first
+    # real month token.
+    d = scan_month_end(text, _DUTCH_MONTHS, limit=1000)
+    if d is None:
+        return "", None
+    return f"{d.year}-{d.month:02d}", d
+
+
+# ---- taxes ------------------------------------------------------------------
+
+
+# Tried in order, first match wins, the policy regional_tax_overlay holds for
+# the other Flemish cards. A flat row, which the cards of the suppliers that
+# switched print since August 2026, wins over the row from 0 kWh of the
+# degressive table being phased out, whatever its upper bound: 3.000 kWh so
+# far, 20.000 kWh on the table the law of 25 October 2026 set. Ecofix's column header "Federale accijns
+# (€cent/kWh)" is followed by its unit, not a figure, so the first pattern
+# cannot read it.
+_EXCISE_ROWS = (
+    re.compile(r"\b(?:Bijzondere|Federale)\s+accijns\s+(\d+,\d+)", re.IGNORECASE),
+    re.compile(rf"Verbruik tussen 0\s*&\s*{TIER_BOUND}\s*kWh\s+([\d,]+)"),
+)
+
+
+def _extract_federal_taxes(
+    text: str,
+) -> tuple[float, tuple[tuple[float, float], ...] | None, float]:
+    """Return (federal_excise, federal_excise_bands, energy_contribution)
+    in EUR/kWh.
+
+    The card's federal block prints residential excise across four kWh
+    bands: the 0-3.000 kWh tier is the excise, and the table from it is read
+    into bands while it falls by volume (until July 2026). A flat excise row
+    is read ahead of it. Energy contribution (Energiebijdrage) is
+    single-rate and optional: the levy was abolished on 2026-08-01 and the
+    suppliers that switched deleted the row, so a card without it is the
+    abolished levy, not a layout drift. From August 2026 the law's own
+    figures replace both (resolve_federal_excise, resolve_federal_contribution).
+    """
+    excise = next((m for p in _EXCISE_ROWS if (m := p.search(text))), None)
+    if excise is None:
+        raise ExtractorError("Ecofix: federal excise row not found")
+    contribution = re.search(r"Energiebijdrage\s+([\d,]+)", text)
+    rate = to_float(excise.group(1)) / 100.0
+    return (
+        rate,
+        excise_tier_bands(text, rate, start=excise.start(), within=excise.end()),
+        to_float(contribution.group(1)) / 100.0 if contribution else 0.0,
+    )
+
+
+def _extract_wallonia_connection_fee(text: str) -> float:
+    # Called only for Wallonia, where the raccordement is mandatory; raise
+    # on a miss rather than silently zero it (matching the federal block).
+    match = re.search(r"Aansluitingsvergoeding\s+([\d,]+)", text)
+    if match is None:
+        raise ExtractorError("Ecofix: Wallonia connection fee not found")
+    return to_float(match.group(1)) / 100.0
+
+
+def _extract_wallonia_renewables(text: str) -> float:
+    """Wallonia ``Bijdrage groene energie`` value.
+
+    pdfplumber's row reconstruction can co-locate the bare value line
+    with an unrelated left-column label (e.g. on Motion the right-side
+    ``3,05`` lands on the same line as the left-side
+    ``Verwachte jaarprijs:`` placeholder). Iterate lines after the WAL
+    ``Bijdrage groene energie`` / ``(€ cent/kWh)`` anchor, skipping the
+    consumption / injection / formula rows, and return the first
+    remaining numeric token.
+    """
+    anchor = _past(text, "Wallonië", "Bijdrage groene energie", r"\(€\s*cent/kWh\)")
+    if not anchor:
+        raise ExtractorError(
+            "Ecofix: Wallonia 'Bijdrage groene energie' anchor not found"
+        )
+    skip_prefixes = (
+        "Afname",
+        "Injectie",
+        "Maandprijs",
+        "Prijsformule",
+        "Enkelvoudige",
+        "Tweevoudige",
+        "Uitsluitend",
+    )
+    stop_markers = ("Distributie", "Ecofix Digi", "Friends with benefits", "Netwerk")
+    for raw_line in text[anchor[1].end() :].splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if any(line.startswith(p) for p in skip_prefixes):
+            # On the Online cards the right-hand value is not always given a
+            # line of its own: Flexy Online prints
+            # "Maandprijs: 5,11 5,11 5,11 / 3,05", where the Flemish columns,
+            # the empty-column slash and the Wallonia value share one line.
+            # Skipping the whole line there dropped the only figure we want
+            # and the scan fell through to the injection row below it, which
+            # billed a feed-in price as the levy. Take a value that follows
+            # the final column separator, and only in that position, so a
+            # date or a formula on a skipped line cannot be mistaken for it.
+            tail = re.search(r"/\s*(\d+,\d+)\s*$", line)
+            if tail:
+                return to_float(tail.group(1)) / 100.0
+            continue
+        if any(marker in line for marker in stop_markers):
+            break
+        match = re.search(r"\b(\d+,\d+)\b", line)
+        if match:
+            return to_float(match.group(1)) / 100.0
+    raise ExtractorError("Ecofix: Wallonia renewables value not found")
+
+
+# ---- DSO row parsers --------------------------------------------------------
+
+
+# Ecofix prints the eight Fluvius areas exactly as the shared map spells them,
+# so alias it rather than restating it: the spelling belongs to the card, and
+# a supplier that abbreviates ("Fluvius Midden-Vl") keeps its own map instead.
+# Same form luminus, mega, octaplus and ecopower already use.
+_FLANDERS_LABELS = FLUVIUS_CARD_LABELS
+
+
+def _extract_flanders_dsos(text: str, kind: TariffKind) -> dict[str, DsoOverlay]:
+    """Read the Flanders Fluvius rows.
+
+    pdfplumber places each digital-meter row on a single line:
+        Fluvius Antwerpen 52,3679 5,35329 4,81301 18,92 18,92
+    The five numbers are: capacity (€/kW/jaar), kWh-tarief total (c€/kWh),
+    kWh-tarief excl. nacht (c€/kWh), data-mgmt per-kwartier (€/jaar),
+    data-mgmt monthly/yearly (€/jaar). The Fluvius West and Zenne-Dijle
+    labels are too long for their column and wrap onto a line of their
+    own, which ``numeric_row`` reads back as the row underneath them.
+
+    ``kind`` selects the data-management column: dynamic contracts meter
+    quarter-hourly (the per-kwartier column), Flexy meters monthly (the
+    monthly/yearly column).
+
+    A second analog-meter table appears below; its 5th column is the
+    prosumer rate in €/jaar, which we attach as
+    ``prosumer_eur_per_kva_year`` (analog-meter holdouts only).
+    """
+    out: dict[str, DsoOverlay] = {}
+    digital_section = _past(
+        text, r"Vlaams gewest\s+Digitale meter", r"Vlaams gewest\s+Analoge meter"
+    )
+    analog_section = _past(
+        text, r"Vlaams gewest\s+Analoge meter", r"Ecofix Gas\s*&\s*Power"
+    )
+    if not digital_section:
+        raise ExtractorError("Ecofix: Flanders 'Digitale meter' table not found")
+    digital = text[digital_section[0] : digital_section[1].start()]
+
+    prosumer_by_key: dict[str, float] = {}
+    if analog_section:
+        prosumer_by_key = parse_prosumer_column(
+            text[analog_section[0] : analog_section[1].start()], _FLANDERS_LABELS
+        )
+
+    for label, key in _FLANDERS_LABELS.items():
+        row = numeric_row(digital, label, 5)
+        if not row:
+            continue
+        capacity = to_float(row[0])
+        kwh_total = to_float(row[1]) / 100.0
+        kwh_excl_night = to_float(row[2]) / 100.0
+        # The row carries two data-management columns: the fourth is the
+        # per-kwartier (quarter-hourly) regime, the fifth the monthly/yearly
+        # one. Bill the column matching the metering regime: dynamic
+        # contracts read quarter-hourly, Flexy reads monthly. They are equal
+        # today, so a single column was masking the mismatch until Fluvius
+        # diverges the two regimes.
+        data_mgmt_year = to_float(row[3 if kind == "dynamic" else 4])
+        out[key] = DsoOverlay(
+            distribution_single=kwh_total,
+            distribution_exclusive_night=kwh_excl_night,
+            transport=0.0,
+            data_management_per_year=data_mgmt_year,
+            capacity_eur_per_kw_year=capacity,
+            prosumer_eur_per_kva_year=prosumer_by_key.get(key),
+        )
+    if not out:
+        raise ExtractorError("Ecofix: no DSO row read in the Flanders table")
+    return out
+
+
+_WALLONIA_LABELS: tuple[tuple[str, str], ...] = (
+    ("AIEG", DSO_AIEG),
+    ("AIESH", DSO_AIESH),
+    ("WAVRE", DSO_REW),
+    ("TECTEO - RESA", DSO_RESA),
+)
+# The ORES rows keep a pattern of their own: every sub-area has to be read
+# and compared, and the sub-area names are not known ahead of the card. The
+# sub-area's name stops at the next line opening an ORES row: run on to the
+# next closing bracket, a run of such lines without one was read to its end
+# again from each.
+_ORES_PATTERN = re.compile(
+    r"^ORES\s*\(((?:(?!^ORES\s*\()[^)])+)\)\s+"
+    + r"([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+"
+    + r"([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+"
+    + r"([\d.,]+)\s+([\d.,]+)\s*$",
+    re.MULTILINE,
+)
+
+
+def _wallonia_row(label: str, text: str) -> tuple[float, ...] | None:
+    row = numeric_row(text, label, 10)
+    if row is None:
+        return None
+    return tuple(to_float(value) for value in row)
+
+
+def _extract_wallonia_dsos(text: str) -> dict[str, DsoOverlay]:
+    """Read the Wallonia rows.
+
+    Each Wallonian DSO row carries 10 numbers in this order:
+        Enkelvoudig | Piek | Dal | PIC | MEDIUM | ECO |
+        Excl. nacht | Jaarlijkse meteropname (€/jaar) |
+        Prosumenten tarief (€/kWe/jaar) | Transport (c€/kWh)
+
+    The card lists 9 ORES sub-areas (Brab. Wal., Est, Hainaut,
+    Luxembourg, Mouscron, Namur, Verviers + Mouscron): every row is
+    numerically identical. ``_extract_ores`` collapses them to a single
+    ``ores`` key and raises on numeric drift between rows so a future
+    sub-area split doesn't silently bill at the first sub-area's rates.
+    """
+    out: dict[str, DsoOverlay] = {}
+
+    # Non-ORES rows.
+    for label, key in _WALLONIA_LABELS:
+        nums = _wallonia_row(label, text)
+        if nums is None:
+            continue
+        out[key] = _build_wallonia_overlay(nums)
+
+    ores = _extract_ores(text)
+    if ores is not None:
+        out[DSO_ORES] = ores
+    if not out:
+        raise ExtractorError("Ecofix: no DSO row read in the Wallonia table")
+    return out
+
+
+def _extract_ores(text: str) -> DsoOverlay | None:
+    rows = list(_ORES_PATTERN.finditer(text))
+    if not rows:
+        return None
+    first = tuple(to_float(g) for g in rows[0].groups()[1:])
+    for row in rows[1:]:
+        following = tuple(to_float(g) for g in row.groups()[1:])
+        if following != first:
+            sub_area = row.group(1).strip()
+            raise ExtractorError(
+                f"Ecofix: ORES sub-area '{sub_area}' numbers diverged from "
+                "the first ORES row; sub-area split needs an explicit DSO key"
+            )
+    return _build_wallonia_overlay(first)
+
+
+def _build_wallonia_overlay(nums: tuple[float, ...]) -> DsoOverlay:
+    (
+        mono,
+        peak,
+        offpeak,
+        pic,
+        medium,
+        eco,
+        excl_night,
+        terme_fixe,
+        prosumer,
+        transport,
+    ) = nums
+    return walloon_dso_overlay(
+        mono=mono,
+        peak=peak,
+        offpeak=offpeak,
+        excl_night=excl_night,
+        pic=pic,
+        medium=medium,
+        eco=eco,
+        transport=transport,
+        terme_fixe=terme_fixe,
+        prosumer=prosumer,
+    )
+
+
+# ---- registry entry ---------------------------------------------------------
+
+
+_ECOFIX_REGIONS = frozenset({REGION_FLANDERS, REGION_WALLONIA})
+
+EXTRACTOR = SupplierExtractor(
+    sweep_cost_s=10.1,
+    id="ecofix",
+    label="Ecofix",
+    contracts=tuple(
+        Contract(
+            id=c.contract_id,
+            label=c.label,
+            kind=c.kind,
+            regions=_ECOFIX_REGIONS,
+            # Flexy indexes injection on the monthly BELPEX-SPP-M, which its
+            # variable energy leg fetches no spots for. The dynamic pair
+            # collects the key through their own energy formula.
+            spot_indexed_injection=c.kind != "dynamic",
+            # And its energy on the delivery month's BELPEX-RLP-M, where the
+            # card prints an earlier month's figure.
+            month_indexed_energy=c.kind == "variable",
+        )
+        for c in _CONTRACTS
+    ),
+    fetch=fetch,
+    probe=probe,
+)

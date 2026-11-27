@@ -1,0 +1,328 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""The Belgian Gas Prices integration."""
+
+from __future__ import annotations
+
+import asyncio
+from datetime import datetime
+
+import voluptuous as vol
+from homeassistant.config_entries import (
+    SIGNAL_CONFIG_ENTRY_CHANGED,
+    ConfigEntry,
+    ConfigEntryChange,
+    ConfigEntryState,
+)
+from homeassistant.core import (
+    Event,
+    EventStateChangedData,
+    HomeAssistant,
+    ServiceCall,
+    ServiceResponse,
+    SupportsResponse,
+    callback,
+)
+from homeassistant.exceptions import ConfigEntryError, ServiceValidationError
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
+from homeassistant.helpers.event import async_track_state_change_event, async_track_time_change
+from homeassistant.helpers.service import async_register_admin_service
+from homeassistant.helpers.storage import Store
+from homeassistant.helpers.typing import ConfigType
+from homeassistant.util import dt as dt_util
+from homeassistant.util.json import JsonValueType
+
+from .backfill import backfill_once_a_year, backfill_prices
+from .backfill_cost import backfill_cost, backfill_cost_once
+from .bill_check import bill_checked
+from .bill_cost import window_cost
+from .const import (
+    CONF_CARD_ARCHIVE,
+    DEFAULT_CARD_ARCHIVE,
+    DOMAIN,
+    PLATFORMS,
+    STORAGE_VERSION,
+)
+from .coordinator import GasCoordinator
+from .daily_ranking import ranking_minute
+from .energy_rate import energy_rates
+from .issues import clear_issues
+from .providers._validity import earliest_priced_month
+from .providers.base import ExtractorError
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
+SERVICE_REFRESH = "refresh"
+SERVICE_BACKFILL = "backfill_statistics"
+SERVICE_BILL_COST = "bill_cost"
+SERVICE_ENERGY_RATE = "energy_rate"
+_REFRESH_SCHEMA = vol.Schema({vol.Optional("entry_id"): cv.string})
+_BACKFILL_SCHEMA = vol.Schema(
+    {
+        vol.Optional("entry_id"): cv.string,
+        vol.Optional("start_date"): cv.date,
+        vol.Optional("clear", default=False): cv.boolean,
+    }
+)
+_BILL_COST_SCHEMA = vol.Schema(
+    {
+        vol.Required("entry_id"): cv.string,
+        vol.Required("start"): cv.date,
+        vol.Required("end"): cv.date,
+    }
+)
+
+type GasConfigEntry = ConfigEntry[GasCoordinator]
+
+
+def _loaded_coordinators(hass: HomeAssistant, entry_id: str | None) -> list[GasCoordinator]:
+    coordinators = [
+        entry.runtime_data
+        for entry in hass.config_entries.async_loaded_entries(DOMAIN)
+        if entry_id is None or entry.entry_id == entry_id
+    ]
+    if entry_id is not None and not coordinators:
+        raise ServiceValidationError(
+            translation_domain=DOMAIN,
+            translation_key="unknown_entry",
+            translation_placeholders={"entry_id": entry_id},
+        )
+    return coordinators
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Register the services once, whatever the number of entries."""
+
+    @callback
+    def _entry_changed(_change: ConfigEntryChange, entry: ConfigEntry) -> None:
+        # A disabled entry is stopped for good, loaded or with its setup
+        # still retrying, which is not unloaded: its Repairs cards go with
+        # it here. Any other unload is followed by a setup, whose first
+        # tick deletes the cards that no longer hold.
+        if (
+            entry.domain == DOMAIN
+            and entry.state is ConfigEntryState.NOT_LOADED
+            and entry.disabled_by is not None
+        ):
+            clear_issues(hass, entry.entry_id)
+
+    async_dispatcher_connect(hass, SIGNAL_CONFIG_ENTRY_CHANGED, _entry_changed)
+
+    async def _refresh(call: ServiceCall) -> None:
+        # Done when the fetches are, so what follows the call reads the
+        # prices they give; the entries side by side, each with its lock.
+        await asyncio.gather(
+            *(
+                coordinator.async_force_refresh(wait=True)
+                for coordinator in _loaded_coordinators(hass, call.data.get("entry_id"))
+            )
+        )
+
+    async def _backfill(call: ServiceCall) -> ServiceResponse:
+        entry_id = call.data.get("entry_id")
+        if call.data["clear"] and entry_id is None:
+            # A clear deletes a sensor's statistics whole; one careless call
+            # must not do that to every entry at once.
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="clear_needs_entry"
+            )
+        today = dt_util.now().date()
+        earliest = earliest_priced_month(today)
+        asked = call.data.get("start_date")
+        if asked is not None and asked < earliest:
+            # The index values read off cards reach no further back, and an
+            # absurd date would only stall.
+            raise ServiceValidationError(
+                translation_domain=DOMAIN,
+                translation_key="start_date_too_early",
+                translation_placeholders={"earliest": earliest.isoformat()},
+            )
+        if asked is not None and asked > today:
+            # Nothing to write, and a clear first would delete the history
+            # for nothing.
+            raise ServiceValidationError(
+                translation_domain=DOMAIN, translation_key="start_date_in_future"
+            )
+        written: dict[str, JsonValueType] = {}
+        for coordinator in _loaded_coordinators(hass, entry_id):
+            start = asked or coordinator.window_start(today)
+            written.update(
+                await backfill_prices(hass, coordinator, start, clear=call.data["clear"])
+            )
+            # The cost is the year's whatever the start, rewritten rather than
+            # cleared: a clear would take the years before with it.
+            written.update(await backfill_cost(hass, coordinator))
+        return {"rows": written}
+
+    async def _bill_cost(call: ServiceCall) -> ServiceResponse:
+        (coordinator,) = _loaded_coordinators(hass, call.data["entry_id"])
+        return await window_cost(coordinator, call.data["start"], call.data["end"])
+
+    async def _energy_rate(call: ServiceCall) -> ServiceResponse:
+        (coordinator,) = _loaded_coordinators(hass, call.data["entry_id"])
+        return await energy_rates(coordinator, call.data["start"], call.data["end"])
+
+    # For administrators only, as the backfill below. Every call fetches the
+    # card, the index values and the calorific values again whatever their
+    # age, and any user, read-only ones included, could repeat it at will. A
+    # call with no user, as an automation's is, still goes through.
+    async_register_admin_service(hass, DOMAIN, SERVICE_REFRESH, _refresh, schema=_REFRESH_SCHEMA)
+    # For administrators only, as Home Assistant registers its own statistics
+    # services: a clear deletes a statistic's whole history, which nothing
+    # gives back. A call with no user, as an automation's is, still goes
+    # through.
+    async_register_admin_service(
+        hass,
+        DOMAIN,
+        SERVICE_BACKFILL,
+        _backfill,
+        schema=_BACKFILL_SCHEMA,
+        supports_response=SupportsResponse.OPTIONAL,
+    )
+    # For administrators only: it reads the meter's history, which says when
+    # a household is away, and fetches the cards of the months asked.
+    async_register_admin_service(
+        hass,
+        DOMAIN,
+        SERVICE_BILL_COST,
+        _bill_cost,
+        schema=_BILL_COST_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+    # For administrators only, as bill_cost: every call fetches the cards of
+    # the months asked that are not held yet.
+    async_register_admin_service(
+        hass,
+        DOMAIN,
+        SERVICE_ENERGY_RATE,
+        _energy_rate,
+        schema=_BILL_COST_SCHEMA,
+        supports_response=SupportsResponse.ONLY,
+    )
+    return True
+
+
+async def async_setup_entry(hass: HomeAssistant, entry: GasConfigEntry) -> bool:
+    try:
+        coordinator = GasCoordinator(hass, entry, defer_meter_reads=True)
+    except ExtractorError as err:
+        # A supplier this release no longer carries: retrying cannot help.
+        raise ConfigEntryError(str(err)) from err
+    if coordinator.extractor.images_only and not entry.data.get(
+        CONF_CARD_ARCHIVE, DEFAULT_CARD_ARCHIVE
+    ):
+        # No card of this supplier can be read here, and the entry keeps the
+        # archive's reading out: retrying would only download the card.
+        raise ConfigEntryError(
+            translation_domain=DOMAIN,
+            translation_key="card_archive_needed",
+            translation_placeholders={"supplier": coordinator.extractor.label},
+        )
+    await coordinator.async_load_persistent()
+    entry.runtime_data = coordinator
+    await coordinator.async_config_entry_first_refresh()
+    if coordinator.meter_reads_pending:
+        # The first refresh read no meter, since Home Assistant waits on it:
+        # the one that does runs now, while the rest of it starts. On the
+        # refresh lock rather than a requested refresh, which Home Assistant
+        # drops when it comes due while another tick holds that lock.
+        entry.async_create_background_task(
+            hass,
+            coordinator.async_reprice(lambda: coordinator.meter_reads_pending),
+            f"{DOMAIN} meter read",
+        )
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+    entry.async_on_unload(entry.add_update_listener(_async_reload))
+
+    bill = bill_checked(entry.data)
+    if bill:
+
+        @callback
+        def _bill_changed(_event: Event[EventStateChangedData]) -> None:
+            coordinator.bill_changed()
+
+        entry.async_on_unload(async_track_state_change_event(hass, bill, _bill_changed))
+
+    running: set[str] = set()
+
+    def _maybe_backfill() -> None:
+        # One run at a time; each returns at once when nothing it draws
+        # from has moved since the last one. Not before a tick goes to read
+        # the meter: the history is priced on the measured volume, and its
+        # stamp would keep a year drawn on another one. One still waiting
+        # for the energy manager draws on the held volume, or the typed one
+        # when none is held.
+        if running or coordinator.meter_reads_pending:
+            return
+        running.add(entry.entry_id)
+
+        async def _run() -> None:
+            try:
+                await backfill_once_a_year(hass, coordinator)
+                await backfill_cost_once(hass, coordinator)
+            finally:
+                running.discard(entry.entry_id)
+
+        entry.async_create_background_task(hass, _run(), f"{DOMAIN} statistics backfill")
+
+    entry.async_on_unload(coordinator.async_add_listener(_maybe_backfill))
+    _maybe_backfill()
+
+    # The hourly tick alone would miss a minute late in the day's last hour
+    # whenever it lands earlier in that hour, day after day.
+    minute = ranking_minute(entry.entry_id)
+
+    @callback
+    def _rank_at_its_minute(_now: datetime) -> None:
+        coordinator.maybe_rank(dt_util.now().date())
+
+    entry.async_on_unload(
+        async_track_time_change(
+            hass, _rank_at_its_minute, hour=minute // 60, minute=minute % 60, second=0
+        )
+    )
+    return True
+
+
+async def _async_reload(hass: HomeAssistant, entry: GasConfigEntry) -> None:
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
+async def async_unload_entry(hass: HomeAssistant, entry: GasConfigEntry) -> bool:
+    """Unload the platforms. The Repairs cards stay: a reload is an unload
+    too, and deleting a card drops the user's choice to ignore it, for the
+    next tick to raise it afresh. A removal or a disabling clears them."""
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: GasConfigEntry) -> None:
+    """Drop the entry's store and Repairs cards with the entry, so a re-add
+    starts clean, whether it was loaded or its setup was still retrying."""
+    clear_issues(hass, entry.entry_id)
+    await Store[dict[str, object]](
+        hass, STORAGE_VERSION, f"{DOMAIN}.{entry.entry_id}"
+    ).async_remove()

@@ -1,0 +1,944 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Everything the comparison page renders, assembled once.
+
+The result step is a single description-placeholder dict: the ranking table,
+the chart series, the caveats and the per-row breakdown all arrive as one
+blob of pre-formatted text. That formatting is long, and none of it decides
+anything, so it lives away from the steps that do.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
+
+from homeassistant.config_entries import OptionsFlow
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.util import dt as dt_util
+
+from .cohort import _signed_in
+from .compare_engine import _SweepEngine
+from .compare_household import _meters_rewired
+from .compare_inputs import (
+    _coordinator_rlp_index_weights,
+    _coordinator_rlp_weights,
+    _coordinator_spp_weights,
+    _detached_spot_view,
+    _keyless_stale_spots,
+    _kva,
+    _label_for_contract,
+    _label_for_supplier,
+    _quote_entry,
+    _spots_cover,
+    _target_dso_mode,
+)
+from .compare_quote import (
+    _annual_bill,
+    _candidate_welcome_credit,
+    _own_welcome_credit,
+    _ytd_welcome_credit,
+)
+from .compare_table import (
+    _card_caveats,
+    _no_day_ahead,
+    _populate_charts,
+    _solar_note,
+    _uncredited_note,
+    _vintage_note,
+    _whatif_note,
+)
+from .compare_weighting import _compare_injection_credit, _tou_weighted_per_kwh
+from .const import (
+    CONF_API_KEY,
+    CONF_CONTRACT,
+    CONF_CONTRACT_START_DATE,
+    CONF_DIRECT_DEBIT,
+    CONF_KEYLESS_SPOTS,
+    CONF_METER,
+    CONF_SUPPLIER,
+    METER_MONO,
+    SOLAR_REGIME_INJECTION,
+    SPOT_PRICED_CONTRACT_KINDS,
+)
+from .first_year import first_year_volume
+from .flow_contracts import _contract_kind
+from .markdown_text import escape_markdown
+from .providers import get as get_extractor
+from .providers import settlement_answer
+from .signing_month import _parse_iso_date, _tariff_card_month
+from .snapshot_resolve import entry_annual_injection_kwh
+from .spot_stats import own_day_ahead, quarter_start
+
+
+class _PlaceholdersMixin(OptionsFlow):
+    """Mixed into _CompareStepsMixin."""
+
+    # State the concrete class owns, declared as BARE annotations with no
+    # value: a valued class attribute would change hasattr() and instance-dict
+    # behaviour. __init__ over there is what actually creates these.
+    _compare: dict[str, Any]
+
+    if TYPE_CHECKING:
+        # Provided by _CompareStepsMixin (compare_flow.py), which mixes this
+        # one in; a stub, since a subclass cannot also be a base.
+        @property
+        def _engine(self) -> _SweepEngine: ...
+
+    async def _build_compare_placeholders(self) -> dict[str, str] | None:
+        """Fetch the picked supplier's snapshot and compute a side-by-side
+        annual estimate against the user's current entry.
+
+        Annual = per_kwh_now * the resolved yearly volume + yearly fees, where the
+        yearly fees are yearly_fixed_fee + 12 * energy_fund + 12 *
+        capacity (Flanders) + 12 * prosumer (Wallonia compensation +
+        solar). Errors collapse to ``-`` so the page always renders.
+        ``None`` while the entry has no coordinator to quote from.
+        """
+
+        from .coordinator import BePricesCoordinator
+
+        current = self.config_entry.data
+        coord = getattr(self.config_entry, "runtime_data", None)
+        # Coordinator may not be a BePricesCoordinator if the entry is
+        # mid-reload (UNDEFINED sentinel) or never finished setup. There is
+        # nothing to quote then, and the step aborts with a translated reason
+        # rather than render a page of dashes around English placeholders.
+        if not isinstance(coord, BePricesCoordinator):
+            return None
+
+        meter = self._compare.get(CONF_METER, current.get(CONF_METER, METER_MONO))
+        hh = await self._engine._resolve_household(
+            coord,
+            candidates=[
+                (
+                    self._compare[CONF_SUPPLIER],
+                    self._compare[CONF_CONTRACT],
+                    settlement_answer(self._compare),
+                )
+            ],
+        )
+        region = hh.region
+        day_start = hh.day_start
+        dso = hh.dso
+        current_meter = hh.current_meter
+        dso_mode = hh.dso_mode
+        peak_kw = hh.peak_kw
+        stored_regime = hh.stored_regime
+        regime = hh.regime
+        quote_entry = hh.quote_entry
+        overridden = hh.overridden
+        now_utc = hh.now_utc
+        today_local = hh.today_local
+        ytd_from = hh.ytd_from
+        fee_proration = hh.fee_proration
+        month_proration = hh.month_proration
+        spot_dict = hh.spot_dict
+        current_kind = hh.current_kind
+        avg_spot = hh.avg_spot
+        compare_spot_injection = hh.compare_spot_injection
+        ytd_kwh = hh.ytd_kwh
+        rolling_inj_kwh = hh.rolling_inj_kwh
+        ytd_inj_kwh = hh.ytd_inj_kwh
+        annual_kwh = hh.annual_kwh
+        volumes_typed = hh.volumes_typed
+        placeholders = hh.placeholders
+        current_snapshot = hh.current_snapshot
+        raw_snapshot = hh.raw_snapshot
+        baseline_snapshot = hh.baseline_snapshot
+        hour_weights = hh.hour_weights
+        inj_hour_weights = hh.inj_hour_weights
+        current_per_kwh = hh.current_per_kwh
+        current_export_per_kwh = hh.current_export_per_kwh
+        _spot_for = hh.spot_for
+        _credit_month_spot_for = hh.credit_month_spot_for
+        _export_rate_for = hh.export_rate_for
+
+        # The target side. Unlike everything above, each of these is a
+        # property of the ONE contract being quoted, and a ranking recomputes
+        # them per row against the household context resolved once.
+        other_kind = _contract_kind(
+            self._compare[CONF_SUPPLIER],
+            self._compare[CONF_CONTRACT],
+            quarter_hourly=settlement_answer(self._compare),
+        )
+        other_dso_mode = _target_dso_mode(other_kind, dso_mode)
+        # On the settlement asked for the target, as the ranking's
+        # _target_side builds it. The year-to-date engine resolves every
+        # archived month against this entry, and the household's own answer
+        # turned a Bolt card quoted on monthly settlement back into a dynamic
+        # one there, which the static walk then dropped month by month.
+        target_entry = _quote_entry(
+            self.config_entry,
+            regime,
+            other_dso_mode,
+            quarter_hourly=settlement_answer(self._compare),
+            meter=meter,
+            direct_debit=self._compare.get(CONF_DIRECT_DEBIT),
+        )
+        other_export_per_kwh: float | None = None
+
+        # Other supplier: fetch + compute.
+        session = async_get_clientsession(self.hass)
+        other_extractor = get_extractor(self._compare[CONF_SUPPLIER])
+        other_per_kwh: float | None = None
+        other_welcome_credit = 0.0
+        other_register_rates: Any = None
+        other_snap = None
+        other_raw = None
+        # The quoted card before the own contract's cohort splice, for what the
+        # own side reads off raw_snapshot: the energy kind the feed-in credit
+        # asks whether it rides a month mean, and the card the year-to-date
+        # walk resolves the cohort on per month. The same card as other_snap
+        # for any other contract, which is not spliced.
+        other_card = None
+        own_contract = (
+            self._compare[CONF_SUPPLIER] == current[CONF_SUPPLIER]
+            and self._compare[CONF_CONTRACT] == current[CONF_CONTRACT]
+        )
+        # Resolve the quote against this entry's site facts through the same
+        # helper the coordinator uses, not apply_vat alone. Both transforms are
+        # per-entry, and skipping the excise band priced a professional quote
+        # at the card's first tier however much the household actually uses:
+        # 1,421 c€/kWh instead of 1,139 at 60 000 kWh/yr, overstating the
+        # alternative by about 169 EUR/yr. The user's own side comes off the
+        # coordinator and IS resolved, so the comparison was biased.
+        from .snapshot_resolve import _resolve_snapshot
+        from .snapshot_store import fetch_shared
+
+        # Through the shared policy rather than extractor.fetch directly, but
+        # asking for a fresh card: this is one quote the user explicitly asked
+        # for, and three compare targets (Engie, Luminus, energie.be) publish
+        # no probe, so adopting a cached row would quote them off a card up to
+        # a day old where this page always downloaded. The other two wins of
+        # going through the policy are kept: the per-key lock, so two dialogs
+        # on one tuple do not both download, and the write into the shared
+        # cache on success, so the coordinators can adopt what this fetched.
+        #
+        # record_failure=False because this is a read-only page. A background
+        # tick's failure is evidence about the supplier and the negative row
+        # exists so siblings back off; a dialog's failure is not, and writing
+        # it here cancels a real entry's due download for five minutes and
+        # inflates the counter the Repairs card is thresholded on.
+        fetched = await fetch_shared(
+            self.hass,
+            session,
+            other_extractor,
+            self._compare[CONF_CONTRACT],
+            region,
+            supplier=self._compare[CONF_SUPPLIER],
+            force=True,
+            record_failure=False,
+        )
+        archived = (
+            None
+            if fetched.row is not None
+            else await self._engine._ocr_fallback(
+                self._compare[CONF_SUPPLIER],
+                self._compare[CONF_CONTRACT],
+                region,
+                fetched,
+            )
+        )
+        if fetched.row is None and archived is None:
+            # Includes the backoff arm, which carries a sibling's recent
+            # failure and no exception of its own. The page is markdown, and
+            # the message quotes what the supplier's server answered.
+            placeholders["error"] = (
+                f"could not fetch quote: {escape_markdown(fetched.error_message)}"
+            )
+        else:
+            if archived is not None:
+                # Page images: the archive's OCR reading is the only price
+                # that exists for this month, and the note below says so.
+                other_read_by_ocr = archived.read_by_ocr
+                fetched_snapshot = archived.snapshot
+            else:
+                # Not None here: the branch above covers the failed fetch, so
+                # one of the two always carries a card.
+                assert fetched.row is not None
+                other_read_by_ocr = False
+                fetched_snapshot = fetched.row.snapshot
+            other_raw = fetched_snapshot
+            other_snap = _resolve_snapshot(
+                _quote_entry(
+                    self.config_entry,
+                    regime,
+                    quarter_hourly=settlement_answer(self._compare),
+                    meter=meter,
+                    direct_debit=self._compare.get(CONF_DIRECT_DEBIT),
+                ),
+                fetched_snapshot,
+            )
+            other_card = other_snap
+            if own_contract:
+                # The household's own contract on another meter or regime is
+                # still the contract it signed: the rates it locked in, not
+                # today's card for a new signer. The own side is spliced the
+                # same way, so a quote that changes nothing reads zero.
+                from .cohort import _cohort_legs
+
+                legs = await _cohort_legs(
+                    self.hass,
+                    session,
+                    other_extractor,
+                    self._compare[CONF_CONTRACT],
+                    region,
+                    target_entry,
+                    other_snap,
+                )
+                other_snap = legs.splice(other_snap)
+            if dso not in other_snap.dsos:
+                placeholders["error"] = (
+                    f"{self._compare[CONF_SUPPLIER]} doesn't serve DSO {dso}"
+                )
+            else:
+                other_per_kwh = _tou_weighted_per_kwh(
+                    other_snap,
+                    dso,
+                    region,
+                    dt_util.as_local(now_utc),
+                    await _spot_for(other_snap),
+                    meter,
+                    other_dso_mode,
+                    hour_weights,
+                    day_start=day_start,
+                )
+                other_export_per_kwh = await _export_rate_for(
+                    other_snap, meter, other_dso_mode
+                )
+                other_register_rates = await hh.register_rates_for(
+                    other_snap, meter, other_dso_mode
+                )
+                if other_per_kwh is None:
+                    placeholders["error"] = "compute failed"
+                elif own_contract:
+                    # A contract already held grants no new welcome credit:
+                    # only what is left of the household's own first year,
+                    # read off the card it signed, on the meter quoted.
+                    other_welcome_credit = await _own_welcome_credit(
+                        self.hass,
+                        target_entry,
+                        other_snap,
+                        hh.signing_snapshot,
+                        dt_util.as_local(now_utc),
+                        dso,
+                        region,
+                        await _spot_for(other_snap),
+                        meter,
+                        other_dso_mode,
+                        hour_weights,
+                        annual_kwh,
+                        rolling_inj_kwh,
+                        regime=regime,
+                        day_start=day_start,
+                    )
+                else:
+                    # A customer signing this card today, over the coming
+                    # year, off the card as it prints today. The own side
+                    # carries what is left of its own first year.
+                    other_welcome_credit = _candidate_welcome_credit(
+                        other_snap,
+                        today_local,
+                        dt_util.as_local(now_utc),
+                        dso,
+                        region,
+                        await _spot_for(other_snap),
+                        meter,
+                        other_dso_mode,
+                        hour_weights,
+                        annual_kwh,
+                        rolling_inj_kwh,
+                        regime=regime,
+                        day_start=day_start,
+                    )
+
+        # Per-supplier injection price (only used in the "injection"
+        # regime; compensation regime nets at the meter, none has
+        # nothing to credit). Compute from each snapshot via the
+        # coordinator's existing helper, which returns None when the
+        # snapshot has no injection data or the user isn't on the
+        # injection regime.
+        current_inj_price: float | None = None
+        compare_inj_price: float | None = None
+        # One clause per side that ends up crediting nothing. Both the
+        # "no injection tariff on the card" and the "spot-indexed but no
+        # spot" cases land on the same silent no-credit branch of
+        # _annual_bill, so the page has to name them or it reads as if the
+        # printed credit applied to both sides.
+        uncredited: list[str] = []
+        if regime == SOLAR_REGIME_INJECTION:
+            if current_snapshot is not None:
+                current_inj_price = _compare_injection_credit(
+                    current_snapshot,
+                    quote_entry,
+                    spot_dict,
+                    avg_spot,
+                    await _credit_month_spot_for(
+                        current_snapshot,
+                        entry=quote_entry,
+                        own=True,
+                        raw=raw_snapshot,
+                    ),
+                    inj_hour_weights,
+                    raw_snapshot=raw_snapshot,
+                    credit_year=hh.credit_year,
+                )
+                if current_inj_price is None and rolling_inj_kwh > 0:
+                    uncredited.append(
+                        _uncredited_note(
+                            current_snapshot,
+                            _label_for_supplier(current[CONF_SUPPLIER]),
+                        )
+                    )
+            if other_snap is not None:
+                compare_inj_price = _compare_injection_credit(
+                    other_snap,
+                    quote_entry,
+                    spot_dict,
+                    avg_spot,
+                    await _credit_month_spot_for(
+                        other_snap, entry=quote_entry, own=False, raw=other_card
+                    ),
+                    inj_hour_weights,
+                    raw_snapshot=other_card,
+                    meter=meter,
+                    credit_year=hh.credit_year,
+                )
+                if compare_inj_price is None and rolling_inj_kwh > 0:
+                    uncredited.append(
+                        _uncredited_note(
+                            other_snap,
+                            _label_for_supplier(self._compare[CONF_SUPPLIER]),
+                        )
+                    )
+
+        current_register_rates = await hh.register_rates_for(
+            current_snapshot, current_meter, dso_mode
+        )
+        current_annual: float | None = None
+        if current_per_kwh is not None:
+            current_annual = _annual_bill(
+                current_snapshot,
+                quote_entry,
+                peak_kw,
+                current_per_kwh,
+                annual_kwh,
+                rolling_inj_kwh,
+                current_inj_price,
+                export_per_kwh=current_export_per_kwh,
+                register_weights=hh.register_weights,
+                register_rates=current_register_rates,
+                meter=current_meter,
+                welcome_credit_eur=hh.own_welcome_credit,
+            )
+            placeholders["current_per_kwh"] = f"{current_per_kwh:.4f}"
+            placeholders["current_annual"] = f"{current_annual:.2f}"
+        if other_per_kwh is not None and other_snap is not None:
+            placeholders["compare_per_kwh"] = f"{other_per_kwh:.4f}"
+            placeholders["compare_annual"] = (
+                f"{_annual_bill(other_snap, target_entry, peak_kw, other_per_kwh, annual_kwh, rolling_inj_kwh, compare_inj_price, export_per_kwh=other_export_per_kwh, register_weights=hh.register_weights_for(meter, other_dso_mode), register_rates=other_register_rates, meter=meter, welcome_credit_eur=other_welcome_credit):.2f}"
+            )
+
+        # A what-if moves BOTH sides together, so the printed supplier delta
+        # barely shifts and the interesting number goes missing. Price the
+        # user's own contract once more under the entry AS CONFIGURED: that
+        # difference is the whole question a what-if is asking.
+        #
+        # It matters more now that the picker offers the user's own contract:
+        # quoting that against itself with a different meter or regime makes
+        # the supplier delta zero by construction, and this baseline is the
+        # only line on the page that answers what the change is worth.
+        baseline_annual: float | None = None
+        if overridden and current_per_kwh is not None and baseline_snapshot is not None:
+            baseline_inj_price = (
+                _compare_injection_credit(
+                    baseline_snapshot,
+                    self.config_entry,
+                    spot_dict,
+                    avg_spot,
+                    await _credit_month_spot_for(
+                        baseline_snapshot,
+                        entry=self.config_entry,
+                        own=True,
+                        raw=raw_snapshot,
+                    ),
+                    inj_hour_weights,
+                    raw_snapshot=raw_snapshot,
+                    credit_year=hh.credit_year,
+                )
+                if stored_regime == SOLAR_REGIME_INJECTION
+                else None
+            )
+            baseline_annual = _annual_bill(
+                baseline_snapshot,
+                self.config_entry,
+                peak_kw,
+                current_per_kwh,
+                annual_kwh,
+                rolling_inj_kwh,
+                baseline_inj_price,
+                export_per_kwh=current_export_per_kwh,
+                register_weights=hh.register_weights,
+                register_rates=current_register_rates,
+                meter=current_meter,
+                # The same first-year share the what-if side carries, on the
+                # card and under the regime as configured: a what-if moves the
+                # regime or the meter, never the day the household signed,
+                # and the regime decides whether the ristourne is netted and
+                # whether a feed-in bonus applies, so the what-if regime here
+                # moved the credit the note says the change is worth.
+                welcome_credit_eur=await _own_welcome_credit(
+                    self.hass,
+                    self.config_entry,
+                    baseline_snapshot,
+                    hh.signing_snapshot,
+                    dt_util.as_local(now_utc),
+                    dso,
+                    region,
+                    await _spot_for(baseline_snapshot),
+                    current_meter,
+                    dso_mode,
+                    hour_weights,
+                    annual_kwh,
+                    rolling_inj_kwh,
+                    regime=stored_regime,
+                    day_start=day_start,
+                ),
+            )
+        placeholders["solar_note"] = _whatif_note(
+            _solar_note(regime, rolling_inj_kwh, uncredited),
+            stored_regime=stored_regime,
+            regime=regime,
+            baseline_eur=baseline_annual,
+            whatif_eur=current_annual,
+            volumes_typed=volumes_typed,
+            missing_kva=_kva(current) <= 0.0,
+        )
+        caveats: list[str] = []
+        own_gaps = hh.index_gaps(current_snapshot, own=True)
+        other_gaps = hh.index_gaps(other_snap)
+        if current_snapshot is not None:
+            caveats += _card_caveats(
+                current_snapshot,
+                _label_for_supplier(current[CONF_SUPPLIER]),
+                gaps=own_gaps,
+            )
+        if other_snap is not None:
+            caveats += _card_caveats(
+                other_snap,
+                _label_for_supplier(self._compare[CONF_SUPPLIER]),
+                read_by_ocr=other_read_by_ocr,
+                gaps=other_gaps,
+            )
+        # Once each: the own contract quoted against itself is one card on
+        # both sides, and its every caveat read twice in a row.
+        caveats = list(dict.fromkeys(caveats))
+        if own_gaps.day_ahead or other_gaps.day_ahead:
+            caveats.append(_no_day_ahead(own_gaps.day_ahead, other_gaps.day_ahead))
+        rewired = _meters_rewired(self.config_entry, today_local)
+        if rewired:
+            caveats.append(
+                "the year to date is left out, as an earlier contract this "
+                "year read other meter sensors or ran on another kind of meter "
+                "(analog or digital)"
+            )
+        vintage = _vintage_note(
+            current_snapshot,
+            _label_for_supplier(current[CONF_SUPPLIER]),
+            other_snap,
+            _label_for_supplier(self._compare[CONF_SUPPLIER]),
+        )
+        if vintage:
+            caveats.append(vintage)
+        placeholders["card_note"] = ("Note: " + "; ".join(caveats)) if caveats else ""
+        if (
+            current_per_kwh is not None
+            and other_per_kwh is not None
+            and other_snap is not None
+            and current_snapshot is not None
+        ):
+            delta = _annual_bill(
+                other_snap,
+                target_entry,
+                peak_kw,
+                other_per_kwh,
+                annual_kwh,
+                rolling_inj_kwh,
+                compare_inj_price,
+                export_per_kwh=other_export_per_kwh,
+                register_weights=hh.register_weights_for(meter, other_dso_mode),
+                register_rates=other_register_rates,
+                meter=meter,
+                welcome_credit_eur=other_welcome_credit,
+            ) - _annual_bill(
+                current_snapshot,
+                quote_entry,
+                peak_kw,
+                current_per_kwh,
+                annual_kwh,
+                rolling_inj_kwh,
+                current_inj_price,
+                export_per_kwh=current_export_per_kwh,
+                register_weights=hh.register_weights,
+                register_rates=current_register_rates,
+                meter=current_meter,
+                welcome_credit_eur=hh.own_welcome_credit,
+            )
+            placeholders["delta_annual"] = f"{'+' if delta >= 0 else ''}{delta:.2f}"
+
+        # Both year-to-date paths replay the household's own meter history,
+        # which was recorded under the configured regime and whose
+        # consumption register may already be netted. Typed volumes are a
+        # yearly hypothesis with no history behind them, so the legs stay
+        # blank rather than mixing a what-if with a measured past. So do
+        # meters rewired or replaced at a switch: the quoted side reads the
+        # entry's sensors, which hold nothing for the earlier contract's days,
+        # and bills them on the entry's meter, analog or digital.
+        if volumes_typed or rewired:
+            _populate_charts(
+                placeholders,
+                current_label=_chart_labels(current, self._compare)[0],
+                compare_label=_chart_labels(current, self._compare)[1],
+            )
+            return placeholders
+
+        # Year-to-date what-if. The own row is always the household's actual
+        # year, priced by the coordinator's _compute_current_year_cost engine
+        # as the current_year_cost sensor prices it. The quoted side takes
+        # one of two paths:
+        #   1. Archive-capable pairs, both suppliers keeping a month archive
+        #      (every scraped supplier but Ecofix, TotalEnergies and Dots
+        #      Energy today),
+        #      with a spot-priced side only once the entry's day-ahead cache
+        #      covers the window: the same engine against its snapshot chain,
+        #      so per-month tariff transitions and the proration model the
+        #      user's actual bill uses apply to both sides. Most accurate.
+        #   2. Everything else (a side without an archive, the custom
+        #      supplier, a spot-priced side whose spots are missing): the
+        #      simple "current rate * ytd_kwh + pro-rated fees" model.
+        from .contract_periods import (
+            current_period_start,
+            with_previous_contracts,
+        )
+        from .ytd_cost import _compute_current_year_cost
+
+        current_extractor = get_extractor(current[CONF_SUPPLIER])
+        own_start = current_period_start(self.config_entry.data, ytd_from)
+
+        async def _own_year() -> float | None:
+            """The household's own year as the current_year_cost sensor prices
+            it: the entry's contract from the day it started, plus the
+            contracts it held before it in the window, on the entry's own
+            day-ahead. Never on what the page fetched with a typed key: the
+            sensor cannot see that, and on a keyless entry whose feed-in
+            follows the spot the row would credit what the sensor does not."""
+            own = await _compute_current_year_cost(
+                self.hass,
+                session,
+                current_extractor,
+                # The RAW card, which is what the coordinator hands the
+                # same function for the current_year_cost sensor. Handing
+                # it the cohort-spliced one instead is not idempotent, for
+                # all that it re-resolves the cohort itself: the splice has
+                # already turned a spot-monthly leg into a variable one, so
+                # the month-indexed re-price finds nothing to do and every
+                # past month falls back to the figure its card printed,
+                # which is the PREVIOUS month's index. The page's own row
+                # and the sensor beside it then answered differently on all
+                # 29 month-indexed contracts.
+                raw_snapshot,
+                quote_entry,
+                # On the household's own day-ahead, as the sensor is.
+                historical_spots=own_day_ahead(current, coord._historical_spots),
+                spot_quarters=own_day_ahead(current, coord._historical_spot_quarters),
+                billed_peak_kw=peak_kw,
+                rlp_weights=_coordinator_rlp_weights(self.config_entry),
+                rlp_index_weights=_coordinator_rlp_index_weights(
+                    self.config_entry, current_snapshot
+                ),
+                spp_weights=_coordinator_spp_weights(
+                    self.config_entry, current_snapshot, own_entry=quote_entry
+                ),
+                # From the day the entry's contract started when it recorded
+                # a switch; the contracts before it are added below.
+                window_start_override=(own_start if own_start != ytd_from else None),
+                snapshot_raw=hh.parsed_snapshot,
+            )
+            return await with_previous_contracts(
+                self.hass,
+                session,
+                coord,
+                self.config_entry,
+                quote_entry,
+                own,
+                window_start=ytd_from,
+                today=today_local,
+            )
+
+        # A spot-priced side bills each past hour at factor*spot+base (or the
+        # month's mean), so the engine needs the year's day-ahead for it:
+        # called without them it returns the fees-only floor, a dynamic side
+        # missing its whole energy bill. They are the Belgian day-ahead,
+        # supplier-independent, and a spot-priced entry's coordinator keeps
+        # the year of them for its own bill, so such a pair takes the engine
+        # like any other and the own row reads what current_year_cost reads.
+        # Read, never fetched for this: a year of day-ahead is not a page's
+        # to download. A side whose spots the cache does not hold falls back
+        # to the one-rate model below, which prices the whole window at a
+        # recent mean spot, 5 to 11% off the sensor on a dynamic household.
+        spot_priced = (
+            current_kind in SPOT_PRICED_CONTRACT_KINDS
+            or other_kind in SPOT_PRICED_CONTRACT_KINDS
+        )
+        archive_capable = (
+            current_extractor.fetch_for_month is not None
+            and other_extractor.fetch_for_month is not None
+        )
+        if archive_capable and other_snap is not None and current_snapshot is not None:
+            # Replay the coordinator's historical spot cache so a
+            # spot-indexed injection (Cociter Variable) gets the same
+            # per-hour feed-in credit the live YTD applies; spots are the
+            # Belgian day-ahead, supplier-independent, so the same cache
+            # prices both sides. A no-op for monthly-indicative contracts.
+            hist_spots = coord._historical_spots
+            # The slots go with them, or a floored feed-in formula would be
+            # replayed here off the hour mean while the annual row printed
+            # right above it credits each slot. Unreachable today, this
+            # block needs an archive-capable pair and the only supplier
+            # that floors exposes no archive, and threaded so it stays
+            # unreachable rather than latent.
+            hist_quarters = coord._historical_spot_quarters
+            # The cache of an entry with no source that stops short of the
+            # window is what a contract it held earlier left: it would credit
+            # the target's spot-indexed feed-in only up to the switch. The
+            # target reads it as no cache, as the ranking's candidates do and as
+            # the token step and the annual note say, so with no key typed the
+            # credit is left out whole. The own row reads none of it whatever
+            # is typed: it is priced on the entry's own day-ahead, as the
+            # current_year_cost sensor is (``_own_year``, ``own_day_ahead``).
+            stale = _keyless_stale_spots(current, hist_spots, ytd_from, today_local)
+            # A key typed on the page, or the keyless setting ticked there.
+            typed = bool(
+                self._compare.get(CONF_API_KEY) or self._compare.get(CONF_KEYLESS_SPOTS)
+            )
+            if stale:
+                hist_spots, hist_quarters = {}, {}
+            if compare_spot_injection and not hist_spots:
+                # The user's own entry isn't spot-needing, so the live
+                # coordinator never backfilled its cache. Fetch into a
+                # LOCAL dict for this throwaway quote with the key typed in
+                # compare_api_key (or the entry's own); without it the
+                # credit silently drops and the YTD overstates the
+                # spot-indexed target's cost. Fetched into a copy of the
+                # coordinator, so a read-only comparison neither mutates live
+                # coordinator state nor has the next tick persist it.
+                borrowed = self._compare.get(CONF_API_KEY) or current.get(CONF_API_KEY)
+                keyless = bool(
+                    self._compare.get(CONF_KEYLESS_SPOTS)
+                    or current.get(CONF_KEYLESS_SPOTS)
+                )
+                if borrowed or keyless:
+                    # Isolated: this wants the target's own year, not whatever
+                    # the entry happens to hold. From the first day of the
+                    # window's quarter, as the tick fetches its own: a credit
+                    # or an energy leg indexed on the month or the quarter
+                    # reads the whole period the window opens in.
+                    view = _detached_spot_view(coord, isolate=True)
+                    await view._ensure_historical_spots(
+                        quarter_start(ytd_from), today_local, borrowed, keyless=keyless
+                    )
+                    hist_spots = view._historical_spots
+                    hist_quarters = view._historical_spot_quarters
+            if stale and typed:
+                # Laid over the stale cache rather than in place of it: a fetch
+                # that came back short or empty (ENTSO-E down, or out of quota
+                # partway through the window) still leaves every hour the
+                # stale cache covers, and a full one wins wherever both hold.
+                hist_spots = {**coord._historical_spots, **hist_spots}
+                hist_quarters = {**coord._historical_spot_quarters, **hist_quarters}
+            if spot_priced and not _spots_cover(hist_spots, ytd_from, today_local):
+                archive_capable = False
+        if archive_capable and other_card is not None and current_snapshot is not None:
+            try:
+                current_ytd_val = await _own_year()
+                compare_ytd_val = await _compute_current_year_cost(
+                    self.hass,
+                    session,
+                    other_extractor,
+                    # Before the splice, as the own row is walked: the own
+                    # contract quoted on another meter resolves its cohort
+                    # per month like the sensor does.
+                    other_card,
+                    target_entry,
+                    contract_override=self._compare[CONF_CONTRACT],
+                    meter_override=meter,
+                    historical_spots=hist_spots,
+                    spot_quarters=hist_quarters,
+                    billed_peak_kw=peak_kw,
+                    # The household's profile for the load shape, the quoted
+                    # card's own blend for the index it settles on. This pair
+                    # is the whole point of the argument: the two rows sit side
+                    # by side and the delta between them is what the page says.
+                    rlp_weights=_coordinator_rlp_weights(self.config_entry),
+                    rlp_index_weights=_coordinator_rlp_index_weights(
+                        self.config_entry, other_snap, quoted=True
+                    ),
+                    spp_weights=_coordinator_spp_weights(
+                        self.config_entry, other_snap, own_entry=None
+                    ),
+                    # Over the days the own row covers, which after a
+                    # recorded switch the entry's settings no longer give.
+                    window_start_override=ytd_from,
+                    snapshot_raw=other_raw,
+                )
+            except Exception:  # degrade to '-'
+                current_ytd_val = None
+                compare_ytd_val = None
+            if current_ytd_val is not None and compare_ytd_val is not None:
+                placeholders["current_ytd"] = f"{current_ytd_val:.2f}"
+                placeholders["compare_ytd"] = f"{compare_ytd_val:.2f}"
+                ytd_delta = compare_ytd_val - current_ytd_val
+                placeholders["delta_ytd"] = (
+                    f"{'+' if ytd_delta >= 0 else ''}{ytd_delta:.2f}"
+                )
+                _populate_charts(
+                    placeholders,
+                    current_label=_chart_labels(current, self._compare)[0],
+                    compare_label=_chart_labels(current, self._compare)[1],
+                )
+                return placeholders
+            # Fall through to the simple model on engine failure.
+
+        if (
+            ytd_kwh is not None
+            and current_per_kwh is not None
+            and other_per_kwh is not None
+            and other_snap is not None
+            and current_snapshot is not None
+        ):
+            # The YTD what-if mirrors the live current_year_cost sensor and
+            # the archive YTD path, both of which DO accrue the Flanders
+            # capacity tariff, so it is kept here too and prorated the same
+            # per-month way rather than by the uniform year fraction.
+            #
+            # The own row is the household's actual year, so it is priced the
+            # way the current_year_cost sensor prices it, on the coordinator's
+            # own spots, whichever model the quoted side needs. One rate times
+            # the window's kWh put it off the sensor beside it: 280 EUR under
+            # it on a year that left a fixed contract for a dynamic one in May,
+            # and 1920,87 against 1751,84 on a fixed card signed in a past
+            # month. Only the quoted side stays the what-if it was.
+            current_ytd: float | None
+            try:
+                current_ytd = await _own_year()
+            except Exception:  # degrade to '-'
+                current_ytd = None
+            credited = _signed_in(other_snap, _tariff_card_month(target_entry))
+            compare_ytd = _annual_bill(
+                other_snap,
+                target_entry,
+                peak_kw,
+                other_per_kwh,
+                ytd_kwh,
+                ytd_inj_kwh,
+                compare_inj_price,
+                export_per_kwh=other_export_per_kwh,
+                register_weights=hh.register_weights_for(meter, other_dso_mode),
+                register_rates=other_register_rates,
+                fee_proration=fee_proration,
+                prosumer_proration=month_proration,
+                capacity_proration=month_proration,
+                meter=meter,
+                # Credited as the engine credits a candidate: off the card it
+                # prints today, as if signed when the household signed its
+                # own contract. Started today, the credit accrued one day of
+                # the window while the own row beside it had all of them.
+                welcome_credit_eur=_ytd_welcome_credit(
+                    other_snap,
+                    credited,
+                    _parse_iso_date(current.get(CONF_CONTRACT_START_DATE)),
+                    dt_util.as_local(now_utc),
+                    dso,
+                    region,
+                    await _spot_for(other_snap),
+                    meter,
+                    other_dso_mode,
+                    hour_weights,
+                    ytd_kwh,
+                    ytd_inj_kwh,
+                    annual_kwh=annual_kwh,
+                    regime=regime,
+                    window_start=ytd_from,
+                    fee_proration=fee_proration,
+                    # The engine's volume: a measured year of SOLD export or
+                    # none. The page's window of export credited a household
+                    # with ten months of it, or a what-if into the injection
+                    # regime, a bonus the engine beside it refuses.
+                    annual_injection_kwh=entry_annual_injection_kwh(target_entry),
+                    day_start=day_start,
+                    # Both volumes give way to the household's first year as
+                    # it metered once that year has closed, as in the engine.
+                    metered=await first_year_volume(
+                        self.hass, target_entry, credited, ytd_from
+                    ),
+                ),
+            )
+            placeholders["compare_ytd"] = f"{compare_ytd:.2f}"
+            if current_ytd is not None:
+                placeholders["current_ytd"] = f"{current_ytd:.2f}"
+                ytd_delta = compare_ytd - current_ytd
+                placeholders["delta_ytd"] = (
+                    f"{'+' if ytd_delta >= 0 else ''}{ytd_delta:.2f}"
+                )
+        _populate_charts(
+            placeholders,
+            current_label=_chart_labels(current, self._compare)[0],
+            compare_label=_chart_labels(current, self._compare)[1],
+        )
+        return placeholders
+
+
+def _chart_labels(
+    current: Mapping[str, Any], compare: Mapping[str, Any]
+) -> tuple[str, str]:
+    """The two row labels for the comparison charts.
+
+    The supplier name alone stops distinguishing the sides as soon as both
+    contracts come from one supplier, which the picker now allows outright.
+    Fall back through what actually differs: supplier, then contract, then
+    neither - the same contract quoted against itself under a different meter
+    or regime, where the only honest labels are which side is which.
+    """
+    cur_supplier = _label_for_supplier(current[CONF_SUPPLIER])
+    cmp_supplier = _label_for_supplier(compare[CONF_SUPPLIER])
+    if cur_supplier != cmp_supplier:
+        return cur_supplier, cmp_supplier
+    cur_contract = _label_for_contract(current[CONF_SUPPLIER], current[CONF_CONTRACT])
+    cmp_contract = _label_for_contract(compare[CONF_SUPPLIER], compare[CONF_CONTRACT])
+    if cur_contract != cmp_contract:
+        return cur_contract, cmp_contract
+    return "Your entry", "Quoted"

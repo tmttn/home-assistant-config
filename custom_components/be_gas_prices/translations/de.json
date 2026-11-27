@@ -1,0 +1,621 @@
+{
+  "title": "Belgische Gaspreise",
+  "config": {
+    "step": {
+      "postcode": {
+        "title": "Wo ist der Gasanschluss?",
+        "description": "Die Postleitzahl, an die Ihr Gas geliefert wird. Damit werden Ihre Region und Ihr Netzbetreiber ermittelt. Leer lassen, um beide selbst zu wählen.",
+        "data": {
+          "postcode": "Postleitzahl"
+        },
+        "data_description": {
+          "postcode": "Vierstellige belgische Postleitzahl."
+        }
+      },
+      "unpriced_network": {
+        "title": "Ein Teil dieser Postleitzahl ist nicht abgedeckt",
+        "description": "Ein Teil der Postleitzahl {postcode} wird über {operators} versorgt, ein Netz, für das keine belgische Tarifkarte Preise angibt; diese Integration kann es nicht abrechnen. Fahren Sie nur fort, wenn Ihr Gas über {dsos} kommt."
+      },
+      "region": {
+        "title": "Region",
+        "description": "Die Region, in die Ihr Gas geliefert wird.",
+        "data": {
+          "region": "Region"
+        }
+      },
+      "supplier": {
+        "title": "Lieferant",
+        "description": "Ihr Gaslieferant.",
+        "data": {
+          "supplier": "Lieferant"
+        }
+      },
+      "contract": {
+        "title": "Vertrag",
+        "description": "Wählen Sie Ihr Produkt. Der Vertragsbeginn ist optional: Bei einem festen oder indexierten Vertrag ergibt die Tarifkarte des Monats, in dem die Lieferung begann, den Preis, den Sie zahlen. Haben Sie auf der Karte eines früheren Monats oder auf einer innerhalb des Monats neu herausgegebenen Karte unterschrieben (der festen Tarifkarte von Elegant, den festen Tarifkarten von Bolt und OCTA+ vom März 2026), geben Sie den Tag Ihrer Unterschrift unter Erweitert an. Ein mit † markiertes Produkt wird nicht mehr verkauft: Wählen Sie es nur, wenn Ihr Vertrag noch darauf läuft. Es wird dann nach seiner letzten Tarifkarte berechnet oder, mit einem Vertragsbeginn, nach der Karte des Monats, in dem Sie unterschrieben haben.",
+        "data": {
+          "contract": "Vertrag",
+          "contract_start_date": "Vertragsbeginn"
+        },
+        "data_description": {
+          "contract_start_date": "Der erste Liefertag, wie auf Ihrer Rechnung."
+        },
+        "sections": {
+          "advanced": {
+            "name": "Erweitert",
+            "description": "Die meisten Haushalte können diese unverändert lassen.",
+            "data": {
+              "tariff_card_date": "Datum der Tarifkarte",
+              "contract_end_date": "Vertragsende",
+              "ytd_from_contract_start": "Die Kosten dieses Jahres ab Vertragsbeginn zählen",
+              "signed_rate": "Die Zahlen meines Vertrags eingeben"
+            },
+            "data_description": {
+              "tariff_card_date": "Der Tag Ihrer Unterschrift, wenn Ihre Karte nicht die des Monats des Lieferbeginns ist. Elegant gibt seine feste Karte innerhalb des Monats neu heraus, die festen Tarifkarten von Bolt und OCTA+ änderten sich Mitte März 2026 und die von EnergyVision am 10. November 2026: der Tag bestimmt dann, welche. Eine Verlängerung bei TotalEnergies folgt der Karte von drei Monaten zuvor: geben Sie einen Tag dieses Monats an.",
+              "contract_end_date": "Dient nur einer Erinnerung an die Verlängerung.",
+              "ytd_from_contract_start": "Aus: die laufenden Kosten und der Verbrauch dieses Jahres beginnen am 1. Januar. Ein: sie beginnen mit dem Vertragsbeginn, wenn dieser später liegt.",
+              "signed_rate": "Für einen Vertrag, dessen Preis von der Karte des Lieferanten abweicht oder dessen Karte nicht zu finden ist. Der nächste Schritt fragt danach."
+            }
+          }
+        }
+      },
+      "dso": {
+        "title": "Netzbetreiber",
+        "description": "Ihr Gasnetzbetreiber, wie auf Ihrer Rechnung angegeben.",
+        "data": {
+          "dso": "Netzbetreiber"
+        }
+      },
+      "household": {
+        "title": "Haushalt",
+        "description": "Geben Sie Ihren Jahresverbrauch an und, falls vorhanden, den Umrechnungsfaktor Ihrer Rechnung. Der Rest kann so bleiben.",
+        "data": {
+          "annual_consumption_kwh": "Jahresverbrauch",
+          "caliber": "Größe des Gaszählers",
+          "gas_meter": "Gaszähler",
+          "conversion_factor": "Umrechnungsfaktor",
+          "card_archive": "Das Kartenarchiv des Projekts verwenden",
+          "daily_compare": "Alle Verträge täglich vergleichen"
+        },
+        "data_description": {
+          "annual_consumption_kwh": "In kWh, von Ihrer letzten Jahresrechnung. Wird verwendet, bis Ihr Gaszähler ein volles Jahr an Messwerten hat.",
+          "caliber": "Steht auf Ihrem Gaszähler; die meisten Haushalte haben einen G4 oder G6. Er bestimmt eine Brüsseler Abgabe.",
+          "gas_meter": "Der Sensor, der Ihren Gasverbrauch zählt, in m³ oder kWh. Leer lassen, um den aus dem Energie-Dashboard zu verwenden.",
+          "conversion_factor": "Wie viele kWh ein m³ Gas wert ist, steht auf Ihrer Rechnung (etwa 11 bis 12, zum Beispiel 11,6). Leer lassen, wenn Sie ihn nicht haben: Sie wählen dann Ihre Gasübernahmestation.",
+          "card_archive": "Tarifkarten aus dem Archiv dieses Projekts auf GitHub holen, wenn die des Lieferanten nicht lesbar sind oder nicht mehr veröffentlicht werden. Nur Lieferant, Vertrag, Region und Monat werden gesendet. Liest außerdem einmal täglich den MwSt.-Satz, auf den sich die archivierten Karten einigen, für die Preise, die eine Karte ohne Satz angibt, und die aus einem Vertrag übernommenen Zahlen, die föderalen Abgaben, die das Archiv für die Monate aufbewahrt hat, die das Gesetz und der Tarif des FÖD Finanzen nicht mehr nennen, sowie für einen eigenen Eintrag, der sein Netz aus dem Tarifblatt seines Netzbetreibers übernimmt, das Netz, das das Archiv für einen Monat aufbewahrt hat, den das Blatt nicht mehr nennt. Ausgeschaltet kontaktiert die Integration GitHub nicht und behält die Tabellen, die sie zuletzt gelesen hat, als die Option an war; ein MwSt.-Satz, den eine Karte nicht angibt, ist sonst 6 %.",
+          "daily_compare": "Einmal täglich alle Verträge Ihrer Region vergleichen und die größte Ersparnis als Sensor anzeigen."
+        }
+      },
+      "station": {
+        "title": "Gasübernahmestation",
+        "description": "Wählen Sie die Gasübernahmestation, die Ihnen am nächsten liegt; manche Rechnungen nennen sie. Ihr monatlicher Wert, von Atrias veröffentlicht, rechnet m³ in kWh um. Er kann einige Prozent mehr kWh zählen als Ihre Rechnung, die auch Druck und Temperatur am Zähler berücksichtigt.",
+        "data": {
+          "station": "Übernahmestation"
+        }
+      },
+      "factor": {
+        "title": "Umrechnungsfaktor",
+        "description": "Wie viele kWh ein m³ Gas wert ist, steht auf Ihrer Rechnung (etwa 11 bis 12 kWh/m³, zum Beispiel 11,6). Leer lassen, um stattdessen Ihre Gasübernahmestation zu wählen.",
+        "data": {
+          "conversion_factor": "Umrechnungsfaktor"
+        }
+      },
+      "signed_rate": {
+        "title": "Tarif bei Vertragsabschluss",
+        "description": "Die Zahlen auf Ihrem Vertrag. Ein leeres Feld behält den Wert der Karte. Preis und Basis in c€/kWh ohne MwSt., der Faktor in c€/kWh je €/MWh Index (eine Formel in €/MWh wie „ZTP x 1,010 + 2,160“ ist ein Faktor von 0,1010 und eine Basis von 0,2160; eine mit dem Index in c€/kWh wie „ZTP x 1,08 + 1,15 c€/kWh“ ein Faktor von 0,108 und eine Basis von 1,15), die Gebühr in € pro Jahr inkl. MwSt.",
+        "data": {
+          "manual_price": "Energiepreis (c€/kWh, ohne MwSt.)",
+          "manual_factor": "Indexfaktor",
+          "manual_base": "Basis (c€/kWh, ohne MwSt.)",
+          "manual_fee": "Jahresgebühr (€, inkl. MwSt.)"
+        }
+      },
+      "custom_energy": {
+        "title": "Der Energiepreis Ihres Vertrags",
+        "description": "Geben Sie die Zahlen Ihres Vertrags so ein, wie Ihre Karte oder Rechnung sie druckt, inklusive MwSt. Sie halten sie selbst aktuell: es gibt keine Karte zum Aktualisieren.",
+        "data": {
+          "custom_price": "Energiepreis (c€/kWh, inkl. MwSt.)",
+          "custom_fee": "Grundgebühr des Lieferanten (€ pro Jahr, inkl. MwSt.)"
+        }
+      },
+      "custom_network": {
+        "title": "Der Tarif Ihres Netzbetreibers",
+        "description": "Die regulierten Zahlen Ihres Netzbetreibers und die Abgaben, inklusive MwSt., wie eine Karte Ihrer Region sie druckt. Verteilungsstufen: T1 bis 5 000 kWh pro Jahr, T2 bis 150 000. Die Verbrauchsteuer folgt dem Gesetz für die Monate, die die Integration davon kennt; was Sie hier eingeben, gilt außerhalb dieser Monate. Der Energiebeitrag und die wallonische Anschlussgebühr sind die des Gesetzes. In einem Fluvius-Netz wird eine auf 0 belassene Messung zum regulierten Tarif der Datenverwaltung des Lieferjahres berechnet. Kreuzen Sie das erste Feld an, um die Terme von T1 und T2 und die Messung stattdessen aus dem veröffentlichten Tarifblatt Ihres Netzbetreibers für jedes Lieferjahr zu übernehmen, dem von Fluvius für Ihr Gebiet in Flandern, dem von Brugel in Brüssel oder dem Tarifraster der CWaPE für Ihren Netzbetreiber in Wallonien, das keine Messung berechnet: Sie folgen dann von selbst jeder jährlichen Änderung, und die eingegebenen Zahlen gelten nur, bis das Tarifblatt gelesen ist. Der Transport, den kein Tarifblatt nennt, bleibt wie eingegeben.",
+        "data": {
+          "custom_network_from_sheet": "Aus dem veröffentlichten Tarifblatt meines Netzbetreibers übernehmen",
+          "custom_t1_fixed": "T1 Festbetrag (€ pro Jahr)",
+          "custom_t1_prop": "T1 Arbeitspreis (c€/kWh)",
+          "custom_t2_fixed": "T2 Festbetrag (€ pro Jahr)",
+          "custom_t2_prop": "T2 Arbeitspreis (c€/kWh)",
+          "custom_transport": "Transport (c€/kWh)",
+          "custom_metering": "Messung oder Datenverwaltung (€ pro Jahr)",
+          "custom_excise_low": "Verbrauchsteuer bis 12 000 kWh (c€/kWh)",
+          "custom_excise_high": "Verbrauchsteuer über 12 000 kWh (c€/kWh)",
+          "custom_levy": "Brüsseler Zählerabgabe für Ihren Zähler (€ pro Jahr)"
+        }
+      }
+    },
+    "error": {
+      "unknown_postcode": "Dies ist keine belgische Postleitzahl, die die Integration kennt.",
+      "no_gas_network": "Für diese Postleitzahl ist kein Gasverteilnetzbetreiber bestimmt. Leeren Sie die Postleitzahl, um den Netzbetreiber selbst zu wählen.",
+      "end_before_start": "Das Vertragsende muss nach dem Vertragsbeginn liegen.",
+      "start_date_in_future": "Der Vertragsbeginn darf nicht in der Zukunft liegen.",
+      "tariff_card_date_in_future": "Das Datum der Tarifkarte darf nicht in der Zukunft liegen.",
+      "stations_unavailable": "Die Liste der Übernahmestationen konnte bei Atrias nicht gelesen werden; geben Sie stattdessen den Faktor von Ihrer Rechnung ein.",
+      "invalid_factor": "Geben Sie den Faktor so ein, wie er auf Ihrer Rechnung steht: eine Zahl von 9 bis 13, zum Beispiel 11,6.",
+      "invalid_number": "Geben Sie eine Zahl mit Dezimalkomma oder -punkt ein, zum Beispiel 8,25. Sie kann weder negativ noch höher sein als das, was eine Karte angibt.",
+      "card_archive_needed": "Ein Vertrag dieses Jahres ist bei einem Lieferanten, der seine Karten als Bilder veröffentlicht, die nur das Kartenarchiv des Projekts liest: schalten Sie diese Option ein."
+    }
+  },
+  "options": {
+    "step": {
+      "postcode": {
+        "title": "Wo ist der Gasanschluss?",
+        "description": "Die Postleitzahl, an die Ihr Gas geliefert wird. Damit werden Ihre Region und Ihr Netzbetreiber ermittelt. Leer lassen, um beide selbst zu wählen.",
+        "data": {
+          "postcode": "Postleitzahl"
+        },
+        "data_description": {
+          "postcode": "Vierstellige belgische Postleitzahl."
+        }
+      },
+      "unpriced_network": {
+        "title": "Ein Teil dieser Postleitzahl ist nicht abgedeckt",
+        "description": "Ein Teil der Postleitzahl {postcode} wird über {operators} versorgt, ein Netz, für das keine belgische Tarifkarte Preise angibt; diese Integration kann es nicht abrechnen. Fahren Sie nur fort, wenn Ihr Gas über {dsos} kommt."
+      },
+      "region": {
+        "title": "Region",
+        "description": "Die Region, in die Ihr Gas geliefert wird.",
+        "data": {
+          "region": "Region"
+        }
+      },
+      "supplier": {
+        "title": "Lieferant",
+        "description": "Ihr Gaslieferant.",
+        "data": {
+          "supplier": "Lieferant"
+        }
+      },
+      "contract": {
+        "title": "Vertrag",
+        "description": "Wählen Sie Ihr Produkt. Der Vertragsbeginn ist optional: Bei einem festen oder indexierten Vertrag ergibt die Tarifkarte des Monats, in dem die Lieferung begann, den Preis, den Sie zahlen. Haben Sie auf der Karte eines früheren Monats oder auf einer innerhalb des Monats neu herausgegebenen Karte unterschrieben (der festen Tarifkarte von Elegant, den festen Tarifkarten von Bolt und OCTA+ vom März 2026), geben Sie den Tag Ihrer Unterschrift unter Erweitert an. Ein mit † markiertes Produkt wird nicht mehr verkauft: Wählen Sie es nur, wenn Ihr Vertrag noch darauf läuft. Es wird dann nach seiner letzten Tarifkarte berechnet oder, mit einem Vertragsbeginn, nach der Karte des Monats, in dem Sie unterschrieben haben. Wählen Sie ein anderes Produkt, entfallen die für das bisherige gespeicherten Daten und Beträge, sofern Sie sie nicht ändern.",
+        "data": {
+          "contract": "Vertrag",
+          "contract_start_date": "Vertragsbeginn"
+        },
+        "data_description": {
+          "contract_start_date": "Der erste Liefertag, wie auf Ihrer Rechnung."
+        },
+        "sections": {
+          "advanced": {
+            "name": "Erweitert",
+            "description": "Die meisten Haushalte können diese unverändert lassen.",
+            "data": {
+              "tariff_card_date": "Datum der Tarifkarte",
+              "contract_end_date": "Vertragsende",
+              "ytd_from_contract_start": "Die Kosten dieses Jahres ab Vertragsbeginn zählen",
+              "signed_rate": "Die Zahlen meines Vertrags eingeben"
+            },
+            "data_description": {
+              "tariff_card_date": "Der Tag Ihrer Unterschrift, wenn Ihre Karte nicht die des Monats des Lieferbeginns ist. Elegant gibt seine feste Karte innerhalb des Monats neu heraus, die festen Tarifkarten von Bolt und OCTA+ änderten sich Mitte März 2026 und die von EnergyVision am 10. November 2026: der Tag bestimmt dann, welche. Eine Verlängerung bei TotalEnergies folgt der Karte von drei Monaten zuvor: geben Sie einen Tag dieses Monats an.",
+              "contract_end_date": "Dient nur einer Erinnerung an die Verlängerung.",
+              "ytd_from_contract_start": "Aus: die laufenden Kosten und der Verbrauch dieses Jahres beginnen am 1. Januar. Ein: sie beginnen mit dem Vertragsbeginn, wenn dieser später liegt.",
+              "signed_rate": "Für einen Vertrag, dessen Preis von der Karte des Lieferanten abweicht oder dessen Karte nicht zu finden ist. Der nächste Schritt fragt danach."
+            }
+          }
+        }
+      },
+      "dso": {
+        "title": "Netzbetreiber",
+        "description": "Ihr Gasnetzbetreiber, wie auf Ihrer Rechnung angegeben.",
+        "data": {
+          "dso": "Netzbetreiber"
+        }
+      },
+      "household": {
+        "title": "Haushalt",
+        "description": "Geben Sie Ihren Jahresverbrauch an und, falls vorhanden, den Umrechnungsfaktor Ihrer Rechnung. Der Rest kann so bleiben.",
+        "data": {
+          "annual_consumption_kwh": "Jahresverbrauch",
+          "caliber": "Größe des Gaszählers",
+          "gas_meter": "Gaszähler",
+          "conversion_factor": "Umrechnungsfaktor",
+          "card_archive": "Das Kartenarchiv des Projekts verwenden",
+          "daily_compare": "Alle Verträge täglich vergleichen"
+        },
+        "data_description": {
+          "annual_consumption_kwh": "In kWh, von Ihrer letzten Jahresrechnung. Wird verwendet, bis Ihr Gaszähler ein volles Jahr an Messwerten hat.",
+          "caliber": "Steht auf Ihrem Gaszähler; die meisten Haushalte haben einen G4 oder G6. Er bestimmt eine Brüsseler Abgabe.",
+          "gas_meter": "Der Sensor, der Ihren Gasverbrauch zählt, in m³ oder kWh. Leer lassen, um den aus dem Energie-Dashboard zu verwenden.",
+          "conversion_factor": "Wie viele kWh ein m³ Gas wert ist, steht auf Ihrer Rechnung (etwa 11 bis 12, zum Beispiel 11,6). Leer lassen, wenn Sie ihn nicht haben: Sie wählen dann Ihre Gasübernahmestation.",
+          "card_archive": "Tarifkarten aus dem Archiv dieses Projekts auf GitHub holen, wenn die des Lieferanten nicht lesbar sind oder nicht mehr veröffentlicht werden. Nur Lieferant, Vertrag, Region und Monat werden gesendet. Liest außerdem einmal täglich den MwSt.-Satz, auf den sich die archivierten Karten einigen, für die Preise, die eine Karte ohne Satz angibt, und die aus einem Vertrag übernommenen Zahlen, die föderalen Abgaben, die das Archiv für die Monate aufbewahrt hat, die das Gesetz und der Tarif des FÖD Finanzen nicht mehr nennen, sowie für einen eigenen Eintrag, der sein Netz aus dem Tarifblatt seines Netzbetreibers übernimmt, das Netz, das das Archiv für einen Monat aufbewahrt hat, den das Blatt nicht mehr nennt. Ausgeschaltet kontaktiert die Integration GitHub nicht und behält die Tabellen, die sie zuletzt gelesen hat, als die Option an war; ein MwSt.-Satz, den eine Karte nicht angibt, ist sonst 6 %.",
+          "daily_compare": "Einmal täglich alle Verträge Ihrer Region vergleichen und die größte Ersparnis als Sensor anzeigen."
+        }
+      },
+      "station": {
+        "title": "Gasübernahmestation",
+        "description": "Wählen Sie die Gasübernahmestation, die Ihnen am nächsten liegt; manche Rechnungen nennen sie. Ihr monatlicher Wert, von Atrias veröffentlicht, rechnet m³ in kWh um. Er kann einige Prozent mehr kWh zählen als Ihre Rechnung, die auch Druck und Temperatur am Zähler berücksichtigt.",
+        "data": {
+          "station": "Übernahmestation"
+        }
+      },
+      "factor": {
+        "title": "Umrechnungsfaktor",
+        "description": "Wie viele kWh ein m³ Gas wert ist, steht auf Ihrer Rechnung (etwa 11 bis 12 kWh/m³, zum Beispiel 11,6). Leer lassen, um stattdessen Ihre Gasübernahmestation zu wählen.",
+        "data": {
+          "conversion_factor": "Umrechnungsfaktor"
+        }
+      },
+      "init": {
+        "menu_options": {
+          "settings": "Einstellungen bearbeiten",
+          "compare": "Einen anderen Vertrag vergleichen (einmaliges Angebot)",
+          "compare_all": "Alle Verträge vergleichen (Rangliste)",
+          "switch": "Einen Vertragswechsel in diesem Jahr erfassen",
+          "remove_switch": "Den letzten Vertragswechsel entfernen",
+          "bill": "Eine Eneco-Rechnung prüfen"
+        }
+      },
+      "compare": {
+        "title": "Einen anderen Vertrag vergleichen",
+        "description": "Wählen Sie den Lieferanten, der mit Ihrem Vertrag verglichen werden soll.",
+        "data": {
+          "supplier": "Lieferant"
+        }
+      },
+      "compare_contract": {
+        "title": "Zu vergleichender Vertrag",
+        "description": "Beide Verträge werden für Ihren Haushalt berechnet: Ihr Jahresverbrauch, Netzbetreiber und Stufe, nach jeder Karte in ihrer heutigen Fassung. Ihr eigener Vertrag wird stattdessen nach der Karte berechnet, nach der Ihr Eintrag ihn abrechnet, sobald der Eintrag seine Karte hat, mit dem Tarif bei Vertragsabschluss oder den von Ihnen eingegebenen Zahlen.",
+        "data": {
+          "contract": "Vertrag"
+        }
+      },
+      "compare_result": {
+        "title": "Angebot",
+        "description": "Ein Jahr mit {annual_kwh} kWh nach jeder Karte in ihrer heutigen Fassung, alle Kosten inbegriffen; Ihr eigener Vertrag nach der Karte und den Zahlen, nach denen Ihr Eintrag ihn abrechnet, sobald der Eintrag seine Karte hat. Ein indexierter Vertrag wird zu seinem Indexwert dieses Monats berechnet oder, solange sein Lieferant diesen nicht veröffentlicht hat, zu dem des Vormonats, auf dem die meisten Karten beruhen; sonst zum Preis auf seiner Karte. Ein ~ markiert einen Preis, den der Monat noch verändern kann. OCR markiert eine als Bilder veröffentlichte Karte, berechnet nach der Lesung des Kartenarchivs.\n\n{table}"
+      },
+      "compare_all_result": {
+        "title": "Alle Verträge, geordnet",
+        "description": "Ein Jahr mit {annual_kwh} kWh nach jeder in Ihrer Region verkauften Karte in ihrer heutigen Fassung, die günstigste zuerst, Ihr Vertrag fett und, sobald Ihr Eintrag seine Karte hat, nach der Karte und den Zahlen berechnet, nach denen der Eintrag ihn abrechnet. Ein indexierter Vertrag wird zu seinem Indexwert dieses Monats berechnet oder, solange sein Lieferant diesen nicht veröffentlicht hat, zu dem des Vormonats, auf dem die meisten Karten beruhen; sonst zum Preis auf seiner Karte. Ein ~ markiert einen Preis, den der Monat noch verändern kann. OCR markiert eine als Bilder veröffentlichte Karte, berechnet nach der Lesung des Kartenarchivs. In der Zeit nicht erreicht: {skipped}.\n\n{table}"
+      },
+      "compare_all_stored": {
+        "title": "Alle Verträge, geordnet",
+        "description": "Die tägliche Rangliste vom {day}: ein Jahr mit {annual_kwh} kWh nach jeder in Ihrer Region verkauften Karte, die günstigste zuerst, Ihr Vertrag fett, berechnet wie im vollständigen Vergleich. Ein ~ markiert einen Preis, den der Monat noch verändern kann, OCR eine als Bilder veröffentlichte Karte, berechnet nach der Lesung des Kartenarchivs. Ein Vertrag, der nicht berechnet werden konnte, fehlt. Setzen Sie das Häkchen, um jetzt jeden Vertrag neu zu berechnen, was etwa zwei Minuten dauert.\n\n{table}",
+        "data": {
+          "price_again": "Jetzt jeden Vertrag neu berechnen"
+        }
+      },
+      "switch": {
+        "title": "Einen Vertragswechsel erfassen",
+        "description": "Geben Sie den ersten Liefertag des neuen Vertrags ein. Die aktuellen Einstellungen bleiben als früherer Vertrag bis zum Vortag erhalten, nach den Karten seines Lieferanten berechnet, und die nächsten Schritte richten den neuen Vertrag ein.",
+        "data": {
+          "switch_date": "Erster Tag des neuen Vertrags"
+        }
+      },
+      "remove_switch": {
+        "title": "Den letzten Vertragswechsel entfernen",
+        "description": "Dies entfernt den am {date} erfassten Wechsel, bei dem Sie {contract} verlassen haben. {contract} wird wieder der aktuelle Vertrag, mit den damaligen Vertragseinstellungen; die Einstellungen des Haushalts (Verbrauch, Zähler, Umrechnung) bleiben, wie sie sind. Ein Wechsel bewahrt kein Enddatum für den Vertrag, den er abschließt; geben Sie es in den Einstellungen erneut ein, falls {contract} eines hat. Um ein Wechseldatum zu korrigieren, entfernen Sie den Wechsel und erfassen ihn erneut mit dem richtigen Datum. Bestätigen Sie, um ihn zu entfernen."
+      },
+      "signed_rate": {
+        "title": "Tarif bei Vertragsabschluss",
+        "description": "Die Zahlen auf Ihrem Vertrag. Ein leeres Feld behält den Wert der Karte. Preis und Basis in c€/kWh ohne MwSt., der Faktor in c€/kWh je €/MWh Index (eine Formel in €/MWh wie „ZTP x 1,010 + 2,160“ ist ein Faktor von 0,1010 und eine Basis von 0,2160; eine mit dem Index in c€/kWh wie „ZTP x 1,08 + 1,15 c€/kWh“ ein Faktor von 0,108 und eine Basis von 1,15), die Gebühr in € pro Jahr inkl. MwSt.",
+        "data": {
+          "manual_price": "Energiepreis (c€/kWh, ohne MwSt.)",
+          "manual_factor": "Indexfaktor",
+          "manual_base": "Basis (c€/kWh, ohne MwSt.)",
+          "manual_fee": "Jahresgebühr (€, inkl. MwSt.)"
+        }
+      },
+      "custom_energy": {
+        "title": "Der Energiepreis Ihres Vertrags",
+        "description": "Geben Sie die Zahlen Ihres Vertrags so ein, wie Ihre Karte oder Rechnung sie druckt, inklusive MwSt. Sie halten sie selbst aktuell: es gibt keine Karte zum Aktualisieren.",
+        "data": {
+          "custom_price": "Energiepreis (c€/kWh, inkl. MwSt.)",
+          "custom_fee": "Grundgebühr des Lieferanten (€ pro Jahr, inkl. MwSt.)"
+        }
+      },
+      "custom_network": {
+        "title": "Der Tarif Ihres Netzbetreibers",
+        "description": "Die regulierten Zahlen Ihres Netzbetreibers und die Abgaben, inklusive MwSt., wie eine Karte Ihrer Region sie druckt. Verteilungsstufen: T1 bis 5 000 kWh pro Jahr, T2 bis 150 000. Die Verbrauchsteuer folgt dem Gesetz für die Monate, die die Integration davon kennt; was Sie hier eingeben, gilt außerhalb dieser Monate. Der Energiebeitrag und die wallonische Anschlussgebühr sind die des Gesetzes. In einem Fluvius-Netz wird eine auf 0 belassene Messung zum regulierten Tarif der Datenverwaltung des Lieferjahres berechnet. Kreuzen Sie das erste Feld an, um die Terme von T1 und T2 und die Messung stattdessen aus dem veröffentlichten Tarifblatt Ihres Netzbetreibers für jedes Lieferjahr zu übernehmen, dem von Fluvius für Ihr Gebiet in Flandern, dem von Brugel in Brüssel oder dem Tarifraster der CWaPE für Ihren Netzbetreiber in Wallonien, das keine Messung berechnet: Sie folgen dann von selbst jeder jährlichen Änderung, und die eingegebenen Zahlen gelten nur, bis das Tarifblatt gelesen ist. Der Transport, den kein Tarifblatt nennt, bleibt wie eingegeben.",
+        "data": {
+          "custom_network_from_sheet": "Aus dem veröffentlichten Tarifblatt meines Netzbetreibers übernehmen",
+          "custom_t1_fixed": "T1 Festbetrag (€ pro Jahr)",
+          "custom_t1_prop": "T1 Arbeitspreis (c€/kWh)",
+          "custom_t2_fixed": "T2 Festbetrag (€ pro Jahr)",
+          "custom_t2_prop": "T2 Arbeitspreis (c€/kWh)",
+          "custom_transport": "Transport (c€/kWh)",
+          "custom_metering": "Messung oder Datenverwaltung (€ pro Jahr)",
+          "custom_excise_low": "Verbrauchsteuer bis 12 000 kWh (c€/kWh)",
+          "custom_excise_high": "Verbrauchsteuer über 12 000 kWh (c€/kWh)",
+          "custom_levy": "Brüsseler Zählerabgabe für Ihren Zähler (€ pro Jahr)"
+        }
+      },
+      "bill": {
+        "title": "Eneco-Rechnung",
+        "description": "Wählen Sie den Sensor Letzte Jahresrechnung der Eneco-Integration, um jede Zeile dieser Rechnung mit dem Tarif zu vergleichen, den diese Integration für den Zeitraum der Zeile berechnet. Ein Sensor Rechnungsprüfung zählt dann die abweichenden Zeilen. Leer lassen, um nichts zu prüfen.",
+        "data": {
+          "bill_entity": "Eneco-Rechnung"
+        },
+        "data_description": {
+          "bill_entity": "Nur die Zeilen französischsprachiger Gasrechnungen werden erkannt, an ihrer Bezeichnung. Eine Zeile über Monate, die hier zu verschiedenen Tarifen berechnet werden, wird nicht verglichen."
+        }
+      }
+    },
+    "error": {
+      "unknown_postcode": "Dies ist keine belgische Postleitzahl, die die Integration kennt.",
+      "no_gas_network": "Für diese Postleitzahl ist kein Gasverteilnetzbetreiber bestimmt. Leeren Sie die Postleitzahl, um den Netzbetreiber selbst zu wählen.",
+      "end_before_start": "Das Vertragsende muss nach dem Vertragsbeginn liegen.",
+      "start_date_in_future": "Der Vertragsbeginn darf nicht in der Zukunft liegen.",
+      "tariff_card_date_in_future": "Das Datum der Tarifkarte darf nicht in der Zukunft liegen.",
+      "start_date_before_switch": "Der Vertragsbeginn darf nicht vor dem zuletzt für diesen Eintrag erfassten Vertragswechsel liegen.",
+      "stations_unavailable": "Die Liste der Übernahmestationen konnte bei Atrias nicht gelesen werden; geben Sie stattdessen den Faktor von Ihrer Rechnung ein.",
+      "invalid_factor": "Geben Sie den Faktor so ein, wie er auf Ihrer Rechnung steht: eine Zahl von 9 bis 13, zum Beispiel 11,6.",
+      "invalid_number": "Geben Sie eine Zahl mit Dezimalkomma oder -punkt ein, zum Beispiel 8,25. Sie kann weder negativ noch höher sein als das, was eine Karte angibt.",
+      "switch_date_invalid": "Der neue Vertrag muss nach dem 1. Januar, nach dem Beginn des aktuellen Vertrags und nach dem zuletzt erfassten Wechsel beginnen, spätestens heute. Ein Vertrag, der am 1. Januar begann, wird unter „Einstellungen bearbeiten“ eingetragen.",
+      "card_archive_needed": "Ein Vertrag dieses Jahres ist bei einem Lieferanten, der seine Karten als Bilder veröffentlicht, die nur das Kartenarchiv des Projekts liest: schalten Sie diese Option ein.",
+      "eneco_bill_not_a_bill": "Wählen Sie den Sensor Letzte Jahresrechnung der Eneco-Integration: Seine anderen Sensoren tragen keine Rechnung.",
+      "eneco_bill_other_energy": "Das ist die Rechnung eines Stromzählers: Wählen Sie den Sensor Letzte Jahresrechnung des Gaszählers."
+    },
+    "abort": {
+      "compare_done": "Vergleich abgeschlossen, nichts wurde geändert.",
+      "no_switch_recorded": "Für diesen Eintrag ist in diesem Jahr kein Vertragswechsel erfasst."
+    },
+    "progress": {
+      "compare_all": "Alle in Ihrer Region verkauften Verträge werden berechnet. Das dauert etwa zwei Minuten, etwas länger, solange eine langsame Tarifkarte noch gelesen wird."
+    }
+  },
+  "selector": {
+    "region": {
+      "options": {
+        "flanders": "Flandern",
+        "wallonia": "Wallonien",
+        "brussels": "Brüssel"
+      }
+    },
+    "caliber": {
+      "options": {
+        "q10": "6 oder 10 m³/h (G4, G6)",
+        "q16": "16 m³/h (G10)",
+        "q25": "25 m³/h (G16)",
+        "q40": "40 m³/h (G25)",
+        "q65": "65 m³/h (G40)",
+        "q100": "100 m³/h (G65)",
+        "q160": "160 m³/h (G100)",
+        "gt160": "Über 160 m³/h"
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "current_price": {
+        "name": "Aktueller Preis"
+      },
+      "current_price_m3": {
+        "name": "Aktueller Preis pro m³"
+      },
+      "energy_component": {
+        "name": "Energieanteil"
+      },
+      "network_component": {
+        "name": "Netzanteil"
+      },
+      "taxes_component": {
+        "name": "Abgabenanteil"
+      },
+      "fixed_costs_eur_per_year": {
+        "name": "Fixkosten pro Jahr"
+      },
+      "supplier_fixed_fee_eur_per_year": {
+        "name": "Grundgebühr des Lieferanten pro Jahr"
+      },
+      "conversion_factor": {
+        "name": "Umrechnungsfaktor"
+      },
+      "current_year_cost": {
+        "name": "Kosten dieses Jahres"
+      },
+      "current_month_cost": {
+        "name": "Kosten dieses Monats"
+      },
+      "year_to_date_consumption": {
+        "name": "Verbrauch dieses Jahres"
+      },
+      "projected_year_cost": {
+        "name": "Kosten der letzten 12 Monate"
+      },
+      "projected_year_end_cost": {
+        "name": "Erwartete Kosten zum Jahresende"
+      },
+      "projected_year_consumption": {
+        "name": "Erwarteter Jahresverbrauch"
+      },
+      "rolling_year_consumption": {
+        "name": "Verbrauch der letzten 12 Monate"
+      },
+      "contract_end_date": {
+        "name": "Vertragsende"
+      },
+      "potential_saving": {
+        "name": "Mögliche Ersparnis"
+      },
+      "bill_check": {
+        "name": "Rechnungsprüfung"
+      }
+    },
+    "button": {
+      "refresh": {
+        "name": "Tarifkarte aktualisieren"
+      }
+    }
+  },
+  "issues": {
+    "snapshot_stale": {
+      "title": "Die Tarifkarte von {supplier} ist veraltet",
+      "fix_flow": {
+        "step": {
+          "confirm": {
+            "title": "Die Tarifkarte von {supplier} ist veraltet",
+            "description": "Die Karte, nach der {entry} rechnet, wurde seit einer Woche nicht aktualisiert oder gilt für einen Monat, der seit über einer Woche abgelaufen ist, daher können die Preise falsch sein. Letzter Fehler: {error}. Absenden, um sie jetzt neu abzurufen."
+          }
+        },
+        "abort": {
+          "still_stale": "Die Karte konnte weiterhin nicht aktualisiert werden. Letzter Fehler: {error}. Sie wird stündlich erneut abgerufen, und diese Reparatur bleibt bis dahin bestehen.",
+          "supplier_late": "Der Abruf hat funktioniert, aber {supplier} stellt weiterhin die Karte eines Monats bereit, der seit über einer Woche abgelaufen ist. Sie wird stündlich erneut abgefragt, und diese Reparatur bleibt bestehen, bis eine neuere Karte veröffentlicht ist."
+        }
+      }
+    },
+    "extractor_failed": {
+      "title": "Die Tarifkarte von {supplier} konnte nicht gelesen werden",
+      "description": "Die Karte für {entry} konnte zweimal nacheinander nicht gelesen werden: {error}. Die letzte gute Karte, falls vorhanden, rechnet weiter. Wenn das anhält, hat der Lieferant wahrscheinlich sein Layout geändert. Aktualisieren Sie zuerst die Integration: Eine neuere Version liest die neue Karte vielleicht schon. Zeigt die neueste Version diese Meldung weiterhin, sehen Sie sich zuerst die offenen Issues auf GitHub an, bevor Sie eines mit den Diagnosedaten öffnen."
+    },
+    "card_missing": {
+      "title": "Die Tarifkarte von {supplier} ist nicht verfügbar",
+      "description": "Die Karte für {entry} konnte zweimal nacheinander nicht gelesen werden, zuletzt weil die Website des Lieferanten unter der Adresse, die die Integration liest, keine Karte hat: {error}. Möglicherweise hat der Lieferant die Karte dieses Monats noch nicht veröffentlicht, das Produkt eingestellt oder seine Karten verschoben. Die letzte gute Karte, falls vorhanden, rechnet weiter. Diese Meldung verschwindet von selbst, sobald die Karte wieder abgerufen werden kann. Hält es länger als einige Tage an, obwohl der Lieferant das Produkt noch anbietet, aktualisieren Sie zuerst die Integration: Eine neuere Version findet die Karte vielleicht schon. Zeigt die neueste Version diese Meldung weiterhin, sehen Sie sich zuerst die offenen Issues auf GitHub an, bevor Sie eines mit den Diagnosedaten öffnen."
+    },
+    "card_unreadable": {
+      "title": "{supplier} veröffentlicht seine Karte als Bilder",
+      "description": "Die Karte für {entry} hat keine Textebene und kann hier daher nicht gelesen werden. Die letzte gute Karte, falls vorhanden, rechnet weiter; das Kartenarchiv des Projekts rechnet mit seiner eigenen Lesung der Karte, sobald es eine hat, wenn der Eintrag es lesen lässt."
+    },
+    "card_read_by_ocr": {
+      "title": "{supplier}-Tarifkarte aus ihrem Bild gelesen",
+      "description": "{supplier} veröffentlicht die Tarifkarte von {entry} als Seitenbilder. Das Kartenarchiv des Projekts liest sie täglich mit einer OCR-Engine, die die Schriften dieser Karten kennt, und {entry} rechnet mit dieser Lesung: Eine Zeile, auf der die Engine ein Zeichen nicht sicher lesen konnte, wird weggelassen statt geraten. Die föderalen Abgaben und die wallonische Anschlussgebühr werden nach dem Gesetz berechnet. Dies verschwindet von selbst, sobald der Lieferant wieder eine lesbare Karte veröffentlicht."
+    },
+    "meter_unit": {
+      "title": "Der Gaszähler kann nicht gelesen werden",
+      "description": "Der Gaszähler von {entry} kann nicht verwendet werden: {error}. Die laufenden Kosten behalten die zuletzt gelesenen Werte, oder bleiben unbekannt, wenn es keine gibt, bis das behoben ist."
+    },
+    "several_meters": {
+      "title": "Mehrere Gaszähler im Energie-Dashboard",
+      "description": "Das Energie-Dashboard listet {count} Gaszähler und {entry} rechnet mit dem ersten. Wählen Sie den Gaszähler in den Optionen der Integration."
+    },
+    "contract_withdrawn": {
+      "title": "{supplier} verkauft {contract} nicht mehr",
+      "description": "{supplier} hat {contract} eingestellt, dessen Tarifkarte nicht mehr veröffentlicht wird. {entry} berechnet Ihre Energie weiter mit der letzten dafür gespeicherten Karte, die sich nicht mehr ändert. Ab dem Jahr nach dieser Karte werden die Verteilungs- und Messentgelte aus den Tarifen Ihres Netzbetreibers übernommen, wie die Regulierungsbehörde sie veröffentlicht; bis sie gelesen sind, gelten die der Karte. Stellt {supplier} Sie auf ein anderes Produkt um, wählen Sie in den Optionen des Eintrags „Einen Vertragswechsel in diesem Jahr erfassen“, geben den ersten Tag des neuen Produkts ein und wählen es aus. „Einstellungen bearbeiten“ würde das ganze Jahr auf den Karten des neuen Produkts berechnen. Begann das neue Produkt am 1. Januar, nutzen Sie „Einstellungen bearbeiten“: Das eingestellte Produkt hat in diesem Jahr nichts geliefert."
+    },
+    "recorder_missing": {
+      "title": "Der Recorder von Home Assistant läuft nicht",
+      "description": "Die Kosten und Mengen von {entry} werden aus dem Verlauf des Gaszählers gelesen, den der Recorder von Home Assistant führt, und der Recorder ist nicht geladen. Sie bleiben unbekannt, bis er läuft; die Preissensoren sind nicht betroffen.\n\nAktiviere den Recorder (er gehört zu default_config, oder füge `recorder:` zu configuration.yaml hinzu) und starte Home Assistant neu."
+    },
+    "bill_lines_off": {
+      "title": "Zeilen der Eneco-Rechnung weichen von den hier berechneten Tarifen ab",
+      "description": "{count} Zeilen der Eneco-Rechnung vom {issued} für {entry} sind zu einem Stückpreis abgerechnet, der weiter von dem abweicht, den diese Integration für ihren Zeitraum berechnet, als die Rundung beider erklärt. Der Sensor Rechnungsprüfung listet jede Zeile mit beiden Preisen."
+    }
+  },
+  "services": {
+    "refresh": {
+      "name": "Aktualisieren",
+      "description": "Die Tarifkarte, die Indexwerte und die Brennwerte jetzt neu abrufen.",
+      "fields": {
+        "entry_id": {
+          "name": "Eintrag",
+          "description": "Nur dieser Eintrag; alle Einträge, wenn weggelassen."
+        }
+      }
+    },
+    "backfill_statistics": {
+      "name": "Statistiken nachtragen",
+      "description": "Die stündlichen Statistiken der Preissensoren von einem Startdatum bis zur letzten Stunde, deren Statistik der Recorder schon berechnet hat, schreiben, und die Kosten des Jahres ab dem Beginn des Fensters dieses Jahres.",
+      "fields": {
+        "entry_id": {
+          "name": "Eintrag",
+          "description": "Nur dieser Eintrag; alle Einträge, wenn weggelassen."
+        },
+        "start_date": {
+          "name": "Startdatum",
+          "description": "Standardmäßig der Beginn des Fensters dieses Jahres. Nie vor dem zuletzt erfassten Vertragswechsel und nicht vor dem 1. Januar des Vorjahres oder in der Zukunft. Ein Monat vor dem Fenster wird nur geschrieben, wenn seine eigene Tarifkarte gefunden wird."
+        },
+        "clear": {
+          "name": "Zuerst löschen",
+          "description": "Löscht die Statistiken der Preissensoren vollständig vor dem Schreiben; erfordert einen Eintrag. Die Kosten des Jahres werden neu geschrieben, nicht gelöscht."
+        }
+      }
+    },
+    "bill_cost": {
+      "name": "Rechnungskosten",
+      "description": "Berechnet den Preis des Gases, das der Zähler über eine Reihe abgeschlossener Tage erfasst hat, wie die Kosten des Jahres, um die Rechnung eines Lieferanten damit zu vergleichen. Gibt die Kosten inkl. MwSt., die kWh und den Anteil dieser Tage zurück, den der Zähler abdeckt.",
+      "fields": {
+        "entry_id": {
+          "name": "Eintrag",
+          "description": "Der Eintrag, dessen Preise verwendet werden."
+        },
+        "start": {
+          "name": "Startdatum",
+          "description": "Der erste abgerechnete Tag. Nicht vor dem 1. Januar vor zwei Jahren und nicht vor dem zuletzt erfassten Vertragswechsel."
+        },
+        "end": {
+          "name": "Enddatum",
+          "description": "Der letzte abgerechnete Tag, vor heute."
+        }
+      }
+    },
+    "energy_rate": {
+      "name": "Energiepreis",
+      "description": "Gibt den Energiepreis jedes Monats inklusive MwSt. an, wie der Vertrag auf seinen Tarifkarten und seinem Index abgerechnet wird, um die kommende Rechnung eines Lieferanten hochzurechnen. Ein Monat, dessen Index noch nicht veröffentlicht ist, wird mit dem letzten berechnet und als vorläufig markiert.",
+      "fields": {
+        "entry_id": {
+          "name": "Eintrag",
+          "description": "Der Eintrag, dessen Preise verwendet werden."
+        },
+        "start": {
+          "name": "Erster Monat",
+          "description": "Ein Tag im ersten Monat. Nicht vor dem 1. Januar vor zwei Jahren und nicht vor dem zuletzt erfassten Vertragswechsel."
+        },
+        "end": {
+          "name": "Letzter Monat",
+          "description": "Ein Tag im letzten Monat, höchstens 14 Monate nach diesem."
+        }
+      }
+    }
+  },
+  "exceptions": {
+    "unknown_entry": {
+      "message": "Kein geladener Eintrag von Belgische Gaspreise hat die ID {entry_id}."
+    },
+    "clear_needs_entry": {
+      "message": "Das Löschen der Statistiken erfordert einen Eintrag: sie werden vollständig gelöscht."
+    },
+    "start_date_too_early": {
+      "message": "Das Startdatum darf nicht vor dem {earliest} liegen: die Indexwerte, die manche Lieferanten nur auf ihre Karten drucken, reichen nicht weiter zurück."
+    },
+    "start_date_in_future": {
+      "message": "Das Startdatum darf nicht in der Zukunft liegen."
+    },
+    "card_archive_needed": {
+      "message": "{supplier} veröffentlicht seine Karten als Bilder, die nur das Kartenarchiv des Projekts liest, und dieser Eintrag schließt das Archiv aus. Schalten Sie die Option für das Kartenarchiv in den Einstellungen des Eintrags ein."
+    },
+    "refresh_pressed_recently": {
+      "message": "Der Tarif wurde zuletzt um {last} geprüft; ab {next} kann er erneut geprüft werden."
+    },
+    "window_reversed": {
+      "message": "Das Enddatum liegt vor dem Startdatum."
+    },
+    "window_not_closed": {
+      "message": "Das Enddatum muss vor heute liegen: nur ganze Tage, die der Zähler erfasst hat, werden berechnet."
+    },
+    "window_before_switch": {
+      "message": "Diese Tage beginnen vor dem {switched}, dem Tag, an dem der aktuelle Vertrag übernommen hat: nur seine eigenen Tage werden berechnet."
+    },
+    "nothing_priced_yet": {
+      "message": "Der Eintrag hat seine Tarifkarte noch nicht berechnet; versuchen Sie es nach seiner ersten Aktualisierung erneut."
+    },
+    "no_meter": {
+      "message": "Es wird kein Gaszähler gelesen: wählen Sie einen in den Einstellungen des Eintrags oder fügen Sie einen zum Energie-Dashboard hinzu."
+    },
+    "meter_not_read": {
+      "message": "Der Gaszähler konnte nicht gelesen werden: {error}"
+    },
+    "no_conversion_factor": {
+      "message": "Ein Monat dieser Tage enthält Gas, aber für ihn ist kein kWh-Wert pro Kubikmeter bekannt."
+    },
+    "window_not_priced": {
+      "message": "Diese Tage konnten nicht berechnet werden: {error}"
+    },
+    "bill_start_too_early": {
+      "message": "Das Startdatum darf nicht vor dem {earliest} liegen: das Archiv der Tarifkarten bewahrt keine älteren auf."
+    },
+    "rate_end_too_late": {
+      "message": "Der letzte Monat darf nicht nach {latest} liegen: so weit lässt sich kein Preis hochrechnen."
+    }
+  }
+}

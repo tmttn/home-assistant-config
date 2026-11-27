@@ -1,0 +1,702 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Eneco Belgium gas tariff card extractor.
+
+Eneco publishes one card per gas product, the same card for Flanders and
+Wallonia, at
+
+    https://cdn.eneco.be/downloads/nl/general/tk/BC_032_<ISSUE>_NL_ENECO_GAS_<TOKEN>.pdf
+
+TOKEN is FIX (Aardgas Vast), FIX_ONE (Aardgas Fix One), FLEX (Aardgas Flex)
+or FLEX_ONE (Aardgas Flex One). ISSUE is "01" and the card's year and month,
+which the card repeats ("Tariefkaart versie 012609" for September 2026). The current card is the
+one the public listing links, the same scrape as for electricity. Every past
+issue stays on the CDN, so the built URL is the archive: Flex back to at least
+January 2020, Vast with a gap from January 2022 to April 2023, Flex One only
+from September 2026 and Fix One from October 2026. No second issue of a month
+("02YYMM") was found for Flex or Vast, gas or electricity, from 2019 to 2026,
+so only the first is asked for.
+Cards before 2025 name the Fluvius DSOs that merged away and price no Flemish
+household's network, only the energy leg a contract was signed on. Their
+Walloon rows read from February 2024, the first card on which the five ORES
+sub-areas print one tariff.
+
+There is no Brussels card: Brugel's supplier list notes that Eneco no longer
+takes new Brussels residential customers, and the cards are "voor Vlaanderen
+en Wallonië".
+
+Aardgas Vast left the listing on 30 October 2026, Fix One being the fixed
+product sold since. A household on Vast is priced on its last card,
+October's, and its past issues are still read off the CDN.
+
+The listing links the card of every gas product sold, which is what discover
+reads for the live check.
+
+Every figure is 6% VAT inclusive, the formula included: it carries its own
+multiplier ("(0,1 X TTFDAW-RLP-M + 1,074) X 1,06"). Both variable products
+index on TTFDAW-RLP-M, the RLP-weighted mean of the ICIS Heren TTF day-ahead
+and weekend prices over the delivery month, known once the month is over. The
+card's Maandprijs is the formula at the last month known, which a footnote
+names ("08/2026: €61,6374/MWh"). Eneco publishes every month's value to two
+decimals in its indexation PDF, and the months it has dropped in an older
+one, which is what fetch_index reads.
+
+Flex cards before April 2023 indexed per quarter, on TTFDAW-RLP, the
+RLP-weighted mean over the delivery quarter: "(0,1 X TTFDAW-RLP + 1,07) X
+1,06" on October 2022's, with a Kwartaalprijs at the last quarter known
+("3de kwartaal 2022: €195,2918/MWh"). Eneco still bills a contract signed on
+one by its formula and that index, which the indexation PDF prints on each
+month of a quarter once the quarter is over. Only their energy leg is read:
+their DSO and levy tables are of a layout no later card uses, and the cards
+of January to March 2022 price at 21% VAT, so they are refused. The cards
+before 2022 index on TTFDAW-S41, which Eneco no longer publishes, and are
+refused too.
+
+The card is read with pypdf. pdfplumber sets the tax block on the same lines
+as the DSO rows and scrambles the one DSO label that wraps.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, replace
+from datetime import date
+from itertools import pairwise
+from typing import Any
+
+import aiohttp
+
+from ..const import (
+    DSO_FLUVIUS_ANTWERPEN,
+    DSO_FLUVIUS_HALLE_VILVOORDE,
+    DSO_FLUVIUS_IMEWO,
+    DSO_FLUVIUS_KEMPEN,
+    DSO_FLUVIUS_LIMBURG,
+    DSO_FLUVIUS_MIDDEN_VLAANDEREN,
+    DSO_FLUVIUS_WEST,
+    DSO_FLUVIUS_ZENNE_DIJLE,
+    DSO_RESA,
+    REGION_FLANDERS,
+    REGION_WALLONIA,
+)
+from ._network import (
+    FLUVIUS_MERGED,
+    METERING,
+    ORES_LABELS,
+    T1_FIXED,
+    T1_PROP,
+    T2_FIXED,
+    T2_PROP,
+    excise_bands,
+    read_dsos,
+    require_region,
+    signing_dsos,
+)
+from ._parse import (
+    LINE_BREAK,
+    SIGN_CHARS,
+    cell_value,
+    formula_gives,
+    month_date,
+    parse_sign,
+    require_contract,
+    stated_unit,
+    to_float,
+)
+from ._pdf import (
+    NL_MONTHS,
+    fetch_pdf_rendered,
+    fetch_pdf_text,
+    fetch_text,
+    printed_vat_rate,
+)
+from ._pdf_render import (
+    pdfplumber_text,
+    word_centre,
+    word_rows,
+)
+from ._rates import Contract, FixedRates, IndexedRates, TariffKind
+from ._validity import end_of_month, future_month, month_card
+from .base import (
+    DsoOverlay,
+    ExtractorError,
+    IndexTable,
+    SupplierExtractor,
+    SupplierSnapshot,
+    TaxOverlay,
+)
+
+_BASE_URL = "https://cdn.eneco.be/downloads/nl/general/tk"
+# With the trailing slash: the bare path answers a 308 to this one.
+_LISTING_URL = "https://eneco.be/nl/elektriciteit-gas/tariefkaarten/"
+_INDEX_URL = "https://cdn.eneco.be/downloads/nl/b2c/acq/indexatieparameters-aardgas.pdf"
+# The months the current one has dropped, from January 2023.
+_OLD_INDEX_URL = "https://cdn.eneco.be/downloads/nl/b2c/acq/indexatieparameters-aardgas-oud.pdf"
+
+# The index both variable products settle on, as the card and the indexation
+# PDF name it.
+_INDEX = "TTFDAW-RLP-M"
+
+# Closed quarters whose printed value is wrong, at the value Eneco bills.
+# Every edition read since September 2026 prints Q4 2025 TTFDAW-RLP as the
+# column's newest closed quarter of that edition (45,95, then 65,26 from 7
+# October), where the edition of February 2026 printed 29,41. Eneco's own
+# yearly gas bill of December 2025 for a contract on the October 2022 card
+# prices 01/10-16/12/2025 at 4,05168 c€/kWh excluding VAT and prints the
+# index as 29,82, so that is the value, whatever an edition prints.
+_BILLED_INDEX: dict[tuple[str, str], float] = {
+    ("TTFDAW-RLP", "2025-10"): 29.82,
+    ("TTFDAW-RLP", "2025-11"): 29.82,
+    ("TTFDAW-RLP", "2025-12"): 29.82,
+}
+# The one Flex cards before _MONTHLY_FROM settle on, per quarter.
+_QUARTERLY_INDEX = "TTFDAW-RLP"
+_MONTHLY_FROM = date(2023, 4, 1)
+
+_REGIONS = frozenset({REGION_FLANDERS, REGION_WALLONIA})
+_NL_MONTH = {name: number for number, name in enumerate(NL_MONTHS, 1)}
+
+
+@dataclass(frozen=True)
+class _ContractDef:
+    contract_id: str
+    label: str
+    kind: TariffKind
+    token: str  # GAS_<TOKEN> in the file name
+    # The first day Eneco no longer sold it.
+    withdrawn: date | None = None
+
+
+# The label is also the title the card opens with.
+_CONTRACTS: tuple[_ContractDef, ...] = (
+    _ContractDef(
+        "eneco_aardgas_vast", "Eneco Aardgas Vast", "fixed", "FIX", withdrawn=date(2026, 10, 30)
+    ),
+    _ContractDef("eneco_aardgas_fix_one", "Eneco Aardgas Fix One", "fixed", "FIX_ONE"),
+    _ContractDef("eneco_aardgas_flex", "Eneco Aardgas Flex", "indexed", "FLEX"),
+    _ContractDef("eneco_aardgas_flex_one", "Eneco Aardgas Flex One", "indexed", "FLEX_ONE"),
+)
+_CONTRACTS_BY_ID = {c.contract_id: c for c in _CONTRACTS}
+
+
+def _contract(contract_id: str, region: str) -> _ContractDef:
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Eneco")
+    if region not in _REGIONS:
+        raise ExtractorError(f"Eneco {contract_id}: not sold in region {region!r}")
+    return contract
+
+
+def card_url(listing: str, contract_id: str) -> str:
+    """The current card of ``contract_id`` as the listing links it.
+
+    The token is closed by ".pdf", so FLEX never picks up the FLEX_ONE card
+    nor FIX the FIX_ONE one.
+    """
+    token = require_contract(_CONTRACTS_BY_ID, contract_id, "Eneco").token
+    match = re.search(rf"{re.escape(_BASE_URL)}/BC_032_\d{{6}}_NL_ENECO_GAS_{token}\.pdf", listing)
+    if match is None:
+        raise ExtractorError(f"Eneco: the listing links no GAS_{token} card")
+    return match.group(0)
+
+
+# Every gas card the listing links, by its token. Looser than card_url, so a
+# product named in an unexpected way still shows up as one. The token is
+# held to 32 characters, four times FLEX_ONE, the longest Eneco has used:
+# of any length it took in the names after it, which are of its own letters,
+# and was read back from each one, 34 s for 144 kB of names that never close
+# on ".pdf".
+_LISTED_RE = re.compile(r"BC_[\d_]+_NL_ENECO_GAS_([A-Z_]{1,32})\.pdf")
+
+
+def parse_catalog(listing: str) -> set[str]:
+    """The gas products the listing links a card for, by contract id; a
+    token no contract has is ``eneco_aardgas_<token>``."""
+    by_token = {c.token: c.contract_id for c in _CONTRACTS}
+    return {
+        by_token.get(token, f"eneco_aardgas_{token.lower()}")
+        for token in _LISTED_RE.findall(listing)
+    }
+
+
+async def discover(session: aiohttp.ClientSession) -> set[str]:
+    """The gas products Eneco sells today, as its listing links them."""
+    return parse_catalog(await fetch_text(session, _LISTING_URL))
+
+
+async def fetch(session: aiohttp.ClientSession, contract_id: str, region: str) -> SupplierSnapshot:
+    """The current card for ``contract_id``, read for ``region``."""
+    contract = _contract(contract_id, region)
+    if contract.withdrawn is not None:
+        raise ExtractorError(
+            f"Eneco withdrew {contract.label} on {contract.withdrawn:%Y-%m-%d}: "
+            "only its past cards are read"
+        )
+    return await _read(
+        session, contract_id, region, card_url(await fetch_text(session, _LISTING_URL), contract_id)
+    )
+
+
+async def _read(
+    session: aiohttp.ClientSession, contract_id: str, region: str, url: str
+) -> SupplierSnapshot:
+    return parse_snapshot(contract_id, region, await fetch_pdf_text(session, url), url)
+
+
+async def fetch_for_month(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+    year_month: date,
+) -> SupplierSnapshot | None:
+    """The card Eneco issued for ``year_month``, or None.
+
+    A month ahead of today in Home Assistant's zone is not asked for. A
+    transient failure raises so the month cache retries it; any other
+    failure, a 404 for a month the product was not sold included, is a month
+    with no card. A card that parses but names another month is refused.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    if contract is None or region not in _REGIONS:
+        return None
+    if future_month(year_month):
+        return None
+    issue = f"01{year_month.year % 100:02d}{year_month.month:02d}"
+    url = f"{_BASE_URL}/BC_032_{issue}_NL_ENECO_GAS_{contract.token}.pdf"
+    return await month_card(_read(session, contract_id, region, url), year_month)
+
+
+def parse_snapshot(contract_id: str, region: str, text: str, source_url: str) -> SupplierSnapshot:
+    """Parse one card's text as pypdf extracts it, for ``region``.
+
+    One card serves both regions, so the region picks the DSO rows and
+    whether the Walloon connection fee applies. A Flex card before April
+    2023 gives its energy leg alone.
+    """
+    contract = _contract(contract_id, region)
+    _require_product(text, contract)
+    card_month = _card_month(text)
+    if contract.kind == "indexed" and card_month < _MONTHLY_FROM:
+        return SupplierSnapshot(
+            supplier="eneco",
+            contract=contract_id,
+            energy=_quarterly_energy(text),
+            dsos={},
+            taxes=TaxOverlay(excise_bands=(), card_vat_rate=printed_vat_rate(text, _VAT_RE)),
+            source_url=source_url,
+            publication_label=f"{card_month:%Y-%m}",
+            valid_until=end_of_month(card_month.year, card_month.month),
+        )
+    return SupplierSnapshot(
+        supplier="eneco",
+        contract=contract_id,
+        energy=_energy(text, contract),
+        dsos=signing_dsos(lambda: _dsos(text, region), card_month, FLUVIUS_MERGED),
+        taxes=_taxes(text, region),
+        source_url=source_url,
+        publication_label=f"{card_month:%Y-%m}",
+        valid_until=end_of_month(card_month.year, card_month.month),
+    )
+
+
+_TITLE_RE = re.compile(r"\s*(Eneco Aardgas[^\n]*)")
+
+
+def _require_product(text: str, contract: _ContractDef) -> None:
+    """Refuse a card whose title names another product. Flex and Flex One
+    print the same layout, so only the title tells them apart."""
+    match = _TITLE_RE.match(text)
+    title = match.group(1).strip() if match else None
+    if title != contract.label:
+        raise ExtractorError(f"Eneco: card is titled {title!r}, expected {contract.label!r}")
+
+
+# "Tariefkaart september 2026 van Eneco Belgium nv", the first sentence.
+_CARD_MONTH_RE = re.compile(r"Tariefkaart\s+([a-z]+)\s+(\d{4})\s+van\s+Eneco")
+
+
+def _card_month(text: str) -> date:
+    match = _CARD_MONTH_RE.search(text)
+    month = _NL_MONTH.get(match.group(1)) if match else None
+    if match is None or month is None:
+        raise ExtractorError("Eneco: card month not found")
+    return month_date(match.group(2), month, "Eneco")
+
+
+# Under the "VERBRUIK (€cent/kWh)" heading the yearly fee comes first. The
+# fixed card prints the price beside it; the variable one prints the yearly
+# estimate and then the Maandprijs on lines of their own, each followed by its
+# label, which the cards before 2025 prefixed with a ">" bullet. The bullet
+# and the spaces around it are taken whole, as _parse.LINE_BREAK is: "\s*>?\s*"
+# split a run of spaces every way before failing.
+_ENERGY_HEAD = rf"VERBRUIK{LINE_BREAK}\(€cent/kWh\){LINE_BREAK}(\d+,\d+)"
+_BULLET = r"(?>\s*>?\s*)"
+_FIXED_RE = re.compile(_ENERGY_HEAD + r"[ \t]+(\d+,\d+)[ \t]*\n")
+_VARIABLE_RE = re.compile(
+    _ENERGY_HEAD
+    + rf"{LINE_BREAK}\d+,\d+{_BULLET}Geschatte jaarprijs{LINE_BREAK}(\d+,\d+){_BULLET}Maandprijs"
+)
+# Before April 2023 the price below the estimate, or above it, was the
+# Kwartaalprijs.
+_QUARTERLY_RE = re.compile(
+    _ENERGY_HEAD
+    + rf"(?:{LINE_BREAK}\d+,\d+{_BULLET}Geschatte jaarprijs)?"
+    + rf"{LINE_BREAK}(\d+,\d+){_BULLET}Kwartaalprijs"
+)
+
+
+def _formula_re(index: str) -> re.Pattern[str]:
+    """The formula on ``index``. The sign has to follow the name, so
+    TTFDAW-RLP is not read off TTFDAW-RLP-M."""
+    return re.compile(
+        rf"\(\s*(\d+(?:,\d+)?)\s*X\s*{re.escape(index)}\s*([{SIGN_CHARS}])\s*(\d+,\d+)\s*\)"
+        r"\s*X\s*(\d+,\d+)"
+    )
+
+
+_FORMULA_RE = _formula_re(_INDEX)
+_QUARTERLY_FORMULA_RE = _formula_re(_QUARTERLY_INDEX)
+# The VAT multiplier a formula carries, the rate every card has stated since
+# April 2022.
+_FORMULA_VAT = "1,06"
+# The formula is the last row under the price table's heading, below the
+# estimate and the Maandprijs: "VERBRUIK (€cent/kWh)", spelt that way and
+# printed once on every Flex card since November 2023 and every Flex One
+# card, starts 69 to 73 characters ahead of it. The reach holds the formula
+# to that table and leaves room for two more rows in it ("9,99 Maandprijs
+# bij domiciliëring" is 34 characters). A formula restated on another scale
+# no longer gives the Maandprijs back, wherever it stands (_require_price).
+_FORMULA_UNIT_RE = re.compile(r"VERBRUIK\s*\(([^()\n]*)\)")
+_FORMULA_UNIT = "€cent/kWh"
+# The index value the Maandprijs is worked out at, once on every card, in the
+# small print: "de laatst gekende waarde van TTFDAW-RLP-M (10/2026:
+# €88,2882/MWh)". The card states the index's unit only there, so a card
+# restating the index alone, in c€/kWh with its factor ten times larger,
+# would still read under its heading. Held to its Maandprijs at the value in
+# €/MWh, it misses it.
+_INDEX_VALUE_RE = re.compile(r"\(\d{2}/\d{4}:\s*€\s*(\d+(?:[.,]\d+)*)\s*/MWh\)")
+# The Kwartaalprijs's, by quarter: "(3de kwartaal 2022: €195,2918/MWh)".
+_QUARTER_VALUE_RE = re.compile(
+    r"\(\d(?:ste|de)\s+kwartaal\s+\d{4}:\s*€\s*(\d+(?:[.,]\d+)*)\s*/MWh\)"
+)
+# On the 80 Flex and Flex One rows of November 2023 to November 2026 the
+# formula at that value gives the Maandprijs back within 0,124%, the rounding
+# of a price printed to the hundredth, at most 0,133% down to the lowest of
+# them, 3,77, and on the Kwartaalprijs of the twelve quarterly Flex cards of
+# April 2022 to March 2023 within 0,04%. Only a price under 1 c€/kWh rounds
+# by more than the tolerance.
+# A factor ten times off misses it by 65% or more, and a base alone by 2,2%
+# or more (Flex One's 0,225 read as a tenth of itself).
+_RECOMPUTE_TOLERANCE = 5e-3
+
+
+def _energy(text: str, contract: _ContractDef) -> FixedRates | IndexedRates:
+    if contract.kind == "fixed":
+        match = _FIXED_RE.search(text)
+        if match is None:
+            raise ExtractorError("Eneco: fixed price block not found")
+        return FixedRates(
+            price=to_float(match.group(2)) / 100.0,
+            yearly_fixed_fee=to_float(match.group(1)),
+        )
+    monthly = _VARIABLE_RE.search(text)
+    formula = _FORMULA_RE.search(text)
+    if monthly is None or formula is None:
+        raise ExtractorError("Eneco: variable price block or formula not found")
+    return _indexed(text, monthly, formula, _INDEX, _INDEX_VALUE_RE)
+
+
+def _quarterly_energy(text: str) -> IndexedRates:
+    """The energy leg of a Flex card before April 2023, on TTFDAW-RLP."""
+    quarterly = _QUARTERLY_RE.search(text)
+    formula = _QUARTERLY_FORMULA_RE.search(text)
+    if quarterly is None or formula is None:
+        raise ExtractorError(f"Eneco: Kwartaalprijs or {_QUARTERLY_INDEX} formula not found")
+    if formula.group(4) != _FORMULA_VAT:
+        raise ExtractorError(
+            f"Eneco: the formula carries X {formula.group(4)}, expected X {_FORMULA_VAT}, "
+            "the 6% VAT billed since April 2022"
+        )
+    return replace(
+        _indexed(text, quarterly, formula, _QUARTERLY_INDEX, _QUARTER_VALUE_RE), period="quarter"
+    )
+
+
+def _indexed(
+    text: str,
+    block: re.Match[str],
+    formula: re.Match[str],
+    index: str,
+    stated_re: re.Pattern[str],
+) -> IndexedRates:
+    """The leg ``formula`` on ``index`` gives, with the fee and the price
+    ``block`` holds, checked against the index value ``stated_re`` reads."""
+    # The heading also anchors the price, so a card restating it fails
+    # above. A formula under a heading of its own would still be read on the
+    # €cent scale.
+    unit = stated_unit(text, _FORMULA_UNIT_RE, formula.span(), before=150)
+    if unit != _FORMULA_UNIT:
+        raise ExtractorError(
+            f"Eneco: the card states its formula in {unit or 'no unit'}, expected {_FORMULA_UNIT}"
+        )
+    # The formula gives c EUR/kWh for an index in EUR/MWh and carries its own
+    # VAT multiplier ("X 1,06"), applied here once and not grossed again.
+    scale = to_float(formula.group(4)) / 100.0
+    factor = to_float(formula.group(1)) * scale
+    base = parse_sign(formula.group(2)) * to_float(formula.group(3)) * scale
+    price = to_float(block.group(2)) / 100.0
+    _require_price(text, factor, base, price, index, stated_re)
+    return IndexedRates(
+        factor=factor,
+        base=base,
+        index=index,
+        price=price,
+        yearly_fixed_fee=to_float(block.group(1)),
+        formula=formula.group(0),
+    )
+
+
+def _require_price(
+    text: str, factor: float, base: float, price: float, index: str, stated_re: re.Pattern[str]
+) -> None:
+    """Refuse a formula that does not give the card's price back at the
+    index value the card names in €/MWh: read on the €cent scale against an
+    index in €/MWh, a restated formula or index would come out ten times off
+    and still parse."""
+    stated = stated_re.search(text)
+    if stated is None:
+        raise ExtractorError(
+            f"Eneco: the card names no {index} value in €/MWh to check its formula on"
+        )
+    value = to_float(stated.group(1))
+    if not formula_gives(price, factor, value, base, tolerance=_RECOMPUTE_TOLERANCE):
+        raise ExtractorError(
+            f"Eneco: the formula gives {(factor * value + base) * 100:.2f} €cent/kWh at "
+            f"{index} {value} €/MWh where the card prints {price * 100:.2f}"
+        )
+
+
+# "Vaste term (€/jaar), Proportionele term (€cent/kWh)" for T1 then T2, then
+# "Meteropname (€/jaar)", which is the Flemish data management fee and a dash
+# on the Walloon rows. No T3: the card only covers up to 100 MWh a year.
+_COLUMNS = (T1_FIXED, T1_PROP, T2_FIXED, T2_PROP, METERING)
+
+# The labels as Eneco prints them. Kempen and Midden-Vlaanderen keep the name
+# of the DSO they replaced in brackets; their figures are the new areas'.
+_LABELS: dict[str, dict[str, str]] = {
+    REGION_FLANDERS: {
+        "FLUVIUS ANTWERPEN": DSO_FLUVIUS_ANTWERPEN,
+        "FLUVIUS HALLE VILVOORDE": DSO_FLUVIUS_HALLE_VILVOORDE,
+        "FLUVIUS IMEWO": DSO_FLUVIUS_IMEWO,
+        "FLUVIUS KEMPEN (IVEKA)": DSO_FLUVIUS_KEMPEN,
+        "FLUVIUS LIMBURG": DSO_FLUVIUS_LIMBURG,
+        "FLUVIUS MIDDEN VLAANDEREN (INTERGEM)": DSO_FLUVIUS_MIDDEN_VLAANDEREN,
+        "FLUVIUS WEST": DSO_FLUVIUS_WEST,
+        "FLUVIUS ZENNE DIJLE": DSO_FLUVIUS_ZENNE_DIJLE,
+    },
+    REGION_WALLONIA: {**ORES_LABELS, "TECTEO RESA": DSO_RESA},
+}
+
+# pypdf breaks "FLUVIUS MIDDEN VLAANDEREN (INTERGEM)" before the bracket and
+# leaves the cells on the second line, where table_row would read "(INTERGEM)"
+# as the whole label. Joined back, the row is one line like the others. The
+# label is the line up to its last character that is no space or tab, the
+# one a lazy label stopped at: lazily, the spaces after the label were
+# scanned again from every one of them, in time growing with their square.
+_WRAPPED_LABEL_RE = re.compile(
+    r"^([A-Z](?:[^\d\n]*[^\d\n \t])?)[ \t]*\n(\([A-Z]+\)[ \t]+\d)", re.MULTILINE
+)
+
+# Transport is a note beside the table, not a column: "Voor het jaar 2026
+# raamt Fluxys deze kosten op 0,165 €cent/kWh (incl. btw)".
+_TRANSPORT_RE = re.compile(r"raamt Fluxys deze kosten\s+op\s+(\d+,\d+)\s*€cent/kWh")
+
+
+def _dsos(text: str, region: str) -> dict[str, DsoOverlay]:
+    transport = _TRANSPORT_RE.search(text)
+    if transport is None:
+        raise ExtractorError("Eneco: Fluxys transport note not found")
+    dsos = read_dsos(
+        _WRAPPED_LABEL_RE.sub(r"\1 \2", text),
+        _LABELS[region],
+        _COLUMNS,
+        supplier="Eneco",
+        after="Netbeheerder",
+        transport=to_float(transport.group(1)) / 100.0,
+    )
+    require_region(dsos, region, "Eneco")
+    return dsos
+
+
+# "Verbruik tussen 0 en 12.000 kWh 1,0929 0,0000": the special excise, then
+# the energy contribution, on the same line. The label is set with no-break
+# spaces.
+_EXCISE_LOW_RE = re.compile(
+    r"Verbruik\s+tussen\s+0\s+en\s+12\.000\s+kWh\s+(\d+,\d+)[ \t]+(\d+,\d+)"
+)
+_EXCISE_HIGH_RE = re.compile(r"Verbruik\s+>\s+12\.000\s+kWh\s+(\d+,\d+)[ \t]+(\d+,\d+)")
+# The per-kWh row, not the flat "0 - 100 kWh/jaar 0,0075 €" one above it,
+# which is the same rate on the first 100 kWh.
+_CONNECTION_FEE_RE = re.compile(r"Aansluitingsvergoeding\s+<\s*1\s*GWh\s+(\d+,\d+)\s*€cent/kWh")
+_VAT_RE = re.compile(r"Alle prijzen en tarieven zijn inclusief\s*(\d+(?:,\d+)?)\s*%\s*btw")
+
+
+def _taxes(text: str, region: str) -> TaxOverlay:
+    low = _EXCISE_LOW_RE.search(text)
+    high = _EXCISE_HIGH_RE.search(text)
+    if low is None or high is None:
+        raise ExtractorError("Eneco: federal excise rows not found")
+    contribution = to_float(low.group(2))
+    if to_float(high.group(2)) != contribution:
+        raise ExtractorError("Eneco: the two excise rows print different energy contributions")
+    return TaxOverlay(
+        excise_bands=excise_bands(to_float(low.group(1)) / 100.0, to_float(high.group(1)) / 100.0),
+        energy_contribution=contribution / 100.0,
+        connection_fee=_connection_fee(text) if region == REGION_WALLONIA else 0.0,
+        card_vat_rate=printed_vat_rate(text, _VAT_RE),
+    )
+
+
+def _connection_fee(text: str) -> float:
+    """The Walloon connection fee as printed. The law's fee is billed
+    whatever a card prints, so a card without the row reads as zero rather
+    than being refused."""
+    match = _CONNECTION_FEE_RE.search(text)
+    return 0.0 if match is None else to_float(match.group(1)) / 100.0
+
+
+# Index values, from the indexation PDF.
+
+_YEAR_RE = re.compile(r"\d{4}")
+
+
+def _word_rows(page: Any) -> list[list[dict[str, Any]]]:
+    """The page's upright words by line. The print code set sideways in the
+    margin is left out, or it could land at the start of a month's row."""
+    return word_rows([w for w in page.extract_words() if w["upright"]])
+
+
+def _place(words: list[dict[str, Any]], columns: list[float], month: str) -> list[str]:
+    """One month's figures in their columns, a dash where there is none."""
+    if not columns:
+        raise ExtractorError(f"Eneco: index row {month} before the column headings")
+    tolerance = min(b - a for a, b in pairwise(columns)) / 2.0
+    cells = ["-"] * len(columns)
+    for word in words:
+        centre = word_centre(word)
+        column = min(range(len(columns)), key=lambda i: abs(columns[i] - centre))
+        if abs(columns[column] - centre) > tolerance or cells[column] != "-":
+            raise ExtractorError(f"Eneco: index figure {word['text']} in {month} fits no column")
+        cells[column] = word["text"]
+    return cells
+
+
+def _render_index(pdf: Any) -> str:
+    lines: list[str] = []
+    columns: list[float] = []
+    for page in pdf.pages:
+        for row in _word_rows(page):
+            texts = [word["text"] for word in row]
+            if _INDEX in texts:
+                columns = [word_centre(word) for word in row]
+                lines.append(" ".join(texts))
+            elif len(texts) > 2 and texts[0].lower() in _NL_MONTH and _YEAR_RE.fullmatch(texts[1]):
+                month = f"{texts[0]} {texts[1]}"
+                lines.append(" ".join([month, *_place(row[2:], columns, month)]))
+    return "\n".join(lines)
+
+
+def index_table_text(payload: bytes) -> str:
+    """Eneco's gas indexation PDF as text: the column headings, then one
+    month a line with a dash in every empty cell.
+
+    The PDF leaves a cell empty where a value is not published (TTFDAW-RLP-M
+    before March 2023, a quarterly column until its quarter is over), and its
+    text layer does not say which: "Juli 2026 52,99 45,11 45,75" reads the
+    same whichever three columns they are. So each figure goes in the column
+    whose heading it sits under.
+    """
+    return pdfplumber_text(payload, "index", _render_index)
+
+
+def parse_index_text(text: str) -> IndexTable:
+    """The index values by column heading and month, in EUR/MWh.
+
+    The quarterly columns are printed on each month of their quarter, so
+    they come out month by month like the monthly one.
+    """
+    table: IndexTable = {}
+    names: list[str] = []
+    for line in text.splitlines():
+        words = line.split()
+        if _INDEX in words:
+            names = words
+            for name in names:
+                table.setdefault(name, {})
+            continue
+        month = _NL_MONTH.get(words[0].lower()) if words else None
+        if month is None or len(words) != len(names) + 2:
+            raise ExtractorError(f"Eneco: unreadable index row {line!r}")
+        for name, cell in zip(names, words[2:], strict=True):
+            value = cell_value(cell)
+            if value is not None:
+                table[name][f"{words[1]}-{month:02d}"] = value
+    if not table.get(_INDEX):
+        raise ExtractorError(f"Eneco: no {_INDEX} values in the indexation PDF")
+    return table
+
+
+async def fetch_index(session: aiohttp.ClientSession) -> IndexTable:
+    """Eneco's published gas index values: the current indexation PDF's,
+    over the older one's for the months it has dropped. A Flex contract
+    signed before April 2023 is priced on the quarterly TTFDAW-RLP back to
+    January 2023."""
+    table: IndexTable = {}
+    for url in (_OLD_INDEX_URL, _INDEX_URL):
+        text = await fetch_pdf_rendered(
+            session, url, variant="eneco-index", timeout=30, render=index_table_text
+        )
+        for name, values in parse_index_text(text).items():
+            table.setdefault(name, {}).update(values)
+    for (name, month), value in _BILLED_INDEX.items():
+        table.setdefault(name, {})[month] = value
+    return table
+
+
+EXTRACTOR = SupplierExtractor(
+    id="eneco",
+    label="Eneco",
+    contracts=tuple(
+        Contract(
+            id=c.contract_id, label=c.label, kind=c.kind, regions=_REGIONS, withdrawn=c.withdrawn
+        )
+        for c in _CONTRACTS
+    ),
+    fetch=fetch,
+    fetch_for_month=fetch_for_month,
+    fetch_index=fetch_index,
+    discover=discover,
+    sweep_cost_s=0.8,
+)

@@ -1,0 +1,762 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Reading a figure off a line of a tariff card.
+
+Belgian cards print numbers in half a dozen ways: a comma decimal, a thousands
+separator that looks like a decimal point, a sign that is a word, a rate that
+is a column heading. These turn a line of extracted text into a number, or
+raise rather than guess. They know nothing about which supplier printed it.
+"""
+
+from __future__ import annotations
+
+import math
+import re
+import unicodedata
+from collections.abc import Iterable, Mapping, Sequence
+from datetime import date
+from difflib import SequenceMatcher
+from typing import TypeVar
+
+from homeassistant.util import dt as dt_util
+
+from ..const import REGION_BRUSSELS, REGION_FLANDERS, REGION_WALLONIA
+from .base import (
+    DsoOverlay,
+    ExtractorError,
+    ShortNetworkTableError,
+    SupplierSnapshot,
+    TaxOverlay,
+    brussels_sibelga_overlay,
+)
+
+
+def fold_accents(text: str) -> str:
+    """Lowercase and strip Latin diacritics.
+
+    Belgian / French / Dutch tariff PDFs sometimes lose their accents
+    when extracted (font / CMap quirks in pypdf), so a literal substring
+    test for ``"août"`` misses an extracted ``"aout"``. Provider-side
+    cross-checks should fold both haystack and needle through this
+    helper to compare apples-to-apples.
+    """
+    return "".join(
+        c
+        for c in unicodedata.normalize("NFKD", text.lower())
+        if not unicodedata.combining(c)
+    )
+
+
+def parse_prosumer_column(
+    section: str, labels: dict[str, str], *, skip_columns: int = 4
+) -> dict[str, float]:
+    """DSO key -> prosumer EUR/kVA/year, off an analog-meter DSO table.
+
+    The Flemish analog-meter table prints the prosumer forfait as the column
+    after ``skip_columns`` numeric ones. Ecofix and EBEM read it with the same
+    eight lines; only the section they read it from differs, and that stays at
+    the call site along with any per-supplier gate on whether the table exists
+    at all.
+
+    A label the table does not carry is simply absent from the result, the same
+    as before: the caller falls back to leaving the rate unset.
+    """
+    out: dict[str, float] = {}
+    skip = r"[\d.,]+\s+" * skip_columns
+    for label, key in labels.items():
+        row = re.search(rf"{re.escape(label)}\s+" + skip + r"([\d.,]+)", section)
+        if row:
+            out[key] = to_float(row.group(1))
+    return out
+
+
+def require_every_area(
+    supplier: str,
+    card: SupplierSnapshot,
+    keys: Iterable[str],
+    *,
+    block: str | None = None,
+) -> None:
+    """Refuse a network table that lacks one of the region's areas.
+
+    A partial table is worse than none: the areas are what every entry picks
+    its network cost from, and a card missing one would be adopted, persisted
+    and shared, leaving the entry on that area with no overlay and every tick
+    failing, while the last good card is gone from the cache. An empty one
+    would let the backfill path silently skip whole months (it swallows the
+    resulting KeyError). Refusing keeps the last good card serving.
+
+    Aspiravi, Belvus, Bolt, Cociter, EBEM, Ecopower, Elegant, Eneco,
+    energie.be, Energy Knights, EnergyVision, Frank, OCTA+ and Trevion ask it
+    of the live card, and hold the running month's card to the same areas
+    through ``running_month_short_of_an_area``. A past month's card keeps a short
+    table: its energy is still what the month and a signing cohort are
+    billed, where refusing the card billed both on today's card, and the
+    month cache takes the missing area's network from the nearest card of
+    the same calendar year that prints it (``_with_nearest_area``,
+    ``snapshot_areas.py``). Ecofix and Dots Energy keep no archive of their
+    own and ask it of the live card alone.
+
+    The error carries the card, which the card archive keeps for its month.
+    """
+    missing = sorted(key for key in keys if key not in card.dsos)
+    if missing:
+        where = f" in the {block} block" if block else ""
+        raise ShortNetworkTableError(
+            f"{supplier}: DSO rows not found for {missing}{where}", card
+        )
+
+
+def running_month_short_of_an_area(
+    out: Mapping[str, DsoOverlay], keys: Iterable[str], year_month: date
+) -> bool:
+    """Whether ``year_month`` is still running and its card's network table
+    lacks one of ``keys``.
+
+    The month walk reads the running month through ``fetch_for_month``, since
+    the card archive is not asked for it, and that is the live card again.
+    Where ``fetch`` refused it (``require_every_area``) and the last good card
+    stayed, adopting it there dropped the running month from every walk on
+    the missing area. ``fetch_for_month`` answers None on it instead, so the
+    current card stands in. A closed month keeps its short table, and its
+    missing area is billed on the nearest card of its year that prints it.
+    """
+    today = dt_util.now().date()
+    if (year_month.year, year_month.month) < (today.year, today.month):
+        return False
+    return any(key not in out for key in keys)
+
+
+def require_contract(by_id: dict[str, _T], contract_id: str, label: str) -> _T:
+    """The contract definition for ``contract_id``, or raise.
+
+    Fourteen call sites across seven extractors spelled out the same lookup and
+    the same "unknown <supplier> contract" message. The guard inside
+    ``parse_snapshot`` is NOT redundant with the one in ``fetch``: that function
+    is the public entry point the tests and the live check call directly.
+
+    ``fetch_for_month`` keeps its own ``return None`` instead: a month a
+    supplier never published has to resolve to None so the caller falls back to
+    the current-card proxy, not blow up the year-to-date walk.
+    """
+    try:
+        return by_id[contract_id]
+    except KeyError:
+        raise ExtractorError(f"unknown {label} contract {contract_id!r}") from None
+
+
+def to_float(text: str) -> float:
+    """Parse a Belgian / French decimal number ('15,93' or '0.102').
+
+    Strips every Unicode space variant Belgian PDFs use as a
+    thousands separator or unit padder before swapping the comma
+    for a decimal point. Without this, NNBSP-separated values like
+    '5 029' raise ValueError mid-page.
+    """
+    cleaned = text.strip()
+    for sep in _NUMERIC_SEPARATORS:
+        cleaned = cleaned.replace(sep, "")
+    value = float(cleaned.replace(",", "."))
+    if not math.isfinite(value):
+        # float() reads "inf" and "nan", and makes an infinity of a run of
+        # digits too long for it: no figure a card prints, and a bound such
+        # as a VAT rate's does not hold to it.
+        raise ValueError("not a finite figure")
+    return value
+
+
+def finite_number(value: object) -> float | None:
+    """A JSON number as a float, or None for anything else: a bool, a
+    string, NaN, an infinity, an integer no float holds."""
+    if isinstance(value, bool) or not isinstance(value, int | float):
+        return None
+    try:
+        number = float(value)
+    except OverflowError:
+        return None
+    return number if math.isfinite(number) else None
+
+
+def tier_bound_kwh(text: str) -> float:
+    """Parse a consumption-tier bound like ``20.000`` or ``1.000.000``.
+
+    Distinct from :func:`to_float`: the dot here is a thousands separator,
+    not a decimal point, so ``to_float`` would read 20.000 kWh as twenty
+    and band every site into the wrong tranche. Tier bounds are always
+    whole kWh, so dropping the separators is exact.
+    """
+    cleaned = text.strip()
+    for sep in _NUMERIC_SEPARATORS:
+        cleaned = cleaned.replace(sep, "")
+    return float(cleaned.replace(".", ""))
+
+
+def _row_label(line: str) -> str:
+    """A row's leading text, up to where its figures start."""
+    found = _ROW_NUMBER.search(line)
+    return (line[: found.start()] if found else line).strip().rstrip(":").strip()
+
+
+def numeric_row(
+    text: str,
+    label: str,
+    columns: int | None = None,
+    *,
+    after: str | None = None,
+    before: str | None = None,
+    threshold: float = 0.82,
+) -> list[str] | None:
+    r"""The figures of the table row whose label reads as ``label``.
+
+    A literal ``label\s+(num)\s+(num)...`` says two things it does not mean.
+    That the label is spelled exactly so, when a card rendered as a page image
+    and read back drops a character now and then. And, because ``\s`` matches
+    a newline, that four figures anywhere after the label will do, including
+    four belonging to the row below. Both were measured on Ecofix's Flexy card:
+    its consumption row came back as ``Maandprjs``, one letter short, so the
+    anchor walked past it to the Injectie block's ``Maandprijs`` and billed a
+    household's consumption at 0,0432 where the card says 0,1181, a clean parse
+    and a wrong bill.
+
+    So this reads a row the way a person does. The label is matched by
+    similarity, not spelling. A row's figures are all on ONE line, because that
+    is what a row is; the only line it will look past is a label too long for
+    its column, sitting alone above its own figures. The column count, where
+    the caller knows it from the card's own headings, has to match. ``after``
+    and ``before`` bound the search to the block the row belongs to, which is
+    what keeps a consumption lookup away from an injection row carrying the
+    same word.
+
+    Returns the figures as they are printed, for :func:`to_float`, or ``None``
+    when nothing matches well enough. Refusing is the point: a wrong row is
+    worse than no row, and the caller raises where the card promises one.
+    """
+    body = text
+    if after is not None:
+        start = body.find(after)
+        if start < 0:
+            return None
+        body = body[start + len(after) :]
+    if before is not None:
+        end = body.find(before)
+        if end >= 0:
+            body = body[:end]
+
+    best: tuple[float, list[str]] | None = None
+    lines = body.splitlines()
+    for index, line in enumerate(lines):
+        numbers = _ROW_NUMBER.findall(line)
+        if not numbers or (columns is not None and len(numbers) != columns):
+            continue
+        row_label = _row_label(line)
+        if not row_label and index:
+            # A label too long for its column wraps onto its own line and
+            # leaves the figures alone on the next one: pdfplumber does
+            # this to Ecofix's Fluvius West and Zenne-Dijle rows. A person
+            # reads those two lines as one row, so take the label from the
+            # line above when it carries no figures of its own.
+            previous = lines[index - 1]
+            if not _ROW_NUMBER.search(previous):
+                row_label = _row_label(previous)
+        score = SequenceMatcher(None, row_label.lower(), label.lower()).ratio()
+        if score >= threshold and (best is None or score > best[0]):
+            best = (score, numbers)
+    return None if best is None else best[1]
+
+
+def ores_sub_areas_split(text: str) -> bool:
+    """Whether the card's ORES sub-area rows print different distribution rates.
+
+    ORES billed each of its sub-areas on a distribution tariff of its own
+    until the end of 2023 (Brabant wallon 8,63 c/kWh where Est printed
+    11,46), and the cards of that time list every one. A single ``ores``
+    area cannot say which of them an entry is on, so a reader leaves ORES
+    out of such a card rather than bill every sub-area on the first row.
+    Only the four distribution figures that open each row are compared: the
+    fixed fees after them may differ by cents a year (OCTA+'s meter rental
+    early in 2024) without making the first row wrong for a kWh.
+    """
+    rates = {tuple(row.split()[:4]) for row in _ORES_SUB_AREA_ROW.findall(text)}
+    return len(rates) > 1
+
+
+def parse_sign(char: str) -> float:
+    """Return -1.0 for any hyphen / dash / Unicode-minus, +1.0 otherwise.
+
+    Use as ``base = parse_sign(m.group(N)) * to_float(m.group(N+1))`` so
+    a future card that swaps to U+2212 (or '+' for an indexation that
+    flips polarity) doesn't silently break the parser.
+    """
+    return -1.0 if char in _NEGATIVE_SIGNS else 1.0
+
+
+# A unit a card states in brackets, "(c€/kWh)" or "(€cent/kWh)", as its first
+# group. It needs a "/", so a footnote mark such as "(2)" is no statement, and
+# both runs are bounded, the first stopping at the first "/", so a bracket full
+# of slashes is read once and an error quotes no more than a unit's worth.
+BRACKETED_UNIT = r"\(([^()\n/]{0,30}/[^()\n]{0,30})\)"
+# A unit a card states as the word after another, "in EURct/kWh" or "exprimé
+# en c€/kWh.", as its first group: the run to the next blank, less a full stop
+# or a comma ending the sentence.
+UNIT_WORD = r"(\S*[^\s.,;])"
+
+
+def stated_unit(
+    text: str,
+    pattern: re.Pattern[str],
+    figure: tuple[int, int],
+    *,
+    before: int = 0,
+    after: int = 0,
+) -> str | None:
+    """The unit a card states for the figure at ``figure``, the start and end
+    offsets of it in ``text``, or None where it states none there.
+
+    ``pattern`` matches one statement of the unit as the card prints it (a
+    column heading, the words after a formula), with the unit as its first
+    group, and should start on a word of the statement, so that its tail is
+    no statement. The last statement starting within ``before`` characters
+    ahead of the figure and ending before it is taken, else the first
+    starting and ending within ``after`` characters behind it. A
+    reader compares the answer with the spellings its cards have printed and
+    refuses any other, None included: a figure read on a scale its card no
+    longer states parses clean ten or a hundred times out, as OCTA+'s formulas
+    did in November 2026 (``_octaplus_formulas.py``).
+    """
+    start, end = figure
+    # Each reach bounds the search, so a call costs its reach rather than the
+    # rest of the card. A search stopped at the edge of a reach reads it as
+    # the end of the text, so each statement found is matched again from
+    # where it starts with the whole text in view: one running across the
+    # edge, "c€/kW" where the reach ends and the card prints "c€/kWh", is no
+    # statement there rather than one cut short.
+    if before:
+        stated = None
+        for found in pattern.finditer(text, max(0, start - before), start):
+            whole = pattern.match(text, found.start())
+            if whole is not None and whole.end() <= start:
+                stated = whole
+        if stated is not None:
+            return stated.group(1)
+    if after:
+        first = pattern.search(text, end, end + after)
+        if first is not None:
+            whole = pattern.match(text, first.start())
+            if whole is not None and whole.end() <= end + after:
+                return whole.group(1)
+    return None
+
+
+def formula_gives(
+    printed: float,
+    factor: float,
+    index: float,
+    base: float,
+    *,
+    tolerance: float,
+    floor: float = 0.0,
+) -> bool:
+    """Whether ``factor`` x ``index`` + ``base`` gives back the price a card
+    prints beside its formula, within ``tolerance`` of it as a share, or
+    within ``floor`` outright where that is wider.
+
+    For a card that states no unit for its formula but prints the index its
+    price is worked out at: a formula read on the wrong scale, or off the
+    wrong row, does not give the printed price back. All five figures in one
+    unit and on one VAT basis. ``floor`` is for a price printed near zero, a
+    feed-in formula crossing zero in a month of low prices, whose rounding to
+    the card's last decimal is more than any share of it.
+    """
+    allowed = max(tolerance * abs(printed), floor)
+    return abs(factor * index + base - printed) <= allowed
+
+
+def parse_brussels_osp(text: str) -> dict[str, float] | None:
+    """Parse the Brussels Brugel OSP annual-fee table off a Sibelga card.
+
+    Every Brussels card that prints the public-service-obligation block
+    lists one flat EUR/year fee per connection-power tier. The supplier
+    extractors render it several ways (label above vs. beside the value;
+    ``et``/``en``/``Entre``/``<=`` phrasings), but each tier row always ends
+    ``<bound> kVA <value>``, so anchor on the value-bearing ``kVA`` token.
+    Returns every tier the card prints, keyed by the shared tier ids, or None
+    when the block is absent (a card that omits it, or a non-Brussels card).
+
+    The rows have to be told apart by their operator, not by the number alone.
+    "> 36 et <= 56 kVA" and "> 56 kVA" both end in ``56 kVA``, so keying on the
+    bound would make the open-ended top row overwrite the one below it and
+    charge a 40 kVA connection the 56-and-above fee.
+    """
+    # Case-insensitive: Bolt prints "Obligations de service publique" (lower
+    # 's'), the other French cards "Obligations de Service Public". Brussels
+    # is bilingual and the Dutch cards head the same table "Taks openbare
+    # dienstverplichtingen (ODV)", so both languages anchor here rather than
+    # the block going unread on a card that prints it.
+    head = _OSP_HEAD_RE.search(text)
+    if head is None:
+        return None
+    block = text[head.start() : _osp_end(text, head.end())]
+    out: dict[str, float] = {}
+    for match in _OSP_ROW_RE.finditer(block):
+        bound = round(to_float(match.group("bound")), 2)
+        if match.group("open"):
+            # A ">" immediately before the value-bearing bound is the
+            # open-ended top row, in both layouts. A closed row reaches this
+            # bound through "<=" (Engie, TotalEnergies) or "et" (Mega), so its
+            # own ">" sits in front of the LOWER bound and never here.
+            tier = _OSP_OPEN_TIER if bound >= _OSP_OPEN_MIN_BOUND else None
+        else:
+            tier = _OSP_BOUND_TO_TIER.get(bound)
+        if tier is not None:
+            out[tier] = to_float(match.group("value"))
+    return out or None
+
+
+def _osp_end(text: str, start: int) -> int:
+    """Where the OSP block that starts before ``start`` ends: at the first
+    line break of a blank run that runs into a footnote mark "(1)", or at
+    the end of the text.
+
+    Each mark is looked for once and the blanks before it read once. Read
+    as the lookahead ``\\n\\s*\\(\\d\\)`` tried at every place, a run of blank
+    lines was read to its end again from each of its line breaks.
+    """
+    for mark in _FOOTNOTE_MARK_RE.finditer(text, start):
+        blank = mark.start()
+        while blank > start and text[blank - 1].isspace():
+            blank -= 1
+        brk = text.find("\n", blank, mark.start())
+        if brk >= 0:
+            return brk
+    return len(text)
+
+
+def parse_sibelga_row(text: str) -> DsoOverlay | None:
+    """Build the Brussels overlay from the eight-column Sibelga row.
+
+    Layout, which Engie's French card and EnergyVision's Dutch Brusol card
+    print identically:
+
+        distribution Normal | Pleines | Creuses | Excl Nuit (c€/kWh) |
+        metering (€/an) | power term <=13kVA (€/an) |
+        power term >13kVA (€/an) | Transport (c€/kWh)
+
+    Returns None when the row is absent, leaving the caller to decide
+    whether that is a card without a Brussels table or a drift to refuse.
+
+    Not every Brussels card uses this layout: TotalEnergies prints seven
+    columns and puts the power term on its own "Terme de puissance mise a
+    disposition" line, so it keeps its own reader rather than being bent
+    into this one.
+    """
+    row = numeric_row(text, "SIBELGA", 8)
+    if not row:
+        return None
+    nums = [to_float(value) for value in row]
+    # A residential <=13kVA Brussels connection is billed both the metering
+    # fee (nums[4]) and the Sibelga <=13kVA power term (nums[5]). Brussels
+    # has no separate capacity charge (capacity is Flanders-only), so fold
+    # both flat annual euros into the DSO fee.
+    return brussels_sibelga_overlay(
+        mono=nums[0],
+        peak=nums[1],
+        offpeak=nums[2],
+        excl_night=nums[3],
+        transport=nums[7],
+        # Columns 5 and 6 are the power term's two bands, at or below
+        # 13 kVA and above it; the metering fee (4) is billed either way.
+        data_management_per_year=nums[4] + nums[5],
+        power_term_above_13kva=nums[4] + nums[6],
+        osp_by_tier=parse_brussels_osp(text),
+    )
+
+
+def parse_vreg_network_ceiling(text: str) -> float | None:
+    """The VREG maximumtarief a Flemish card states, in EUR/kWh.
+
+    The regulator caps what a digital-meter connection pays in network
+    charges: the capacity term plus the per-kWh network term together may not
+    exceed this times the volume. ``fees._capped_capacity_annual`` applies it
+    and several cards print it as a column of their DSO table, which those
+    extractors read. Luminus and Frank state it once in a footnote instead,
+    and it went unread there, so the cap never bound on 15 contracts. It bites
+    where the capacity term dominates, which is a low-volume connection on a
+    high peak.
+
+    ``None`` when the card does not state it, which leaves the cap off as
+    before rather than inventing a ceiling.
+    """
+    match = _VREG_CEILING_RE.search(re.sub(r"\s+", " ", text))
+    return to_float(match.group(1)) if match else None
+
+
+def regional_tax_overlay(
+    text: str,
+    *,
+    supplier: str,
+    region: str,
+    excise: Sequence[re.Pattern[str]],
+    renewables: Sequence[re.Pattern[str]],
+    contribution: re.Pattern[str] | None = None,
+    fund: re.Pattern[str] | None = None,
+) -> TaxOverlay:
+    """The tax block of a single-region, VAT-inclusive card.
+
+    ``region`` decides which of the three regional renewables fields the
+    parsed levy lands in; the other two stay zero, which is the honest value
+    on a card that prices one region.
+
+    Every such card carries the same four rows and the same policy about
+    which of them may be missing. Only the anchors differ, so the callers pass
+    compiled patterns and this holds the policy:
+
+    * ``excise``: MANDATORY. Patterns are tried in order and the first match
+      wins, so a card printing both the flat August-2026 row and the tiered
+      one being phased out resolves to the flat rate. When the match is the
+      first row of a degressive table, the whole table is read into bands
+      (:func:`excise_tier_bands`).
+    * ``renewables``: MANDATORY, and ALL of them must match. Summed. Some
+      cards print GSC and WKK separately, others one pre-summed row, and a
+      Brussels card prints a single "groene stroom" cost.
+    * ``contribution``: OPTIONAL, absent means 0.0. The federal levy dropped
+      to zero on 2026-08-01 and suppliers answered by deleting the row, so an
+      absent row is the abolished levy, not a layout drift.
+    * ``fund``: OPTIONAL, absent means 0.0, and it is EUR/month so it is NOT
+      scaled by 100 like the c€/kWh rows.
+
+    Sharing the policy is the point. It was written out three times and had
+    already drifted: two suppliers defaulted an absent contribution row to
+    zero while the third still raised on it, so that one would have gone
+    offline the moment its card dropped the row like the others' did.
+    """
+    if region not in (REGION_FLANDERS, REGION_WALLONIA, REGION_BRUSSELS):
+        # Silently zeroing all three fields would under-bill by the whole
+        # green levy, so a region that names no field is a programming error.
+        raise ExtractorError(f"{supplier}: unknown region {region!r}")
+    excise_match = next((m for p in excise if (m := p.search(text))), None)
+    if excise_match is None:
+        raise ExtractorError(f"{supplier}: could not parse the tax block")
+    renewables_matches = [p.search(text) for p in renewables]
+    if not renewables or any(m is None for m in renewables_matches):
+        # These cards always bill a green-certificate levy; a miss is a layout
+        # drift that would silently under-bill, so fail loud and let the
+        # coordinator keep serving its cached snapshot.
+        raise ExtractorError(f"{supplier}: could not parse the GSC/WKK levies")
+    contribution_match = contribution.search(text) if contribution else None
+    fund_match = fund.search(text) if fund else None
+    levy = sum(
+        to_float(m.group(1)) / 100.0 for m in renewables_matches if m is not None
+    )
+    federal_excise = to_float(excise_match.group(1)) / 100.0
+    return TaxOverlay(
+        federal_excise=federal_excise,
+        federal_excise_bands=excise_tier_bands(
+            text, federal_excise, start=excise_match.start(), within=excise_match.end()
+        ),
+        energy_contribution=(
+            to_float(contribution_match.group(1)) / 100.0 if contribution_match else 0.0
+        ),
+        flanders_renewables=levy if region == REGION_FLANDERS else 0.0,
+        wallonia_renewables=levy if region == REGION_WALLONIA else 0.0,
+        brussels_renewables=levy if region == REGION_BRUSSELS else 0.0,
+        energy_fund_eur_per_month=(
+            to_float(fund_match.group(1)) if fund_match else 0.0
+        ),
+        # These cards print every value VAT-inclusive, and the energy fund
+        # carries no VAT at all, so the snapshot needs no gross-up.
+        vat_rate=0.0,
+    )
+
+
+def excise_tier_bands(
+    text: str,
+    excise: float | None,
+    *,
+    start: int = 0,
+    within: int | None = None,
+    per_euro: float = 100.0,
+) -> tuple[tuple[float, float], ...] | None:
+    """The degressive excise table a card prints, or None.
+
+    Until July 2026 the household excise was a schedule by annual volume, and
+    most cards print it whole, as rows ("Verbruik tussen 0 en 3.000 kWh
+    5,0329") or as a footnote ("0-3.000 kwh : 5,0329 c€/kwh, 3.001 - 20.000
+    kwh : ..."). Read for their first row only, a household above 20.000 kWh
+    was billed that rate on every kWh. Read as bands, the resolver blends
+    them over the entry's volume.
+
+    The table is the one whose first row, from 0, is the first found at or
+    after ``start``; with ``within``, that row has to begin before it, which
+    is how a caller holding the match of the excise row it bills says "this
+    row's table" and no other volume table on the card, such as a tiered
+    energy price, is taken for it. Each further row starts where the one
+    before it ended, or a kWh above it. ``per_euro`` is how many of the
+    printed unit make a euro: 100 for c€/kWh, 1 for a card printing euro.
+
+    None for no table, a table of one row, one whose first rate is not the
+    ``excise`` the caller read (when given), and one whose tiers all carry one
+    rate, as several cards still print it since August 2026, so the law's
+    excise keeps replacing that rate.
+    """
+    row = _tier_row(text, start)
+    if row is None or (within is not None and row.start() >= within):
+        return None
+    bands: list[tuple[float, float]] = []
+    while row is not None:
+        per = 1000.0 if row.group(3).lower() == "m" else 1.0
+        lower = tier_bound_kwh(row.group(1)) * per
+        floor = bands[-1][0] if bands else 0.0
+        if bands and len(row.group(1)) == 3 and lower == (floor + 1.0) % 1000.0:
+            # A bound printed with a space for thousands that the text layer
+            # wrapped at it: Bolt's "3 001 - 20 000 kWh" reads "3", a line of
+            # the column beside it, then "001 - 20 000 kWh".
+            lower = floor + 1.0
+        if lower not in ((floor, floor + 1.0) if bands else (0.0,)):
+            break
+        bands.append(
+            (tier_bound_kwh(row.group(2)) * per, to_float(row.group(4)) / per_euro)
+        )
+        row = _tier_row(text, row.end())
+    if (
+        len(bands) < 2
+        or (excise is not None and abs(bands[0][1] - excise) > 1e-9)
+        or len({rate for _upper, rate in bands}) == 1
+    ):
+        return None
+    return tuple(bands)
+
+
+def _tier_row(text: str, pos: int) -> re.Match[str] | None:
+    """The first excise tier row at or after ``pos``, or None: the search
+    goes on past every run of thousands groups that starts no row."""
+    while (row := _EXCISE_TIER_RE.search(text, pos)) is not None and row[1] is None:
+        pos = row.end()
+    return row
+
+
+_T = TypeVar("_T")
+_NUMERIC_SEPARATORS = (
+    " ",  # ASCII space
+    " ",  # NBSP (U+00A0)
+    " ",  # THIN SPACE (U+2009)
+    " ",  # NARROW NO-BREAK SPACE (U+202F, CLDR French thousands)
+    " ",  # LINE SEPARATOR (U+2028)
+)
+# Single source of truth for the sign character that appears between
+# BELPEX/Epex factor and base across every supplier formula (both
+# consumption and injection sides). Hyphen-minus, ASCII plus,
+# figure-dash, en-dash, em-dash, and U+2212 mathematical minus are
+# all encountered in the wild; supplier PDFs flip silently between
+# them on re-renders.
+_NEGATIVE_SIGNS = ("-", "‐", "‑", "‒", "–", "—", "−")
+# A Belgian figure carries a thousands separator AND a decimal comma, so a
+# pattern allowing only one of them reads 1.234,56 as two columns and makes
+# a row look wider than it is. The cards print 20.000 and 1.000.000 (see
+# tier_bound_kwh), so this is not hypothetical.
+_ROW_NUMBER = re.compile(r"\d+(?:[.,]\d+)*")
+# A row of a Walloon card's ORES sub-area, "ORES (Est) 11,46 12,24 ...", with
+# its figures on the same line: from the first character after the label that
+# is not blank to the last one, or the one blank of a row with nothing else.
+# As the shortest run before the line's trailing blanks, each step of that run
+# read those blanks again. The bracket stops where the next row's label opens
+# a bracket of its own, whose row reads the same: run on past it, a column of
+# labels with no closing bracket was read to its end again from each.
+_ORES_SUB_AREA_ROW = re.compile(
+    r"^ORES\s*\((?:(?!^ORES\s*\([^)])[^)])+\)[^\S\n]+(\S(?:[^\n]*\S)?|[^\S\n])[^\S\n]*$",
+    re.MULTILINE | re.IGNORECASE,
+)
+# Residential connection-power upper bounds (kVA) mapped to the OSP tier keys
+# shared with const.CONNECTION_KVA_TIER_*. Kept as literals so this low-level
+# helper stays decoupled from the config module; the keys must match.
+_OSP_BOUND_TO_TIER: dict[float, str] = {
+    1.44: "le1_44",
+    6.0: "le6",
+    9.6: "le9_6",
+    13.0: "le13",
+    18.0: "le18",
+    36.0: "le36",
+    56.0: "le56",
+}
+# The table's last row has no upper bound, so it is keyed by the bound it opens
+# at rather than by one it closes. Suppliers write that bound as the top of the
+# band below ("> 56 kVA") or as the first value above it ("> 56,01 kVA"), so
+# the check is "at least", not equality.
+_OSP_OPEN_TIER = "gt56"
+_OSP_OPEN_MIN_BOUND = 56.0
+# The OSP block's heading, a footnote mark that can end it, and one of its
+# rows, read from the start of its bound: tried from each digit of a long
+# number, the number was read again from every one.
+_OSP_HEAD_RE = re.compile(
+    r"Obligations de Service|Taks openbare dienstverplichtingen", re.I
+)
+_FOOTNOTE_MARK_RE = re.compile(r"\(\d\)")
+_OSP_ROW_RE = re.compile(
+    r"(?P<open>>\s*)?(?<![\d.,])(?P<bound>[\d.,]+)\s*kVA[\s\n]+(?P<value>[\d.,]+)"
+)
+# "Un tarif maximal de 0,3472738 €/kWh (hors gestion des données) s'applique
+# aux compteurs digitaux", and in Dutch "Voor digitale meters geldt een
+# maximumtarief van 0,3472738 EUR/kWh (excl. databeheer)". One VREG figure for
+# the whole of Flanders, so a card that states it once states it for every
+# Fluvius area on it.
+_VREG_CEILING_RE = re.compile(
+    r"(?:tarif\s+maximal|maximum\s*tarief)\s+(?:de\s+|van\s+)?"
+    r"([\d.]+,\d+|[\d,]+\.\d+)\s*(?:EUR|€)\s*/\s*kWh",
+    re.IGNORECASE,
+)
+
+
+SIGN_CHARS = r"+\-‐‑‒–—−"
+"""Drop into a regex character class: ``[`` + SIGN_CHARS + ``]``."""
+
+LINE_BREAK = r"[^\S\n]*\n\s*"
+"""Drop into a pattern where blanks holding a line break part two fields:
+what ``\\s*\\n\\s*`` reads, read one way. Spelt with two runs of ``\\s``, a
+run of blank lines was split between them in every way before what follows
+it failed, the square of the run."""
+
+# One row of a degressive excise table, by its volume range rather than its
+# label, which OCTA+'s Flemish cards mangle: "Verbruik tussen 0 en 3.000 kWh
+# 5,0329", "Verbruik tussen 0 – 20.000 kWh", "Consommation entre 0 & 3 000
+# kWh", "Verbruik tussen 0 kWh en 3.000 kWh" (DATS 24), "0-3 MWh 5,03288"
+# (Trevion, EBEM), "0 en 3.000 kWh: 0,04748 euro/kWh" (Ecopower) and the
+# footnotes' "3.001 - 20.000 kwh : 5,0329". A bound is a whole number in
+# thousands groups, so a figure printed just before the row ("0,20417 0-3
+# MWH") is not read into it. The rate is on the row's own line, or after a
+# colon on the next one, where a footnote wraps ("20.001-50.000 kWh :\n4,8188"):
+# Trevion's plain layout prints its rows and then their rates apart.
+# The unit is read by its first letter and tolerates the two ways OCTA+'s
+# aligned text mangles it on the rows after the first, "kWhW" and "k h".
+# Where no row starts, the run of thousands groups there matches alone, with
+# no groups, and the search goes on past it (``_tier_row``): each group of the
+# run reads to the same end and fails there the same way, and tried from every
+# group, a long run of them was read again from each.
+TIER_BOUND = r"\d+(?:[. ]\d{3})*"
+_EXCISE_TIER_RE = re.compile(
+    rf"(?<![\d.,])(?:({TIER_BOUND})\s*(?:[km]wh\s*)?(?:&|en|et|[{SIGN_CHARS}])\s*"
+    rf"({TIER_BOUND})\s*([km])[^\S\n]?w?h\w?\b(?:[^\S\n]*:\s*|[^\S\n]+)(\d+(?:[.,]\d+)?)"
+    r"|\d+(?:[. ]\d{3}(?!\d))*)",
+    re.IGNORECASE,
+)

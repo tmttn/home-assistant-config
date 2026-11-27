@@ -1,0 +1,963 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""TotalEnergies Belgium tariff card extractor.
+
+TotalEnergies publishes the current month's tariff card per (product,
+region) at stable URLs:
+
+    https://totalenergies.be/static/marketing-documents/b2c/tariff-card/
+        latest/<PRODUCT>_ELECTRICITY_<REGION>_FR.pdf
+
+The ``/latest/`` segment auto-rolls each month so no listing scrape is
+needed. All nine residential electricity products are registered, and
+every one but Impact (Wallonia only) is published in all three regions.
+The five professional ones (proComfort, proComfort Fixe, proEssential,
+proEssential Fixe and proDrive) sit under ``b2b/`` instead of ``b2c/``, in
+all three regions, and are read by ``_totalenergies_pro``.
+
+Since October 2026 the feed-in offer is a card of its own beside each
+product's, ``INJECTION_<PRODUCT>_ELECTRICITY_<REGION>_FR.pdf``, and the
+product card prints no feed-in block. The listing links it for the variable
+and dynamic products only, but the address answers for the fixed ones too,
+with the same "Injection Variable" offer their cards printed until
+September, so it is built rather than looked up.
+
+The PDFs include rotated DSO / tax columns that pypdf cannot extract
+('Rotated text discovered. Output will be incomplete.'). The extractor
+uses pdfplumber for the layout-aware extraction it needs to read those
+cells; the other extractors keep using pypdf since their cards are
+horizontal-text-only.
+
+Dynamic formula format: ``0.1034 * BELPEXH + 1.75`` (HTVA, c€/kWh).
+The parser scales factor and base by the parsed VAT multiplier - same
+pattern as Engie/Luminus.
+"""
+
+from __future__ import annotations
+
+import logging
+import re
+from dataclasses import dataclass, replace
+from datetime import date, datetime, timedelta
+from statistics import median
+
+import aiohttp
+from homeassistant.util import dt as dt_util
+
+from ..const import (
+    REGION_BRUSSELS,
+    REGION_FLANDERS,
+    REGION_WALLONIA,
+)
+from ._parse import LINE_BREAK, require_contract
+from ._pdf import (
+    fetch_pdf_text_layout,
+    fetch_text,
+    head_freshness_key,
+    is_missing_card_error,
+    is_transient_fetch_error,
+    printed_vat_rate,
+)
+from ._rates import (
+    ALL_REGIONS,
+    Contract,
+    EnergyRates,
+    FixedRates,
+    InjectionRates,
+    TariffKind,
+    VariableRates,
+)
+from ._settle import settled_energy, settled_injection
+from ._totalenergies_cards import (
+    _IMPACT_BANDS,
+    _INDEX_FIT,
+    _VAT_RE,
+    _extract_connection_fee,
+    _extract_energy,
+    _extract_injection,
+    _extract_publication_month,
+    _vat_multiplier,
+    _without_renewables,
+    in_french,
+    is_dutch_card,
+    monthly_rates_printed,
+)
+from ._totalenergies_overlays import (
+    _energy_contribution_from_table,
+    _extract_brussels_dsos,
+    _extract_energy_contribution,
+    _extract_energy_fund,
+    _extract_excise_bands,
+    _extract_federal_excise,
+    _extract_flanders_dsos,
+    _extract_renewables,
+    _extract_wallonia_dsos,
+    cev_included,
+)
+from ._totalenergies_pro import parse_pro_snapshot
+from ._validity import card_valid_until, end_of_month, parse_valid_until
+from .base import (
+    ExtractorError,
+    SupplierExtractor,
+    SupplierSnapshot,
+    TaxOverlay,
+    with_vat_basis,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+_BASE_URL = "https://totalenergies.be/static/marketing-documents/b2c/tariff-card/latest"
+_PRO_BASE_URL = (
+    "https://totalenergies.be/static/marketing-documents/b2b/tariff-card/latest"
+)
+
+_REGION_TO_CODE: dict[str, str] = {
+    REGION_FLANDERS: "VL",
+    REGION_WALLONIA: "WAL",
+    REGION_BRUSSELS: "BXL",
+}
+
+
+@dataclass(frozen=True)
+class _ContractDef:
+    contract_id: str
+    label: str
+    kind: TariffKind
+    slug: str  # the file prefix in TotalEnergies's URL
+    # The product name each edition of the card prints in its title. The
+    # labels above are not it: "myComfort" is also how "myComfort Fixe" begins.
+    french_title: str
+    dutch_title: str
+    # Regions the product is actually published in. TotalEnergies's
+    # listing page advertises every product in V/W/B but a few only
+    # have a Wallonia PDF; the others return a 200 OK HTML 404 page.
+    regions: frozenset[str] = ALL_REGIONS
+    # A product of the professional range, its cards under b2b/.
+    professional: bool = False
+
+
+_CONTRACTS: tuple[_ContractDef, ...] = (
+    _ContractDef(
+        "totalenergies_electricite_fixe",
+        "TotalEnergies Electricité Fixe",
+        "fixed",
+        "ELECTRICITE-FIXE",
+        "Electricité Fixe",
+        "Elektriciteit Vast",
+    ),
+    _ContractDef(
+        "totalenergies_electricite_variable",
+        "TotalEnergies Electricité Variable",
+        "variable",
+        "ELECTRICITE-VARIABLE",
+        "Electricité Variable",
+        "Elektriciteit Variabel",
+    ),
+    _ContractDef(
+        "totalenergies_impact",
+        "TotalEnergies Impact",
+        "variable",
+        "IMPACT",
+        "Impact Variable",
+        "Impact Variabel",
+        regions=frozenset({REGION_WALLONIA}),
+    ),
+    _ContractDef(
+        "totalenergies_mycomfort",
+        "TotalEnergies myComfort",
+        "variable",
+        "MYCOMFORT",
+        "myComfort Variable",
+        "myComfort Variabel",
+    ),
+    _ContractDef(
+        "totalenergies_mycomfort_fixed",
+        "TotalEnergies myComfort Fixe",
+        "fixed",
+        "MYCOMFORT-FIXED",
+        "myComfort Fixe",
+        "myComfort Vast",
+    ),
+    _ContractDef(
+        "totalenergies_mydrive",
+        "TotalEnergies myDrive",
+        "variable",
+        "MYDRIVE",
+        "myDrive",
+        "myDrive",
+    ),
+    _ContractDef(
+        "totalenergies_mydynamic",
+        "TotalEnergies myDynamic",
+        "dynamic",
+        "MYDYNAMIC",
+        "myDynamic",
+        "myDynamic",
+    ),
+    _ContractDef(
+        "totalenergies_myessential",
+        "TotalEnergies myEssential",
+        "variable",
+        "MYESSENTIAL",
+        "myEssential Variable",
+        "myEssential Variabel",
+    ),
+    _ContractDef(
+        "totalenergies_myessential_fixed",
+        "TotalEnergies myEssential Fixe",
+        "fixed",
+        "MYESSENTIAL-FIXED",
+        "myEssential Fixe",
+        "myEssential Vast",
+    ),
+    _ContractDef(
+        "totalenergies_pro_procomfort",
+        "TotalEnergies proComfort",
+        "variable",
+        "PROCOMFORT",
+        "proComfort Variable",
+        "proComfort Variabel",
+        professional=True,
+    ),
+    _ContractDef(
+        "totalenergies_pro_procomfort_fixed",
+        "TotalEnergies proComfort Fixe",
+        "fixed",
+        "PROCOMFORT-FIXED",
+        "proComfort Fixe",
+        "proComfort Vast",
+        professional=True,
+    ),
+    _ContractDef(
+        "totalenergies_pro_prodrive",
+        "TotalEnergies proDrive",
+        "variable",
+        "PRODRIVE",
+        "proDrive",
+        "proDrive",
+        professional=True,
+    ),
+    _ContractDef(
+        "totalenergies_pro_proessential",
+        "TotalEnergies proEssential",
+        "variable",
+        "PROESSENTIAL",
+        "proEssential Variable",
+        "proEssential Variabel",
+        professional=True,
+    ),
+    _ContractDef(
+        "totalenergies_pro_proessential_fixed",
+        "TotalEnergies proEssential Fixe",
+        "fixed",
+        "PROESSENTIAL-FIXED",
+        "proEssential Fixe",
+        "proEssential Vast",
+        professional=True,
+    ),
+)
+
+_CONTRACTS_BY_ID = {c.contract_id: c for c in _CONTRACTS}
+
+
+_LISTING_URL = (
+    "https://totalenergies.be/fr/particuliers/electricite-et-gaz/cartes-tarifaires"
+)
+_PRO_LISTING_URL = (
+    "https://totalenergies.be/fr/professionnels/electricite-et-gaz/cartes-tarifaires"
+)
+
+
+def _card_url(contract: _ContractDef, name: str, region: str, language: str) -> str:
+    base = _PRO_BASE_URL if contract.professional else _BASE_URL
+    return f"{base}/{name}_ELECTRICITY_{_REGION_TO_CODE[region]}_{language}.pdf"
+
+
+def _document_url(contract: _ContractDef, region: str, language: str = "FR") -> str:
+    return _card_url(contract, contract.slug, region, language)
+
+
+def _injection_url(contract: _ContractDef, region: str, language: str = "FR") -> str:
+    """The product's feed-in card, published beside it since October 2026."""
+    return _card_url(contract, f"INJECTION_{contract.slug}", region, language)
+
+
+async def probe(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+) -> str | None:
+    """Cheap freshness probe: HEAD the per-(contract, region) PDF and its
+    feed-in card.
+
+    TotalEnergies serves every card under ``/tariff-card/latest/<SLUG>_...``
+    and overwrites in place, so the file's Last-Modified header is the
+    right freshness signal. The feed-in card is uploaded on its own, and a
+    key from the product card alone would keep a snapshot holding last
+    month's feed-in, or none, until the product card next moved.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    if (
+        contract is None
+        or region not in _REGION_TO_CODE
+        or region not in contract.regions
+    ):
+        return None
+    card = await head_freshness_key(session, _document_url(contract, region))
+    if card is None:
+        return None
+    feed_in = await head_freshness_key(session, _injection_url(contract, region))
+    return card if feed_in is None else f"{card} {feed_in}"
+
+
+async def discover(session: aiohttp.ClientSession) -> set[str]:
+    """Return every electricity-product slug from the cartes-tarifaires pages,
+    the residential one and the professional one.
+
+    Each listing page links each card as
+    ``tariff-card/latest/<SLUG>_ELECTRICITY_<REGION>_FR.pdf`` and its
+    feed-in card as ``INJECTION_<SLUG>_ELECTRICITY_<REGION>_FR.pdf``. A
+    feed-in card names its product's slug, so a product the listing shows
+    only through one still counts, and the prefix is never taken for a
+    product of its own. Strip the regulated TARIFF_SOCIAL entry (not a
+    residential-market product: the social tariff supplier prices it from the
+    CREG's card). live_check
+    diffs the result against ``{c.slug for c in _CONTRACTS}``.
+    """
+    slugs: set[str] = set()
+    for url in (_LISTING_URL, _PRO_LISTING_URL):
+        try:
+            html = await fetch_text(session, url)
+        except ExtractorError:
+            return set()
+        slugs |= {
+            slug
+            for slug in re.findall(
+                r"tariff-card/latest/(?:INJECTION_)?([A-Z0-9\-]+)"
+                r"_ELECTRICITY_(?:VL|WAL|BXL)_FR",
+                html,
+            )
+            if slug != "TARIFF_SOCIAL"
+        }
+    return slugs
+
+
+# ---- top-level fetch + parser -------------------------------------------------
+
+
+async def fetch(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+) -> SupplierSnapshot:
+    """Fetch the configured region's PDF for ``contract_id``, and its
+    feed-in card when the product card prints no feed-in block."""
+    contract = _contract_in(contract_id, region)
+    snapshot, _text = await _fetch_card(session, contract, region)
+    if snapshot.injection is not None:
+        return snapshot
+    injection, _text = await _fetch_injection(
+        session, contract, region, snapshot.publication_label
+    )
+    return snapshot if injection is None else replace(snapshot, injection=injection)
+
+
+def _contract_in(contract_id: str, region: str) -> _ContractDef:
+    """The contract, refusing a region it is not published in."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "TotalEnergies")
+    if region not in _REGION_TO_CODE:
+        raise ExtractorError(f"TotalEnergies: unknown region {region!r}")
+    if region not in contract.regions:
+        raise ExtractorError(
+            f"TotalEnergies {contract_id}: not available in region {region!r}"
+        )
+    return contract
+
+
+async def _fetch_card(
+    session: aiohttp.ClientSession, contract: _ContractDef, region: str
+) -> tuple[SupplierSnapshot, str]:
+    """The product card, French first and Dutch when the French one is
+    wrong, and the text it was read off."""
+    contract_id = contract.contract_id
+    url = _document_url(contract, region)
+    text = await fetch_pdf_text_layout(session, url)
+    try:
+        return parse_snapshot(contract_id, text, region, url), text
+    except ExtractorError as err:
+        # The French address can serve the wrong document: in October 2026
+        # myComfort Fixe in Brussels served the injection card and myEssential
+        # in Flanders a card with its green contribution left blank, while
+        # the Dutch address served the right card. The Dutch card is read
+        # when the French one does not parse, and the French error stands
+        # when neither does. A Dutch fetch that failed transiently is
+        # reported as such instead: it says nothing about either card, and
+        # the French parse error would ask for a layout report on one blip.
+        dutch = _document_url(contract, region, "NL")
+        try:
+            text = await fetch_pdf_text_layout(session, dutch)
+            return parse_snapshot(contract_id, text, region, dutch), text
+        except ExtractorError as dutch_err:
+            if is_transient_fetch_error(str(dutch_err)):
+                raise
+            raise err from None
+
+
+async def _fetch_injection(
+    session: aiohttp.ClientSession,
+    contract: _ContractDef,
+    region: str,
+    month: str,
+    *,
+    of_month: bool = False,
+) -> tuple[InjectionRates | None, str]:
+    """The feed-in leg off the product's feed-in card and the text it was
+    read off, or ``None`` and no text where neither edition of it is
+    published.
+
+    The French card first and the Dutch one when the French one is not the
+    right card or not of ``month``, the tariff card's: on 5 October 2026 the
+    French feed-in card of Electricité Fixe in Flanders still said September
+    and the Dutch one October. Where no edition is of that month, the first
+    one that is the right card is read all the same: its formula is the
+    offer as last published, and refusing it would hold back the tariff card
+    too, unless ``of_month`` asks for that month's card alone: settling a
+    month on an older one would settle it on the index the month before
+    closed at. A fetch that failed transiently is raised as itself, and a
+    card that is the wrong one in both editions raises the French card's
+    error.
+    """
+    error: ExtractorError | None = None
+    stale: tuple[InjectionRates | None, str] = (None, "")
+    read = False
+    for language in ("FR", "NL"):
+        url = _injection_url(contract, region, language)
+        try:
+            text = await fetch_pdf_text_layout(session, url)
+        except ExtractorError as err:
+            if not is_missing_card_error(str(err)):
+                raise
+            continue
+        try:
+            leg, printed = parse_injection_card(contract.contract_id, text, region)
+        except ExtractorError as err:
+            error = error or err
+            continue
+        if printed.casefold() == month.casefold():
+            return leg, text
+        if not read:
+            stale, read = (leg, text), True
+    if read:
+        return (None, "") if of_month else stale
+    if error is not None:
+        raise error
+    return None, ""
+
+
+def parse_injection_card(
+    contract_id: str, text: str, region: str
+) -> tuple[InjectionRates | None, str]:
+    """The feed-in leg a product's feed-in card prints, and the card's month.
+
+    The same block the product cards printed until September 2026: a
+    "Tarif mensuel" estimate, an ``f * BELPEXM + b`` formula (``BELPEXH``
+    on myDynamic's "Injection Dynamique") and the month's "Compteur Simple"
+    figure, so :func:`_extract_injection` reads it unchanged. The card must
+    be the offer the contract takes, for its region: the variable one for
+    every product but myDynamic, the fixed products included, as their
+    cards printed it until September. The professional products all read
+    "Injection Variable Pro", which is exempt from VAT like the residential
+    offer by its own words (``_PRO_FEED_IN_EXEMPT_RE``).
+    """
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "TotalEnergies")
+    dynamic = contract.kind == "dynamic"
+    if is_dutch_card(text):
+        title = "Injectie Dynamic" if dynamic else "Variabel Injectie"
+        if contract.professional:
+            title = "Injectie Variabel Pro"
+        place = (
+            rf"I\s?njectie\s+voor\s+elektriciteit\s+in\s+het\s+{_DUTCH_PLACES[region]}"
+        )
+        _check_card(text, title, place, region)
+        text = in_french(text)
+    else:
+        title = "Injection Dynamique" if dynamic else "Injection Variable"
+        if contract.professional:
+            title = "Injection Variable Pro"
+        place = (
+            r"Injection\s+pour\s+l.{1,2}lectricit[ée]\s+en\s+R[ée]gion\s+"
+            + _FRENCH_PLACES[region]
+        )
+        _check_card(text, title, place, region)
+    words = r"\s+".join(map(re.escape, title.split()))
+    dated = re.search(rf"Total\s?Energies\s+{words}{LINE_BREAK}(\w+\s+\d{{4}})", text)
+    leg = _extract_injection(text, contract.kind)
+    if leg is not None and contract.professional:
+        # Engie's and most of Mega's professional feed-in cards tax it, and
+        # this one says it is exempt. A card that stops saying so is taxed.
+        leg = replace(leg, vat_applies=_PRO_FEED_IN_EXEMPT_RE.search(text) is None)
+    return leg, dated.group(1) if dated else ""
+
+
+# "Injection pour l'électricité en Région flamande - exonérée de TVA" and
+# "Injectie voor elektriciteit in het Vlaamse Gewest - vrijgesteld van btw".
+_PRO_FEED_IN_EXEMPT_RE = re.compile(
+    r"exon[ée]r[ée]e\s+de\s+TVA|vrijgesteld\s+van\s+btw", re.IGNORECASE
+)
+
+
+# The Walloon cards' footnote saying their day/night split is not billed on
+# the CWaPE incitative tariff, in either edition: "Le tarif bihoraire n'est
+# pas compatible avec la structure tarifaire incitative (Tarif IMPACT)" and
+# "Het tweevoudig tarief is niet compatibel met de incitatieve
+# tariefstructuur (Tariefimpact)". Read before a Dutch card is put in French.
+_NO_BI_HOURLY_UNDER_IMPACT_RE = re.compile(
+    r"tarif\s+bihoraire\s+n['’]est\s+pas\s+compatible\s+avec\s+la\s+structure"
+    r"\s+tarifaire\s+incitative"
+    r"|tweevoudig\s+tarief\s+is\s+niet\s+compatibel\s+met\s+de\s+incitatieve",
+    re.IGNORECASE,
+)
+
+
+def parse_snapshot(
+    contract_id: str, text: str, region: str, source_url: str = _BASE_URL
+) -> SupplierSnapshot:
+    """Pure parser exposed for unit tests."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "TotalEnergies")
+    single_under_impact = _NO_BI_HOURLY_UNDER_IMPACT_RE.search(text) is not None
+    if is_dutch_card(text):
+        place = rf"Elektriciteit\s+in\s+het\s+{_DUTCH_PLACES[region]}"
+        _check_card(text, contract.dutch_title, place, region)
+        text = in_french(text)
+    else:
+        place = rf"[ÉE]lectricit[ée]\s+en\s+R[ée]gion\s+{_FRENCH_PLACES[region]}"
+        _check_card(text, contract.french_title, place, region)
+    if contract.professional:
+        return parse_pro_snapshot(contract_id, contract.kind, text, region, source_url)
+
+    columns = _meter_columns(text, contract)
+    energy = _extract_energy(text, contract.kind, columns)
+    if single_under_impact and isinstance(energy, (FixedRates, VariableRates)):
+        # An Impact connection on this product pays the single rate in every
+        # band, which only the card says; see FixedRates.single_under_impact.
+        energy = replace(energy, single_under_impact=True)
+    included = cev_included(text)
+    if included is not None:
+        energy = _without_renewables(energy, included, _vat_multiplier(text))
+    injection = _extract_injection(text, contract.kind)
+    publication_label = _extract_publication_month(text)
+    federal_excise = _extract_federal_excise(text)
+    energy_contribution = _extract_energy_contribution(text)
+    if energy_contribution is None:
+        energy_contribution = _energy_contribution_from_table(text, region)
+    if energy_contribution is None:
+        # Neither the labelled line nor the DSO table fallback exposed the
+        # row, so the card drifted. Fail loud rather than silently dropping
+        # the contribution. A row that is PRESENT and reads zero is a valid
+        # value since the levy fell to zero on 2026-08-01, so only a real
+        # miss (None) raises here.
+        raise ExtractorError("TotalEnergies: federal energy contribution not found")
+    region_connection_fee = (
+        _extract_connection_fee(text) if region == REGION_WALLONIA else 0.0
+    )
+    energy_fund = _extract_energy_fund(text) if region == REGION_FLANDERS else 0.0
+
+    flanders_renewables = 0.0
+    wallonia_renewables = 0.0
+    brussels_renewables = 0.0
+    if region == REGION_FLANDERS:
+        flanders_renewables = _extract_renewables(text)
+        dsos = _extract_flanders_dsos(text)
+    elif region == REGION_WALLONIA:
+        wallonia_renewables = _extract_renewables(text)
+        dsos = _extract_wallonia_dsos(text)
+    else:
+        brussels_renewables = _extract_renewables(text)
+        dsos = _extract_brussels_dsos(text)
+
+    return with_vat_basis(
+        SupplierSnapshot(
+            supplier="totalenergies",
+            contract=contract_id,
+            energy=energy,
+            dsos=dsos,
+            taxes=TaxOverlay(
+                federal_excise=federal_excise,
+                federal_excise_bands=_extract_excise_bands(text),
+                energy_contribution=energy_contribution,
+                flanders_renewables=flanders_renewables,
+                wallonia_renewables=wallonia_renewables,
+                brussels_renewables=brussels_renewables,
+                region_connection_fee=region_connection_fee,
+                energy_fund_eur_per_month=energy_fund,
+                vat_rate=0.0,
+            ),
+            source_url=source_url,
+            publication_label=publication_label,
+            valid_until=parse_valid_until(text),
+            injection=injection,
+        ),
+        printed_vat_rate(text, _VAT_RE),
+    )
+
+
+# How each edition names the region, after "Électricité en Région" on a
+# French card and "Elektriciteit in het" on a Dutch one, and the same after
+# the feed-in cards' "Injection pour l'électricité" and "Injectie voor
+# elektriciteit".
+_FRENCH_PLACES: dict[str, str] = {
+    REGION_FLANDERS: "flamande",
+    REGION_WALLONIA: "wallonne",
+    REGION_BRUSSELS: r"de\s+Bruxelles-Capitale",
+}
+_DUTCH_PLACES: dict[str, str] = {
+    REGION_FLANDERS: r"Vlaamse\s+Gewest",
+    REGION_WALLONIA: r"Waalse\s+Gewest",
+    REGION_BRUSSELS: r"Brussels\s+Hoofdstedelijk\s+Gewest",
+}
+
+
+def _check_card(text: str, title: str, place: str, region: str) -> None:
+    """Refuse a card that is not this product's electricity card for this
+    region.
+
+    TotalEnergies' October 2026 uploads put cards at the wrong address: the
+    Dutch Brussels address of Electricité Variable served myEssential
+    Variabel, the Dutch Flemish one of myComfort served myComfort Vast and
+    the Dutch Brussels one of myEssential a gas card. The layout is shared,
+    so such a card would parse, and a French address serving a sibling's
+    card would bill that product's rates and fee without a word. Its title
+    and region line say what it is.
+    """
+    words = r"\s+".join(map(re.escape, title.split()))
+    # The professional cards spell their range apart in some titles: the
+    # Flemish proComfort Fixe card of November 2026 reads "pro Comfort Fixe".
+    words = re.sub(r"^pro(?=[A-Z])", r"pro\\s?", words)
+    if not re.search(rf"Total\s?Energies\s+{words}(?!\w)", text):
+        raise ExtractorError(f"TotalEnergies: the card is not {title}")
+    if not re.search(place, text):
+        raise ExtractorError(
+            f"TotalEnergies: the card is not the {region} electricity card"
+        )
+
+
+# The meter columns' header, ending on the exclusive-night one where the card
+# prints it. The October 2026 myDynamic cards drop that column and print
+# "19,37 19,37 19,37 Tarif mensuel" with the fee on the next line.
+_EXCL_NIGHT_HEADER_RE = re.compile(
+    rf"Heures\s+creuses\s+excl\.\s*nuit{LINE_BREAK}Consommation"
+)
+
+
+def _meter_columns(text: str, contract: _ContractDef) -> int:
+    """How many rates the consumption row prints: three CWaPE bands on
+    Impact, three meter columns on a dynamic card without the exclusive-night
+    one, four otherwise."""
+    if contract.slug == "IMPACT":
+        return _IMPACT_BANDS
+    if contract.kind == "dynamic" and not _EXCL_NIGHT_HEADER_RE.search(text):
+        return 3
+    return 4
+
+
+# The variable products whose energy leg is a BELPEXM_RLP formula the parser
+# reads, so the re-price needs spots the kind never collects a key for. Every
+# variable card is one, Impact included: it prints the pair once per CWaPE
+# band rather than once per meter column, and solves to the same index as the
+# other four. The fixed cards and myDynamic are neither.
+_MONTH_INDEXED_ENERGY: frozenset[str] = frozenset(
+    {
+        "totalenergies_electricite_variable",
+        "totalenergies_impact",
+        "totalenergies_mycomfort",
+        "totalenergies_mydrive",
+        "totalenergies_myessential",
+        "totalenergies_pro_procomfort",
+        "totalenergies_pro_prodrive",
+        "totalenergies_pro_proessential",
+    }
+)
+
+
+def _printed_energy_index(energy: EnergyRates) -> float | None:
+    """The index a card's month-indexed rates are printed at, solved off
+    their own formulas, or ``None`` for a leg without one.
+
+    The median of the columns, Impact having one: on some cards they solve a
+    few tenths of a EUR/MWh apart, far more than the hundredth of a cent each
+    rate is rounded to (myDrive and myEssential in Wallonia, October 2026:
+    164,26 to 164,72 across the columns), so no single one sets the month.
+    """
+    if not (isinstance(energy, VariableRates) and energy.month_indexed):
+        return None
+    indices = [
+        (rate - base) / factor
+        for rate, factor, base in (
+            (energy.current, energy.formula_factor, energy.formula_base),
+            (energy.peak, energy.formula_factor_peak, energy.formula_base_peak),
+            (
+                energy.offpeak,
+                energy.formula_factor_offpeak,
+                energy.formula_base_offpeak,
+            ),
+            (
+                energy.exclusive_night,
+                energy.formula_factor_exclusive_night,
+                energy.formula_base_exclusive_night,
+            ),
+        )
+        if rate is not None and factor and base is not None
+    ]
+    return median(indices) if indices else None
+
+
+def _printed_injection_index(injection: InjectionRates | None) -> float | None:
+    """The Belpex_M a card's feed-in rate is printed at, or ``None``."""
+    if injection is None or not injection.month_indexed:
+        return None
+    factor, base, rate = injection.factor, injection.base, injection.current
+    if not factor or base is None or rate is None:
+        return None
+    return (rate - base) / factor
+
+
+# What each variable card said when last read for a settlement: when, the
+# month it is titled for, and the index its monthly block is printed at, or
+# None where the block is unread or the card is not served. A card takes 10 to
+# 13 s of CPU to read on a Raspberry Pi, and every contract and region settling
+# in a refresh asks the same range, 12 cards while it still carries last
+# month's title. Kept for an hour, so a refresh reads each card once, while a
+# provisional month, asked again the next day, reads them afresh.
+_RANGE_HEARD: dict[tuple[str, str], tuple[datetime, date | None, float | None]] = {}
+_RANGE_HEARD_FOR = timedelta(hours=1)
+
+
+def _heard(
+    contract_id: str, region: str, card: SupplierSnapshot | None, text: str
+) -> tuple[date | None, float | None]:
+    """The month ``card`` is titled for and the index its monthly block is
+    printed at, kept in ``_RANGE_HEARD``; ``None`` for a card not served."""
+    said = (
+        (None, None)
+        if card is None
+        else (
+            card_valid_until(None, card.publication_label),
+            (
+                _printed_energy_index(card.energy)
+                if monthly_rates_printed(text)[0]
+                else None
+            ),
+        )
+    )
+    _RANGE_HEARD[contract_id, region] = (dt_util.utcnow(), *said)
+    return said
+
+
+def _heard_lately(
+    contract_id: str, region: str
+) -> tuple[date | None, float | None] | None:
+    """What ``_heard`` kept of this card within the hour, or ``None``."""
+    heard = _RANGE_HEARD.get((contract_id, region))
+    if heard is None or dt_util.utcnow() - heard[0] >= _RANGE_HEARD_FOR:
+        return None
+    return heard[1], heard[2]
+
+
+async def _range_index(
+    session: aiohttp.ClientSession,
+    contract: _ContractDef,
+    region: str,
+    titled: date | None,
+    own: float | None,
+) -> float | None:
+    """The index the range of variable cards titled for ``titled`` prints
+    its rates at, or ``None`` while it cannot be told.
+
+    Every variable card of a month is printed at the same index, one figure
+    for the country, so a card printed at another is misprinted. The
+    Electricité Variable card in Brussels of the afternoon of 1 October 2026
+    printed myComfort's block under its own bases and solves to 159,9
+    EUR/MWh, where every other card of the range solves to 164,4 to 164,7;
+    settled on it, September would have kept 159,9 for good. So ``own``,
+    this card's index, stands once one other card titled for the same month
+    agrees within the fit of a card's own columns. Where two other cards
+    agree with each other and not with ``own``, or this card's block is
+    unread (``own`` is ``None``), the month is billed at the index those two
+    print: left waiting for a card corrected within the month, it stayed at
+    its estimate for good once the next month's card replaced it. Where no
+    two cards titled for the month agree, the rest of the range still
+    carrying last month's title or its block unread, there is nothing to
+    settle on yet. The cards heard within the hour are asked first, costing
+    nothing (``_heard``), then the region's.
+    """
+    regions = (region, *(r for r in _REGION_TO_CODE if r != region))
+    others = [
+        (other, where)
+        for where in regions
+        for other in _CONTRACTS
+        if (other, where) != (contract, region)
+        and other.contract_id in _MONTH_INDEXED_ENERGY
+        and where in other.regions
+    ]
+    others.sort(key=lambda pair: _heard_lately(pair[0].contract_id, pair[1]) is None)
+    seen: list[float] = []
+    for other, where in others:
+        said = _heard_lately(other.contract_id, where)
+        if said is None:
+            try:
+                card, text = await _fetch_card(session, other, where)
+            except ExtractorError as err:
+                if is_transient_fetch_error(str(err)):
+                    raise
+                card, text = None, ""
+            said = _heard(other.contract_id, where, card, text)
+        month, printed = said
+        if month != titled or printed is None:
+            continue
+        if own is not None and abs(printed - own) <= _INDEX_FIT:
+            return own
+        agreed = next((i for i in seen if abs(i - printed) <= _INDEX_FIT), None)
+        if agreed is not None:
+            return (agreed + printed) / 2
+        seen.append(printed)
+    return None
+
+
+async def settle_month(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+    year_month: date,
+    held: SupplierSnapshot,
+) -> SupplierSnapshot:
+    """``held``, the card of a closed month, re-priced on the indices the next
+    card prints its rates at.
+
+    A variable card prints its rates "sur base de la derniere valeur connue
+    du BELPEXM_RLP (du mois precedent)", and its feed-in on the last
+    Belpex_M, without ever naming either figure. So the next card's rates
+    are its own formulas at this month's indices, and solving them gives
+    those: every October 2026 card solves to 164,41 to 164,74 EUR/MWh in
+    all three regions. The engine's own mean of that index runs about
+    0,3 EUR/MWh low, being hourly where TotalEnergies has weighed quarter
+    hours since 2026, and a keyless entry billed each closed month at the
+    one before it.
+
+    In place: the held card keeps every field and only its month-indexed
+    legs move. TotalEnergies keeps no archive, so the next card is only ever
+    the live one. Not out yet, or a live card titled for another month, and
+    the month is ``provisional`` so it is asked again; once the live card is
+    a later one, the card archive's row settled while it ran is what holds
+    the month, and ``held`` comes back as it is: a month still unsettled
+    then never will be, and stays at its estimate, which is logged. The
+    feed-in card is uploaded on its own and can lag the tariff card
+    (Electricité Fixe in Flanders still said September on 5 and 14 October
+    2026), so only the one titled like it settles the feed-in. A leg the next
+    card gives no index for is left as held, and the month stays
+    ``provisional`` while the other leg settles. The energy settles on the
+    index the range of variable cards agrees on (``_range_index``): this
+    card's once another card prints it too, or the one two other cards print
+    where this card is misprinted or its block unread.
+    """
+    first = date(year_month.year, year_month.month, 1)
+    following = date(first.year + (first.month == 12), first.month % 12 + 1, 1)
+    running = dt_util.now().date().replace(day=1)
+    if following > running:
+        return replace(held, provisional=True)
+    if following < running:
+        _LOGGER.warning(
+            "TotalEnergies %s in %s, %04d-%02d, was not settled while the next "
+            "card, the only one that settles it, was served, so the month "
+            "stays at its estimate",
+            contract_id,
+            region,
+            first.year,
+            first.month,
+        )
+        return held
+    try:
+        contract = _contract_in(contract_id, region)
+        card, text = await _fetch_card(session, contract, region)
+        titled, printed = _heard(contract_id, region, card, text)
+        if titled != end_of_month(following.year, following.month):
+            return replace(held, provisional=True)
+        feed_in, feed_in_text = card.injection, text
+        if feed_in is None:
+            feed_in, feed_in_text = await _fetch_injection(
+                session, contract, region, card.publication_label, of_month=True
+            )
+    except ExtractorError as err:
+        if is_transient_fetch_error(str(err)):
+            raise
+        return replace(held, provisional=True)
+    # A rate the card prints as the regulator's annual estimate, its monthly
+    # block unread, is at no index the month closed at (``_heard``).
+    monthly_feed_in = monthly_rates_printed(feed_in_text)[1]
+    energy, injection = held.energy, held.injection
+    pending = False
+    if getattr(energy, "month_indexed", False):
+        index = await _range_index(session, contract, region, titled, printed)
+        pending = index is None
+        if index is not None:
+            energy = settled_energy(energy, index)
+    if injection is not None and injection.month_indexed:
+        index = _printed_injection_index(feed_in) if monthly_feed_in else None
+        pending = pending or index is None
+        if index is not None:
+            injection = settled_injection(injection, index)
+    return replace(
+        held,
+        energy=energy,
+        injection=injection,
+        provisional=held.provisional or pending,
+    )
+
+
+EXTRACTOR = SupplierExtractor(
+    sweep_cost_s=12.8,
+    id="totalenergies",
+    label="TotalEnergies",
+    contracts=tuple(
+        Contract(
+            id=c.contract_id,
+            label=c.label,
+            kind=c.kind,
+            regions=c.regions,
+            professional=c.professional,
+            # Every non-dynamic card indexes its feed-in credit on the
+            # monthly Belpex_M, which the fixed / variable energy leg never
+            # fetches spots for. myDynamic collects the key via its own
+            # BELPEXH energy formula.
+            spot_indexed_injection=c.kind != "dynamic",
+            month_indexed_energy=c.contract_id in _MONTH_INDEXED_ENERGY,
+        )
+        for c in _CONTRACTS
+    ),
+    fetch=fetch,
+    probe=probe,
+    settles_on_next_card=True,
+    settle_month=settle_month,
+)

@@ -1,0 +1,966 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Rebuilding the cost statistics the recorder should already hold.
+
+The prices are a per-hour value the compiler can be handed directly. A cost
+is a running sum, so a row written into the middle of a year has to continue
+the total that was there before it and leave the total after it consistent,
+or the energy dashboard reads a step that never happened. That is what makes
+this the long half of a backfill.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import calendar
+import logging
+from collections.abc import Callable
+from datetime import UTC, date, datetime, timedelta
+from functools import partial
+from typing import TYPE_CHECKING, Any
+
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
+from homeassistant.util import dt as dt_util
+
+from .backfill_window import (
+    _COST_SENSOR_KEY,
+    _build_context,
+    _contract_segments,
+    _in_turns,
+    _recorder_models,
+    _stat_id,
+)
+from .const import (
+    CONF_CONTRACT_START_DATE,
+    CONF_SUPPLIER,
+    DAY_START,
+    DOMAIN,
+    METER_MONO,
+    REGION_FLANDERS,
+    SOLAR_REGIME_COMPENSATION,
+    SOLAR_REGIME_INJECTION,
+)
+from .coordinator import BePricesCoordinator
+from .coordinator_data import ytd_window_reset
+from .energy_meters import meter_setting, noting_failed_reads
+from .fees import (
+    _annual_static_fees,
+    _capped_capacity_monthly_eur,
+    _compensation_kva,
+    _prosumer_monthly_fee,
+    _welcome_credit_eur,
+    billed_peak_for,
+    billed_peak_on,
+    bills_gross_network,
+    first_year_net_kwh,
+    gross_network_rebate,
+    in_first_contract_year,
+    lump_held_to_first_year,
+    window_energy_rate,
+)
+from .first_year import first_year_charges
+from .injection import _historical_injection_rate, _injection_is_spot_formula
+from .meter_hourly import _metered_sides
+from .pricing import (
+    MeterType,
+    compute_breakdown,
+    compute_network_and_taxes,
+    renewables_eur_per_kwh,
+    yearly_fixed_fee_for_meter,
+)
+from .providers import get as get_extractor
+from .providers._rates import InjectionRates
+from .providers.base import SupplierSnapshot
+from .signing_month import _parse_iso_date
+from .snapshot_resolve import meter_segment
+from .spot_stats import (
+    _bucket_by_local_month,
+    _energy_is_quarter_hourly,
+    _energy_needs_spot,
+    _hour_spot,
+    _injection_is_spp_indexed,
+    _injection_on_month_mean,
+    _NetAllocation,
+    _register_for,
+    _rlp_hour_weight,
+    _SpotMonthBucket,
+    _spp_injection_spot,
+    own_day_ahead,
+)
+from .synergrid import SppWeights
+from .ytd_legs import _dso_prosumer_day
+
+if TYPE_CHECKING:
+    # Annotations only, as _recorder_models says: the package has to load
+    # without the recorder, and the calls take the lazy copies it returns.
+    from homeassistant.components.recorder.models import StatisticMetaData
+
+_LOGGER = logging.getLogger(__name__)
+
+# hass.data[DOMAIN] key of the locks _import_cost_rows takes, by statistic id.
+_JOIN_LOCKS_KEY = "cost_join_locks"
+
+# Why a run left the cost series as it was, each followed in the response by
+# the sensors it names.
+UNANSWERED = "the recorder did not answer for"
+UNJOINED = "the recorder has no recent statistics for"
+
+
+def _injection_rate_for_hour(
+    snap_h: Any,
+    *,
+    spot: float | None,
+    spots: dict[datetime, float],
+    bucket: _SpotMonthBucket,
+    quarters: dict[datetime, list[float]],
+    utc_hour: datetime,
+    local: datetime,
+    spp_weights: SppWeights | None,
+    month_spp_cache: dict[tuple[int, int, bool], float | None],
+    hourly_injection: Callable[[InjectionRates | None], bool],
+    today: date,
+    meter: MeterType = METER_MONO,
+    region: str = REGION_FLANDERS,
+    day_start: int = DAY_START,
+) -> float | None:
+    """The feed-in rate for one backfilled hour, or None when it has none.
+
+    Both backfill passes resolved this identically: the same nine-keyword
+    _spp_injection_spot call followed by the same _historical_injection_rate.
+
+    ``monthly_mean`` stays derived here from THIS hour's snapshot rather than
+    being hoisted by the caller: an archived month can carry a different
+    energy kind from the cohort leg, so the flag is per-hour, not per-run.
+    That is also why the hour's own 15-minute slots are only handed on when
+    this hour is priced off its own spot: a credit settling on a month mean is
+    not priced by what one hour's quarters did. Nor by a card settled by the
+    hour: ``quarters`` is empty except on an entry whose current card floors
+    its feed-in per quarter-hour, and an earlier contract billed hourly floors
+    its credit once an hour.
+
+    ``bucket`` is ``spots`` grouped by month, which each pass builds once.
+    Handed the raw cache instead, _spp_injection_spot grouped the whole year
+    again on every call before it looked at its month cache, and a backfill
+    made that call once an hour in each pass: 12.602 groupings of a
+    6.311-hour cache at about 41 ms apiece on a Raspberry Pi.
+    """
+    monthly_mean = _injection_on_month_mean(snap_h)
+    hourly = hourly_injection(snap_h.injection)
+    inj_spot = _spp_injection_spot(
+        # The hour's spot goes in only when the CREDIT is the one that replays
+        # it, judged by the same predicate the live scalar and the year-to-date
+        # walk use: a card that prints a monthly indicative beside its formula
+        # bills the indicative, and handing this the energy's spot priced a
+        # whole year of feed-in off a formula the card calls an illustration.
+        (
+            spot
+            if snap_h.injection is not None
+            and _injection_is_spot_formula(snap_h.injection, snap_h.energy)
+            else None
+        ),
+        monthly_mean=monthly_mean,
+        # An SPP-indexed formula may only resolve against the SPP-weighted
+        # mean; without one _historical_injection_rate falls through to the
+        # card's printed indicative rather than the energy leg's mean.
+        strict=_injection_is_spp_indexed(snap_h),
+        # The month's own settled index when the supplier has published it,
+        # which makes every source below moot.
+        index_realised=getattr(snap_h.injection, "index_realised", None),
+        spp_weights=spp_weights,
+        bucket=bucket,
+        year=local.year,
+        month=local.month,
+        today=today,
+        cache=month_spp_cache,
+        hourly=hourly,
+        hourly_spot=spots.get(utc_hour),
+    )
+    return _historical_injection_rate(
+        snap_h.injection,
+        inj_spot,
+        quarters=(
+            quarters.get(utc_hour)
+            if (hourly or not monthly_mean) and _energy_is_quarter_hourly(snap_h.energy)
+            else None
+        ),
+        energy=snap_h.energy,
+        when=local,
+        meter=meter,
+        region=region,
+        day_start=day_start,
+    )
+
+
+async def _backfill_cost_sensor(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    coordinator: BePricesCoordinator,
+    hours: list[datetime],
+    spots: dict[datetime, float],
+    quarters: dict[datetime, list[float]],
+    emit_from: datetime | None = None,
+    gaps: dict[str, int] | None = None,
+    held: dict[str, set[str]] | None = None,
+) -> dict[str, int]:
+    """Write cumulative state/sum rows for ``current_year_cost`` over ``hours``.
+
+    Mirrors the live :func:`_compute_current_year_cost` engine but
+    produces one running-total point per hour instead of one
+    end-of-day number, so the recorder can render the YTD bill as a
+    growing line on the Energy dashboard / Statistics card.
+
+    Fees accrue per hour, each local day's ``annual / days_in_year`` share
+    spread evenly over that day's own hours (23 or 25 on the clock-change
+    days), so every day ends on the live ``days_in_ytd / days_in_year``
+    proration while the line still grows smoothly through it. Per-month
+    tariff archives are honoured the same way as in the live path. So is a
+    welcome credit: subtracted per day off the signing month's card through
+    the same ``_welcome_credit_eur`` the live walk calls, capped against the
+    same three running components, so the imported series and the sensor
+    agree at the end of every day rather than meeting at a step of everything
+    credited so far.
+
+    ``current_year_cost`` is a cumulative ``TOTAL`` sensor that resets on
+    Jan 1. ``hours`` MUST stay within a single calendar year, anchored at
+    that year's Jan 1: the loop accumulates monotonically from the first
+    hour and (when ``emit_from`` is set) only writes rows on/after it, so
+    a mid-year backfill still carries the correct year-to-date sum. The
+    sum must not be reset mid-series: the recorder derives the Energy
+    dashboard's change as ``sum - prev_sum`` and ignores ``last_reset``
+    for imported statistics, so a drop back to ~0 would render as a large
+    spurious negative cost. The caller therefore anchors on Jan 1 of the
+    *end* year and never spans a year boundary here.
+
+    Returns a per-statistic-id row count (one entry max). Skips
+    silently when the sensor isn't registered (auto path firing
+    before platform setup completes).
+
+    ``gaps``, when given, receives what the rows leave out:
+    ``energy_hours_unpriced`` counts metered hours whose energy term had no
+    price (no cached spot, or no DSO row on that month's card), and
+    ``injection_hours_uncredited`` exported hours whose feed-in credit had no
+    rate. A key is set only when its count is not zero. Unlike the live
+    sensor, which recomputes the year on every tick, an imported row keeps
+    what it was written with, so a gap left here stays until the next backfill.
+
+    That is also why nothing is imported when the recorder did not answer one
+    of the walk's meter reads, or a read of the chain the rows join
+    (``_import_cost_rows``): a busy database answers each meter read with
+    nothing, which priced the year at its fees alone over the rows it had.
+    Nor while it holds no live row of the sensor to join them to.
+    ``held``, when given, receives why, with the sensors each reason names,
+    for the caller to run it again.
+    """
+    sid = _stat_id(hass, entry, _COST_SENSOR_KEY)
+    if sid is None or not _compiled(hass, sid):
+        return {}
+
+    (
+        StatisticData,
+        StatisticMetaData,
+        StatisticMeanType,
+        async_import_statistics,
+    ) = _recorder_models()
+    rows: list[Any] = []
+    missing: dict[str, int] = {}
+    # One contract at a time, each carrying on from the bill the ones before it
+    # ran up: an entry that recorded no switch is one piece, as it always was.
+    carried = 0.0
+    with noting_failed_reads() as failed:
+        for seg_entry, seg_snap, seg_raw, seg_hours in await _contract_segments(
+            hass, entry, coordinator, hours, billed_only=True
+        ):
+            carried = await _accrue_cost(
+                hass,
+                seg_entry,
+                coordinator,
+                seg_hours,
+                spots,
+                quarters,
+                snapshot=seg_snap,
+                snapshot_raw=seg_raw,
+                carried=carried,
+                emit_from=emit_from,
+                rows=rows,
+                make_row=StatisticData,
+                gaps=missing,
+            )
+    if failed:
+        if held is not None:
+            # Named by the settings holding them, as every log line names a
+            # household's meters: the reasons are logged and returned.
+            held.setdefault(UNANSWERED, set()).update(
+                meter_setting(hass, entity_id) for entity_id in failed
+            )
+        return {sid: 0}
+
+    if rows:
+        metadata = StatisticMetaData(
+            mean_type=StatisticMeanType.NONE,
+            has_sum=True,
+            name=None,
+            source="recorder",
+            statistic_id=sid,
+            unit_class=None,
+            unit_of_measurement="EUR",
+        )
+        # The cycle the rows were priced in, never the clock's: pricing a year
+        # takes minutes on a small host, and a run that ends past New Year's
+        # midnight would otherwise chain last year's rows onto this year's
+        # cycle.
+        reset = ytd_window_reset(entry, dt_util.as_local(rows[-1]["start"]))
+        why = await _import_cost_rows(
+            hass, metadata, rows, reset, async_import_statistics
+        )
+        if why is not None:
+            if held is not None:
+                held.setdefault(why, set()).add(sid)
+            return {sid: 0}
+    if missing:
+        _LOGGER.warning(
+            "backfill of %s left %d hours of energy unpriced and %d hours of "
+            "feed-in uncredited, for want of a cached spot or a DSO row; the "
+            "imported cost keeps that gap until the next backfill",
+            sid,
+            missing.get("energy_hours_unpriced", 0),
+            missing.get("injection_hours_uncredited", 0),
+        )
+        if gaps is not None:
+            gaps.update(missing)
+    return {sid: len(rows)}
+
+
+async def _import_cost_rows(
+    hass: HomeAssistant,
+    metadata: StatisticMetaData,
+    rows: list[Any],
+    reset: datetime,
+    import_statistics: Any,
+) -> str | None:
+    """Import the year-to-date rows as a continuation of the recorded chain.
+
+    Each row is built with ``sum = state``, the year-to-date bill. The live
+    compile does not restart ``sum`` at a new cycle: on a ``last_reset`` change
+    it carries the running total on (``sensor/recorder.py``, the reset branch
+    keeps ``_sum`` and sets ``old_state = 0.0``), so on an entry that ran
+    through last year the row before 1 January holds last year's whole bill.
+    Imported as they were built, the first hour of the year then reported
+    minus that bill on the Energy dashboard. So the rows are put on the
+    recorded chain first: shifted by what the chain held before the window,
+    less the part of this cycle already in it. A first backfill, with nothing
+    recorded before it, shifts by nothing and imports what it always did.
+
+    The rows the live compile wrote are moved onto the imported chain by the
+    recorder itself: an adjustment queued ahead of the import shifts the sum
+    of every row from the first imported hour on, short-term and hourly, by
+    what lies between the two chains, and the import then writes its hours
+    over the live ones. Within a cycle the compile adds to ``sum`` exactly
+    what the state moves by, so one shift moves every live row. A row
+    compiled before the adjustment reaches the queue is moved with the rest,
+    and one compiled after it resumes from a moved one. Read and written back
+    from here, a compile landing between the read and the write stayed on the
+    old chain, and the next hour fell by the whole year's bill.
+
+    None once the rows are queued. With nothing imported, ``UNANSWERED``
+    when the recorder did not answer one of those reads, and ``UNJOINED``
+    when it holds no live row of the rows' cycle yet to move: a new sensor's
+    first is compiled within five minutes, and so is the first of a window
+    that has just moved, and the automatic backfill runs again. Taken for nothing recorded, a chain it could not read put every
+    row a year's bill below it, which the first hour of the year read as
+    minus that bill, and the imported rows stay.
+    """
+    from homeassistant.components.recorder import (  # type: ignore[attr-defined]
+        get_instance,
+    )
+
+    sid = metadata["statistic_id"]
+    first = rows[0]["start"]
+    instance = get_instance(hass)
+    # One join at a time, each read once the one before it is written: the
+    # adjustment moves the live rows by what lies between the two chains,
+    # and two joins that read before either wrote moved them twice, the
+    # automatic backfill's and a service call's alike.
+    async with _join_lock(hass, sid):
+        base = await _chain_before(hass, sid, first, reset)
+        if base is None:
+            return UNANSWERED
+        try:
+            anchor = await _live_anchor(
+                hass, sid, rows[-1]["start"] + timedelta(hours=1), reset
+            )
+        except Exception:  # recorder may surface anything
+            _LOGGER.debug("could not read the live %s rows the backfill joins", sid)
+            return UNANSWERED
+        if anchor is None:
+            _LOGGER.debug("no live %s row the backfill can join yet", sid)
+            return UNJOINED
+        if base:
+            rows = [{**row, "sum": round(base + row["state"], 4)} for row in rows]
+        state, chained = anchor
+        # From the first imported hour, not the reset: a window that starts
+        # later continues the chain the rows before it hold, read above.
+        shift = round(base - (chained - state), 4)
+        if shift:
+            instance.async_adjust_statistics(sid, first, shift, "EUR")
+        import_statistics(hass, metadata, rows)
+        await instance.async_block_till_done()
+    return None
+
+
+def _compiled(hass: HomeAssistant, statistic_id: str) -> bool:
+    """Whether the recorder compiles the statistics of ``statistic_id``: an
+    enabled sensor it records. One it does not is a sensor the user turned
+    off or keeps out of the recorder, and gets no history written either.
+    The cost rows join the live ones besides, and a sensor it does not
+    compile never has any, which every run would wait for again."""
+    from homeassistant.components.recorder import (  # type: ignore[attr-defined]
+        get_instance,
+    )
+
+    found = er.async_get(hass).async_get(statistic_id)
+    if found is not None and found.disabled_by is not None:
+        _LOGGER.debug("%s is disabled; it is not backfilled", statistic_id)
+        return False
+    # The filter is_entity_recorded reads: newer releases (2026.9.4) only
+    # re-export that function from the recorder package, and strict mypy
+    # refuses the import there.
+    recorded = get_instance(hass).entity_filter
+    if recorded is not None and not recorded(statistic_id):
+        _LOGGER.debug("%s is not recorded; it is not backfilled", statistic_id)
+        return False
+    return True
+
+
+def _join_lock(hass: HomeAssistant, statistic_id: str) -> asyncio.Lock:
+    """The lock :func:`_import_cost_rows` holds while it joins
+    ``statistic_id``'s rows."""
+    bucket: dict[str, Any] = hass.data.setdefault(DOMAIN, {})
+    locks: dict[str, asyncio.Lock] = bucket.setdefault(_JOIN_LOCKS_KEY, {})
+    if statistic_id not in locks:
+        locks[statistic_id] = asyncio.Lock()
+    return locks[statistic_id]
+
+
+async def _live_anchor(
+    hass: HomeAssistant, statistic_id: str, end: datetime, reset: datetime
+) -> tuple[float, float] | None:
+    """The state and ``sum`` of a live row of the cycle that began at
+    ``reset``, near ``end``: the sensor's hour before it, or else its first
+    five minutes of that cycle from ``end`` on. None when the recorder holds
+    neither. Raises what the recorder raised.
+
+    A row of another cycle stands that cycle's whole bill away from the rows
+    to come. After an edit that moved the window, or at a New Year whose
+    first hour saw no tick, the newest rows stay the cycle before's until
+    the sensor's next five minutes compile, and joined to one of them the
+    hour after the last one written rose by that bill.
+    """
+    for start, stop, period in (
+        (end - timedelta(hours=1), end, "hour"),
+        (end, None, "5minute"),
+    ):
+        for row in await _read(hass, statistic_id, start, stop, period, True):
+            began = row.get("last_reset")
+            if isinstance(began, datetime):
+                began = began.timestamp()
+            if (
+                began is not None
+                and abs(began - reset.timestamp()) < 1.0
+                and row.get("state") is not None
+                and row.get("sum") is not None
+            ):
+                return float(row["state"]), float(row["sum"])
+    return None
+
+
+async def _read(
+    hass: HomeAssistant,
+    statistic_id: str,
+    start: datetime,
+    stop: datetime | None,
+    period: str,
+    last_reset: bool = False,
+) -> list[Any]:
+    """The state and ``sum`` rows of ``period`` from ``start`` to ``stop``,
+    or to the newest when None, with the instant each was last reset at
+    when ``last_reset``. Raises what the recorder raised."""
+    from homeassistant.components.recorder import (  # type: ignore[attr-defined]
+        get_instance,
+    )
+    from homeassistant.components.recorder.statistics import (
+        statistics_during_period,
+    )
+
+    got = await get_instance(hass).async_add_executor_job(
+        statistics_during_period,
+        hass,
+        start,
+        stop,
+        {statistic_id},
+        period,
+        None,
+        {"sum", "state", "last_reset"} if last_reset else {"sum", "state"},
+    )
+    return list(got.get(statistic_id, []))
+
+
+async def _chain_before(
+    hass: HomeAssistant, statistic_id: str, first: datetime, reset: datetime
+) -> float | None:
+    """How far the recorded ``sum`` chain runs ahead of the year-to-date bill
+    just before ``first``, 0.0 when nothing is recorded before it, or None
+    when the recorder did not answer.
+
+    The last long-term row before ``first`` is found by month and then by
+    hour, so a long gap costs two or three bounded reads. A row from before
+    ``reset`` belongs to an earlier cycle, whose bill the new one starts on
+    top of, so its whole ``sum`` is carried; a row of this cycle carries its
+    ``sum`` less the bill it already counts.
+
+    The recorder moves a month read's end to the next month's start, so on
+    1 January it returns January too, which holds nothing before ``first``.
+    So it does for a window opening in the middle of a month: that month's
+    row begins before ``first`` and may hold no hour before it, and the last
+    one is then in a month before.
+    """
+    hours: list[Any] = []
+    try:
+        months = await _read(
+            hass, statistic_id, first - timedelta(days=400), first, "month"
+        )
+        months = [row for row in months if row["start"] < first.timestamp()]
+        for month in reversed(months):
+            month_start = datetime.fromtimestamp(month["start"], tz=UTC)
+            hours = await _read(hass, statistic_id, month_start, first, "hour")
+            if hours:
+                break
+    except Exception:  # recorder may surface anything
+        _LOGGER.debug("could not read the %s chain before the backfill", statistic_id)
+        return None
+    if not hours or hours[-1].get("sum") is None:
+        return 0.0
+    last = hours[-1]
+    chain = float(last["sum"])
+    if datetime.fromtimestamp(last["start"], tz=UTC) < reset:
+        return chain
+    return chain - float(last.get("state") or 0.0)
+
+
+async def _accrue_cost(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    coordinator: BePricesCoordinator,
+    hours: list[datetime],
+    spots: dict[datetime, float],
+    quarters: dict[datetime, list[float]],
+    *,
+    snapshot: SupplierSnapshot | None,
+    snapshot_raw: SupplierSnapshot | None,
+    carried: float,
+    emit_from: datetime | None,
+    rows: list[Any],
+    make_row: Any,
+    gaps: dict[str, int],
+) -> float:
+    """One contract's hours onto the running year-to-date bill.
+
+    ``entry``, ``snapshot`` and ``snapshot_raw`` are the contract's: the entry
+    and ``None`` for its own, the stand-in, card and the card that was
+    resolved from of one held earlier in the year. Every row
+    emitted carries ``carried``, what the contracts before it ran up, so the
+    series stays one running total across a switch; the return is the bill at
+    the last hour, for the next contract to carry on from. Each contract nets
+    its own compensation, prorates its own fees and credits its own welcome
+    offer over its own days, which is how the live walk prices it. The hours
+    it could not price are added into ``gaps`` (see _backfill_cost_sensor).
+    """
+    if not hours:
+        return carried
+    if snapshot is None:
+        # The entry's own contract on its own day-ahead, none at all for an
+        # entry with no source: the cache may hold the days a contract held
+        # earlier was priced on with its key (own_day_ahead).
+        spots = own_day_ahead(entry.data, spots)
+        quarters = own_day_ahead(entry.data, quarters)
+    bill = 0.0
+    ctx = await _build_context(
+        hass, entry, coordinator, hours, snapshot=snapshot, snapshot_raw=snapshot_raw
+    )
+    region = ctx.region
+    day_start = ctx.day_start
+    dso = ctx.dso
+    meter = ctx.meter
+    dso_mode = ctx.dso_mode
+    regime = ctx.regime
+    is_compensation = regime == SOLAR_REGIME_COMPENSATION
+    # Already includes the regime and Wallonia halves of the gate.
+    kva = _compensation_kva(entry)
+    # The kW the Flemish capacity tariff is charged on. Read from the live
+    # coordinator so the backfilled series accrues it exactly as the live
+    # _ytd_capacity does; the rolling mean is not reconstructable per past
+    # month, so both use the current one (see _ytd_capacity). Asked of the
+    # contract's own settings, as price_previous_periods asks it: one held
+    # earlier on an analog meter was billed the flat charge, and so was each
+    # day before a recorded replacement of one, asked per day below.
+    billed_peak_kw = (
+        billed_peak_for(entry.data, coordinator._billed_peak_kw())
+        if region == REGION_FLANDERS
+        else 0.0
+    )
+
+    # One bulk fetch per recorder entity; bin into UTC-hour totals.
+    # _recorder_rows treats the start/end arguments as local-day
+    # boundaries; pass the local dates of the first / last UTC hour so
+    # the recorder query window aligns with the backfill's _hour_iter.
+    # Passing UTC dates here would shift the window by 1-2h vs local
+    # midnight and either drop or double-include the end-of-range hour.
+    cons_per_hour: dict[datetime, float] = {}
+    inj_per_hour: dict[datetime, float] = {}
+    if hours:
+        start_d = dt_util.as_local(hours[0]).date()
+        end_d = dt_util.as_local(hours[-1]).date()
+        sides = await _metered_sides(hass, entry, start_d, end_d)
+        # Mirror the live paths: a pair that cannot be billed (half-wired, or
+        # one half recording nothing) accrues fees only rather than bill the
+        # wired half and credit injection against a consumption side that
+        # silently resolved to nothing. The hours one side cannot be billed on
+        # have left both, as on the live walks.
+        if sides is not None:
+            cons_per_hour = sides.consumption.kwh
+            inj_per_hour = sides.injection.kwh
+    # Article 81's cap on a double-flow meter (fees.gross_network_rebate),
+    # compared with the prosumer fee of the days the meter reported, as the
+    # live walks compare it (ytd_legs._dso_prosumer_day).
+    network_cap = bills_gross_network(entry.data)
+    running_prosumer_network = 0.0
+    reported_days = {
+        dt_util.as_local(h).date() for h in cons_per_hour.keys() | inj_per_hour.keys()
+    }
+
+    _snap_for = ctx.snap_for
+    spp_weights = ctx.spp_weights
+    month_spp_cache = ctx.month_spp_cache
+    month_mean_cache = ctx.month_mean_cache
+    hourly_injection = ctx.hourly_injection
+    # Bucketed once, like the live walk: the closed-month coverage gate needs
+    # to know how much of a month is actually cached, not just its mean.
+    month_bucket = _bucket_by_local_month(spots) if spots else {}
+    today = dt_util.now().date()
+
+    # UTC-hour count per local day so the static fee accrues smoothly per
+    # hour yet each local day sums to exactly annual/days_in_year, even on
+    # the DST seam days (23 or 25 UTC hours).
+    hours_per_local_date: dict[date, int] = {}
+    for h in hours:
+        d = dt_util.as_local(h).date()
+        hours_per_local_date[d] = hours_per_local_date.get(d, 0) + 1
+
+    running_energy = 0.0
+    running_fees = 0.0
+    # The three components a welcome credit may come off, kept beside the bill
+    # the way the live walk keeps them: the supplier's energy component of the
+    # consumption (gross of any feed-in credit), the supplier's own standing
+    # charge and the green electricity / CHP contribution. The credit is
+    # capped against their running sum, so a series that omitted it met the
+    # live sensor at a step of everything credited so far.
+    running_energy_component = 0.0
+    running_supplier_fee = 0.0
+    running_green = 0.0
+    # What the window drew, and that less what it put back: the export share
+    # a per-kWh credit nets its YEAR by while the first year runs
+    # (first_year_net_kwh). Once that year has closed, ctx.first_year is it.
+    running_consumption_kwh = 0.0
+    running_net_kwh = 0.0
+    # The energy component and volume of the contract's own first-year hours,
+    # the rate a percentage credit is a share of, as the live walk keeps them.
+    running_credit_component = 0.0
+    running_credit_kwh = 0.0
+    # The window the credit accrues over is the sensor's own, whichever year
+    # the caller anchored the hours on, and the first year it counts from is
+    # the entry's own start date, as on the live side.
+    # This contract's own first day: 1 January, or its start date on an entry
+    # that bills from it, for the entry's own contract, and the day an earlier
+    # one began for that one, which is the window the live walk credits over.
+    credit_window_start = dt_util.as_local(hours[0]).date()
+    credit_start = _parse_iso_date(entry.data.get(CONF_CONTRACT_START_DATE))
+    # A lump held to what its first contract year charged, on that year's own
+    # charges, as the live walk holds it.
+    card = snapshot if snapshot is not None else coordinator._snapshot
+    assert card is not None
+    signing = await lump_held_to_first_year(
+        ctx.signing,
+        credit_start,
+        credit_window_start,
+        dt_util.as_local(hours[-1]).date(),
+        partial(
+            first_year_charges,
+            hass,
+            coordinator._session,
+            get_extractor(entry.data[CONF_SUPPLIER]),
+            card,
+            entry,
+            historical_spots=spots,
+            spot_quarters=quarters,
+            spp_weights=ctx.spp_weights,
+            rlp_weights=ctx.rlp_weights,
+            rlp_index_weights=ctx.rlp_index_weights,
+            snapshot_raw=(
+                snapshot_raw
+                if snapshot is not None
+                else getattr(coordinator, "_snapshot_raw", None)
+            ),
+        ),
+    )
+    netting = _NetAllocation()
+    allocated = ctx.rlp_weights is not None
+    async for utc_hour in _in_turns(hours):
+        local = dt_util.as_local(utc_hour)
+        month_first = date(local.year, local.month, 1)
+        snap_h = await _snap_for(meter_segment(entry.data, local.date()))
+        spot = _hour_spot(
+            snap_h.energy,
+            local,
+            utc_hour,
+            spots,
+            month_bucket,
+            month_mean_cache,
+            today,
+            ctx.rlp_index_weights,
+        )
+
+        # Energy term: an hour the spot cache cannot price is NOT dropped.
+        # It still has a network leg and a tax leg, both known from that
+        # month's snapshot and neither depending on the day-ahead price, and on
+        # a Belgian residential card those two are the larger half of the
+        # all-in rate. The live walk bills them through compute_network_and_taxes
+        # for exactly this reason; skipping the hour whole here instead made the
+        # persisted cost series drop grid and taxes on every metered kWh in an
+        # ENTSO-E gap, so the imported rows and the compiled ones disagreed at
+        # the seam by more than the energy nobody could price.
+        no_spot = spot is None and _energy_needs_spot(snap_h.energy)
+        try:
+            bd = (
+                compute_network_and_taxes(
+                    snap_h, dso, region, local, meter, dso_mode, day_start=day_start
+                )
+                if no_spot
+                else compute_breakdown(
+                    snap_h,
+                    dso,
+                    region,
+                    local,
+                    spot,
+                    meter,
+                    dso_mode,
+                    day_start=day_start,
+                )
+            )
+        except (KeyError, ValueError):
+            bd = None
+        cons = cons_per_hour.get(utc_hour, 0.0)
+        inj = inj_per_hour.get(utc_hour, 0.0)
+        if cons > 0.0 and (bd is None or no_spot):
+            gaps["energy_hours_unpriced"] = gaps.get("energy_hours_unpriced", 0) + 1
+        inj_rate: float | None = None
+        if bd is not None:
+            # An unpriced hour has a zero energy component, as in the live
+            # walk: nothing was charged, so nothing can be credited against.
+            running_energy_component += cons * bd.energy
+            running_green += cons * renewables_eur_per_kwh(snap_h.taxes, region)
+            running_consumption_kwh += cons
+            running_net_kwh += cons - inj
+            if in_first_contract_year(credit_start, local.date()):
+                running_credit_component += cons * bd.energy
+                running_credit_kwh += cons
+            if is_compensation:
+                netting.add(
+                    _register_for(local, meter, dso_mode, region, day_start=day_start),
+                    cons - inj,
+                    bd.all_in,
+                    _rlp_hour_weight(ctx.rlp_weights, local),
+                    network=bd.network,
+                    gross_kwh=cons,
+                )
+            elif regime == SOLAR_REGIME_INJECTION:
+                running_energy += cons * bd.all_in
+                inj_rate = _injection_rate_for_hour(
+                    snap_h,
+                    spot=spot,
+                    spots=spots,
+                    bucket=month_bucket,
+                    quarters=quarters,
+                    utc_hour=utc_hour,
+                    local=local,
+                    spp_weights=spp_weights,
+                    month_spp_cache=month_spp_cache,
+                    hourly_injection=hourly_injection,
+                    today=today,
+                    meter=meter,
+                    region=region,
+                    day_start=day_start,
+                )
+                if inj_rate is not None:
+                    running_energy -= inj * inj_rate
+            else:
+                running_energy += cons * bd.all_in
+        if (
+            regime == SOLAR_REGIME_INJECTION
+            and inj > 0.0
+            and inj_rate is None
+            and snap_h.injection is not None
+        ):
+            gaps["injection_hours_uncredited"] = (
+                gaps.get("injection_hours_uncredited", 0) + 1
+            )
+
+        # Fee accrual: spread each local day's annual/days_in_year share
+        # evenly over that day's actual UTC hours, so the YTD line grows
+        # smoothly yet every day (including the 23/25-hour DST seam days)
+        # totals exactly annual/days_in_year, matching the live YTD per-day
+        # proration (annual * days_in_ytd / days_in_year). A flat
+        # annual/(days_in_year*24) rate accrued 23 or 25 hours' worth on
+        # the seam days, drifting from the live sensor at the seam.
+        days_in_year = 366 if calendar.isleap(local.year) else 365
+        annual_static = _annual_static_fees(snap_h, meter, entry, day=local.date())
+        running_fees += (
+            annual_static / days_in_year / hours_per_local_date[local.date()]
+        )
+        # The supplier's share of that, spread the same way, because a welcome
+        # credit may come off the standing charge and off none of the energy
+        # fund, data-management or OSP fees accrued beside it.
+        running_supplier_fee += (
+            float(yearly_fixed_fee_for_meter(snap_h.energy, meter) or 0.0)
+            / days_in_year
+            / hours_per_local_date[local.date()]
+        )
+
+        # Flemish capacity tariff, spread per local day like the prosumer fee
+        # below (its monthly charge over that month's days), so the backfill
+        # meets the live _ytd_capacity proration (days_in_ytd /
+        # days_in_full_month) at the seam rather than trailing it.
+        if billed_peak_kw:
+            # With the card's VAT basis, as the live walk passes it: the
+            # ceiling headroom is grossed by the same rate as the charge,
+            # and without it a professional card billed VAT-inclusive had its
+            # headroom a fifth short here and its capped months lower than
+            # the live sensor's.
+            monthly = _capped_capacity_monthly_eur(
+                snap_h.dsos.get(dso),
+                entry,
+                billed_peak_on(entry.data, billed_peak_kw, local.date()),
+                vat_rate=snap_h.taxes.vat_rate,
+            )
+            if monthly:
+                days_in_full_month = calendar.monthrange(
+                    month_first.year, month_first.month
+                )[1]
+                running_fees += (
+                    monthly / days_in_full_month / hours_per_local_date[local.date()]
+                )
+
+        # Compensation is Walloon-only (see fees._compute_prosumer):
+        # gate the prosumer accrual to Wallonia so a Flanders entry never
+        # backfills prosumer on top of the capacity tariff.
+        if kva:
+            overlay = snap_h.dsos.get(dso)
+            monthly_fee = _prosumer_monthly_fee(overlay, snap_h, kva)
+            if monthly_fee:
+                # Prorate the monthly prosumer fee per local day, the same way
+                # the static fee above is spread, so both reach a full daily
+                # share on the current in-progress day and the backfill meets
+                # the live _ytd_prosumer (days_in_ytd / days_in_full_month)
+                # proration at the seam instead of trailing it by a partial
+                # day. Dividing by that day's actual UTC-hour count makes each
+                # day (including the 23/25-hour DST seam days) sum to exactly
+                # monthly_fee / days_in_full_month.
+                days_in_full_month = calendar.monthrange(
+                    month_first.year, month_first.month
+                )[1]
+                running_fees += (
+                    monthly_fee
+                    / days_in_full_month
+                    / hours_per_local_date[local.date()]
+                )
+        if network_cap and bd is not None and local.date() in reported_days:
+            running_prosumer_network += (
+                _dso_prosumer_day(snap_h, entry, local.date())
+                / hours_per_local_date[local.date()]
+            )
+
+        # Compensation regime clamps the YTD energy term at zero
+        # (Walloon meter forfeits surplus injection past
+        # consumption); injection / none never go negative through
+        # the energy term alone.
+        displayed_energy = (
+            netting.billed(allocated=allocated) if is_compensation else running_energy
+        )
+        # Credited by the DAY, as the live walk does, against what the window
+        # has charged so far: the two agree at the end of every local day and
+        # the backfill runs at most a day's share ahead inside one, the same
+        # kind of intra-day lead the fee proration above carries.
+        credit = _welcome_credit_eur(
+            signing,
+            credit_start,
+            credit_window_start,
+            local.date(),
+            running_energy_component + running_supplier_fee + running_green,
+            first_year_net_kwh(
+                ctx.annual_kwh,
+                running_consumption_kwh,
+                running_consumption_kwh - running_net_kwh,
+                compensation=is_compensation,
+            ),
+            (
+                window_energy_rate(running_credit_component, running_credit_kwh)
+                if running_credit_kwh > 0.0
+                else window_energy_rate(
+                    running_energy_component, running_consumption_kwh
+                )
+            ),
+            first_year_injection_kwh=ctx.annual_injection_kwh,
+            metered=ctx.first_year,
+        )
+        rebate = (
+            gross_network_rebate(
+                running_prosumer_network,
+                netting.net_network(allocated=allocated),
+                netting.gross_network(),
+            )
+            if network_cap
+            else 0.0
+        )
+        bill = displayed_energy + running_fees - credit - rebate
+        state = round(carried + bill, 4)
+        # Accumulate from Jan 1 (the caller anchors ``hours`` there) but
+        # only emit rows inside the requested window, so a mid-year
+        # ``start`` still carries the correct year-to-date sum instead of
+        # restarting from zero and clashing with the pre-existing series.
+        if emit_from is None or utc_hour >= emit_from:
+            rows.append(make_row(start=utc_hour, state=state, sum=state))
+
+    return carried + bill

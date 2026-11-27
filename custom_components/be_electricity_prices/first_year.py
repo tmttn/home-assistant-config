@@ -1,0 +1,322 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""What the first contract year charged and metered, for a welcome credit
+measured over it.
+
+EnergyVision's April to June 2026 cards cap the credit they pay at the
+anniversary at what that first year charged for the components it may come
+off (``fees.lump_held_to_first_year``), and Mega's per-kWh half rides what it
+drew. That year straddles 1 January, so it is walked or read on its own by
+the year-to-date bill, a calendar year at a time on each year's own load
+curve, and kept once it is over.
+"""
+
+from __future__ import annotations
+
+from datetime import date, timedelta
+from typing import Any
+
+import aiohttp
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
+
+from .const import (
+    CONF_CONTRACT,
+    CONF_CONTRACT_START_DATE,
+    CONF_REGION,
+    CONF_SOLAR_REGIME,
+    SOLAR_REGIME_COMPENSATION,
+    SOLAR_REGIME_INJECTION,
+    SOLAR_REGIME_NONE,
+)
+from .energy_meters import _bills_injection, _kwh_sensor_ids, noting_failed_reads
+from .fees import (
+    FirstYearVolume,
+    first_year_last_day,
+    first_year_net_kwh,
+    grants_a_welcome_credit,
+    last_credited_day,
+)
+from .meter_daily import _measured_kwh
+from .providers.base import SupplierExtractor, SupplierSnapshot
+from .signing_month import _parse_iso_date
+from .snapshot_store import cached_month_card
+
+
+async def first_year_charges(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    extractor: SupplierExtractor,
+    snapshot: SupplierSnapshot,
+    entry: ConfigEntry,
+    first: date,
+    last: date,
+    **walk: Any,
+) -> float | None:
+    """What ``[first, last]`` charged for the three components a welcome
+    credit may come off, by the year-to-date bill over those days.
+
+    The metered part is stretched over the days or hours the walk could not
+    price (no meter reading, no spot), so a history starting part-way through
+    the first year does not pass for a year of small bills; a walk that priced
+    none answers None, as one that could not run at all does.
+
+    Kept on the coordinator once those days are over and the last of them is
+    in the recorder, from a walk the recorder answered in full and that priced
+    something (``_first_year_memo``), for as long as the cards of their
+    months and the profiles they were priced on stay the same: nothing else
+    about a closed year moves, and walking it again cost every tick from the
+    anniversary to 31 December 0,3 to 3,5 s on a Raspberry Pi. Two inputs
+    are left out of what is compared on purpose. The day-ahead: the cache
+    keeps the trailing year only, so a later walk would price fewer of those
+    hours, not better. And the card held today, which the coordinator
+    resolves again whenever the measured yearly volume moves and which stands
+    in only for a month no archive holds. A compare-page proxy carries no
+    coordinator and walks every time.
+    """
+    memo: dict[tuple[Any, ...], tuple[tuple[Any, ...], float | None]] | None = getattr(
+        getattr(entry, "runtime_data", None), "_first_year_memo", None
+    )
+    contract = walk.get("contract_override") or entry.data.get(CONF_CONTRACT, "")
+    slot = (contract, walk.get("meter_override"), first, last)
+    months: list[date] = []
+    month = date(first.year, first.month, 1)
+    while month <= last:
+        months.append(month)
+        month = (month + timedelta(days=32)).replace(day=1)
+    pieces = _year_pieces(entry, first, last, walk)
+    inputs = (
+        tuple(
+            cached_month_card(
+                hass, extractor.id, contract, entry.data.get(CONF_REGION, ""), m
+            )
+            for m in months
+        ),
+        tuple(
+            (piece.get("rlp_weights"), piece.get("rlp_index_weights"))
+            for _start, _end, piece in pieces
+        ),
+        walk.get("spp_weights"),
+        walk.get("cached_only", False),
+    )
+    now = dt_util.now()
+    closed = now.date() > last + timedelta(days=1) or (
+        now.date() > last and now.hour >= 1
+    )
+    if memo is not None and closed:
+        held = memo.get(slot)
+        if held is not None and held[0] == inputs:
+            return held[1]
+    # Kept only from a walk every recorder read answered, and that priced
+    # something. A busy recorder answers each read with nothing, and the walk
+    # then comes back with no figure, or a figure short of the year; kept, it
+    # left the lump on the stretched estimate until 31 December.
+    with noting_failed_reads() as failed:
+        eligible = await _walked_charges(
+            hass, session, extractor, snapshot, entry, pieces
+        )
+    if memo is not None and closed and not failed and eligible is not None:
+        memo[slot] = (inputs, eligible)
+    return eligible
+
+
+def _year_pieces(
+    entry: ConfigEntry, first: date, last: date, walk: dict[str, Any]
+) -> list[tuple[date, date, dict[str, Any]]]:
+    """``[first, last]`` cut at each 1 January that changes the load curve,
+    each piece with the walk that prices it.
+
+    The curve is keyed by local (month, day, hour) without its year, and the
+    walk is handed the one the coordinator holds, the running year's, so a
+    first year begun in April priced the months before 1 January on the next
+    year's weekdays: 0,3 to 7,8% on an RLP-indexed month's index. A piece
+    takes its own year's curve where the walk carries the entry's own and
+    the installation holds that year's (``rlp_weights_held_for_year``), which
+    the shared store keeps for the year before the running one. Fetching it
+    here would retry the download on every tick while it cannot be had.
+
+    Uncut where nothing would change: the walk carries no curve, or an index
+    curve that is not the entry's (a candidate on the compare page, whose
+    blend this does not know), or no coordinator is there to hold one.
+    """
+    held = walk.get("rlp_weights")
+    index = walk.get("rlp_index_weights")
+    curve_of = getattr(
+        getattr(entry, "runtime_data", None), "rlp_weights_held_for_year", None
+    )
+    if curve_of is None or held is None or (index is not None and index is not held):
+        return [(first, last, walk)]
+    pieces: list[tuple[date, date, dict[str, Any]]] = []
+    for year in range(first.year, last.year + 1):
+        own = curve_of(year)
+        piece = walk
+        if own is not None and own is not held:
+            piece = {**walk, "rlp_weights": own, "rlp_index_weights": None}
+        pieces.append(
+            (max(first, date(year, 1, 1)), min(last, date(year, 12, 31)), piece)
+        )
+    if all(piece is walk for _start, _end, piece in pieces):
+        return [(first, last, walk)]
+    return pieces
+
+
+# What a piece's bill reports that the year adds up, each a sum over its days
+# or hours.
+_SUMMED = (
+    "welcome_credit_eligible_eur",
+    "energy_component_ytd_eur",
+    "green_component_ytd_eur",
+    "days_priced",
+    "hours_priced",
+    "days_elapsed",
+    "hours_elapsed",
+)
+
+
+async def _walked_charges(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    extractor: SupplierExtractor,
+    snapshot: SupplierSnapshot,
+    entry: ConfigEntry,
+    pieces: list[tuple[date, date, dict[str, Any]]],
+) -> float | None:
+    """:func:`first_year_charges` with no memo: the walk itself, one bill per
+    piece (``_year_pieces``), added up."""
+    # Late: the year-to-date engine is what asks for these charges.
+    from .ytd_cost import _compute_current_year_cost
+
+    year: dict[str, float] = {}
+    for start, end, walk in pieces:
+        piece: dict[str, float] = {}
+        if (
+            await _compute_current_year_cost(
+                hass,
+                session,
+                extractor,
+                snapshot,
+                entry,
+                breakdown=piece,
+                window_start_override=start,
+                window_end=end,
+                **walk,
+            )
+            is None
+            or "welcome_credit_eligible_eur" not in piece
+        ):
+            return None
+        for key in _SUMMED:
+            if key in piece:
+                year[key] = year.get(key, 0.0) + piece[key]
+    eligible = year.get("welcome_credit_eligible_eur")
+    priced = year.get("days_priced", year.get("hours_priced", 0.0))
+    elapsed = year.get("days_elapsed", year.get("hours_elapsed", 0.0))
+    if eligible is None or priced <= 0.0:
+        return None
+    metered = year.get("energy_component_ytd_eur", 0.0) + year.get(
+        "green_component_ytd_eur", 0.0
+    )
+    return eligible + metered * (elapsed / priced - 1.0)
+
+
+async def first_year_volume(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    snapshot: SupplierSnapshot,
+    window_start: date,
+) -> FirstYearVolume | None:
+    """What the first contract year metered, for the welcome credit
+    ``snapshot`` grants a window from ``window_start``, once that year has
+    closed; ``None`` while it runs, which leaves the credit on the trailing
+    year's estimate (``fees.first_year_net_kwh``).
+
+    The card measures the credit's per-kWh half over that year, "pour votre
+    premiere annee de consommation nette", so once it has closed what is
+    credited is what it drew, not what the year to the day does: its
+    consumption, net of its export where the meter nets it, and its export
+    where it is sold, each over a full year of meter
+    (``compare_quote._full_year_kwh``). An export meter that recorded the
+    year and nothing on it is a year without export. Each side stands on its
+    own: one whose history does not cover the year, or with no meter wired,
+    is ``None`` and keeps the estimate, the other is still the meter's. Under
+    compensation the net takes the export off the draw, so it needs both, or
+    no export meter at all, where the bill nets nothing either.
+
+    Not read for a window past every day the credit reaches, and kept on the
+    coordinator once the year's last day is in the recorder, from a read the
+    recorder answered in full, the rule :func:`first_year_charges` keeps its
+    walk by. A compare-page proxy carries no coordinator and reads every time.
+    """
+    # Late: the compare quote, which this reads the yearly rule from, asks
+    # for this volume too.
+    from .compare_quote import _covers_a_year, _full_year_kwh
+
+    start = _parse_iso_date(entry.data.get(CONF_CONTRACT_START_DATE))
+    if (
+        start is None
+        or not grants_a_welcome_credit(snapshot)
+        or window_start > last_credited_day(snapshot, start)
+    ):
+        return None
+    last = first_year_last_day(start)
+    now = dt_util.now()
+    if now.date() <= last:
+        return None
+    regime = entry.data.get(CONF_SOLAR_REGIME, SOLAR_REGIME_NONE)
+    memo: dict[tuple[str, date], FirstYearVolume] | None = getattr(
+        getattr(entry, "runtime_data", None), "_first_year_volumes", None
+    )
+    if memo is not None and (regime, start) in memo:
+        return memo[(regime, start)]
+    with noting_failed_reads() as failed:
+        consumption = await _measured_kwh(hass, entry, start, last)
+        injection = (
+            await _measured_kwh(hass, entry, start, last, side="injection")
+            if _bills_injection(entry) and any(_kwh_sensor_ids(entry, "injection"))
+            else None
+        )
+    days = (last - start).days + 1
+    drawn = _full_year_kwh(consumption, days)
+    # What the export meter says the year put back, or None where no meter
+    # recorded the whole of it. Coverage, not the figure: a meter that
+    # recorded the year and nothing on it says the year exported nothing.
+    exported = None
+    if injection is not None and _covers_a_year(injection.days_with_data):
+        exported = _full_year_kwh(injection, days) or 0.0
+    # The draw, netted where the meter nets it, which then needs that year of
+    # export; with no export meter wired the bill nets nothing either.
+    net = None
+    if drawn is not None:
+        if regime != SOLAR_REGIME_COMPENSATION or injection is None:
+            net = drawn
+        elif exported is not None:
+            net = first_year_net_kwh(drawn, drawn, exported, compensation=True)
+    volume = FirstYearVolume(net, exported if regime == SOLAR_REGIME_INJECTION else 0.0)
+    closed = now.date() > last + timedelta(days=1) or now.hour >= 1
+    if memo is not None and closed and not failed:
+        memo[(regime, start)] = volume
+    return volume

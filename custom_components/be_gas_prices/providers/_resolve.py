@@ -1,0 +1,360 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Turning a published card into what one household is billed on.
+
+A card prints a table; a household sits in one row of it. The distribution
+tier and the excise slices follow the annual volume, the Brussels levy the
+meter caliber, and the levies the law sets the delivery month, whatever month
+the card itself was printed for.
+"""
+
+from __future__ import annotations
+
+from dataclasses import replace
+from datetime import date
+
+from .. import excise_law, fluvius, law_archive, network_sheet, tarbel
+from ..const import (
+    CALIBER_Q10,
+    ENERGY_CONTRIBUTION_KNOWN_FROM,
+    ENERGY_CONTRIBUTION_RESIDENTIAL_HTVA,
+    ENERGY_CONTRIBUTION_ZEROED_FROM,
+    FLUVIUS_KEYS,
+    GAS_EXCISE_KNOWN_FROM,
+    GAS_EXCISE_KNOWN_UNTIL,
+    GAS_EXCISE_RESIDENTIAL_HTVA,
+    OSP_Q10_HIGH,
+    OSP_Q10_LOW,
+    OSP_Q10_SPLIT_KWH,
+    SUPPLIER_SOCIAL,
+    TIER_BOUNDS_KWH,
+    TIER_T1,
+    TIER_T2,
+    VAT_RATE_REDUCED,
+    WALLONIA_DSO_KEYS,
+    WALLOON_CONNECTION_FEE,
+    WALLOON_CONNECTION_FEE_KNOWN_FROM,
+)
+from ..vat_rates import residential_vat
+from ._network import excise_bands
+from .base import DsoOverlay, DsoTier, SupplierSnapshot, TaxOverlay
+
+# Every figure of the law the resolvers below bill on, and the months they
+# cover: a release that learns more of them prices past months anew, which
+# the price history stamp has to notice.
+LAW_FIGURES = (
+    GAS_EXCISE_RESIDENTIAL_HTVA,
+    GAS_EXCISE_KNOWN_UNTIL,
+    ENERGY_CONTRIBUTION_RESIDENTIAL_HTVA,
+    ENERGY_CONTRIBUTION_KNOWN_FROM,
+    ENERGY_CONTRIBUTION_ZEROED_FROM,
+    WALLOON_CONNECTION_FEE,
+    WALLOON_CONNECTION_FEE_KNOWN_FROM,
+)
+
+
+def tier_for(annual_kwh: float) -> str:
+    """The distribution tier an annual volume falls in.
+
+    The tier prices every kWh of the year, not a slice of it. A volume above
+    the last bound is kept in the last tier a card can price: a connection
+    that large is remotely read and on a tariff no residential card prints,
+    so it is out of scope rather than billable.
+    """
+    for tier, bound in TIER_BOUNDS_KWH:
+        if annual_kwh <= bound:
+            return tier
+    return TIER_BOUNDS_KWH[-1][0]
+
+
+def effective_excise(bands: tuple[tuple[float | None, float], ...], annual_kwh: float) -> float:
+    """The excise per kWh a household pays over the year, in EUR/kWh.
+
+    The special excise is billed per slice of the annual volume: the first
+    12 000 kWh at the lower rate and only the rest at the higher one. The
+    blend is what one kWh costs on average at that volume, which lets the
+    pricing engine keep reading a single rate. A volume of zero or less has
+    no slices to blend and pays the first band's rate.
+    """
+    if annual_kwh <= 0:
+        return bands[0][1]
+    total = 0.0
+    lower = 0.0
+    for upper, rate in bands:
+        top = annual_kwh if upper is None else min(annual_kwh, upper)
+        if top > lower:
+            total += (top - lower) * rate
+        if upper is None or annual_kwh <= upper:
+            break
+        lower = upper
+    return total / annual_kwh
+
+
+def _in_window(delivery: date, start: tuple[int, int], end: tuple[int, int] | None) -> bool:
+    month = (delivery.year, delivery.month)
+    return month >= start and (end is None or month < end)
+
+
+def law_excise(delivery: date) -> tuple[float, float] | None:
+    """The residential excise up to the band and above it, EUR/kWh excluding
+    VAT, in force for ``delivery``: the period FPS Finance's excise tariff
+    lists for it (tarbel.py), the quarterly notices of art. 420 included;
+    else the quarterly figures const.py holds; else article 419 as read from
+    Justel, from the day the wording in force dates, its voted steps for the
+    years to come included; else what the card archive kept for a month
+    they no longer give (law_archive.py); and None outside all four."""
+    listed = tarbel.excise_for(delivery)
+    if listed is not None:
+        return listed
+    if _in_window(delivery, GAS_EXCISE_KNOWN_FROM, GAS_EXCISE_KNOWN_UNTIL):
+        month = (delivery.year, delivery.month)
+        return next(
+            (low, high)
+            for start, low, high in reversed(GAS_EXCISE_RESIDENTIAL_HTVA)
+            if start <= month
+        )
+    read = excise_law.excise_for(delivery)
+    return read if read is not None else law_archive.excise_for(delivery)
+
+
+def law_protected_excise(delivery: date) -> float | None:
+    """The protected residential customer's excise, EUR/kWh excluding VAT,
+    in force for ``delivery``: article 419 as read from Justel, from the day
+    its wording dates, the steps voted after it included, since the
+    quarterly notices of art. 420 do not move it; else the period FPS
+    Finance's excise tariff lists (tarbel.py); else what the card archive
+    kept for a month they no longer give (law_archive.py); None outside all
+    three."""
+    for source in (
+        excise_law.protected_excise_for,
+        tarbel.protected_excise_for,
+        law_archive.protected_excise_for,
+    ):
+        rate = source(delivery)
+        if rate is not None:
+            return rate
+    return None
+
+
+def law_contribution(delivery: date) -> float | None:
+    """The residential energy contribution, EUR/kWh excluding VAT, the law
+    sets for ``delivery``: the period FPS Finance's excise tariff lists for
+    it (tarbel.py); else article 419 as read from Justel, beside the excise,
+    from the day its wording dates, the steps voted after it included; else
+    what the card archive kept for a month they no longer give
+    (law_archive.py); else the figures const.py holds, for an entry that has
+    read none of them; and None before the excise window, where the card is
+    read as printed."""
+    if not _in_window(delivery, ENERGY_CONTRIBUTION_KNOWN_FROM, None):
+        return None
+    for source in (
+        tarbel.contribution_for,
+        excise_law.contribution_for,
+        law_archive.contribution_for,
+    ):
+        rate = source(delivery)
+        if rate is not None:
+            return rate
+    if _in_window(delivery, ENERGY_CONTRIBUTION_ZEROED_FROM, None):
+        return 0.0
+    return ENERGY_CONTRIBUTION_RESIDENTIAL_HTVA
+
+
+# Belgium's VAT rates above zero. A card stating one of them for its
+# customers puts the law's figures on that rate, as it prints its own; a
+# stated rate outside them is a misread, and the residential gas rate
+# stands. Every card read so far states 6 % or nothing.
+_BELGIAN_VAT_RATES = (VAT_RATE_REDUCED, 0.12, 0.21)
+
+
+def vat_factor(taxes: TaxOverlay, delivery: date) -> float:
+    """What a law figure excluding VAT is multiplied by on ``taxes``'s card
+    for ``delivery``: the rate the card states, else the residential rate of
+    the month (vat_rates.py)."""
+    rate = taxes.card_vat_rate
+    if rate is None or not any(abs(rate - known) < 1e-9 for known in _BELGIAN_VAT_RATES):
+        rate = residential_vat(delivery)
+    return 1 + rate
+
+
+def resolve_federal_levies(
+    taxes: TaxOverlay, delivery: date, *, protected: bool = False
+) -> TaxOverlay:
+    """``taxes`` with the federal levies the law sets for ``delivery``.
+
+    The special excise and the energy contribution are set by federal law
+    for the whole country, so the delivery month decides them, not the month
+    the card was printed in. Ecofix, Sparki, Belvus and the Energy Together
+    brands still printed the pre-August excise on their September 2026 cards,
+    and OCTA+ and TotalEnergies a pre-August energy contribution. Within the
+    months the law is known for (:func:`law_excise`), the law's rate replaces
+    the card's; outside them the card is read as printed.
+
+    Only a residential card is touched: its values are VAT inclusive
+    (``vat_rate`` 0.0), and the law's rate is put on the VAT the card states
+    (:func:`vat_factor`). A professional card prints excluding VAT and is
+    taxed on other rates.
+
+    A ``protected`` customer's card, the social tariff's, prints no excise:
+    it is billed the protected rate (:func:`law_protected_excise`) on every
+    kWh, and no energy contribution, which the law exempts it from. A month
+    neither source gives is left without an excise and cannot be priced.
+    """
+    if taxes.vat_rate != 0.0:
+        return taxes
+    factor = vat_factor(taxes, delivery)
+    if protected:
+        rate = law_protected_excise(delivery)
+        return replace(
+            taxes,
+            excise_bands=() if rate is None else excise_bands(rate * factor, None),
+            energy_contribution=0.0,
+        )
+    resolved = taxes
+    excise = law_excise(delivery)
+    if excise is not None:
+        low, high = excise
+        resolved = replace(
+            resolved,
+            excise_bands=excise_bands(low * factor, high * factor),
+        )
+    contribution = law_contribution(delivery)
+    if contribution is not None:
+        resolved = replace(resolved, energy_contribution=contribution * factor)
+    return resolved
+
+
+def resolve_network(
+    dsos: dict[str, DsoOverlay], taxes: TaxOverlay, delivery: date
+) -> dict[str, DsoOverlay]:
+    """``dsos`` with the Fluvius data management fee where a card omits it.
+
+    Only for a delivery year whose Fluvius tariff sheet has been read
+    (fluvius.py), and only on a residential card, whose figures are VAT
+    inclusive at the rate it states.
+    """
+    htva = fluvius.data_management_fee(delivery.year)
+    if taxes.vat_rate != 0.0 or htva is None:
+        return dsos
+    fee = htva * vat_factor(taxes, delivery)
+    return {
+        key: replace(overlay, metering_per_year=fee)
+        if key in FLUVIUS_KEYS and overlay.metering_per_year == 0.0
+        else overlay
+        for key, overlay in dsos.items()
+    }
+
+
+def resolve_network_sheet(
+    dsos: dict[str, DsoOverlay], taxes: TaxOverlay, delivery: date
+) -> dict[str, DsoOverlay]:
+    """``dsos`` with each DSO's T1 and T2 terms and metering as its tariff
+    sheet held for ``delivery`` gives them (network_sheet.py), for a card
+    taking its network off the sheet.
+
+    The sheets are excluding VAT and a residential card includes it, so they
+    are put on the VAT of the month (:func:`vat_factor`). The transport
+    stays the card's, since no sheet prints it, and a DSO no sheet is held
+    for keeps every figure of the card.
+    """
+    factor = vat_factor(taxes, delivery) if taxes.vat_rate == 0.0 else 1.0
+    out: dict[str, DsoOverlay] = {}
+    for key, overlay in dsos.items():
+        sheet = network_sheet.held_network(delivery, key)
+        out[key] = (
+            overlay
+            if sheet is None
+            else replace(
+                overlay,
+                tiers={
+                    **overlay.tiers,
+                    TIER_T1: DsoTier(
+                        fixed_per_year=sheet.t1_fixed * factor,
+                        proportional=sheet.t1_proportional * factor,
+                    ),
+                    TIER_T2: DsoTier(
+                        fixed_per_year=sheet.t2_fixed * factor,
+                        proportional=sheet.t2_proportional * factor,
+                    ),
+                },
+                metering_per_year=sheet.metering_per_year * factor,
+            )
+        )
+    return out
+
+
+def resolve_connection_fee(
+    taxes: TaxOverlay, dsos: dict[str, DsoOverlay], delivery: date
+) -> TaxOverlay:
+    """``taxes`` with the Walloon connection fee the law sets for
+    ``delivery``, on a residential card of the Walloon DSOs.
+
+    EnergyVision's September 2026 Walloon cards print the electricity rate,
+    ten times the gas one. The order has no end, so neither does this; on
+    any other card, and before the order, the card is read as printed.
+    """
+    if (
+        taxes.vat_rate != 0.0
+        or not WALLONIA_DSO_KEYS & dsos.keys()
+        or not _in_window(delivery, WALLOON_CONNECTION_FEE_KNOWN_FROM, None)
+    ):
+        return taxes
+    return replace(taxes, connection_fee=WALLOON_CONNECTION_FEE)
+
+
+def resolve_for_delivery(snapshot: SupplierSnapshot, delivery: date) -> SupplierSnapshot:
+    """``snapshot`` as it bills a month delivered on ``delivery``: the levies
+    the law sets for that month and the regulated network figures a card
+    leaves out, or where the card takes them off it, the DSO's tariff sheet
+    (network_sheet.takes_network_sheet). The social tariff's network part is
+    the CREG's and stands in for the operator's tariffs, the Fluvius data
+    management fee included."""
+    social = snapshot.supplier == SUPPLIER_SOCIAL
+    taxes = resolve_federal_levies(snapshot.taxes, delivery, protected=social)
+    dsos = snapshot.dsos if social else resolve_network(snapshot.dsos, snapshot.taxes, delivery)
+    if network_sheet.takes_network_sheet(snapshot, delivery.year):
+        dsos = resolve_network_sheet(dsos, snapshot.taxes, delivery)
+    return replace(
+        snapshot,
+        dsos=dsos,
+        taxes=resolve_connection_fee(taxes, snapshot.dsos, delivery),
+    )
+
+
+def brussels_levy(osp: dict[str, float] | None, caliber: str, annual_kwh: float) -> float | None:
+    """The Brussels per-meter levy for a meter caliber, in EUR/year.
+
+    The smallest caliber pays one of two amounts by whether the standardised
+    annual consumption is above 5 000 kWh. 0.0 outside Brussels, where the
+    card carries no table; None for a caliber the card's table does not
+    print, which the card cannot price rather than one that pays nothing.
+    """
+    if osp is None:
+        return 0.0
+    if caliber == CALIBER_Q10:
+        key = OSP_Q10_LOW if annual_kwh <= OSP_Q10_SPLIT_KWH else OSP_Q10_HIGH
+        return osp.get(key)
+    return osp.get(caliber)

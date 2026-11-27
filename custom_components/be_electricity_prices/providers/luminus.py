@@ -1,0 +1,873 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Luminus Belgium tariff card extractor.
+
+Luminus publishes the current month's tariff card per (product, region)
+through a public REST endpoint:
+
+    https://www.luminus.be/api-next/get-pricelist/
+        ?documentSlug=<slug>&energyType=electricity&language=fr
+        &tabValue=<Wallonia|Flanders>
+
+Each request returns a fresh PDF (e.g. April 2026 -> 202604 in the
+filename). Luminus only sells residential market products in Flanders
+and Wallonia; Brussels carries only the regulated Social tariff, which
+is priced by the social tariff supplier (social.py), not here.
+
+Energy prices, distribution rows and renewables surcharges all vary
+between V and W on every product, so the extractor fetches exactly the
+configured region's PDF and never merges. Prices are 6% VAT inclusive
+in the printed values; the Dynamic formula is hors TVA so factor and
+base are scaled by the parsed VAT multiplier.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass, replace
+from datetime import date
+
+import aiohttp
+from homeassistant.util import dt as dt_util
+
+from ..const import (
+    REGION_FLANDERS,
+    REGION_WALLONIA,
+)
+from ._luminus_cards import (
+    _LABEL_MONTH_RE,
+    _VAT_PATTERNS,
+    _extract_energy,
+    _extract_injection,
+    _named_month,
+    published_indices,
+)
+from ._luminus_overlays import (
+    _extract_energy_fund,
+    _extract_excise_bands,
+    _extract_flanders_dsos,
+    _extract_per_kwh_taxes,
+    _extract_renewables,
+    _extract_wallonia_dsos,
+    _green_cost_folded,
+    _wallonia_distribution,
+)
+from ._luminus_promo import _extract_promo
+from ._parse import (
+    require_contract,
+)
+from ._pdf import (
+    FR_MONTHS,
+    fetch_pdf_text,
+    fetch_text,
+    is_transient_fetch_error,
+    printed_vat_rate,
+)
+from ._rates import (
+    Contract,
+    EnergyRates,
+    TariffKind,
+    VariableRates,
+)
+from ._settle import indexed_energy, settled_energy, settled_injection
+from ._validity import (
+    archive_validity_check,
+    parse_valid_until,
+)
+from .base import (
+    DsoOverlay,
+    ExtractorError,
+    SupplierExtractor,
+    SupplierSnapshot,
+    TaxOverlay,
+    with_vat_basis,
+)
+
+_API_URL = "https://www.luminus.be/api-next/get-pricelist/"
+
+# The price-list archive behind the site's "Archives de listes de prix" app:
+# one call names the products a month had (with the Salesforce-style product
+# id the PDF endpoint wants), the other serves the PDF for one product, month
+# and region. Sixty-one months on the app's own picker, back to September
+# 2021. The current month is on it too, but it is not asked for: see
+# fetch_for_month.
+_ARCHIVE_PRODUCTS_URL = "https://www.luminus.be/api/pricelist/products"
+_ARCHIVE_PDF_URL = "https://www.luminus.be/api/pricelist/pdf"
+
+_REGION_TO_TAB: dict[str, str] = {
+    REGION_FLANDERS: "Flanders",
+    REGION_WALLONIA: "Wallonia",
+}
+
+
+@dataclass(frozen=True)
+class _ContractDef:
+    contract_id: str
+    label: str
+    kind: TariffKind
+    slug: str  # Luminus's documentSlug query parameter
+
+
+_CONTRACTS: tuple[_ContractDef, ...] = (
+    _ContractDef("luminus_comfy", "Luminus Comfy", "fixed", "comfy"),
+    _ContractDef("luminus_comfy_plus", "Luminus Comfy+", "fixed", "comfy-plus"),
+    _ContractDef("luminus_comfyflex", "Luminus ComfyFlex", "variable", "comfyflex"),
+    _ContractDef(
+        "luminus_comfyflex_plus", "Luminus ComfyFlex+", "variable", "comfyflex-plus"
+    ),
+    _ContractDef("luminus_maxxfix", "Luminus MaxxFix", "fixed", "maxxfix"),
+    _ContractDef("luminus_maxxflex", "Luminus MaxxFlex", "variable", "maxxflex"),
+    _ContractDef("luminus_basicfix", "Luminus BasicFix", "fixed", "basicfix"),
+    _ContractDef("luminus_basicflex", "Luminus BasicFlex", "variable", "basicflex"),
+    _ContractDef("luminus_smartflex", "Luminus SmartFlex", "tou", "smartflex"),
+    _ContractDef("luminus_dynamic", "Luminus Dynamic", "dynamic", "dynamic"),
+    # Luminus Sociaal/Social is not a product here: the social tariff is the
+    # CREG's, the same at every supplier, and is priced by the social tariff
+    # supplier (social.py), which reads this card only for its feed-in.
+)
+
+_CONTRACTS_BY_ID = {c.contract_id: c for c in _CONTRACTS}
+
+
+def _document_url(slug: str, region: str) -> str:
+    tab = _REGION_TO_TAB[region]
+    return (
+        f"{_API_URL}?documentSlug={slug}&energyType=electricity"
+        f"&language=fr&tabValue={tab}"
+    )
+
+
+_SITEMAP_URL = "https://www.luminus.be/sitemap.xml"
+
+# Luminus's sitemap exposes one product page per slug under the
+# tariffs root, e.g. /fr/particuliers/tarifs-energie/comfyflex/.
+_PRODUCT_PAGE_RE = re.compile(
+    r"/(?:fr|nl)/particuliers/(?:tarifs-energie|onze-tarieven)/([a-z0-9\-]+)/"
+)
+
+# Excluded slugs: regulated tariffs not offered on the residential
+# market, plus the parent index pages.
+_EXCLUDED_SLUGS = frozenset({"tarif-social", "sociaal-tarief"})
+
+# A <loc> in a sitemap or a sitemap index. Luminus re-sharded: what used to be
+# one flat sitemap is now a 709-byte <sitemapindex> naming five children, and
+# the product pages moved into sitemap-products.xml. One level is followed, not
+# recursed: the index names sitemaps and a sitemap names pages, so a second
+# level would be a sitemap of sitemaps, which no generator emits.
+_SITEMAP_LOC_RE = re.compile(r"<loc>\s*([^<\s]+)\s*</loc>", re.IGNORECASE)
+_SITEMAP_INDEX_RE = re.compile(r"<sitemapindex\b", re.IGNORECASE)
+
+
+async def discover(session: aiohttp.ClientSession) -> set[str]:
+    """Discover Luminus products from the public sitemap.
+
+    The /fr/particuliers/tarifs-energie/<slug>/ structure is the
+    canonical product directory. Every slug there is a product
+    (residential + market only). Excludes the regulated social
+    tariff, which the social tariff supplier prices.
+
+    Follows a sitemap INDEX one level, because Luminus re-sharded and
+    ``sitemap.xml`` is now 709 bytes naming five children. Against a flat
+    sitemap that check is false and nothing changes; against the index it is
+    the difference between eleven product slugs and none. Discovery returning
+    nothing is only a warning in the catalog check, so this went unnoticed:
+    measured on the released 0.27.2 as well, it has been blind for as long as
+    the split has been live.
+    """
+    try:
+        xml = await fetch_text(session, _SITEMAP_URL)
+    except ExtractorError:
+        return set()
+    documents = [xml]
+    if _SITEMAP_INDEX_RE.search(xml):
+        documents = []
+        for child in _SITEMAP_LOC_RE.findall(xml):
+            try:
+                documents.append(await fetch_text(session, child))
+            except ExtractorError:
+                # One unreadable child is not a reason to report no products
+                # at all; the others still name theirs.
+                continue
+    return {
+        slug
+        for document in documents
+        for slug in _PRODUCT_PAGE_RE.findall(document)
+        if slug not in _EXCLUDED_SLUGS
+    }
+
+
+# ---- top-level fetch + parser -------------------------------------------------
+
+
+async def fetch(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+) -> SupplierSnapshot:
+    """Fetch the configured region's PDF for ``contract_id``."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Luminus")
+    if region not in _REGION_TO_TAB:
+        raise ExtractorError(
+            f"Luminus {contract_id}: not available in region {region!r}"
+        )
+    return await _read_at(
+        session, contract_id, region, _document_url(contract.slug, region)
+    )
+
+
+async def _read_at(
+    session: aiohttp.ClientSession, contract_id: str, region: str, url: str
+) -> SupplierSnapshot:
+    """The product's card at ``url``, read as ``fetch`` reads it, its
+    network and prosumer rows filled from a sibling's current card."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Luminus")
+    text = await fetch_pdf_text(session, url)
+
+    async def _current(sibling: _ContractDef) -> str | None:
+        return await fetch_pdf_text(session, _document_url(sibling.slug, region))
+
+    renewables = None
+    if _green_cost_borrowed(text):
+        month = _card_month(text)
+        if month is None:
+            raise ExtractorError("Luminus: card month not found")
+        renewables = await _archived_renewables(session, contract, region, month)
+    snap = await _with_sibling_network(
+        parse_snapshot(contract_id, text, region, url, renewables=renewables),
+        text,
+        region,
+        _current,
+    )
+    return await _with_sibling_prosumer(snap, text, region, _current)
+
+
+# The first month whose cards are taken at their word when they say the
+# energy row carries the green energy cost. The reissue of 29 October 2026
+# said so over the very figures of the first edition, which printed the cost
+# beside them, so October still bills it. The November cards raised every
+# formula base by about the cost: 1,46 to 1,51 c/kWh excluding VAT in
+# Flanders, where Luminus's own table gives 1,17 + 0,39 including it, and
+# 2,93 to 3,00 in Wallonia, for 3,03. The feed-in formulas did not move.
+_GREEN_COST_IN_ENERGY_FROM = date(2026, 11, 1)
+
+
+def _card_month(text: str) -> date | None:
+    """The first of the month a card's title names, or None."""
+    return _named_month(
+        _LABEL_MONTH_RE.fullmatch(_extract_publication_month(text).strip())
+    )
+
+
+def _green_cost_in_energy(text: str) -> bool:
+    """Whether the card's energy row carries the green energy cost, so none
+    is billed beside it (``_GREEN_COST_IN_ENERGY_FROM``)."""
+    if not _green_cost_folded(text):
+        return False
+    month = _card_month(text)
+    return month is not None and month >= _GREEN_COST_IN_ENERGY_FROM
+
+
+def _green_cost_borrowed(text: str) -> bool:
+    """Whether the card bills a green energy cost it does not print, which
+    ``_archived_renewables`` then reads off an archived card."""
+    return _green_cost_folded(text) and not _green_cost_in_energy(text)
+
+
+async def _archived_renewables(
+    session: aiohttp.ClientSession,
+    contract: _ContractDef,
+    region: str,
+    month: date,
+) -> float:
+    """The green energy cost of ``month``'s quarter, off the archive's cards.
+
+    For a card that no longer prints the figure while its figures still leave
+    it out (``_green_cost_borrowed``). The cards that do print it say "Les
+    montants mentionnés dans les présentes conditions sont valables pour le
+    trimestre en cours", so only a card of the same quarter is asked, from
+    ``month`` back to the quarter's first. The archive kept the first edition
+    of a month, which on 29 October 2026 still printed the rows the reissue
+    dropped; by 1 November it served the reissue for most products. Where no
+    card of the quarter prints them the card fails to parse rather than bill a
+    figure of another quarter, or none.
+    """
+    start = (month.month - 1) // 3 * 3 + 1
+    for number in range(month.month, start - 1, -1):
+        held = month.replace(month=number)
+        try:
+            product_id = await _resolve_archive_product_id(
+                session, contract, region, held
+            )
+            if product_id is not None:
+                text = await fetch_pdf_text(
+                    session, _archive_pdf_url(product_id, held, region)
+                )
+                return _extract_renewables(text, region)
+        except ExtractorError as err:
+            if is_transient_fetch_error(str(err)):
+                raise
+    raise ExtractorError(
+        "Luminus: the card prints no green energy cost, nor does any archived "
+        "card of its quarter"
+    )
+
+
+# Cards asked, in order, for the Walloon figures a card bills but does not
+# print. Each prints the static seven-column table, transport, fixed term and
+# prosumer rate included, and those figures are the DSO's, not the product's.
+_SIBLINGS: tuple[str, ...] = (
+    "luminus_comfyflex",
+    "luminus_maxxflex",
+    "luminus_basicflex",
+)
+_PROSUMER_NAMED_RE = re.compile(r"tarif\s+prosumer", re.IGNORECASE)
+
+
+async def _with_sibling_prosumer(
+    snap: SupplierSnapshot,
+    text: str,
+    region: str,
+    load: Callable[[_ContractDef], Awaitable[str | None]],
+) -> SupplierSnapshot:
+    """Fill the Walloon prosumer rate a card names but does not print.
+
+    SmartFlex's October 2026 card in Wallonia prints the Impact triplet where
+    its September card printed the prosumer column, yet its footnote still
+    bills the tariff: "si vous disposez d'un compteur bidirectionnel, la
+    redevance reseau peut egalement etre calculee sur la base du prelevement
+    brut d'electricite, si ce calcul est plus avantageux que la facturation du
+    tarif prosumer". So a household under compensation still owes it, and an
+    overlay without it billed that household nothing. The rate is the DSO's,
+    so it is taken from a sibling card of the same region and month. Dynamic's
+    card names no prosumer tariff at all and is left as it is.
+
+    The card fails to parse when no sibling carries the rate
+    (``_sibling_rows``).
+    """
+    if (
+        region != REGION_WALLONIA
+        or not snap.dsos
+        or any(o.prosumer_eur_per_kva_year is not None for o in snap.dsos.values())
+        or _PROSUMER_NAMED_RE.search(text) is None
+    ):
+        return snap
+    rows = await _sibling_rows(
+        load,
+        lambda rows: all(
+            key in rows and rows[key].prosumer_eur_per_kva_year is not None
+            for key in snap.dsos
+        ),
+    )
+    if rows is None:
+        raise ExtractorError(
+            "Luminus: no sibling card prints the Walloon prosumer rate this card bills"
+        )
+    return replace(
+        snap,
+        dsos={
+            key: replace(
+                overlay, prosumer_eur_per_kva_year=rows[key].prosumer_eur_per_kva_year
+            )
+            for key, overlay in snap.dsos.items()
+        },
+    )
+
+
+async def _with_sibling_network(
+    snap: SupplierSnapshot,
+    text: str,
+    region: str,
+    load: Callable[[_ContractDef], Awaitable[str | None]],
+) -> SupplierSnapshot:
+    """Fill the Walloon network rows a card prints the distribution of alone.
+
+    The Dynamic card Luminus printed for both regions from May to December
+    2025 gives each Walloon row its four distribution figures, with no
+    transport and no fixed term, where the other cards of the month print
+    all seven: "AIEG 9,46 9,56 7,65 7,00" against "AIEG 9,46 9,56 7,65 7,00
+    2,98 19,08 78,99". Those figures are the DSO's, so the rows are taken
+    from a sibling card of the same region and month, and only from one
+    printing the very distribution figures this card prints, area by area.
+    Where none does, the card keeps no network table, and a month billed on
+    it is dropped as on any card short of the entry's area. The prosumer
+    rate stays out, as on every Dynamic card: none names the tariff.
+    """
+    if region != REGION_WALLONIA or snap.dsos:
+        return snap
+    printed = _wallonia_distribution(text)
+    if not printed:
+        return snap
+    rows = await _sibling_rows(
+        load,
+        lambda rows: all(
+            key in rows
+            and (
+                rows[key].distribution_single,
+                rows[key].distribution_peak,
+                rows[key].distribution_offpeak,
+                rows[key].distribution_exclusive_night,
+            )
+            == figures
+            for key, figures in printed.items()
+        ),
+    )
+    if rows is None:
+        return snap
+    return replace(
+        snap,
+        dsos={
+            key: replace(rows[key], prosumer_eur_per_kva_year=None) for key in printed
+        },
+    )
+
+
+async def _sibling_rows(
+    load: Callable[[_ContractDef], Awaitable[str | None]],
+    take: Callable[[dict[str, DsoOverlay]], bool],
+) -> dict[str, DsoOverlay] | None:
+    """The Walloon rows of the first sibling card ``take`` accepts, or None.
+
+    A transient failure on a sibling propagates, so the fetch is retried; a
+    sibling that is missing or unreadable passes to the next.
+    """
+    for sibling_id in _SIBLINGS:
+        try:
+            text = await load(_CONTRACTS_BY_ID[sibling_id])
+            if text is None:
+                continue
+            rows = _extract_wallonia_dsos(text)
+        except ExtractorError as err:
+            if is_transient_fetch_error(str(err)):
+                raise
+            continue
+        if take(rows):
+            return rows
+    return None
+
+
+def _archive_product_name(name: str) -> str:
+    """Fold an archive product label onto a contract label.
+
+    The archive names products "Luminus Comfy Electricité", "Luminus BasicFix
+    Online Electricité" or "Luminus Dynamic Online Electricité" where the
+    catalogue says "Luminus Comfy", "Luminus BasicFix" and "Luminus Dynamic":
+    the energy word and the online marker are the only differences, and the
+    ids are opaque, so the label is the join.
+    """
+    folded = name.lower()
+    for word in (
+        " electricité",
+        " électricité",
+        " electricite",
+        " elektriciteit",
+        " online",
+    ):
+        folded = folded.replace(word, "")
+    return " ".join(folded.split())
+
+
+async def _resolve_archive_product_id(
+    session: aiohttp.ClientSession,
+    contract: _ContractDef,
+    region: str,
+    month_first: date,
+) -> str | None:
+    """The archive's product id for ``contract`` in ``region`` for one month,
+    or ``None`` when that month lists no such product.
+
+    Every shape the endpoint can answer with is funnelled into ExtractorError,
+    for the reason the current-card resolver of a sibling extractor gives: a
+    payload that is JSON but not the expected shape must read as a failed
+    fetch rather than escape as a TypeError.
+    """
+    url = (
+        f"{_ARCHIVE_PRODUCTS_URL}?language=FR&customerSegment=Residential"
+        f"&energyType=Electricity&region={_REGION_TO_TAB[region]}"
+        f"&signing={month_first.year:04d}-{month_first.month:02d}"
+    )
+    body = await fetch_text(session, url, timeout=15)
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError as err:
+        raise ExtractorError(f"Luminus archive parse error: {err}") from err
+    if not isinstance(payload, list):
+        raise ExtractorError("Luminus archive parse error: expected a product list")
+    wanted = _archive_product_name(contract.label)
+    for row in payload:
+        if not isinstance(row, dict):
+            continue
+        if _archive_product_name(str(row.get("Product", ""))) != wanted:
+            continue
+        product_id = row.get("ProductId")
+        if isinstance(product_id, str) and product_id:
+            return product_id
+    return None
+
+
+def _archive_pdf_url(product_id: str, first: date, region: str) -> str:
+    return (
+        f"{_ARCHIVE_PDF_URL}?language=FR&productId={product_id}"
+        f"&date={first.year:04d}-{first.month:02d}"
+        f"&region={_REGION_TO_TAB[region]}&inline=true"
+    )
+
+
+async def fetch_for_month(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+    year_month: date,
+) -> SupplierSnapshot | None:
+    """The card Luminus published for one past month, or ``None``.
+
+    Behind the site's price-list archive: the month's product list gives the
+    id, the PDF endpoint serves that product's card for the month and region.
+    The PDF comes with a UTF-8 byte-order mark in front of the magic bytes,
+    which the shared fetch helper already tolerates. The cards print a
+    validity date, which is the authoritative cross-check; the month name in
+    the title is the fallback.
+
+    Until this existed a contract start date did nothing on a Luminus entry:
+    the signing-cohort splice had no card to read, and every past month of the
+    year-to-date billed on the current card as a proxy. Every failure comes
+    back as ``None``, the one-month answer the month cache expects.
+
+    The running month is refused, as Mega's archive refuses it. The archive
+    keeps serving a month's first edition after the live card is corrected:
+    on 5 October 2026 it still had the October cards of the 1st, priced on
+    August's Belpex, where the live ones had been reissued on the 2nd on
+    September's, 4,3 c/kWh apart on ComfyFlex. Answered from here, the month
+    cost billed that first edition while current_price billed the reissue.
+    ``None`` makes the live card the running month's, which it is.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    if contract is None or region not in _REGION_TO_TAB:
+        return None
+    first = date(year_month.year, year_month.month, 1)
+    if first >= dt_util.now().date().replace(day=1):
+        return None
+    try:
+        product_id = await _resolve_archive_product_id(session, contract, region, first)
+        if product_id is None:
+            return None
+        url = _archive_pdf_url(product_id, first, region)
+        text = await fetch_pdf_text(session, url)
+        renewables = (
+            await _archived_renewables(session, contract, region, first)
+            if _green_cost_borrowed(text)
+            else None
+        )
+
+        async def _archived(sibling: _ContractDef) -> str | None:
+            sibling_id = await _resolve_archive_product_id(
+                session, sibling, region, first
+            )
+            if sibling_id is None:
+                return None
+            return await fetch_pdf_text(
+                session, _archive_pdf_url(sibling_id, first, region)
+            )
+
+        snap = await _with_sibling_network(
+            parse_snapshot(contract_id, text, region, url, renewables=renewables),
+            text,
+            region,
+            _archived,
+        )
+        snap = await _with_sibling_prosumer(snap, text, region, _archived)
+    except ExtractorError as err:
+        # A timeout, a reset or a 5xx says nothing about the month: raise,
+        # so the month cache retries it instead of caching it as absent.
+        if is_transient_fetch_error(str(err)):
+            raise
+        return None
+    return archive_validity_check(snap, text, first, month_names=FR_MONTHS)
+
+
+async def settle_month(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+    year_month: date,
+    held: SupplierSnapshot,
+) -> SupplierSnapshot:
+    """``held``, the card of a closed month, re-priced on the index the next
+    card names for it.
+
+    The cards print their month-indexed rates at the previous month's
+    index, "Les prix affiches sont calcules sur la base de la derniere
+    valeur Belpex connue (mois precedent)", and the next card names the
+    month's own: "Belpex = 156,41 EUR/MWh (valeur de l'indice de septembre
+    2026)", and "Belpex RLP M" for BasicFlex. A keyless entry billed every
+    closed month a month behind: BasicFlex 3,26 c/kWh under in September
+    2026, 2,61 over in February.
+
+    ComfyFlex and ComfyFlex+ are the same on the delivery quarter: every
+    month of it settles on "Belpex = 131,39 EUR/MWh (valeur de l'indice du
+    3ieme trimestre 2026)", which the first card of the quarter after names.
+    Every closed quarter of 2026 was billed on the one before: 4,33 c/kWh
+    under in the third on ComfyFlex in Flanders.
+
+    In place, never by replacing the card: Luminus's archive serves a month
+    without its new-customer campaign, and on 5 October 2026 it still served
+    the first October edition the live card had corrected. So the energy
+    formula rows (MaxxFlex, SmartFlex, BasicFlex, ComfyFlex) and the indexed
+    feed-in are re-priced, and every other field of ``held`` stays.
+
+    The next card is the live one while its month runs and the archive's
+    after. Not out yet, or naming another period while it is the live one
+    (the live card of the 1st was a month behind in October 2026), and the
+    month is ``provisional`` so it is asked again. A next card of a closed
+    month that names another period, or no index a leg needs, settles
+    nothing.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    if contract is None or region not in _REGION_TO_TAB:
+        return held
+    first = date(year_month.year, year_month.month, 1)
+    quarterly = getattr(held.energy, "quarter_indexed", False)
+    span = 3 if quarterly else 1
+    # The first month of the period ``first`` is billed on, and of the one
+    # after, whose first card names its index.
+    start = first.replace(month=(first.month - 1) // span * span + 1)
+    after = start.month - 1 + span
+    following = date(start.year + after // 12, after % 12 + 1, 1)
+    running = dt_util.now().date().replace(day=1)
+    if following > running:
+        return replace(held, provisional=True)
+    live = following == running
+    try:
+        if live:
+            text = await fetch_pdf_text(session, _document_url(contract.slug, region))
+        else:
+            product_id = await _resolve_archive_product_id(
+                session, contract, region, following
+            )
+            if product_id is None:
+                return held
+            text = await fetch_pdf_text(
+                session, _archive_pdf_url(product_id, following, region)
+            )
+    except ExtractorError as err:
+        if is_transient_fetch_error(str(err)):
+            raise
+        return replace(held, provisional=True) if live else held
+    named = {
+        name: value
+        for name, (period, value) in published_indices(
+            text, quarterly=quarterly
+        ).items()
+        if period == start
+    }
+    energy, injection = held.energy, held.injection
+    energy_index = injection_index = None
+    if indexed_energy(energy):
+        rlp = getattr(energy, "rlp_indexed", False)
+        energy_index = named.get("Belpex RLP M" if rlp else "Belpex")
+        if energy_index is None:
+            return replace(held, provisional=True) if live else held
+    if injection is not None and injection.month_indexed:
+        injection_index = named.get("Belpex")
+        if injection_index is None:
+            return replace(held, provisional=True) if live else held
+    return replace(
+        held,
+        energy=energy if energy_index is None else _settled(energy, energy_index),
+        injection=(
+            injection
+            if injection is None or injection_index is None
+            else settled_injection(injection, injection_index)
+        ),
+    )
+
+
+def _settled(energy: EnergyRates, index: float) -> EnergyRates:
+    """``energy`` settled on ``index``, the value its period closed at.
+
+    ``settled_energy`` settles a leg indexed on its month and leaves a
+    quarter-indexed one as it is, since Bolt's settle register by register,
+    each on an index of its own. ComfyFlex prices each register on a pair of
+    its own against the one quarterly Belpex, which is the monthly shape over
+    a quarter, so it is settled as one.
+    """
+    if isinstance(energy, VariableRates) and energy.quarter_indexed:
+        settled = settled_energy(replace(energy, month_indexed=True), index)
+        assert isinstance(settled, VariableRates)  # it keeps the leg's type
+        return replace(settled, month_indexed=False)
+    return settled_energy(energy, index)
+
+
+def parse_snapshot(
+    contract_id: str,
+    text: str,
+    region: str,
+    source_url: str = _API_URL,
+    *,
+    renewables: float | None = None,
+) -> SupplierSnapshot:
+    """Pure parser exposed for unit tests.
+
+    ``renewables`` is the region's green energy cost in EUR/kWh for a card
+    that does not print it (``_archived_renewables``), else the card's own.
+    A card whose energy row carries the cost bills none beside it
+    (``_green_cost_in_energy``), whatever is passed.
+    """
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Luminus")
+
+    energy = _extract_energy(text, contract.kind)
+    injection = _extract_injection(text, contract.kind)
+    publication_label = _extract_publication_month(text)
+    federal_excise, energy_contribution, connection_fee = _extract_per_kwh_taxes(
+        text, region
+    )
+    energy_fund = _extract_energy_fund(text) if region == REGION_FLANDERS else 0.0
+
+    in_energy = _green_cost_in_energy(text)
+    if in_energy:
+        renewables = 0.0
+    elif renewables is None:
+        renewables = _extract_renewables(text, region)
+    flanders_renewables = 0.0
+    wallonia_renewables = 0.0
+    if region == REGION_FLANDERS:
+        flanders_renewables = renewables
+        dsos = _extract_flanders_dsos(
+            text, contract.kind, _label_year(publication_label)
+        )
+    else:
+        wallonia_renewables = renewables
+        dsos = _extract_wallonia_dsos(text)
+
+    return with_vat_basis(
+        SupplierSnapshot(
+            supplier="luminus",
+            contract=contract_id,
+            energy=energy,
+            dsos=dsos,
+            taxes=TaxOverlay(
+                federal_excise=federal_excise,
+                federal_excise_bands=_extract_excise_bands(text, federal_excise),
+                energy_contribution=energy_contribution,
+                flanders_renewables=flanders_renewables,
+                wallonia_renewables=wallonia_renewables,
+                renewables_in_energy=in_energy,
+                region_connection_fee=connection_fee,
+                energy_fund_eur_per_month=energy_fund,
+                vat_rate=0.0,
+            ),
+            source_url=source_url,
+            publication_label=publication_label,
+            valid_until=parse_valid_until(text),
+            injection=injection,
+            **_extract_promo(text, publication_label),  # type: ignore[arg-type]
+        ),
+        printed_vat_rate(text, *_VAT_PATTERNS),
+    )
+
+
+# ---- promotional credits -----------------------------------------------------
+
+
+# ---- energy + tax block -------------------------------------------------------
+
+
+def _extract_publication_month(text: str) -> str:
+    # The first page usually says e.g. "Luminus Comfy Electricité (avril 2026)".
+    # The May 2026 cards started padding the inside of the parens with a
+    # trailing space ("(mai 2026 )"), so tolerate optional whitespace
+    # against future-similar formatting drift.
+    match = re.search(
+        r"\(\s*([a-zA-Zéèû]+\s+\d{4})\s*\)",
+        text,
+    )
+    return match.group(1) if match else ""
+
+
+def _label_year(label: str) -> int | None:
+    """The year a card's label names ("juin 2024"), or None."""
+    match = re.search(r"\b(20\d{2})\b", label)
+    return int(match.group(1)) if match else None
+
+
+# ---- DSO row parsers ----------------------------------------------------------
+
+
+_LUMINUS_REGIONS = frozenset({REGION_FLANDERS, REGION_WALLONIA})
+
+# Contracts whose card indexes the feed-in credit, so the credit needs ENTSO-E
+# spots their own energy leg does not fetch: on the month, and on ComfyFlex and
+# ComfyFlex+ on the quarter, whose months settle on the next quarter's card.
+# Dynamic collects its key through its own Belpex H energy formula.
+_MONTHLY_INJECTION_CONTRACTS: frozenset[str] = frozenset(
+    {
+        "luminus_comfy",
+        "luminus_comfy_plus",
+        "luminus_comfyflex",
+        "luminus_comfyflex_plus",
+        "luminus_maxxfix",
+        "luminus_maxxflex",
+        "luminus_basicfix",
+        "luminus_basicflex",
+        "luminus_smartflex",
+    }
+)
+# Contracts whose ENERGY is an indexed formula too: MaxxFlex prints one per
+# meter and SmartFlex one per band, both on the delivery month's Belpex,
+# BasicFlex one per meter on the delivery month's Belpex RLP M, and ComfyFlex
+# and ComfyFlex+ one per meter on the delivery quarter's Belpex.
+_MONTHLY_ENERGY_CONTRACTS: frozenset[str] = frozenset(
+    {
+        "luminus_comfyflex",
+        "luminus_comfyflex_plus",
+        "luminus_maxxflex",
+        "luminus_smartflex",
+        "luminus_basicflex",
+    }
+)
+
+
+EXTRACTOR = SupplierExtractor(
+    sweep_cost_s=1.1,
+    id="luminus",
+    label="Luminus",
+    contracts=tuple(
+        Contract(
+            id=c.contract_id,
+            label=c.label,
+            kind=c.kind,
+            regions=_LUMINUS_REGIONS,
+            spot_indexed_injection=c.contract_id in _MONTHLY_INJECTION_CONTRACTS,
+            month_indexed_energy=c.contract_id in _MONTHLY_ENERGY_CONTRACTS,
+        )
+        for c in _CONTRACTS
+    ),
+    fetch=fetch,
+    fetch_for_month=fetch_for_month,
+    settles_on_next_card=True,
+    settle_month=settle_month,
+)

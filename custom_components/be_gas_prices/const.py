@@ -1,0 +1,399 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Constants for the Belgian Gas Prices integration.
+
+No supplier prices live here: every rate comes from a live tariff card. The
+few regulated figures that do are set by law for the whole country and carry
+the months they are known to cover. The excise is read from FPS Finance's
+excise tariff (tarbel.py) and from the law on Justel (excise_law.py); its
+quarters typed here stand in while the tariff is not held.
+"""
+
+from __future__ import annotations
+
+from typing import Final
+
+DOMAIN: Final = "be_gas_prices"
+
+PLATFORMS: Final = ("sensor", "button")
+
+REGION_FLANDERS: Final = "flanders"
+REGION_WALLONIA: Final = "wallonia"
+REGION_BRUSSELS: Final = "brussels"
+
+REGIONS: Final = (REGION_FLANDERS, REGION_WALLONIA, REGION_BRUSSELS)
+
+# Canonical gas DSO keys. Stable forever: stored verbatim in every entry's
+# CONF_DSO and used as the keys of SupplierSnapshot.dsos, so renaming one
+# would silently break every entry on it. The eight Fluvius areas are the ones
+# that exist since the 1 January 2025 merger; the names they replaced
+# (Gaselwest, Iveka, Iverlek, Sibelgas, Intergem) carry no tariff any more.
+DSO_FLUVIUS_ANTWERPEN: Final = "fluvius_antwerpen"
+DSO_FLUVIUS_HALLE_VILVOORDE: Final = "fluvius_halle_vilvoorde"
+DSO_FLUVIUS_IMEWO: Final = "fluvius_imewo"
+DSO_FLUVIUS_KEMPEN: Final = "fluvius_kempen"
+DSO_FLUVIUS_LIMBURG: Final = "fluvius_limburg"
+DSO_FLUVIUS_MIDDEN_VLAANDEREN: Final = "fluvius_midden_vlaanderen"
+DSO_FLUVIUS_WEST: Final = "fluvius_west"
+DSO_FLUVIUS_ZENNE_DIJLE: Final = "fluvius_zenne_dijle"
+
+# One key for ORES. Its five gas sub-areas (Brabant wallon, Hainaut, Luxembourg,
+# Mouscron, Namur) are billed one tariff: "Les differents tarifs sont uniformes
+# sur le territoire du gestionnaire de reseau de distribution" (CWaPE decision
+# CD-24k29-CWaPE-1008). The cards still print a row per sub-area, and the
+# readers require those rows to agree before they collapse them.
+DSO_ORES: Final = "ores"
+DSO_RESA: Final = "resa"
+
+DSO_SIBELGA: Final = "sibelga"
+
+FLUVIUS_KEYS: Final[frozenset[str]] = frozenset(
+    {
+        DSO_FLUVIUS_ANTWERPEN,
+        DSO_FLUVIUS_HALLE_VILVOORDE,
+        DSO_FLUVIUS_IMEWO,
+        DSO_FLUVIUS_KEMPEN,
+        DSO_FLUVIUS_LIMBURG,
+        DSO_FLUVIUS_MIDDEN_VLAANDEREN,
+        DSO_FLUVIUS_WEST,
+        DSO_FLUVIUS_ZENNE_DIJLE,
+    }
+)
+WALLONIA_DSO_KEYS: Final[frozenset[str]] = frozenset({DSO_ORES, DSO_RESA})
+BRUSSELS_DSO_KEYS: Final[frozenset[str]] = frozenset({DSO_SIBELGA})
+
+REGION_DSO_KEYS: Final[dict[str, frozenset[str]]] = {
+    REGION_FLANDERS: FLUVIUS_KEYS,
+    REGION_WALLONIA: WALLONIA_DSO_KEYS,
+    REGION_BRUSSELS: BRUSSELS_DSO_KEYS,
+}
+
+# DSO selection per region, in the order the setup flow lists them.
+DSO_CHOICES: Final[dict[str, tuple[tuple[str, str], ...]]] = {
+    REGION_FLANDERS: (
+        (DSO_FLUVIUS_ANTWERPEN, "Fluvius Antwerpen"),
+        (DSO_FLUVIUS_HALLE_VILVOORDE, "Fluvius Halle-Vilvoorde"),
+        (DSO_FLUVIUS_IMEWO, "Fluvius Imewo"),
+        (DSO_FLUVIUS_KEMPEN, "Fluvius Kempen"),
+        (DSO_FLUVIUS_LIMBURG, "Fluvius Limburg"),
+        (DSO_FLUVIUS_MIDDEN_VLAANDEREN, "Fluvius Midden-Vlaanderen"),
+        (DSO_FLUVIUS_WEST, "Fluvius West"),
+        (DSO_FLUVIUS_ZENNE_DIJLE, "Fluvius Zenne-Dijle"),
+    ),
+    REGION_WALLONIA: (
+        (DSO_ORES, "ORES"),
+        (DSO_RESA, "RESA"),
+    ),
+    REGION_BRUSSELS: ((DSO_SIBELGA, "Sibelga"),),
+}
+
+# The distribution tariff's consumption tiers, in kWh a year, upper bounds
+# inclusive. Set by the regulators alike in all three regions and applied
+# NON-cumulatively: the tier the annual volume falls in prices every kWh of
+# it ("de maniere non-cumulative, a l'ensemble des kWh", CWaPE). A structure,
+# not a price, which is why it lives here. T4 and above are remotely read
+# industrial connections no residential card prices.
+TIER_T1: Final = "t1"
+TIER_T2: Final = "t2"
+TIER_T3: Final = "t3"
+TIER_BOUNDS_KWH: Final[tuple[tuple[str, float], ...]] = (
+    (TIER_T1, 5_000.0),
+    (TIER_T2, 150_000.0),
+    (TIER_T3, 1_000_000.0),
+)
+
+# The federal special excise on residential gas is billed per consumption
+# slice on the annual volume ("tarief per verbruiksschijf, berekend op
+# jaarbasis", art. 419 g) of the programme law of 27 December 2004): the first
+# 12 000 kWh at one rate, the rest at the other.
+EXCISE_BAND_KWH: Final = 12_000.0
+
+# The residential special excise moves every quarter by a notice under art.
+# 420 §3/1, which Justel does not consolidate. FPS Finance's excise tariff
+# lists each quarter (tarbel.py) and is billed first; past what it lists,
+# art. 419 as Justel serves it from 1 August 2026, with the steps the law
+# votes for later years (excise_law.py). The quarters from January 2025 to
+# July 2026, the earliest a backfill can bill up to the wording of 1 August,
+# are also typed here by delivery month, in EUR/kWh EXCLUDING VAT for the two
+# slices, each rate applying from its month until the next one's: TarBel's
+# figures (annex 7, codes Q570 to Q583), for an entry that has not read the
+# tariff and for the day FPS Finance drops those codes; Justel gives none of
+# them. A federal levy: one
+# rate for the whole country, so a card printing another one for a delivery
+# month is stale rather than different; most cards of April to June 2026
+# printed the first quarter's.
+GAS_EXCISE_RESIDENTIAL_HTVA: Final[tuple[tuple[tuple[int, int], float, float], ...]] = (
+    ((2025, 1), 0.00823, 0.0089393),
+    ((2025, 4), 0.00823, 0.0087266),
+    ((2025, 7), 0.00823, 0.0082752),
+    ((2025, 10), 0.00823, 0.0088971),
+    ((2026, 1), 0.00823, 0.0090782),
+    ((2026, 4), 0.00823, 0.0093061),
+    ((2026, 7), 0.00823, 0.0093315),
+)
+GAS_EXCISE_KNOWN_FROM: Final = GAS_EXCISE_RESIDENTIAL_HTVA[0][0]
+GAS_EXCISE_KNOWN_UNTIL: Final = (2026, 8)  # exclusive
+
+# Article 419 of the programme law of 27 December 2004 as Justel consolidates
+# it, read by excise_law.py. French, because the parser anchors on the French
+# wording, and served in ISO-8859-1, which the page declares.
+EXCISE_LAW_URL: Final = (
+    "https://www.ejustice.just.fgov.be/cgi_loi/change_lg.pl"
+    "?language=fr&la=F&table_name=loi&cn=2004122730"
+)
+
+# FPS Finance's excise tariff (TarBel, annex 7 to the declaration), read by
+# tarbel.py: the rates in force by period, the quarterly notices of art. 420
+# included. Dutch, because the parser anchors on the Dutch wording.
+TARBEL_URL: Final = (
+    "https://eservices.minfin.fgov.be/extTariffBrowser/"
+    "FileResourceForHomePageServlet?fname=accijnzen.xlsx&lang=NL"
+)
+
+# The Walloon connection fee on gas ("redevance de raccordement", art. 40 of
+# the gas decree of 19 December 2002), in EUR/kWh and exempt from VAT. The
+# Walloon government's order of 19 June 2003 (art. 2) sets 0,0075 EUR for the
+# first 100 kWh of a year and 0,000075 EUR/kWh after that below 1 GWh a year,
+# which is 0,000075 EUR/kWh throughout. The same article sets 0,00075 EUR/kWh
+# for low-voltage electricity, the figure EnergyVision's September 2026
+# Walloon gas cards print instead. In force since 15 July 2003 and art. 2
+# never amended, so it holds until it is: no end is assumed, and the live
+# check fails when most Walloon cards print another fee than this one.
+WALLOON_CONNECTION_FEE: Final = 0.000075
+WALLOON_CONNECTION_FEE_KNOWN_FROM: Final = (2003, 7)
+
+# The federal energy contribution on residential gas, in EUR/kWh EXCLUDING
+# VAT (0,9978 EUR/MWh, art. 419 i) of the programme law of 27 December 2004,
+# TarBel codes Q516 and Q517), from the start of the excise window, and the
+# month it stopped being levied: the programme law of 30 May 2026 set it to
+# zero from 1 August 2026. Compared against the DELIVERY month, since the levy
+# is law rather than a contract term. FPS Finance's excise tariff (tarbel.py)
+# and article 419 on Justel (excise_law.py) are read for it first; these
+# answer for an entry that has read neither yet and for a month the tariff
+# no longer lists, which Justel's wording in force does not reach.
+ENERGY_CONTRIBUTION_RESIDENTIAL_HTVA: Final = 0.0009978
+ENERGY_CONTRIBUTION_KNOWN_FROM: Final = GAS_EXCISE_KNOWN_FROM
+ENERGY_CONTRIBUTION_ZEROED_FROM: Final = (2026, 8)
+
+# Belgian VAT on residential gas (Royal Decree nr. 20, table A, XIV). The rate
+# billed is the card archive's table of the rate the cards agree on
+# (vat_rates.py); this answers before it has been read and for a month before
+# the first it holds.
+VAT_RATE_REDUCED: Final = 0.06
+# The card archive's table of the residential VAT rate the cards of each month
+# agree on, which scripts/archive_cards.py writes and vat_rates.py reads for an
+# entry with the card archive option on.
+VAT_TABLE_URL: Final = (
+    "https://raw.githubusercontent.com/renaudallard/be_price_cards/main/gas/vat.json"
+)
+# The card archive's table of what the integration bills each month on from
+# the law, which scripts/archive_cards.py writes and law_archive.py reads for
+# an entry with the card archive option on.
+LAW_TABLE_URL: Final = (
+    "https://raw.githubusercontent.com/renaudallard/be_price_cards/main/gas/law.json"
+)
+# The card archive's table of what each DSO's network sheet gave a custom
+# entry each month, which scripts/archive_cards.py writes and
+# network_archive.py reads for an entry taking its network from a sheet with
+# the card archive option on.
+NETWORK_TABLE_URL: Final = (
+    "https://raw.githubusercontent.com/renaudallard/be_price_cards/main/gas/network.json"
+)
+
+# Brussels per-meter levy (gas ordinance of 1 April 2004, art.
+# 20septiesdecies): a yearly amount by meter caliber in m3/h, and for the
+# smallest caliber by whether the standardised annual consumption is above
+# 5 000 kWh. The keys are what an entry stores; the amounts come off the card.
+CALIBER_Q10: Final = "q10"
+CALIBER_Q16: Final = "q16"
+CALIBER_Q25: Final = "q25"
+CALIBER_Q40: Final = "q40"
+CALIBER_Q65: Final = "q65"
+CALIBER_Q100: Final = "q100"
+CALIBER_Q160: Final = "q160"
+CALIBER_GT160: Final = "gt160"
+CALIBERS: Final = (
+    CALIBER_Q10,
+    CALIBER_Q16,
+    CALIBER_Q25,
+    CALIBER_Q40,
+    CALIBER_Q65,
+    CALIBER_Q100,
+    CALIBER_Q160,
+    CALIBER_GT160,
+)
+DEFAULT_CALIBER: Final = CALIBER_Q10
+# The smallest caliber's split, as the levy table keys it.
+OSP_Q10_LOW: Final = "q10_le5000"
+OSP_Q10_HIGH: Final = "q10_gt5000"
+OSP_Q10_SPLIT_KWH: Final = 5_000.0
+
+CONF_POSTCODE: Final = "postcode"
+CONF_REGION: Final = "region"
+CONF_DSO: Final = "dso"
+CONF_SUPPLIER: Final = "supplier"
+CONF_CONTRACT: Final = "contract"
+CONF_CALIBER: Final = "caliber"
+
+# Estimated yearly consumption in kWh. It picks the distribution tier and
+# the excise slices until the meter has measured a year, which then wins. The
+# default is the 17 000 kWh household the CREG prices its reference offers on
+# (note Z3308).
+CONF_ANNUAL_CONSUMPTION_KWH: Final = "annual_consumption_kwh"
+DEFAULT_ANNUAL_CONSUMPTION_KWH: Final = 17_000.0
+
+# The household's gas meter: a cumulative sensor in m3 or in kWh.
+CONF_GAS_METER: Final = "gas_meter"
+
+# How a volume in m3 becomes energy in kWh. "manual" takes the factor printed
+# on the household's bill, which carries the DSO's correction for the pressure
+# and temperature at the meter, and comes first; "station" reads the monthly
+# gross calorific value of one gas reception station from Atrias, per normal
+# cubic metre, without that correction.
+CONF_CONVERSION_MODE: Final = "conversion_mode"
+CONVERSION_STATION: Final = "station"
+CONVERSION_MANUAL: Final = "manual"
+DEFAULT_CONVERSION_MODE: Final = CONVERSION_MANUAL
+CONF_STATION: Final = "station"
+CONF_CONVERSION_FACTOR: Final = "conversion_factor"
+# The kWh a cubic metre of Belgian gas is worth, as bills print it.
+CONVERSION_FACTOR_MIN: Final = 9.0
+CONVERSION_FACTOR_MAX: Final = 13.0
+
+CONF_CONTRACT_START_DATE: Final = "contract_start_date"
+CONF_CONTRACT_END_DATE: Final = "contract_end_date"
+CONF_TARIFF_CARD_DATE: Final = "tariff_card_date"
+CONF_YTD_FROM_CONTRACT_START: Final = "ytd_from_contract_start"
+
+# The figures a household signed at, typed from its own contract, for when the
+# signing month's card cannot be read or the offer had figures of its own. A
+# fixed contract takes a price, an indexed one the factor and base of its
+# formula; both may take the yearly fee. Price and base in c EUR/kWh, the
+# factor in c EUR/kWh per EUR/MWh of index, all excluding VAT as formulas are
+# printed; the fee in EUR a year including VAT, as cards print fees.
+CONF_MANUAL_PRICE: Final = "manual_price"
+CONF_MANUAL_FACTOR: Final = "manual_factor"
+CONF_MANUAL_BASE: Final = "manual_base"
+CONF_MANUAL_FEE: Final = "manual_fee"
+MANUAL_RATE_KEYS: Final = (CONF_MANUAL_PRICE, CONF_MANUAL_FACTOR, CONF_MANUAL_BASE, CONF_MANUAL_FEE)
+# Cards print factors of 0,10 to 0,20: one past this is the multiplier a
+# formula prints, "ZTP x 1,08" on an index in c EUR/kWh or "TTF_RLP x 1" on
+# one in EUR/MWh, which would price the gas ten times over.
+MANUAL_FACTOR_MAX: Final = 0.5
+CONF_PREVIOUS_CONTRACTS: Final = "previous_contracts"
+CONF_SWITCH_DATE: Final = "switch_date"
+
+# Whether this entry may read the card archive (CARD_ARCHIVE_URL) for a past
+# month its supplier no longer serves, and its VAT, law and network tables
+# (VAT_TABLE_URL, LAW_TABLE_URL, NETWORK_TABLE_URL). Off keeps the integration
+# from contacting GitHub at all.
+CONF_CARD_ARCHIVE: Final = "card_archive"
+DEFAULT_CARD_ARCHIVE: Final = True
+
+CONF_DAILY_COMPARE: Final = "daily_compare"
+DEFAULT_DAILY_COMPARE: Final = False
+
+# The Eneco integration's last bill sensor whose lines are held against the
+# rates priced here (bill_check.py); none is checked without one.
+CONF_BILL_ENTITY: Final = "bill_entity"
+BILL_INTEGRATION: Final = "eneco_be"
+# The supplier whose bill the integration above reads.
+SUPPLIER_ENECO: Final = "eneco"
+
+# The coordinator ticks hourly: a cheap probe decides whether a card is
+# fetched again, and the running costs follow the meter.
+UPDATE_INTERVAL_MINUTES: Final = 60
+
+STORAGE_VERSION: Final = 1
+
+# The card archive, in the shared be_price_cards repository beside the cards
+# themselves: one small JSON per (supplier, contract, region, month), written
+# daily by .github/workflows/archive_cards.yml.
+CARD_ARCHIVE_URL: Final = (
+    "https://raw.githubusercontent.com/renaudallard/be_price_cards/main/gas/cards"
+)
+
+# Atrias publishes the monthly gross calorific value of every gas reception
+# station in Belgium. The API wants the public subscription key its own site
+# carries in runtime-config.js, read at run time rather than copied here.
+ATRIAS_CONFIG_URL: Final = "https://www.atrias.be/runtime-config.js"
+ATRIAS_API_URL: Final = "https://api.atrias.be/roots"
+
+# A metered window stands as a yearly volume when it covers a year, up to
+# MEASURED_YEAR_GAP_DAYS missing days scaled across; a shorter one does not.
+MEASURED_FULL_YEAR_DAYS: Final = 365
+MEASURED_YEAR_GAP_DAYS: Final = 15
+
+# --- Expert custom supplier ----------------------------------------------------
+# For a product with no public card (a group purchase, a supplier this
+# integration does not read): the household types its own price and the
+# regulated figures of its DSO, VAT inclusive as cards print them, and the
+# snapshot is built from the entry instead of fetched. Listed last among the
+# suppliers and never ranked, since there is no card to compare.
+SUPPLIER_CUSTOM: Final = "custom"
+CUSTOM_CONTRACT: Final = "custom_fixed"
+CONF_CUSTOM_PRICE: Final = "custom_price"
+CONF_CUSTOM_FEE: Final = "custom_fee"
+CONF_CUSTOM_T1_FIXED: Final = "custom_t1_fixed"
+CONF_CUSTOM_T1_PROP: Final = "custom_t1_prop"
+CONF_CUSTOM_T2_FIXED: Final = "custom_t2_fixed"
+CONF_CUSTOM_T2_PROP: Final = "custom_t2_prop"
+CONF_CUSTOM_TRANSPORT: Final = "custom_transport"
+CONF_CUSTOM_METERING: Final = "custom_metering"
+CONF_CUSTOM_EXCISE_LOW: Final = "custom_excise_low"
+CONF_CUSTOM_EXCISE_HIGH: Final = "custom_excise_high"
+# Ticked, the network figures come off the DSO's published tariff sheet of
+# each delivery year instead (network_sheet.py), the typed ones standing in
+# until a sheet is read.
+CONF_CUSTOM_NETWORK_FROM_SHEET: Final = "custom_network_from_sheet"
+# No longer asked, since the law sets both for every month billed: kept
+# among the custom keys so an older entry's figures go when it is saved.
+CONF_CUSTOM_CONTRIBUTION: Final = "custom_contribution"
+CONF_CUSTOM_CONNECTION_FEE: Final = "custom_connection_fee"
+CONF_CUSTOM_LEVY: Final = "custom_levy"
+CUSTOM_KEYS: Final = (
+    CONF_CUSTOM_PRICE,
+    CONF_CUSTOM_FEE,
+    CONF_CUSTOM_T1_FIXED,
+    CONF_CUSTOM_T1_PROP,
+    CONF_CUSTOM_T2_FIXED,
+    CONF_CUSTOM_T2_PROP,
+    CONF_CUSTOM_TRANSPORT,
+    CONF_CUSTOM_METERING,
+    CONF_CUSTOM_EXCISE_LOW,
+    CONF_CUSTOM_EXCISE_HIGH,
+    CONF_CUSTOM_NETWORK_FROM_SHEET,
+    CONF_CUSTOM_CONTRIBUTION,
+    CONF_CUSTOM_CONNECTION_FEE,
+    CONF_CUSTOM_LEVY,
+)
+
+# --- Social tariff -----------------------------------------------------------
+# The social tariff the CREG sets each quarter for protected customers,
+# whoever supplies them (providers/social.py). Never ranked: only a
+# protected household can be on it.
+SUPPLIER_SOCIAL: Final = "social"
+SOCIAL_CONTRACT: Final = "social"

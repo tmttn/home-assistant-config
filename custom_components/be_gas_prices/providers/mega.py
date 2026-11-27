@@ -1,0 +1,732 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Mega gas tariff card extractor.
+
+Mega publishes one card per (product, region) on its own CDN:
+
+    https://my.mega.be/resources/tarif/Mega-FR-NG-B2C-<BX|VL|WL>-<MMYYYY>-<Suffix>.pdf
+
+The suffix carries the product and, on most products, the day and month the
+card took effect ("Smart0109", "Cosy0809", "Zen0109-Fixed"), while a few
+carry no date at all ("Prepaid", "Offpeak-Bi-Var"). It cannot be predicted,
+and gas suffixes are not the electricity ones (Online Flex is "Online0109"
+here, "Online0109-Green" there), so the current card is found on the public
+listing, https://www.mega.be/fr/energie/cartes-tarifaires, where every card
+link carries a ``data-product-element="<Product>"`` attribute. The same links are
+what discover reads for the live check.
+
+The CDN keeps past months under the same grammar, which is the archive
+(Smart Flex reaches back to January 2024 at least). The listing points at
+the latest issue of a month, and Mega reissues some cards mid-month: in
+September 2026 Cosy Flex and Smart Fixed went from "...0109" (published on
+31 and 27 August) to "...0809" (7 September), with the same tariff and a
+larger first-year ristourne. A reissue's day does not carry over to other
+months ("Cosy0808" for August is the CDN's HTML stub, "Cosy0108" the card),
+while every month checked has an issue dated the 1st, so a past month is
+asked for as issued on the 1st.
+
+Every figure is 6% VAT inclusive. The Flex products index monthly on the
+arithmetic mean of the EGSI day-ahead and weekend assessments of ZTP or TTF
+over the delivery month, known only once the month is over. The formula is
+printed excluding VAT, in c EUR/kWh with the index in c EUR/kWh ("ZTP x 1,08
++ 1,15 c EUR/kWh"). The headline price is a forecast over the next twelve
+months; the card also prints its formula at the last month the index is
+known for ("pour le mois de aout 2026 ... Compteur mono-horaire : 8.28"),
+which is the price read here. Mega publishes both indices month by month on
+its indexation page as "ZTP mensuel" and "TTF1", in EUR/kWh excluding VAT.
+The July to September 2026 cards print the formula at the page's value to
+the card's rounding; the October 2026 ZTP cards print 0,02 to 0,03 c EUR/kWh
+under it, the TTF ones still match.
+
+The first-year ristourne most cards offer (a c EUR/kWh reduction, a fixed
+fee reduction, or both) is a credit over the first contract year, granted
+from the first advance invoice on the October 2026 cards and after twelve
+or fourteen months, capped at 848 EUR, on the cards before them. It is not
+part of the tariff, so it is not read.
+
+Mega's CDN sends the cards with a bogus "Content-Encoding: UTF-8" header,
+which aiohttp ignores as an encoding it does not know.
+
+Off-peak Flex, Off-peak Fixed, Prepaid Flex and Prepaid Fixed left the
+listing and the product pages on 30 October 2026, in every region. A
+household on one is priced on its last card, October's, and its past months
+are built off that card's name, since the listing no longer links one.
+
+Zen Fixed left the listing with the November 2026 cards, in every region,
+while the fixed-price page still sells it and the CDN serves its November
+card. Its card is built off the last listed card's name, moved to this month.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from datetime import date
+
+import aiohttp
+from homeassistant.util import dt as dt_util
+
+from ..const import (
+    DSO_RESA,
+    DSO_SIBELGA,
+    REGION_BRUSSELS,
+    REGION_FLANDERS,
+    REGION_WALLONIA,
+)
+from ._network import (
+    FLUVIUS_LABELS,
+    FLUVIUS_MERGED,
+    METERING,
+    ORES_LABELS,
+    T1_FIXED,
+    T1_PROP,
+    T2_FIXED,
+    T2_PROP,
+    T3_FIXED,
+    T3_PROP,
+    excise_bands,
+    osp_table,
+    read_dsos,
+    require_region,
+    signing_dsos,
+)
+from ._parse import (
+    LINE_BREAK,
+    SIGN_CHARS,
+    elements,
+    html_cells,
+    in_tag,
+    month_date,
+    parse_sign,
+    require_contract,
+    to_float,
+)
+from ._pdf import fetch_pdf_text, fetch_text, printed_vat_rate
+from ._rates import ALL_REGIONS, Contract, FixedRates, IndexedRates, TariffKind
+from ._validity import end_of_month, future_month, month_card
+from .base import (
+    DsoOverlay,
+    ExtractorError,
+    IndexTable,
+    SupplierExtractor,
+    SupplierSnapshot,
+    TaxOverlay,
+)
+
+_LISTING_URL = "https://www.mega.be/fr/energie/cartes-tarifaires"
+_INDEX_URL = "https://www.mega.be/fr/energie/indexation-de-nos-produits-variables"
+_CARD_BASE = "https://my.mega.be/resources/tarif/Mega-FR-NG-B2C-"
+
+_REGION_TO_CODE: dict[str, str] = {
+    REGION_FLANDERS: "VL",
+    REGION_WALLONIA: "WL",
+    REGION_BRUSSELS: "BX",
+}
+
+
+@dataclass(frozen=True)
+class _ContractDef:
+    contract_id: str
+    label: str
+    kind: TariffKind
+    listing_name: str  # the data-product-element value on the listing
+    card_name: str  # the name the card prints, less its term ("2Y")
+    regions: frozenset[str] = ALL_REGIONS
+    # The first day Mega no longer sold it.
+    withdrawn: date | None = None
+    # The name past the region code of the last card the listing linked,
+    # which stands in for the listing's link once the listing drops the
+    # product: a withdrawn one, or one Mega still sells and publishes.
+    last_card: str = ""
+
+
+# The day the listing stopped linking Off-peak Flex and Fixed and Prepaid
+# Flex and Fixed, whose October 2026 cards are their last.
+_OFFPEAK_PREPAID_WITHDRAWN = date(2026, 10, 30)
+
+# Every residential gas product on the listing, and the ones it dropped, still
+# offered to the households on them. There is no Dynamic gas card, and
+# Off-peak Impact has a Walloon card only, priced like Off-peak Flex. The
+# listing also links two SME cards, which are professional and not listed
+# here.
+_CONTRACTS: tuple[_ContractDef, ...] = (
+    _ContractDef("mega_smart_flex", "Mega Smart Flex", "indexed", "Smart Flex", "Smart Flex"),
+    _ContractDef("mega_cosy_flex", "Mega Cosy Flex", "indexed", "Cosy Flex", "Cosy Flex"),
+    _ContractDef("mega_online_flex", "Mega Online Flex", "indexed", "Online Flex", "Online Flex"),
+    _ContractDef(
+        "mega_prepaid_flex",
+        "Mega Prepaid Flex",
+        "indexed",
+        "Prepaid Flex",
+        "Prepaid Flex",
+        withdrawn=_OFFPEAK_PREPAID_WITHDRAWN,
+        last_card="102026-Prepaid",
+    ),
+    _ContractDef(
+        "mega_offpeak_flex",
+        "Mega Off-peak Flex",
+        "indexed",
+        "Off-peak Flex",
+        "Offpeak Flex",
+        withdrawn=_OFFPEAK_PREPAID_WITHDRAWN,
+        last_card="102026-Offpeak-Bi-Var",
+    ),
+    _ContractDef(
+        "mega_offpeak_impact",
+        "Mega Off-peak Impact",
+        "indexed",
+        "Off-peak Impact",
+        "Offpeak Impact Flex",
+        regions=frozenset({REGION_WALLONIA}),
+    ),
+    _ContractDef("mega_smart_fixed", "Mega Smart Fixed", "fixed", "Smart Fixed", "Smart Fixed"),
+    _ContractDef("mega_cosy_fixed", "Mega Cosy Fixed", "fixed", "Cosy Fixed", "Cosy Fixed"),
+    _ContractDef("mega_online_fixed", "Mega Online Fixed", "fixed", "Online Fixed", "Online Fixed"),
+    _ContractDef(
+        "mega_prepaid_fixed",
+        "Mega Prepaid Fixed",
+        "fixed",
+        "Prepaid Fixed",
+        "Prepaid Fixed",
+        withdrawn=_OFFPEAK_PREPAID_WITHDRAWN,
+        last_card="102026-Prepaid0110-Fix",
+    ),
+    _ContractDef(
+        "mega_offpeak_fixed",
+        "Mega Off-peak Fixed",
+        "fixed",
+        "Off-peak Fixed",
+        "Offpeak Fixed",
+        withdrawn=_OFFPEAK_PREPAID_WITHDRAWN,
+        last_card="102026-Offpeak-Bi0110-Fix",
+    ),
+    # Off the listing with the first November 2026 cards, in every region,
+    # while the fixed-price page still sold it and the CDN served its November
+    # card under October's name moved a month. Back on it by 5 November; the
+    # last card still stands in should it go again.
+    _ContractDef(
+        "mega_zen_fixed",
+        "Mega Zen Fixed",
+        "fixed",
+        "Zen Fixed",
+        "Zen Fixed",
+        last_card="102026-Zen0110-Fix",
+    ),
+)
+_CONTRACTS_BY_ID = {c.contract_id: c for c in _CONTRACTS}
+
+
+def _region_code(contract: _ContractDef, region: str) -> str:
+    if region not in contract.regions:
+        raise ExtractorError(f"Mega {contract.contract_id}: not sold in region {region!r}")
+    return _REGION_TO_CODE[region]
+
+
+def _listed_url(listing: str, contract: _ContractDef, code: str) -> str | None:
+    """The link the listing carries for ``contract``'s gas card in the
+    region ``code``, pinned to that segment, so the electricity card and
+    the other regions' links of the same product never match. Looked for
+    in the element's tag as :func:`parse_catalog` reads the listing."""
+    element = re.compile(r'data-product-element="' + re.escape(contract.listing_name) + '"')
+    link = re.compile(r'href="(' + re.escape(_CARD_BASE) + code + r'-\d{6}-[^"]+\.pdf)"')
+    found = next(in_tag(listing, element, link), None)
+    return None if found is None else found[1].group(1)
+
+
+def card_url(listing: str, contract_id: str, region: str) -> str:
+    """The URL of the card the listing links for ``contract_id`` in ``region``.
+
+    Mega drops one region's block of a product from the listing now and then
+    while still publishing its card: the electricity listing lost Dynamic
+    Wallonia overnight in July 2026. The regional cards differ only by their
+    -B2C-<code>- segment, so another region's link is rewritten for it. That
+    is a guess at the URL: a card not published there fails its download,
+    and a card of another region fails ``require_region``.
+
+    A product no region links any more takes its ``last_card``, moved to
+    this month, as Zen Fixed does since the November 2026 listing dropped
+    it. A card Mega did not publish under that name fails on the CDN's stub.
+    """
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Mega")
+    code = _region_code(contract, region)
+    url = _listed_url(listing, contract, code)
+    if url is not None:
+        return url
+    for other in _REGION_TO_CODE.values():
+        sibling = None if other == code else _listed_url(listing, contract, other)
+        if sibling is not None:
+            return sibling.replace(f"-NG-B2C-{other}-", f"-NG-B2C-{code}-", 1)
+    if contract.last_card:
+        return archive_url(_last_card_url(contract, code), dt_util.now().date())
+    raise ExtractorError(f"Mega {contract_id}: no {code} card on the listing")
+
+
+# Every product whose listing element links a residential gas card; the SME
+# cards are -NG-B2B- and the electricity ones -EL-. The link is looked for
+# in the element's tag with in_tag: a pattern lazily spanning the tag looked
+# to the next ">" again from every element, and 100 kB of elements that no
+# ">" followed took 5 s.
+_LISTED_ELEMENT_RE = re.compile(r'data-product-element="([^"]+)"')
+_LISTED_LINK_RE = re.compile(r'href="' + re.escape(_CARD_BASE))
+
+
+def parse_catalog(listing: str) -> set[str]:
+    """The gas products the listing links a card for, by contract id; a
+    product no contract is gets ``mega_<words>``.
+
+    A product read off its ``last_card`` is counted as long as it is sold:
+    the listing dropped Zen Fixed for the first days of November 2026 while
+    the fixed-price page still sold it, and that is no news.
+    """
+    by_name = {c.listing_name: c.contract_id for c in _CONTRACTS}
+    names = [element[1] for element, _link in in_tag(listing, _LISTED_ELEMENT_RE, _LISTED_LINK_RE)]
+    listed = {
+        by_name.get(name, "mega_" + "_".join(re.findall(r"[a-z0-9]+", name.lower())))
+        for name in names
+    }
+    return listed | {c.contract_id for c in _CONTRACTS if c.last_card and c.withdrawn is None}
+
+
+async def discover(session: aiohttp.ClientSession) -> set[str]:
+    """The gas products Mega sells today, as its listing links them."""
+    return parse_catalog(await fetch_text(session, _LISTING_URL))
+
+
+def _last_card_url(contract: _ContractDef, code: str) -> str:
+    """The last card the listing linked for ``contract`` in the region ``code``."""
+    return f"{_CARD_BASE}{code}-{contract.last_card}.pdf"
+
+
+# The "-MMYYYY-" segment, looked for in the file name before its ".pdf":
+# "(?=[^/]*\.pdf$)" after the segment looked along the rest of the URL again
+# from every such segment, in time growing with their square.
+_URL_MONTH_RE = re.compile(r"-(\d{2})(\d{4})-")
+
+
+def archive_url(current: str, year_month: date) -> str:
+    """The URL of the same card as first issued for ``year_month``.
+
+    Both months in the filename move: the ``-MMYYYY-`` segment and the month
+    of the suffix's issue date, whose day becomes the 1st. A suffix with no
+    date is left alone. The current month keeps the listing's own URL, which
+    is its latest issue.
+    """
+    match = None
+    if current.endswith(".pdf"):
+        match = _URL_MONTH_RE.search(current, current.rfind("/") + 1, len(current) - 4)
+    if match is None:
+        raise ExtractorError(f"Mega: no month in card URL {current}")
+    if (int(match.group(2)), int(match.group(1))) == (year_month.year, year_month.month):
+        return current
+    target = f"{year_month.month:02d}"
+    head = current[: match.start()] + f"-{target}{year_month.year}-"
+    tail = re.sub(
+        rf"(?<=[A-Za-z])\d{{2}}{match.group(1)}(?=[-.])",
+        f"01{target}",
+        current[match.end() :],
+        count=1,
+    )
+    return head + tail
+
+
+async def fetch(session: aiohttp.ClientSession, contract_id: str, region: str) -> SupplierSnapshot:
+    """The card the listing links today for ``contract_id`` in ``region``."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Mega")
+    if contract.withdrawn is not None:
+        raise ExtractorError(
+            f"Mega withdrew {contract.label} on {contract.withdrawn:%Y-%m-%d}: "
+            "only its past cards are read"
+        )
+    url = card_url(await fetch_text(session, _LISTING_URL), contract_id, region)
+    return await _read(session, contract_id, region, url)
+
+
+async def _read(
+    session: aiohttp.ClientSession, contract_id: str, region: str, url: str
+) -> SupplierSnapshot:
+    return parse_snapshot(contract_id, region, await fetch_pdf_text(session, url), source_url=url)
+
+
+async def _read_month(
+    session: aiohttp.ClientSession, contract_id: str, region: str, year_month: date
+) -> SupplierSnapshot:
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Mega")
+    if contract.withdrawn is None:
+        current = card_url(await fetch_text(session, _LISTING_URL), contract_id, region)
+    else:
+        current = _last_card_url(contract, _region_code(contract, region))
+    return await _read(session, contract_id, region, archive_url(current, year_month))
+
+
+async def fetch_for_month(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+    year_month: date,
+) -> SupplierSnapshot | None:
+    """The card Mega published for a past month, or None.
+
+    The URL is built off the listing's current one, or off a withdrawn
+    product's last card. A month ahead of Home Assistant's clock is refused
+    rather than asked for. A transient failure raises so the month cache
+    retries it; any other failure, the HTML stub the CDN serves for a card
+    it never published included, is a month with no card, and a card naming
+    another month than the one asked for is refused too.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    if contract is None or region not in contract.regions:
+        return None
+    if future_month(year_month):
+        return None
+    return await month_card(_read_month(session, contract_id, region, year_month), year_month)
+
+
+_FIG = r"\d+(?:[.,]\d+)?"
+
+
+def parse_snapshot(
+    contract_id: str, region: str, text: str, *, source_url: str = _LISTING_URL
+) -> SupplierSnapshot:
+    """Parse one regional card's text as pypdf extracts it."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "Mega")
+    _region_code(contract, region)
+    flat = " ".join(text.split())
+    _check_product(text, contract)
+    card_month = _card_month(flat)
+    vat_rate = printed_vat_rate(flat, r"TVA\s+(\d+(?:[.,]\d+)?)\s*%\s+incluse")
+    if vat_rate is None:
+        raise ExtractorError("Mega: VAT statement not found")
+    bands, contribution = _excise(text, flat)
+    return SupplierSnapshot(
+        supplier="mega",
+        contract=contract_id,
+        energy=_energy(text, flat, contract, 1.0 + vat_rate),
+        dsos=signing_dsos(lambda: _dsos(text, region), card_month, FLUVIUS_MERGED),
+        taxes=TaxOverlay(
+            excise_bands=bands,
+            energy_contribution=contribution,
+            connection_fee=_connection_fee(text) if region == REGION_WALLONIA else 0.0,
+            osp_by_caliber=_osp(text) if region == REGION_BRUSSELS else None,
+            card_vat_rate=vat_rate,
+        ),
+        source_url=source_url,
+        publication_label=f"{card_month:%Y-%m}",
+        valid_until=end_of_month(card_month.year, card_month.month),
+    )
+
+
+# "Gaz naturel / Smart Flex 2Y / (Variable)". The term is not part of the
+# name: the January 2025 card printed "Smart Flex" alone. The name is the
+# first line after "Gaz naturel" that is not blank: the line break before it
+# is taken whole. Backing into it read a blank line between as the name,
+# which names no product, and scanned the lines after it again from every
+# one, in time growing with their square.
+_PRODUCT_RE = re.compile(r"Gaz naturel(?>\s*\n)(.+)\n\s*\((?:Variable|Fixe)\)")
+# The term after the name, from the first space before it: tried from
+# every space of a run, it was scanned to the end of the run again.
+_TERM_RE = re.compile(r"(?<!\s)\s+\d+Y$")
+
+
+def _check_product(text: str, contract: _ContractDef) -> None:
+    """Refuse a card printed for another product than ``contract``.
+
+    An archive URL is built rather than linked, so the card it lands on is
+    checked for the product it prices before any figure is trusted.
+    """
+    match = _PRODUCT_RE.search(text)
+    if match is None:
+        raise ExtractorError("Mega: product name not found")
+    printed = _TERM_RE.sub("", match.group(1).strip())
+    if printed != contract.card_name:
+        raise ExtractorError(f"Mega {contract.contract_id}: card is for {printed!r}")
+
+
+_CARD_MONTH_RE = re.compile(r"Prix du mois (\d{2})/(\d{4})")
+
+
+def _card_month(flat: str) -> date:
+    """The month the card is for: "Prix du mois 09/2026"."""
+    match = _CARD_MONTH_RE.search(flat)
+    if match is None or not 1 <= int(match.group(1)) <= 12:
+        raise ExtractorError("Mega: card month not found")
+    return month_date(match.group(2), match.group(1), "Mega")
+
+
+_PRICE_RE = re.compile(rf"Coût énergie \(c€/kWh\){LINE_BREAK}({_FIG})\s*\n")
+_FEE_RE = re.compile(rf"Redevance fixe \(€/an\){LINE_BREAK}({_FIG})\s*\n")
+_FORMULA_RE = re.compile(
+    rf"formule tarifaire pour le gaz est la suivante \(HTVA\) ?: "
+    rf"((ZTP|TTF) x ({_FIG}) ([{SIGN_CHARS}]) ({_FIG}) c€/kWh)"
+)
+# The index the formula names, as the card defines it. It has to be the
+# definition of the series Mega's indexation page publishes under the name
+# mapped below, or the price would be resolved against another index.
+_INDEX_DEFINITION_RE = re.compile(
+    r"moyenne arithmétique des cotations journalières Day Ahead et Weekend "
+    r"(ZTP|TTF) \(EGSI\) durant le mois de fourniture"
+)
+_INDEX_NAMES: dict[str, str] = {"ZTP": "ZTP mensuel", "TTF": "TTF1"}
+# "Les derniers prix constates ... pour le mois de aout 2026 (...) sont les
+# suivants (c EUR/kWh) : Compteur mono-horaire : 8.28." The label wraps at
+# its hyphen.
+_LAST_KNOWN_RE = re.compile(
+    rf"derniers prix constatés .{{0,600}}?sont les suivants \(c€/kWh\) : "
+    rf"Compteur mono- ?horaire : ({_FIG})"
+)
+
+
+def _energy(text: str, flat: str, contract: _ContractDef, vat: float) -> FixedRates | IndexedRates:
+    price = _PRICE_RE.search(text)
+    fee = _FEE_RE.search(text)
+    if price is None or fee is None:
+        raise ExtractorError("Mega: energy price block not found")
+    yearly_fee = to_float(fee.group(1))
+    if contract.kind == "fixed":
+        return FixedRates(price=to_float(price.group(1)) / 100.0, yearly_fixed_fee=yearly_fee)
+
+    formula = _FORMULA_RE.search(flat)
+    definition = _INDEX_DEFINITION_RE.search(flat)
+    if formula is None or definition is None:
+        raise ExtractorError("Mega: indexation formula not found")
+    if formula.group(2) != definition.group(1):
+        raise ExtractorError("Mega: the formula and its index definition disagree")
+    # The price at the last month the index is known for is a fact; the
+    # headline is a twelve-month forecast, kept for a card that stops
+    # printing the other.
+    last_known = _LAST_KNOWN_RE.search(flat)
+    printed = last_known.group(1) if last_known else price.group(1)
+    base = parse_sign(formula.group(4)) * to_float(formula.group(5))
+    return IndexedRates(
+        # c EUR/kWh on an index in c EUR/kWh is EUR/kWh per 1000 EUR/MWh.
+        factor=to_float(formula.group(3)) / 1000.0 * vat,
+        base=base / 100.0 * vat,
+        index=_INDEX_NAMES[formula.group(2)],
+        price=to_float(printed) / 100.0,
+        yearly_fixed_fee=yearly_fee,
+        formula=formula.group(1),
+    )
+
+
+# The distribution table as the header prints it: the three proportional
+# terms (c EUR/kWh) then the three fixed ones (EUR/year), then Flanders's
+# data management or Brussels's yearly metering fee. Wallonia has neither.
+_TIERS = (T1_PROP, T2_PROP, T3_PROP, T1_FIXED, T2_FIXED, T3_FIXED)
+_COLUMNS: dict[str, tuple[str, ...]] = {
+    REGION_FLANDERS: (*_TIERS, METERING),
+    REGION_WALLONIA: _TIERS,
+    REGION_BRUSSELS: (*_TIERS, METERING),
+}
+_LABELS: dict[str, dict[str, str]] = {
+    REGION_FLANDERS: FLUVIUS_LABELS,
+    REGION_WALLONIA: {**ORES_LABELS, "RESA": DSO_RESA},
+    REGION_BRUSSELS: {"Sibelga": DSO_SIBELGA},
+}
+_FIGURE_LINE_RE = re.compile(_FIG)
+_TRANSPORT_RE = re.compile(rf"Coût du transport{LINE_BREAK}({_FIG})\s*\n")
+
+
+def _table_rows(text: str) -> str:
+    """The distribution table with each row on one line.
+
+    pypdf gives one cell per line, the label first and wrapped where it is
+    long ("ORES (Brabant" / "wallon)", "Fluvius Halle-" / "Vilvoorde"). A
+    figure joins the row above it, and a line after a label left open by a
+    hyphen or a parenthesis completes that label. The header's own wrapped
+    lines end up as rows of the wrong width, which the readers skip.
+    """
+    start = text.find("Prix de la distribution et du transport")
+    end = text.find("Taxes, redevances", start)
+    if start < 0 or end < 0:
+        raise ExtractorError("Mega: distribution table not found")
+    # Each row as the pieces it is joined from, with the parentheses it has
+    # opened and not closed counted as they come: a row grown and counted
+    # again whole at every line of a label left open took time growing with
+    # the square of the table, 4 s for 100 kB.
+    rows: list[list[str]] = []
+    open_label = False
+    unclosed = 0
+    for raw in text[start:end].splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if rows and _FIGURE_LINE_RE.fullmatch(line):
+            rows[-1].append(" " + line)
+        elif open_label:
+            rows[-1].append(line if rows[-1][-1].endswith("-") else " " + line)
+        else:
+            rows.append([line])
+            unclosed = 0
+        unclosed += line.count("(") - line.count(")")
+        open_label = line.endswith("-") or unclosed > 0
+    return "\n".join("".join(row) for row in rows)
+
+
+def _dsos(text: str, region: str) -> dict[str, DsoOverlay]:
+    # Transport is one Fluxys figure, printed once for every DSO.
+    transport = _TRANSPORT_RE.search(text)
+    if transport is None:
+        raise ExtractorError("Mega: transport cost not found")
+    dsos = read_dsos(
+        _table_rows(text),
+        _LABELS[region],
+        _COLUMNS[region],
+        supplier="Mega",
+        transport=to_float(transport.group(1)) / 100.0,
+    )
+    require_region(dsos, region, "Mega")
+    return dsos
+
+
+# One excise row per slice, followed on the cards printed before August 2026
+# by the energy contribution in a column of its own.
+_EXCISE_ROW = rf"{LINE_BREAK}({_FIG})(?:{LINE_BREAK}({_FIG}))?\s*\n"
+_EXCISE_LOW_RE = re.compile(r"Consommation entre 0 et 12\.000 kWh" + _EXCISE_ROW)
+_EXCISE_HIGH_RE = re.compile(r"Consommation de plus de 12\.000 kWh" + _EXCISE_ROW)
+_CONTRIBUTION_ZERO = "La contribution énergétique est fixée à 0"
+
+
+def _excise(text: str, flat: str) -> tuple[tuple[tuple[float | None, float], ...], float]:
+    """The excise bands and the energy contribution, both in EUR/kWh.
+
+    A card without the contribution column states the levy is zero, and
+    one stating neither is a layout change rather than a zero.
+    """
+    low = _EXCISE_LOW_RE.search(text)
+    high = _EXCISE_HIGH_RE.search(text)
+    if low is None or high is None:
+        raise ExtractorError("Mega: federal excise rows not found")
+    bands = excise_bands(to_float(low.group(1)) / 100.0, to_float(high.group(1)) / 100.0)
+    if low.group(2) != high.group(2):
+        raise ExtractorError("Mega: the energy contribution differs between the slices")
+    if low.group(2) is not None:
+        return bands, to_float(low.group(2)) / 100.0
+    if _CONTRIBUTION_ZERO not in flat:
+        raise ExtractorError("Mega: energy contribution not found")
+    return bands, 0.0
+
+
+_CONNECTION_FEE_RE = re.compile(rf"Redevance de raccordement{LINE_BREAK}({_FIG})\s*\n")
+
+
+def _connection_fee(text: str) -> float:
+    """The Walloon connection fee as printed. The law's fee is billed
+    whatever a card prints, so a card without the row reads as zero rather
+    than being refused."""
+    match = _CONNECTION_FEE_RE.search(text)
+    return 0.0 if match is None else to_float(match.group(1)) / 100.0
+
+
+# "6 ou 10 m / 3 / /heure* / 3.56": the caliber, its unit split around the
+# superscript, the footnote marks, then the amount on a line of its own.
+_OSP_AMOUNT_RE = re.compile(rf"^/heure\**{LINE_BREAK}({_FIG})\s*$", re.MULTILINE)
+
+
+def _osp(text: str) -> dict[str, float]:
+    start = text.find("Obligations de Service Public")
+    end = text.find("Lorsque la dernière consommation", start)
+    if start < 0 or end < 0:
+        raise ExtractorError("Mega: Brussels levy table not found")
+    amounts = [to_float(value) for value in _OSP_AMOUNT_RE.findall(text[start:end])]
+    return osp_table(amounts, supplier="Mega")
+
+
+# One row of the index page and the series it is of, found from its opening
+# to its closing (_parse.elements): "<tr data-line=...>(.*?)</tr>" scanned to
+# the end of the page from every row no closing followed, 26 s over 72 kB.
+# A row naming no series is the heading of a table, "Du | Au | Prix €/kWh
+# (htva)", whose last cell is the only statement of the unit and VAT basis
+# of the values under it. They are read under that heading alone: a table
+# headed in c€/kWh or €/MWh would come out a hundred or a thousand times
+# off, as Engie's index did when its page gained a table in c€/kWh.
+_INDEX_ROW_RE = re.compile(r'<tr(?: data-line="([^"]+)"|(?=[\s>]))')
+_INDEX_ROW_END_RE = re.compile("</tr>")
+_INDEX_HEADING = "Prix €/kWh (htva)"
+_MONTH_START_RE = re.compile(r"01-(0[1-9]|1[0-2])-(\d{4})")
+_INDEX_VALUE_RE = re.compile(r"€\s*(\d+[.,]\d+)")
+
+
+def parse_index_page(page: str) -> IndexTable:
+    """Mega's monthly ZTP and TTF values, by delivery month, in EUR/MWh.
+
+    One row per month, newest first: "01-08-2026 | 01-09-2026 | EUR0.0617121"
+    in EUR/kWh excluding VAT. A row that does not run from the first of a
+    month to the first of the next is not a monthly value and is skipped,
+    and so is every row of a table headed in another unit.
+    """
+    table: IndexTable = {name: {} for name in _INDEX_NAMES.values()}
+    heading: str | None = None
+    for opened, row, _closed in elements(page, _INDEX_ROW_RE, _INDEX_ROW_END_RE):
+        name = opened.group(1)
+        cells = html_cells(row)
+        if name is None:
+            heading = cells[-1] if cells else None
+            continue
+        if name not in table or heading != _INDEX_HEADING:
+            continue
+        if len(cells) != 3:
+            continue
+        start = _MONTH_START_RE.fullmatch(cells[0])
+        end = _MONTH_START_RE.fullmatch(cells[1])
+        value = _INDEX_VALUE_RE.fullmatch(cells[2])
+        if start is None or end is None or value is None:
+            continue
+        year, month = int(start.group(2)), int(start.group(1))
+        if (int(end.group(2)), int(end.group(1))) != (year + month // 12, month % 12 + 1):
+            continue
+        table[name][f"{year}-{month:02d}"] = to_float(value.group(1)) * 1000.0
+    missing = sorted(name for name, values in table.items() if not values)
+    if missing:
+        raise ExtractorError(
+            f"Mega: index values not found: {', '.join(missing)} (read under the "
+            f"heading {_INDEX_HEADING!r} only)"
+        )
+    return table
+
+
+async def fetch_index(session: aiohttp.ClientSession) -> IndexTable:
+    """Mega's published gas index values."""
+    return parse_index_page(await fetch_text(session, _INDEX_URL))
+
+
+EXTRACTOR = SupplierExtractor(
+    id="mega",
+    label="Mega",
+    contracts=tuple(
+        Contract(
+            id=c.contract_id,
+            label=c.label,
+            kind=c.kind,
+            regions=c.regions,
+            withdrawn=c.withdrawn,
+        )
+        for c in _CONTRACTS
+    ),
+    fetch=fetch,
+    fetch_for_month=fetch_for_month,
+    fetch_index=fetch_index,
+    discover=discover,
+    sweep_cost_s=2.1,
+)

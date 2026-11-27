@@ -1,0 +1,332 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""A month of gas billed the way a Belgian supplier bills it.
+
+Pure functions over what the coordinator has gathered: which card prices the
+month, which energy leg the household is on, the index value the month
+settles at, the volume used and the days the month contributes. The running
+costs, the projections and the price history are all sums of these.
+
+The rules this encodes:
+
+- The network and the levies of a month come from that month's own card
+  where one is known, and the federal levies from the law for that delivery
+  month (``_resolve.resolve_federal_levies``).
+- The energy leg is the card of the month, or the card the household signed
+  (the signing cohort) when the entry says so and the contract is fixed or
+  indexed. A variable price is the supplier's for each month, so the card
+  of the month sets it whatever the signing date. An indexed leg is priced
+  at the index value of the delivery month once the supplier has published
+  it, at the latest value it has published before then, and, where it
+  has published none up to then, at the index the card of the month prices
+  its own figure at.
+- The distribution tier and the excise slices follow the household's annual
+  volume, and the yearly fixed costs accrue by the day.
+- A card may waive its supplier fee for the first months of a contract
+  signed on it (``SupplierSnapshot.fee_waived_months``): those days of the
+  contract accrue no supplier fee, whichever card prices the month.
+"""
+
+from __future__ import annotations
+
+import calendar
+from collections.abc import Callable
+from dataclasses import dataclass, replace
+from datetime import date, timedelta
+from typing import Any
+
+from .const import CONF_SUPPLIER, SUPPLIER_CUSTOM
+from .manual_rate import manual_leg
+from .pricing import PriceBreakdown, compute_breakdown, energy_price, fixed_costs
+from .providers._rates import EnergyRates, IndexedRates, VariableRates, on_vat
+from .providers._resolve import resolve_for_delivery
+from .providers.base import IndexTable, SupplierSnapshot, stand_in_name
+from .vat_rates import residential_vat
+
+# The energy leg a card bills a household on at a residential VAT rate: the
+# card's own, or the signing card's with the figures the household typed.
+type LegFor = Callable[[SupplierSnapshot, float], EnergyRates]
+
+
+@dataclass(frozen=True)
+class IndexValue:
+    """The index value a month is priced at, and the month it belongs to.
+
+    ``month`` differs from the month priced while the supplier has not yet
+    published that month's value, which makes the price provisional, and so
+    does ``stand_in``: a value the table carries beside the supplier's own
+    series (``stand_in_name``), another supplier's of the same index while
+    the supplier's own publication lags, or its own before it is final.
+    """
+
+    value: float
+    month: str
+    stand_in: bool = False
+
+
+def month_key(day: date) -> str:
+    return f"{day.year}-{day.month:02d}"
+
+
+def add_months(day: date, months: int) -> date:
+    """The same day ``months`` months on, or the last of a shorter month."""
+    index = day.month - 1 + months
+    year, month = day.year + index // 12, index % 12 + 1
+    return date(year, month, min(day.day, calendar.monthrange(year, month)[1]))
+
+
+def fee_waiver(signed: SupplierSnapshot | None, start: date | None) -> tuple[date, date] | None:
+    """The days ``[since, until)`` a contract started on ``start`` and
+    signed on ``signed`` pays no supplier fee: the first months that card
+    waives it for. None without a start date, a signing card or a waiver,
+    so a contract whose card is not known pays the fee."""
+    if signed is None or start is None or signed.fee_waived_months <= 0:
+        return None
+    return start, add_months(start, signed.fee_waived_months)
+
+
+def index_for(table: IndexTable | None, index: str, month: str) -> IndexValue | None:
+    """The value ``index`` settles at for ``month``, or the latest published
+    before it, or None when the supplier has published none up to then.
+
+    The supplier's own value comes first; where it has none, the stand-in
+    the table carries for the months its publication has not reached
+    (``stand_in_name``), its own value winning a month both give."""
+    own = (table or {}).get(index) or {}
+    stand_in = (table or {}).get(stand_in_name(index)) or {}
+    if month in own:
+        return IndexValue(own[month], month)
+    if month in stand_in:
+        return IndexValue(stand_in[month], month, stand_in=True)
+    earlier = [(key, False) for key in own if key < month]
+    earlier += [(key, True) for key in stand_in if key < month and key not in own]
+    if not earlier:
+        return None
+    latest, borrowed = max(earlier)
+    return IndexValue((stand_in if borrowed else own)[latest], latest, stand_in=borrowed)
+
+
+def merged_index(held: IndexTable | None, fetched: IndexTable, month: str) -> IndexTable:
+    """``fetched``, with every value ``held`` has for a month before ``month``
+    that ``fetched`` no longer gives.
+
+    A supplier that publishes a value only on the cards it still links
+    (Trevion's next month's card, Belvus's last twelve) drops it once that
+    card leaves the listing, though the month it settled stays settled. A
+    value for ``month`` or a later one is the publication's alone: a
+    forward value it took back is not kept.
+    """
+    table = {name: dict(values) for name, values in fetched.items()}
+    for name, values in (held or {}).items():
+        kept = table.setdefault(name, {})
+        for key, value in values.items():
+            if key < month:
+                kept.setdefault(key, value)
+    return table
+
+
+def card_leg(card: SupplierSnapshot, vat_rate: float) -> EnergyRates:
+    """The card's own energy leg at ``vat_rate``, for a card no contract is
+    laid over."""
+    return on_vat(card.energy, vat_rate)
+
+
+def contract_leg(
+    own: EnergyRates,
+    signed: EnergyRates | None,
+    data: dict[str, Any],
+    vat_rate: float,
+) -> EnergyRates:
+    """The energy leg a month is billed on, from the card of the month
+    (``own``), the signing card's leg where one is known and the figures
+    the household typed (``data``), at ``vat_rate``, the residential rate
+    of the month: a figure a parser grossed by an assumed rate is moved onto
+    it (:func:`on_vat`), and the typed figures are grossed by it, before the
+    signed formula is priced at the index of the card of the month.
+
+    For a month the supplier has published no value of the index up to, a
+    card prints only its own month's price. The index that price was set at
+    is read back off the card of the month, and a signed or typed formula is
+    priced at it, so the month moves with the market rather than holding
+    the signing month's figure. A published value prices the formula
+    instead (``resolve_energy_price``).
+
+    The custom supplier's typed card is the contract itself: nothing is laid
+    over it, not even signing figures an earlier version of the flow asked
+    a custom entry for.
+    """
+    if data.get(CONF_SUPPLIER) == SUPPLIER_CUSTOM:
+        return own
+    own = on_vat(own, vat_rate)
+    signed = None if signed is None else on_vat(signed, vat_rate)
+    leg = own if signed is None or isinstance(signed, VariableRates) else signed
+    leg = manual_leg(leg, data, vat_rate)
+    if (
+        leg is not own
+        and isinstance(leg, IndexedRates)
+        and isinstance(own, IndexedRates)
+        and own.index == leg.index
+        and own.factor
+    ):
+        # The price of a month with no value of the index published up to it:
+        # off the card of the month, and settled only as that card is.
+        leg = replace(leg, price=leg.at((own.price - own.base) / own.factor), settled=own.settled)
+    return leg
+
+
+def resolve_energy_price(
+    energy: EnergyRates, table: IndexTable | None, month: str
+) -> tuple[float, IndexValue | None]:
+    """The energy price of ``month`` in EUR/kWh on the card's VAT basis, and
+    the index value it was priced at (None for a price the card fixed)."""
+    if not isinstance(energy, IndexedRates):
+        return energy.price, None
+    value = index_for(table, energy.index, month)
+    return energy_price(energy, None if value is None else value.value), value
+
+
+@dataclass(frozen=True)
+class MonthBill:
+    """One month's share of the bill, in EUR VAT inclusive."""
+
+    month: str
+    kwh: float
+    days: int
+    # The first of those days: the 1st, unless the window or the contract
+    # starts later in the month.
+    first: date
+    breakdown: PriceBreakdown
+    energy_cost: float
+    network_cost: float
+    taxes_cost: float
+    fixed_cost: float
+    index: IndexValue | None
+    # True while the energy price is not yet the one the month settles at:
+    # an indexed leg priced at another month's value, settled or not, or at
+    # the card's own estimate because the supplier publishes no value at all,
+    # and a variable price the card sets by a formula on such an index.
+    provisional: bool
+
+    @property
+    def total(self) -> float:
+        return self.energy_cost + self.network_cost + self.taxes_cost + self.fixed_cost
+
+
+def bill_month(
+    *,
+    month: str,
+    card: SupplierSnapshot,
+    energy_for: LegFor,
+    table: IndexTable | None,
+    dso: str,
+    annual_kwh: float,
+    caliber: str,
+    kwh: float,
+    days: int,
+    days_in_year: int,
+    first: date | None = None,
+    fee_waived: tuple[date, date] | None = None,
+) -> MonthBill:
+    """Bill ``kwh`` used over ``days`` days of ``month``, from ``first`` on,
+    the 1st when not given.
+
+    ``card`` prices the network and the levies; ``energy_for`` gives the
+    leg the household is billed on, the card's own or the signing card's,
+    at the residential VAT rate of ``month`` (vat_rates.py). The supplier's
+    fixed fee follows the energy leg, since it is part of the offer the
+    household signed. The billed days that fall in ``fee_waived``
+    (:func:`fee_waiver`) accrue none of it.
+    """
+    year, number = (int(part) for part in month.split("-"))
+    start = date(year, number, 1)
+    begin = start if first is None else first
+    priced, price, index = priced_month(card, energy_for, table, month)
+    energy = priced.energy
+    breakdown = compute_breakdown(priced, dso, annual_kwh, price)
+    costs = fixed_costs(priced, dso, annual_kwh, caliber)
+    fixed = costs.total * days / days_in_year
+    if fee_waived is not None:
+        since, until = fee_waived
+        waived = (min(begin + timedelta(days=days), until) - max(begin, since)).days
+        fixed -= costs.supplier * max(waived, 0) / days_in_year
+    return MonthBill(
+        month=month,
+        kwh=kwh,
+        days=days,
+        first=begin,
+        breakdown=breakdown,
+        energy_cost=kwh * breakdown.energy,
+        network_cost=kwh * breakdown.network,
+        taxes_cost=kwh * breakdown.taxes,
+        fixed_cost=fixed,
+        index=index,
+        provisional=is_provisional(card, energy, index, month),
+    )
+
+
+def priced_month(
+    card: SupplierSnapshot, energy_for: LegFor, table: IndexTable | None, month: str
+) -> tuple[SupplierSnapshot, float, IndexValue | None]:
+    """``card`` as it bills ``month``: the levies and the network resolved
+    for that delivery month, with the energy leg ``energy_for`` gives at the
+    month's residential VAT rate, and that leg's price of the month on the
+    card's VAT basis with the index value it was priced at."""
+    year, number = (int(part) for part in month.split("-"))
+    start = date(year, number, 1)
+    energy = energy_for(card, residential_vat(start))
+    priced = replace(resolve_for_delivery(card, start), energy=energy)
+    price, index = resolve_energy_price(energy, table, month)
+    return priced, price, index
+
+
+def is_provisional(
+    card: SupplierSnapshot, energy: EnergyRates, index: IndexValue | None, month: str
+) -> bool:
+    """Whether ``energy``, priced at ``index`` for ``month`` on ``card``, is
+    not yet the price the month settles at (``MonthBill.provisional``)."""
+    return (isinstance(energy, VariableRates) and energy.estimate) or (
+        isinstance(energy, IndexedRates)
+        and (
+            index.month != month or index.stand_in
+            if index is not None
+            else not _settled_for(card, energy, month)
+        )
+    )
+
+
+def _settled_for(card: SupplierSnapshot, energy: IndexedRates, month: str) -> bool:
+    """Whether a leg priced with no index value at all is priced at what
+    ``month`` settles at. Its price is then the card's, or a signed or typed
+    formula read back off it (``contract_leg``): final only where the card
+    is settled, on that index, and for its own month."""
+    own = card.energy
+    card_month = None if card.valid_until is None else f"{card.valid_until:%Y-%m}"
+    return (
+        isinstance(own, IndexedRates)
+        and own.settled
+        and own.index == energy.index
+        and card_month == month
+    )

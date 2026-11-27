@@ -1,0 +1,948 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# Copyright (c) 2026, Koen Dierckx <koen.dierckx@gmail.com>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Trevion residential electricity tariff cards.
+
+Trevion publishes a public, month-labelled PDF archive.  The cards are
+VAT-inclusive for residential customers; injection is VAT-exempt.
+"""
+
+from __future__ import annotations
+
+import re
+from calendar import monthrange
+from dataclasses import dataclass, replace
+from datetime import date
+from typing import Any
+
+import aiohttp
+
+from ..const import (
+    FLUVIUS_CARD_LABELS,
+    REGION_FLANDERS,
+)
+from ._links import on_page_site
+from ._parse import (
+    SIGN_CHARS,
+    excise_tier_bands,
+    formula_gives,
+    parse_sign,
+    require_every_area,
+    running_month_short_of_an_area,
+    stated_unit,
+    to_float,
+)
+from ._pdf import (
+    NL_MONTHS,
+    fetch_pdf_text_layout,
+    fetch_text,
+    is_transient_fetch_error,
+    printed_vat_rate,
+)
+from ._rates import (
+    Contract,
+    DynamicRates,
+    EnergyRates,
+    FixedRates,
+    InjectionRates,
+    SpotMonthlyRates,
+    TariffKind,
+)
+from ._settle import settled_injection
+from ._validity import archive_validity_check
+from .base import (
+    DsoOverlay,
+    ExtractorError,
+    SupplierExtractor,
+    SupplierSnapshot,
+    TaxOverlay,
+    with_vat_basis,
+)
+
+_LISTING_URL = "https://trevion.be/tariefkaarten/"
+_NUM = r"[\d.,]+"
+_MONTH = "(?:" + "|".join(NL_MONTHS) + ")"
+_MONTH_NUMBERS = {name: index for index, name in enumerate(NL_MONTHS, 1)}
+# The settled index a card names, with the month it belongs to: "De laatst
+# gekende waarde is deze van augustus 2026 (79,11 EUR/MWh)". The card prints
+# that sentence twice in the same words, once per parameter, so each reader
+# anchors on its own marker and the gap to it is bounded. Unanchored, the
+# feed-in reader takes the consumption sentence, which is a different index
+# entirely: 135,84 against 79,11 for August 2026. The sentence alone is also
+# what each formula's printed price is worked out at (``_QUOTED_INDEX_RE``).
+_KNOWN_VALUE = (
+    r"laatst\s+gekende\s+waarde\s+is\s+deze\s+van\s+"
+    rf"({_MONTH})\s+(20\d{{2}})\s*\(\s*(\d+(?:[.,]\d+)?)\s*\u20ac/MWh"
+)
+_PUBLISHED_INDEX_TAIL = r".{0,40}?" + _KNOWN_VALUE
+
+# The card spells its eight Fluvius areas exactly the way the shared table
+# does, so it uses the shared table. Six other providers alias it the same
+# way; this one arrived as a contributor PR carrying its own copy, and a copy
+# is a relabel away from being wrong on its own: the loop below adds no row
+# for a label that has moved, so seven areas keep their overlay and the eighth
+# prices without one.
+_DSOS = FLUVIUS_CARD_LABELS
+
+
+@dataclass(frozen=True)
+class _ContractDef:
+    id: str
+    label: str
+    kind: TariffKind
+    card_re: str
+    # The first day Trevion no longer sold it; see ``Contract.withdrawn``.
+    withdrawn: date | None = None
+    # The product that replaced it, whose cards go on naming the indices its
+    # last month settles on; see ``_settle_on_published_indices``.
+    successor: str | None = None
+
+
+_CONTRACTS = (
+    _ContractDef("groene_energie_vast", "Groene Energie Vast", "fixed", "VAST"),
+    _ContractDef(
+        "groene_stroom_flex", "Groene Stroom Flex", "spot_monthly", "Groene-Stroom-Flex"
+    ),
+    _ContractDef(
+        "groene_energie_dynamisch",
+        "Groene Energie Dynamisch",
+        "dynamic",
+        r"Groene-Energie-Dynamisch(?!-Plus)",
+    ),
+    _ContractDef(
+        "groene_energie_dynamisch_plus",
+        "Groene Energie Dynamisch Plus",
+        "dynamic",
+        "Groene-Energie-Dynamisch-Plus",
+    ),
+    # Replaced by FlexiO Max in October 2026: the listing carries no LifePowr
+    # card after September and its product pages redirect to FlexiO Max,
+    # whose card prints the same formula, fee and network rows.
+    _ContractDef(
+        "lifepowr",
+        "LifePowr by Trevion",
+        "spot_monthly",
+        "LifePowrByTrevion",
+        withdrawn=date(2026, 10, 1),
+        successor="flexio_max",
+    ),
+    _ContractDef("energreen", "Energreen by Trevion", "dynamic", "EnergreenByTrevion"),
+    # Launched in October 2026 for households steering their installations
+    # through a FlexiO EMS+. Priced like Groene Stroom Flex on its own
+    # coefficients; the flexibility fee the EMS+ earns is paid apart from the
+    # energy and feed-in prices, depends on the market, and is not modelled.
+    _ContractDef(
+        "flexio_max",
+        "FlexiO Max by Trevion",
+        "spot_monthly",
+        "FlexiO-Max-by-Trevion",
+    ),
+)
+_BY_ID = {item.id: item for item in _CONTRACTS}
+
+
+def _number(value: str) -> float:
+    return to_float(value.replace(".", "") if "," in value and "." in value else value)
+
+
+# A link on the listing, its "particulier" and the stamp it ends on.
+_HREF_RE = re.compile(r'href="([^" ]*)"', re.IGNORECASE)
+_PARTICULIER_RE = re.compile("particulier", re.IGNORECASE)
+_STAMP_TAIL_RE = re.compile(r"-(\d{6})(?:-\d+)?\.pdf", re.IGNORECASE)
+
+
+def _archive_links(html: str, contract: _ContractDef) -> list[tuple[str, str]]:
+    """``(url, YYYYMM)`` for every link on the listing to one of
+    ``contract``'s cards: the product's name, then "particulier", then the
+    stamp the path ends on, "-202610.pdf" or "-202610-1.pdf".
+
+    Each link is read once. As one pattern of three open runs, a long link
+    was read again for every place each of them could end. Where the first
+    name and the first "particulier" after it leave room for the stamp, any
+    others do too, and the stamp is the last one the path ends on, which
+    only its last two dashes can start.
+    """
+    card = re.compile(contract.card_re, re.IGNORECASE)
+    out: list[tuple[str, str]] = []
+    for href in _HREF_RE.finditer(html):
+        path = href.group(1)
+        name = card.search(path)
+        mark = None if name is None else _PARTICULIER_RE.search(path, name.end())
+        if mark is None:
+            continue
+        # Read as a link on the listing, on Trevion's own site alone.
+        url = on_page_site(_LISTING_URL, path)
+        if url is None:
+            continue
+        last = path.rfind("-", mark.end())
+        for dash in (last, path.rfind("-", mark.end(), last) if last >= 0 else -1):
+            stamp = _STAMP_TAIL_RE.fullmatch(path, dash) if dash >= 0 else None
+            if stamp is not None:
+                out.append((url, stamp.group(1)))
+                break
+    return out
+
+
+async def _find_card(
+    session: aiohttp.ClientSession, contract: _ContractDef, month: date | None = None
+) -> tuple[str, str]:
+    return _resolve_card(await fetch_text(session, _LISTING_URL), contract, month)
+
+
+def _resolve_card(
+    html: str, contract: _ContractDef, month: date | None = None
+) -> tuple[str, str]:
+    """The card URL and label for ``month`` out of an already-fetched listing.
+
+    Split from the fetch so that settling a month on the next month's card
+    costs one PDF and not a second round trip for the page both months are
+    listed on, which is the discipline ``ebem._archived_card`` keeps.
+    """
+    matches = _archive_links(html, contract)
+    if not matches:
+        raise ExtractorError(f"Trevion: no card found for {contract.id}")
+    # The listing's six digits are read as YYYYMM. Nothing guarantees they are
+    # one: a file named for an id rather than a month matches the pattern just
+    # as well, and date() then raises a bare ValueError that reaches the user as
+    # "month must be in 1..12" on the Repairs card that asks them to report a
+    # layout change. Skip what does not parse and say so if none does.
+    parsed = []
+    for path, stamp in matches:
+        try:
+            parsed.append((path, stamp, date(int(stamp[:4]), int(stamp[4:]), 1)))
+        except ValueError:
+            continue
+    if not parsed:
+        raise ExtractorError(
+            f"Trevion: no card found for {contract.id}; the listing's "
+            f"{len(matches)} match(es) name no month"
+        )
+    if month is not None:
+        parsed = [
+            item for item in parsed if item[2] == date(month.year, month.month, 1)
+        ]
+        if not parsed:
+            raise ExtractorError(
+                f"Trevion: no archived card for {contract.id} {month:%Y-%m}"
+            )
+    path, stamp, _ = max(parsed, key=lambda item: item[2])
+    return path, f"{stamp[:4]}-{stamp[4:]}"
+
+
+async def fetch(
+    session: aiohttp.ClientSession, contract_id: str, region: str
+) -> SupplierSnapshot:
+    contract = _BY_ID.get(contract_id)
+    if contract is None or region != REGION_FLANDERS:
+        raise ExtractorError(f"unknown or unsupported Trevion contract {contract_id!r}")
+    url, label = await _find_card(session, contract)
+    text = await fetch_pdf_text_layout(session, url)
+    snap = parse_snapshot(contract_id, text, url, label)
+    # Here and not in the reader: a past month's card keeps a short table.
+    require_every_area("Trevion", snap, _DSOS.values())
+    return snap
+
+
+async def fetch_for_month(
+    session: aiohttp.ClientSession, contract_id: str, region: str, year_month: date
+) -> SupplierSnapshot | None:
+    contract = _BY_ID.get(contract_id)
+    if contract is None or region != REGION_FLANDERS:
+        return None
+    try:
+        html = await fetch_text(session, _LISTING_URL)
+        url, label = _resolve_card(html, contract, year_month)
+        text = await fetch_pdf_text_layout(session, url)
+        snap = archive_validity_check(
+            parse_snapshot(contract_id, text, url, label), text, year_month
+        )
+        # None means the check refused the card, a CDN serving some other
+        # month's file. Nothing to settle, and nothing to serve.
+        if snap is None or running_month_short_of_an_area(
+            snap.dsos, _DSOS.values(), year_month
+        ):
+            return None
+        return await _settle_on_published_indices(
+            session, contract, snap, year_month, html
+        )
+    except ExtractorError as err:
+        # A timeout, a reset or a 5xx says nothing about the month: raise,
+        # so the month cache retries it instead of caching it as absent.
+        if is_transient_fetch_error(str(err)):
+            raise
+        return None
+
+
+async def _settle_on_published_indices(
+    session: aiohttp.ClientSession,
+    contract: _ContractDef,
+    snap: SupplierSnapshot,
+    year_month: date,
+    html: str,
+) -> SupplierSnapshot:
+    """Bill an archived month at the two indices Trevion publishes for it.
+
+    The monthly card prices both legs on a Belpex mean of the delivery month,
+    which is not known while that month runs: what it prints is the last value
+    published, i.e. the month before. The following month's card names this
+    month's, with the month spelled out, so an archived month takes both
+    figures from it.
+
+    Only the legs that are indexed ask. The fixed and dynamic contracts are
+    settled by neither, so they never pay for the extra card; the monthly one
+    carries an RLP-indexed energy leg and an SPP-indexed credit and takes both.
+    A withdrawn product has no following card for its last month, so that one
+    is read off its successor's, which names the same two market indices.
+    While the following card is not out, or names another month or no index
+    for a leg, the month is flagged ``provisional``, so the month cache re-asks
+    after its TTL and the archive walk leaves the row absent rather than
+    filing an estimate as a closed month's fact.
+
+    Both means this replaces are near misses rather than the same number: the
+    card defines each index on "de Belgische kwartierprijzen", the quarter-hour
+    prices, and the integration computes on hourly ones. Over the 2026 months
+    that put the credit's index about 0,9 EUR/MWh high and the energy leg's
+    0,19 low.
+    """
+    energy = snap.energy
+    injection = snap.injection
+    settles_energy = isinstance(energy, SpotMonthlyRates) and energy.rlp_indexed
+    settles_injection = injection is not None and injection.spp_indexed
+    if not settles_energy and not settles_injection:
+        return snap
+    following = date(
+        year_month.year + (year_month.month == 12), year_month.month % 12 + 1, 1
+    )
+    try:
+        try:
+            url, _label = _resolve_card(html, contract, following)
+        except ExtractorError:
+            if contract.successor is None:
+                raise
+            url, _label = _resolve_card(html, _BY_ID[contract.successor], following)
+        text = await fetch_pdf_text_layout(session, url)
+    except ExtractorError as err:
+        # A timeout or a 5xx says nothing about the month, so let the month
+        # cache retry it rather than freeze an estimate behind it.
+        if is_transient_fetch_error(str(err)):
+            raise
+        return replace(snap, provisional=True)
+    month = date(year_month.year, year_month.month, 1)
+    changed: dict[str, Any] = {}
+    if isinstance(energy, SpotMonthlyRates) and energy.rlp_indexed:
+        found = published_rlp_index(text)
+        # The month is checked, not assumed: a card that skipped a month would
+        # otherwise settle this one on somebody else's index.
+        if found is not None and found[0] == month:
+            changed["energy"] = replace(energy, index_realised=found[1])
+    if injection is not None and injection.spp_indexed:
+        found = published_spp_index(text)
+        if found is not None and found[0] == month:
+            changed["injection"] = settled_injection(injection, found[1])
+    if (settles_energy and "energy" not in changed) or (
+        settles_injection and "injection" not in changed
+    ):
+        # The card filed as the next one names another month, as a first
+        # upload made before this month's indices were known does, or no
+        # index at all. Asked again, never filed as settled on the estimate.
+        return replace(snap, provisional=True, **changed)
+    return replace(snap, **changed)
+
+
+# Every residential card the listing links, by the product its file is named
+# after: "Tariefkaart-<product>-Particulier-YYYYMM.pdf", and the older
+# "Trevion-tariefkaart-<product>-particulier-YYYYMM.pdf" Vast still uses.
+_LISTED_PRODUCT_RE = re.compile(
+    r'href="[^"]*/(?:Trevion-tariefkaart-|Tariefkaart-)([A-Za-z0-9-]+?)'
+    r'-particulier-\d{6}(?:-\d+)?\.pdf"',
+    re.IGNORECASE,
+)
+# Listed beside the electricity cards and not an electricity product.
+_NOT_ELECTRICITY = frozenset({"Gas-Flex"})
+
+
+async def discover(session: aiohttp.ClientSession) -> set[str]:
+    """The residential products on the listing, by contract id where one is
+    registered and by the card's product name where none is, so live_check
+    reports a new product by the name Trevion gives it.
+
+    FlexiO Max was on the listing a day before anything noticed it, because
+    nothing here read the listing for anything but the cards it already knew.
+    """
+    try:
+        html = await fetch_text(session, _LISTING_URL)
+    except ExtractorError:
+        return set()
+    found: set[str] = set()
+    for product in set(_LISTED_PRODUCT_RE.findall(html)) - _NOT_ELECTRICITY:
+        known = next(
+            (
+                contract.id
+                for contract in _CONTRACTS
+                if re.search(contract.card_re, f"-{product}-", re.IGNORECASE)
+            ),
+            None,
+        )
+        found.add(known or product)
+    return found
+
+
+async def probe(
+    session: aiohttp.ClientSession, contract_id: str, region: str
+) -> str | None:
+    """The card URL the fetcher would resolve for ``contract_id``.
+
+    The listing sends neither ``Last-Modified`` nor ``ETag``, so a header
+    probe always came back ``None`` and a new card waited on the 24 h TTL.
+    The filename carries the month and WordPress's ``-N`` re-upload suffix,
+    so the URL is the signal instead. ``None`` on a failed resolve, so the
+    TTL takes over.
+    """
+    contract = _BY_ID.get(contract_id)
+    if contract is None or region != REGION_FLANDERS:
+        return None
+    try:
+        url, _label = await _find_card(session, contract)
+    except ExtractorError:
+        return None
+    return url
+
+
+def _extract_validity(text: str) -> date | None:
+    match = re.search(rf"{_MONTH}\s+(20\d{{2}})", text, re.IGNORECASE)
+    if not match:
+        return None
+    month_name = match.group(0).split()[0].lower()
+    year = int(match.group(1))
+    month = _MONTH_NUMBERS[month_name]
+    return date(year, month, monthrange(year, month)[1])
+
+
+def _published_index(text: str, marker: str) -> tuple[date, float] | None:
+    """The settled value the card names for ``marker``, as ``(month, EUR/kWh)``."""
+    match = re.search(
+        re.escape(marker) + _PUBLISHED_INDEX_TAIL, text, re.IGNORECASE | re.DOTALL
+    )
+    if match is None:
+        return None
+    month = _MONTH_NUMBERS[match.group(1).lower()]
+    return date(int(match.group(2)), month, 1), _number(match.group(3)) / 1000.0
+
+
+def published_rlp_index(text: str) -> tuple[date, float] | None:
+    """The settled Belpex_RLP_VL a card names, which its energy leg bills at."""
+    return _published_index(text, "Belpex_RLP_VL")
+
+
+def published_spp_index(text: str) -> tuple[date, float] | None:
+    """The settled Belpex_SPP_BE a card names, which its credit bills at.
+
+    Trevion prints the month each value belongs to, unlike EBEM's card, which
+    names only "vorige maand". From May 2026 on the two suppliers publish
+    identical figures on both indices (79,11 and 135,84 for August 2026),
+    which is what says these are the market's settled values rather than house
+    numbers; over the three months before that they differ by up to 1,3, so
+    each supplier is still settled on its own published figure.
+
+    The card also says what the value is a mean OF: "het gewogen gemiddelde
+    van de Belgische kwartierprijzen", the quarter-hour prices. A mean
+    computed on hourly ones is a near miss rather than the same number.
+    """
+    return _published_index(text, "Belpex_SPP_BE")
+
+
+# A figure of the meter row with any sign printed ahead of it. No card on file
+# prints a negative one, but a feed-in formula under zero in a month of low
+# solar prices gives one, and the figure is compared with the formula as the
+# negative it is (``_require_printed``). It is never credited: the monthly
+# credit is the formula at the SPP the card quotes, and a dynamic card's is
+# the formula at each quarter hour.
+# The sign and the blanks after it are one optional group, so a match starts
+# only at a sign or a digit: a sign and blanks matched apart would let every
+# blank of a long run start a scan of the rest of it.
+_ROW_FIGURE_RE = re.compile(rf"(?:([{SIGN_CHARS}])\s*+)?({_NUM})")
+_METER_ROW_RE = re.compile(
+    r"^(?:Tweevoudig|SMR3)\s+(.+)$", re.IGNORECASE | re.MULTILINE
+)
+
+
+def _meter_row(text: str) -> tuple[int, list[float]]:
+    """Where the figures of the meter table's row start, and each figure with
+    its sign: the energy and feed-in prices, then the green, CHP and
+    yearly-fee columns, which Vast prints alone. ``(-1, [])`` where the card
+    prints no such row."""
+    row = _METER_ROW_RE.search(text)
+    if row is None:
+        return -1, []
+    return row.start(1), [
+        parse_sign(sign) * _number(figure)
+        for sign, figure in _ROW_FIGURE_RE.findall(row.group(1))
+    ]
+
+
+def _meter_shared_values(text: str) -> tuple[float, float, float]:
+    """Return the green, CHP, and yearly-fee columns from the meter table."""
+    _at, values = _meter_row(text)
+    if len(values) >= 5:
+        return values[2], values[3], values[4]
+    if len(values) == 3:
+        return values[0], values[1], values[2]
+
+    table = re.sub(r"\s+", " ", text)
+    reordered = re.search(
+        rf"Enkelvoudig\s+{_NUM}\s+{_NUM}\s+({_NUM})\s+({_NUM})\s+({_NUM})\s+Tweevoudig",
+        table,
+        re.IGNORECASE,
+    )
+    if reordered:
+        green, chp, fee = (_number(value) for value in reordered.groups())
+        return green, chp, fee
+    raise ExtractorError("Trevion: shared meter costs not found")
+
+
+def _fee(text: str) -> float:
+    return _meter_shared_values(text)[2]
+
+
+# The unit of the meter table's price columns, in the headings above them:
+# "Afname (c€/kWh) Injectie (c€/kWh)" on every card on file, February to
+# November 2026, in both text orders, and nowhere else on the card. They end
+# 109 to 166 characters ahead of the first figure under them, the Vast
+# card's "Enkelvoudig" row or the meter row of the others, and start 181 at
+# most, where the card has barely begun. A card heading either column in
+# another unit, or no longer heading it, prints figures this reads ten or a
+# hundred times out, formula and printed price alike, and is refused.
+_COLUMN_UNIT_RES = {
+    column: re.compile(rf"{column}\s*\(([^()]{{0,20}})\)")
+    for column in ("Afname", "Injectie")
+}
+_COLUMN_UNIT = "c€/kWh"
+_COLUMN_UNIT_REACH = 300
+
+
+def _require_column_units(text: str, at: int) -> None:
+    """Refuse a meter table whose price columns, read from ``at``, are not
+    headed in c€/kWh."""
+    for column, pattern in _COLUMN_UNIT_RES.items():
+        unit = stated_unit(text, pattern, (at, at), before=_COLUMN_UNIT_REACH)
+        if unit != _COLUMN_UNIT:
+            raise ExtractorError(
+                f"Trevion: the {column} column is stated in {unit or 'no unit'}, "
+                f"not {_COLUMN_UNIT}"
+            )
+
+
+def _extract_fixed(text: str) -> tuple[FixedRates, InjectionRates]:
+    table = re.sub(r"\s+", " ", text)
+    single = re.search(rf"Enkelvoudig\s+({_NUM})\s+({_NUM})", table, re.IGNORECASE)
+    peak = re.search(rf"Piekuren\s+({_NUM})\s+({_NUM})", table, re.IGNORECASE)
+    offpeak = re.search(rf"Daluren\s+({_NUM})\s+({_NUM})", table, re.IGNORECASE)
+    night = re.search(rf"Exclusief\s+Nacht\s+({_NUM})", table, re.IGNORECASE)
+    if not single or not peak or not offpeak or not night:
+        raise ExtractorError("Trevion: fixed energy table not found")
+    _require_column_units(table, single.start(1))
+    return (
+        FixedRates(
+            single=_number(single.group(1)) / 100.0,
+            peak=_number(peak.group(1)) / 100.0,
+            offpeak=_number(offpeak.group(1)) / 100.0,
+            exclusive_night=_number(night.group(1)) / 100.0,
+            yearly_fixed_fee=_fee(text),
+        ),
+        InjectionRates(
+            current=_number(single.group(2)) / 100.0,
+            peak=_number(peak.group(2)) / 100.0,
+            offpeak=_number(offpeak.group(2)) / 100.0,
+            bi_hourly=True,
+            # The table holding both columns is headed "1 jaar vast", so the
+            # feed-in price is fixed with the consumption price.
+            fixed_for_term=bool(_FIXED_FOR_TERM.search(table)),
+        ),
+    )
+
+
+# The row label between the column headings and the first price row, on
+# every Vast card: "Afname (c€/kWh) Injectie (c€/kWh) ... 1 jaar vast
+# Enkelvoudig ...".
+_FIXED_FOR_TERM = re.compile(
+    r"Injectie\s*\(c€/kWh\).{0,200}?\b\d+\s+jaar\s+vast\b", re.IGNORECASE
+)
+
+
+# The card's title line: "september 2026 – Incl. 6% BTW".
+_VAT_RE = re.compile(r"Incl\.\s*(\d+)\s*%\s*BTW", re.IGNORECASE)
+
+# The formulas state no unit of their own, so one restated on another scale
+# would read clean. Each must give back the price the meter row prints for
+# it, energy then feed-in ("Tweevoudig 22,28 10,94" on the monthly cards,
+# "SMR3 21,03 12,02" on the dynamic ones), at the index quoted in the sentence
+# before it: "De laatst gekende waarde is deze van oktober 2026 (182,447
+# €/MWh). De tariefformule elektriciteit is (0,107* Belpex_RLP_VL+1,5) *1,06."
+# On every archived card, February to November 2026, that sentence starts 92
+# to 104 characters ahead of its formula, and the energy's ends 391 or more
+# ahead of the feed-in formula, out of reach. The worst gap on them is 0,43 %,
+# a feed-in printed at 0,27 c€/kWh; the energy's is 0,04 %. Read ten times
+# off, a factor misses by 77 % or more. That 0,27 is April 2026's SPP of 29,17
+# EUR/MWh, and 0,095 x SPP - 2,5 crosses zero at 26,3: a feed-in printed that
+# close to zero is out by more than any share of it, so a gap of 0,01 c€/kWh,
+# the hundredth the row prints to, is allowed outright. Every archived figure
+# lies within 0,0052 c€/kWh of its formula, half that hundredth from the
+# row's rounding and a little from the index's, and the other half of the
+# floor keeps an exact tie, 0,065 printed 0,07 at an SPP of 27,00, from
+# failing on floating point.
+_QUOTED_INDEX_RE = re.compile(_KNOWN_VALUE, re.IGNORECASE)
+_QUOTED_INDEX_REACH = 200
+_FORMULA_TOLERANCE = 0.02
+_FORMULA_FLOOR = 0.0001
+
+
+def _require_printed(
+    text: str,
+    kind: str,
+    energy: tuple[float, float, int],
+    feed_in: tuple[float, float, int],
+) -> None:
+    """Refuse a ``kind`` card whose energy or feed-in formula, each a
+    ``(factor, base, offset)`` in EUR/kWh on an index in EUR/kWh, does not
+    give back the price the meter row prints for it at the index the
+    sentence before the formula quotes. A card printing no such price or
+    quoting no index is refused too: every card on file does both."""
+    row_at, row = _meter_row(text)
+    if len(row) < 5:
+        raise ExtractorError(
+            f"Trevion: the {kind} card prints no price for its formulas"
+        )
+    _require_column_units(text, row_at)
+    for column, (name, (factor, base, at)) in enumerate(
+        (("energy", energy), ("injection", feed_in))
+    ):
+        quoted = _QUOTED_INDEX_RE.search(text, max(0, at - _QUOTED_INDEX_REACH), at)
+        if quoted is None or not formula_gives(
+            row[column] / 100.0,
+            factor,
+            _number(quoted.group(3)) / 1000.0,
+            base,
+            tolerance=_FORMULA_TOLERANCE,
+            floor=_FORMULA_FLOOR,
+        ):
+            raise ExtractorError(
+                f"Trevion: the {kind} {name} formula does not give the price "
+                "its card prints"
+            )
+
+
+def _extract_formula(text: str, marker: str) -> tuple[float, float, int]:
+    """The formula's factor and base, grossed by the multiplier it prints,
+    and where it starts.
+
+    "(0,107* Belpex 15 MTU+1,3) *1,06": the card applies its VAT inside the
+    formula, so that multiplier is read rather than assumed, and a card
+    printing another rate is priced at it.
+    """
+    match = re.search(
+        rf"\(({_NUM})\*\s*{marker}\s*([{SIGN_CHARS}])\s*({_NUM})\)\s*\*\s*(1[.,]\d+)",
+        text,
+        re.IGNORECASE,
+    )
+    if not match:
+        raise ExtractorError(f"Trevion: formula not found for {marker}")
+    # The card prints its formula in c€/kWh against a Belpex quoted in
+    # EUR/MWh: "(0,107* Belpex 15 MTU+1,3) *1,06", and the table beside it
+    # reads 15,96 c€/kWh at the 128,55 EUR/MWh the card itself quotes. Against
+    # a spot in EUR/kWh the factor therefore carries x1000/100 = x10, and the
+    # base divides cents into EUR. Both were short by that ten, which priced
+    # the commodity leg of every Trevion dynamic and monthly contract at a
+    # tenth of the card: 1,5958 c€/kWh where the card says 15,96.
+    vat = _number(match.group(4))
+    factor = _number(match.group(1)) * 10.0 * vat
+    base = (
+        (_number(match.group(3)) if match.group(2) == "+" else -_number(match.group(3)))
+        / 100.0
+        * vat
+    )
+    return factor, base, match.start()
+
+
+def _after(text: str, first: str, then: str) -> int | None:
+    """Where the text past the first ``then`` after the first ``first``
+    starts, both read regardless of case, or ``None`` where either is missing.
+
+    The gap between the two stops at the next ``first``, which finds the
+    same ``then``. Left open, a card with nothing after them was read to its
+    end again from every later ``first`` and every later ``then``.
+    """
+    head = re.search(
+        rf"{first}(?:(?!{first}).)*?{then}", text, re.IGNORECASE | re.DOTALL
+    )
+    return None if head is None else head.end()
+
+
+def _injection_formula(text: str, index: str) -> re.Match[str] | None:
+    """The feed-in formula over ``index``: the first after the first
+    "formule" past the first "teruglevering".
+
+    Read from where its number starts, since from each digit of a long one
+    the number was read again. The multiplication sign moved from "x" to
+    "*" between the May and the June 2026 monthly cards; both are read.
+    """
+    tail = _after(text, "teruglevering", "formule")
+    if tail is None:
+        return None
+    return re.compile(
+        rf"(?<![\d.,])({_NUM})\s*[*x×]\s*{index}\s*([{SIGN_CHARS}])\s*({_NUM})",
+        re.IGNORECASE,
+    ).search(text, tail)
+
+
+def _extract_monthly(text: str) -> tuple[SpotMonthlyRates, InjectionRates]:
+    marker = "Belpex_RLP_VL"
+    factor, base, at = _extract_formula(text, marker)
+    injection = _injection_formula(text, "Belpex_SPP_BE")
+    if not injection:
+        raise ExtractorError("Trevion: monthly injection formula not found")
+    tail = _after(text, "Belpex_SPP_BE parameter", "laatst gekende waarde")
+    known_index = (
+        None
+        if tail is None
+        else re.compile(rf"\(({_NUM})\s*€/MWh\)", re.IGNORECASE).search(text, tail)
+    )
+    if not known_index:
+        raise ExtractorError("Trevion: latest SPP index not found")
+    inj_factor = _number(injection.group(1)) * 10.0
+    inj_base = (
+        _number(injection.group(3))
+        if injection.group(2) == "+"
+        else -_number(injection.group(3))
+    ) / 100.0
+    current = inj_factor * (_number(known_index.group(1)) / 1000.0) + inj_base
+    _require_printed(
+        text, "monthly", (factor, base, at), (inj_factor, inj_base, injection.start(1))
+    )
+    return SpotMonthlyRates(
+        factor=factor,
+        base=base,
+        rlp_indexed=True,
+        rlp_blend="flanders",
+        yearly_fixed_fee=_fee(text),
+    ), InjectionRates(
+        current=current, factor=inj_factor, base=inj_base, spp_indexed=True
+    )
+
+
+# The quarter-hour index of the dynamic cards. The October 2026 cards call it
+# "EPEX Spot", "gebaseerd op de kwartier notering van de Day Ahead Belpex
+# Baseload", where every card before them said "Belpex 15 MTU"; the formulas
+# and the coefficients are unchanged, so either name is the same index.
+_QUARTER_HOUR_INDEX = r"(?:Belpex 15 MTU|EPEX Spot)"
+
+
+def _extract_dynamic(text: str) -> tuple[DynamicRates, InjectionRates]:
+    factor, base, at = _extract_formula(text, _QUARTER_HOUR_INDEX)
+    injection = _injection_formula(text, _QUARTER_HOUR_INDEX)
+    if not injection:
+        raise ExtractorError("Trevion: dynamic injection formula not found")
+    inj_factor = _number(injection.group(1)) * 10.0
+    inj_base = (
+        _number(injection.group(3))
+        if injection.group(2) == "+"
+        else -_number(injection.group(3))
+    ) / 100.0
+    _require_printed(
+        text, "dynamic", (factor, base, at), (inj_factor, inj_base, injection.start(1))
+    )
+    return DynamicRates(
+        factor=factor, base=base, quarter_hourly=True, yearly_fixed_fee=_fee(text)
+    ), InjectionRates(factor=inj_factor, base=inj_base)
+
+
+def _extract_dsos(text: str) -> dict[str, DsoOverlay]:
+    """The digital-meter network table.
+
+    An area whose row does not read is left out. ``fetch`` refuses a live
+    card short of an area and ``fetch_for_month`` the running month's
+    (``require_every_area``), while a past month's card keeps its energy and
+    the month cache bills the missing area on the nearest card of the same
+    calendar year that prints it. A table nothing could be read from raises.
+    """
+    start = text.find("Digitale Meter")
+    end = text.find("Analoge Meter", start)
+    section = text[start : end if end >= 0 else len(text)]
+    out: dict[str, DsoOverlay] = {}
+    for label, key in _DSOS.items():
+        match = re.search(
+            rf"{re.escape(label)}\s+({_NUM})\s+({_NUM})\s+({_NUM})\s+({_NUM})",
+            section,
+            re.IGNORECASE,
+        )
+        if match:
+            out[key] = DsoOverlay(
+                distribution_single=_number(match.group(2)) / 100.0,
+                distribution_exclusive_night=_number(match.group(3)) / 100.0,
+                transport=0.0,
+                capacity_eur_per_kw_year=_number(match.group(1)),
+                data_management_per_year=_number(match.group(4)),
+            )
+    if not out:
+        raise ExtractorError("Trevion: digital-meter DSO table not found")
+    return out
+
+
+# A c€/kWh figure as this card prints one: the tier labels of the older
+# excise block ("0-3 MWh") carry no decimal comma, so this cannot read one of
+# them as a rate.
+_DEC = r"\d+,\d+"
+# Tried in order, first match wins, the way regional_tax_overlay does it. The
+# GSC and WKK levies keep this parser off that helper: Trevion prints them in
+# the meter table, not the tax block (_meter_shared_values).
+_EXCISE_ROWS = (
+    # The flat row every card carries since August 2026, value on its own line.
+    re.compile(
+        rf"^Bijzondere accijns[^\n]*?\)[^\S\n]+({_DEC})[^\S\n]*$",
+        re.IGNORECASE | re.MULTILINE,
+    ),
+    # The degressive block older cards print, from its 0-3 MWh row; the layout
+    # reader keeps each tier's value on its row, so the block is read whole.
+    re.compile(rf"^0-3\s*MWh[^\S\n]+({_DEC})", re.IGNORECASE | re.MULTILINE),
+    # The plain reader prints the four labels and then the four values in the
+    # same order, so the first figure after the last label is that same tier.
+    re.compile(rf"50-1000\s*MWh\s+({_DEC})", re.IGNORECASE),
+)
+
+
+def _extract_taxes(text: str) -> TaxOverlay:
+    contribution = re.search(
+        rf"^Bijdrage op de energie[^\n]*?\)\s+({_NUM})\s*$",
+        text,
+        re.IGNORECASE | re.MULTILINE,
+    )
+    excise = next((m for p in _EXCISE_ROWS if (m := p.search(text))), None)
+    excise_value = excise.group(1) if excise else None
+    # The gap to the figure stops at the next heading: a card of headings
+    # with no figure after them was read to its end from each.
+    fund = re.search(
+        r"Bijdrage energiefonds met domicilie"
+        r"(?:(?!Bijdrage energiefonds met domicilie).)*?"
+        rf"\(\d+\)\s+({_NUM})",
+        text,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if excise_value is None:
+        raise ExtractorError("Trevion: tax block not found")
+    green, chp, _ = _meter_shared_values(text)
+    # The contribution and the domiciled energiefonds row both print 0 since
+    # August 2026 and are optional, the policy regional_tax_overlay holds for
+    # every other Flemish card: the levy was abolished on 2026-08-01 and the
+    # other suppliers answered by deleting the row, so a card without it is
+    # the abolished levy, not a layout drift, and must not take every
+    # contract offline the day Trevion does the same.
+    federal_excise = _number(excise_value) / 100.0
+    return TaxOverlay(
+        federal_excise=federal_excise,
+        # The layout reader keeps each tier's value on its row; the plain one
+        # prints them apart and is read for the 0-3 MWh rate alone.
+        federal_excise_bands=(
+            excise_tier_bands(
+                text, federal_excise, start=excise.start(), within=excise.end()
+            )
+            if excise is not None
+            else None
+        ),
+        energy_contribution=(
+            _number(contribution.group(1)) / 100.0 if contribution else 0.0
+        ),
+        flanders_renewables=(green + chp) / 100.0,
+        energy_fund_eur_per_month=_number(fund.group(1)) if fund else 0.0,
+        vat_rate=0.0,
+    )
+
+
+def parse_snapshot(
+    contract_id: str,
+    text: str,
+    source_url: str = _LISTING_URL,
+    publication_label: str = "",
+) -> SupplierSnapshot:
+    contract = _BY_ID.get(contract_id)
+    if contract is None:
+        raise ExtractorError(f"unknown Trevion contract {contract_id!r}")
+    energy: EnergyRates
+    injection: InjectionRates
+    if contract.kind == "fixed":
+        energy, injection = _extract_fixed(text)
+    elif contract.kind == "spot_monthly" and "Belpex_RLP_VL" in text:
+        energy, injection = _extract_monthly(text)
+    else:
+        # The dynamic products, and LifePowr's cards up to May 2026: it
+        # billed per quarter-hour on Belpex 15 MTU before it became a monthly
+        # Belpex_RLP_VL product in June, and a past month is stored as the
+        # product it was.
+        energy, injection = _extract_dynamic(text)
+    return with_vat_basis(
+        SupplierSnapshot(
+            supplier="trevion",
+            contract=contract_id,
+            energy=energy,
+            injection=injection,
+            dsos=_extract_dsos(text),
+            taxes=_extract_taxes(text),
+            source_url=source_url,
+            publication_label=publication_label,
+            valid_until=_extract_validity(text),
+        ),
+        printed_vat_rate(text, _VAT_RE),
+        # Grossed by the multiplier its formula prints, not by this rate.
+        grossed=False,
+    )
+
+
+EXTRACTOR = SupplierExtractor(
+    id="trevion",
+    label="Trevion",
+    sweep_cost_s=8.0,
+    settles_on_next_card=True,
+    contracts=tuple(
+        Contract(
+            id=item.id,
+            label=item.label,
+            kind=item.kind,
+            regions=frozenset({REGION_FLANDERS}),
+            withdrawn=item.withdrawn,
+        )
+        for item in _CONTRACTS
+    ),
+    fetch=fetch,
+    probe=probe,
+    fetch_for_month=fetch_for_month,
+)
+
+__all__ = [
+    "EXTRACTOR",
+    "discover",
+    "fetch",
+    "fetch_for_month",
+    "parse_snapshot",
+    "probe",
+]

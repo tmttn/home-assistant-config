@@ -1,0 +1,580 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""energie.be gas tariff card extractor.
+
+energie.be sells two residential gas products, in Flanders only, each on a
+one-year term: Gas particulier online (variable) and Gas vast particulier
+online (fixed). Neither card has a document key of its own. The contracts
+endpoint the site itself reads names the current card of each product:
+
+    https://www.energie.be/api/v1/data/contracts
+        contracts[tariffType == "Variable" | "Fixed"].contractTypeNgRes.tariffDocument
+
+(contractTypeElRes is the electricity card). The Dynamic contract has no gas
+card: the site says a gas contract beside it is variable.
+
+The archive is a second endpoint, one row per month with its gas card:
+
+    https://www.energie.be/api/v1/data/tariff-cards
+        ?isProfessional=false&tariffType=<Variable|Fixed>
+        tariffCards[date == "YYYY/MM"].gasDocument
+
+It is published in arrears, so the running month is never on it. Rows go
+back to November 2023, but the cards of January to November 2025 are page
+images without a text layer and the older ones print the Fluvius areas that
+no longer exist, so the readable archive starts at December 2025.
+
+The variable card bills the delivery month at (factor x TTF_RLP + base)
+c EUR/kWh excluding VAT, TTF_RLP being that month's RLP-weighted TTF
+day-ahead mean in c EUR/kWh, so it is only known once the month is over. The
+factor moves from card to card (1,025 in August 2026, 1,014 in September),
+which is why a cohort's own card matters. The printed price is the formula at
+a VNR estimate of the index ("Weergegeven prijs op basis van de ingeschatte
+index (VNR methodologie): 6,24 c EUR/kWh"), not at a known value.
+
+energie.be publishes the realised TTF_RLP month by month in its indexation
+parameters document, which the document key ``?key=Indexation`` redirects to.
+
+Every figure on the card is VAT inclusive ("Alle prijzen zijn inclusief btw
+tenzij anders vermeld") except the formula, and the card never states the
+rate. The formula is grossed by the residential rate the law sets, which is
+what reproduces the price the card prints.
+
+From November 2026 the cards come in a new template: the month on a title
+line of its own, the price and the standing charge in one row, which the
+layout reading runs together out of order, and two network labels away
+from their figures. Such a card is read off its plain text, a second
+download.
+
+energie.be publishes TTF_RLP in a document of its own, which can run late.
+It also adds a month's value to the file it already serves, as on
+3 November 2026 for October: the new cell then comes out of the plain text
+after the page's footer, away from its row, so the document is read by
+position, where the cell sits in its row. For the months after the newest
+value the table carries Trevion's TTF_RLP as a stand-in, the same index,
+which agreed with energie.be's within 0,05 EUR/MWh in every month from
+December 2024 to September 2026; a month priced on it stays provisional
+until energie.be publishes its own.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass
+from datetime import date
+from typing import Any
+
+import aiohttp
+
+from ..const import REGION_FLANDERS, VAT_RATE_REDUCED
+from . import trevion
+from ._network import (
+    FLUVIUS_LABELS,
+    METERING,
+    T1_FIXED,
+    T1_PROP,
+    T2_FIXED,
+    T2_PROP,
+    TRANSPORT,
+    excise_bands,
+    printed_contribution,
+    read_dsos,
+    require_region,
+)
+from ._parse import (
+    SIGN_CHARS,
+    fold_accents,
+    formula_gives,
+    month_date,
+    parse_sign,
+    require_contract,
+    to_float,
+)
+from ._pdf import (
+    MONTH_NAMES,
+    fetch_pdf_text,
+    fetch_pdf_text_layout,
+    fetch_text,
+    on_site,
+    parse_json,
+)
+from ._rates import Contract, FixedRates, IndexedRates, TariffKind
+from ._validity import end_of_month, month_card
+from .base import (
+    DsoOverlay,
+    ExtractorError,
+    IndexTable,
+    SupplierExtractor,
+    SupplierSnapshot,
+    TaxOverlay,
+    stand_in_name,
+)
+
+_CONTRACTS_URL = "https://www.energie.be/api/v1/data/contracts"
+_ARCHIVE_URL = "https://www.energie.be/api/v1/data/tariff-cards"
+_INDEX_URL = "https://www.energie.be/api/v1/data/document?key=Indexation"
+# The storage account the endpoints link every card on.
+_STORAGE = "https://energie.blob.core.windows.net"
+# The endpoints answer a few kB: 3 kB for the contracts and 11 kB for each
+# archive on 6 November 2026, an archive a row longer each month.
+_JSON_LIMIT = 256 * 1024
+
+# The index the variable card names, and the name fetch_index files it under.
+_INDEX = "TTF_RLP"
+
+_REGIONS = frozenset({REGION_FLANDERS})
+
+
+@dataclass(frozen=True)
+class _ContractDef:
+    contract_id: str
+    label: str
+    kind: TariffKind
+    tariff_type: str  # the endpoints' tariffType
+
+
+_CONTRACTS: tuple[_ContractDef, ...] = (
+    _ContractDef("energiebe_variable", "energie.be Gas particulier online", "indexed", "Variable"),
+    _ContractDef("energiebe_fixed", "energie.be Gas vast particulier online", "fixed", "Fixed"),
+)
+_CONTRACTS_BY_ID = {c.contract_id: c for c in _CONTRACTS}
+
+
+def _json(body: str, what: str) -> dict[str, Any]:
+    """The endpoint's answer as a JSON object, or raise."""
+    payload = parse_json(body, f"energie.be: {what}")
+    if not isinstance(payload, dict):
+        raise ExtractorError(f"energie.be: {what} is not a JSON object")
+    return payload
+
+
+def _card_link(value: object) -> str | None:
+    """A card link the endpoints give, where it is on energie.be's storage.
+
+    All 154 links the two endpoints gave on 6 November 2026, back to
+    November 2023, were on that host, as was every card the card archive
+    read. A link to another host is passed over like a missing one: the
+    endpoint is not to choose where Home Assistant goes.
+    """
+    return value if isinstance(value, str) and on_site(value, _STORAGE) else None
+
+
+async def _current_card_url(session: aiohttp.ClientSession, contract: _ContractDef) -> str:
+    payload = _json(
+        await fetch_text(session, _CONTRACTS_URL, limit=_JSON_LIMIT), "contracts endpoint"
+    )
+    rows = payload.get("contracts")
+    for row in rows if isinstance(rows, list) else ():
+        if not isinstance(row, dict) or row.get("tariffType") != contract.tariff_type:
+            continue
+        gas = row.get("contractTypeNgRes")
+        url = _card_link(gas.get("tariffDocument")) if isinstance(gas, dict) else None
+        if url is not None:
+            return url
+    raise ExtractorError(f"energie.be: no {contract.tariff_type} gas card in the contracts list")
+
+
+async def _archive_card_url(
+    session: aiohttp.ClientSession, contract: _ContractDef, year_month: date
+) -> str | None:
+    """The archived gas card of ``year_month``, or None when the archive
+    lists no such month."""
+    body = await fetch_text(
+        session,
+        _ARCHIVE_URL,
+        params={"isProfessional": "false", "tariffType": contract.tariff_type},
+        limit=_JSON_LIMIT,
+    )
+    rows = _json(body, "tariff card archive").get("tariffCards")
+    if not isinstance(rows, list):
+        raise ExtractorError("energie.be: tariff card archive has no tariffCards list")
+    wanted = f"{year_month.year:04d}/{year_month.month:02d}"
+    for row in rows:
+        if isinstance(row, dict) and row.get("date") == wanted:
+            return _card_link(row.get("gasDocument"))
+    return None
+
+
+def _region(region: str) -> None:
+    if region != REGION_FLANDERS:
+        raise ExtractorError(f"energie.be: gas is not sold in region {region!r}")
+
+
+async def fetch(session: aiohttp.ClientSession, contract_id: str, region: str) -> SupplierSnapshot:
+    """The current card for ``contract_id``."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "energie.be")
+    _region(region)
+    return await _read(session, contract_id, region, await _current_card_url(session, contract))
+
+
+async def _read(
+    session: aiohttp.ClientSession, contract_id: str, region: str, url: str
+) -> SupplierSnapshot:
+    text = await fetch_pdf_text_layout(session, url)
+    plain = await fetch_pdf_text(session, url) if _TEMPLATE_RE.search(text) else None
+    return parse_snapshot(contract_id, region, text, source_url=url, plain=plain)
+
+
+async def _read_month(
+    session: aiohttp.ClientSession, contract: _ContractDef, region: str, year_month: date
+) -> SupplierSnapshot | None:
+    url = await _archive_card_url(session, contract, year_month)
+    if url is None:
+        return None
+    return await _read(session, contract.contract_id, region, url)
+
+
+async def fetch_for_month(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+    year_month: date,
+) -> SupplierSnapshot | None:
+    """The card energie.be published for a past month, or None.
+
+    The archive is keyed by month, so no clock is involved. A month it does
+    not list, a card without a text layer and a card of another layout are
+    all a month with no card; only a transient failure raises, so the month
+    cache retries it. A card naming another month than its row is refused.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    if contract is None or region != REGION_FLANDERS:
+        return None
+    return await month_card(_read_month(session, contract, region, year_month), year_month)
+
+
+def parse_snapshot(
+    contract_id: str,
+    region: str,
+    text: str,
+    *,
+    source_url: str = _CONTRACTS_URL,
+    plain: str | None = None,
+) -> SupplierSnapshot:
+    """Parse one card's text as pdfplumber lays it out. A card of the
+    November 2026 template is read off ``plain``, its plain reading,
+    instead."""
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "energie.be")
+    _region(region)
+    if _TEMPLATE_RE.search(text):
+        if plain is None:
+            raise ExtractorError("energie.be: card read without its plain text")
+        text = _WRAPPED_LABEL_RE.sub(r"\1", plain)
+    card_month = _card_month(text, contract)
+    energy = _fixed(text) if contract.kind == "fixed" else _indexed(text)
+    return SupplierSnapshot(
+        supplier="energiebe",
+        contract=contract_id,
+        energy=energy,
+        dsos=_dsos(text),
+        taxes=TaxOverlay(
+            excise_bands=_excise(text),
+            energy_contribution=_energy_contribution(text, card_month),
+            card_vat_rate=None,
+        ),
+        source_url=source_url,
+        publication_label=f"{card_month:%Y-%m}",
+        valid_until=end_of_month(card_month.year, card_month.month),
+    )
+
+
+# "Gas particulier online – september 2026", "Gas vast particulier online –
+# september 2026"; the December 2025 cards leave out "online", the October
+# 2026 ones "particulier". The word "vast" is the only thing on the page
+# naming the product, so it is checked against the contract asked for.
+_TITLE_RE = re.compile(
+    r"^Gas\s+(vast\s+)?(?:particulier\s*)?(?:online\s*)?["
+    + SIGN_CHARS
+    + r"]\s*([a-z]+)\s+(\d{4})\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+# From November 2026 the month has a title line of its own, the product the
+# line under it: "Tariefkaart november 2026 - Particulier", then "Gas vast
+# online" or "Gas online".
+_TEMPLATE_RE = re.compile(
+    r"^Tariefkaart\s+([a-z]+)\s+(\d{4})\s*["
+    + SIGN_CHARS
+    + r"]\s*Particulier[ \t]*\n[ \t]*Gas\s+(vast\s+)?online[ \t]*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+# Their plain reading wraps the label of Fluvius (Midden-Vlaanderen) after
+# its hyphen, two lines above its figures, where the table reader looks
+# one line up only: the label is joined back first.
+_WRAPPED_LABEL_RE = re.compile(r"^(Fluvius \([^()\n]*-)[ \t]*\n(?=[^()\n]*\)[ \t]*$)", re.MULTILINE)
+
+
+def _card_month(text: str, contract: _ContractDef) -> date:
+    if (match := _TITLE_RE.search(text)) is not None:
+        vast, name, year = match.groups()
+    elif (match := _TEMPLATE_RE.search(text)) is not None:
+        name, year, vast = match.groups()
+    else:
+        raise ExtractorError("energie.be: card title not found")
+    month = MONTH_NAMES.get(fold_accents(name))
+    if month is None:
+        raise ExtractorError("energie.be: card title not found")
+    if bool(vast) != (contract.kind == "fixed"):
+        title = " ".join(match.group(0).split())
+        raise ExtractorError(f"energie.be: card {title!r} is not {contract.label}")
+    return month_date(year, month, "energie.be")
+
+
+# The price opens the line under the "Energieprijs" heading, before the
+# formula (variable) or the fixed-price sentence, with its unit on the line
+# under it: "8,06 looptijd van het contract ." over "(c€/kWh)". On the
+# plain reading of the November 2026 cards the unit is beside it: "10,44
+# c€/kWh". Only c€/kWh is taken, since a price restated in €/kWh would read
+# a hundredth of itself.
+_PRICE_RE = re.compile(
+    r"^Energieprijs[ \t]*\n[ \t]*(\d+,\d+)"
+    r"(?:(?:[ \t][^\n]*)?\n[ \t]*\(c€/kWh\)|[ \t]+c€/kWh)[ \t]*$",
+    re.MULTILINE,
+)
+# The fee's unit is on its own line under it, or beside it on the plain
+# reading of the November 2026 cards: "35 €/jaar".
+_FEE_RE = re.compile(
+    r"^Vaste vergoeding[ \t]*\n[ \t]*(\d+(?:,\d+)?)"
+    r"(?:[ \t]*\n[ \t]*\(€/jaar\)|[ \t]*€/jaar)",
+    re.MULTILINE,
+)
+_FORMULA_RE = re.compile(
+    r"formule\s*\(excl\.\s*btw\)\s*:\s*\(\s*(\d+,\d+)\s*x\s*TTF_RLP\s*"
+    r"([" + SIGN_CHARS + r"])\s*(\d+,\d+)\s*\)\s*c€/kWh"
+)
+# "Weergegeven prijs op basis van de ingeschatte index (VNR methodologie):
+# 6,24 c€/kWh.": the estimate of TTF_RLP the printed price is worked out at,
+# "4,30c€/kWh" on the May and June 2026 cards, its unit wrapped after the
+# slash on the plain reading of the November 2026 ones ("8,92 c€/", "kWh.").
+_ESTIMATE_RE = re.compile(r"\(VNR\s+methodologie\)\s*:\s*(\d+,\d+)\s*c€/\s*kWh")
+# The "c€/kWh" the formula ends on is its result's and says nothing of the
+# index it multiplies: restated on a TTF_RLP in €/MWh, its factor a tenth,
+# as EBEM and Ecofix print theirs, the formula would still match and bill a
+# tenth of the price. So it has to give the printed price back at that
+# estimate, and a card printing no estimate in c€/kWh is refused. Price and
+# estimate are both rounded to the hundredth, which moves the result by
+# 0,0104 c€/kWh at the most, half a percent of a price of 2,09; the twelve
+# cards of December 2025 to November 2026 are within 0,0085, 0,24% of the
+# lowest of them. A factor a tenth of itself misses by 85% or more, a base
+# a tenth of itself by 1,6% of November's 9,76 and more of a lower price.
+_FORMULA_TOLERANCE = 0.005
+_FIXED_RE = re.compile(r"De energieprijs is een vaste prijs")
+
+
+def _price_and_fee(text: str) -> tuple[float, float]:
+    price = _PRICE_RE.search(text)
+    fee = _FEE_RE.search(text)
+    if price is None or fee is None:
+        raise ExtractorError("energie.be: energy price in c€/kWh or yearly fixed fee not found")
+    return to_float(price.group(1)) / 100.0, to_float(fee.group(1))
+
+
+def _fixed(text: str) -> FixedRates:
+    # The variable card is the one that prints a formula; a fixed contract
+    # served it would bill an estimate as a fixed price.
+    if _FORMULA_RE.search(text) or not _FIXED_RE.search(text):
+        raise ExtractorError("energie.be: fixed card does not state a fixed price")
+    price, fee = _price_and_fee(text)
+    return FixedRates(price=price, yearly_fixed_fee=fee)
+
+
+def _indexed(text: str) -> IndexedRates:
+    formula = _FORMULA_RE.search(text)
+    if formula is None:
+        raise ExtractorError("energie.be: variable card formula not found")
+    price, fee = _price_and_fee(text)
+    # The card states no VAT rate; the residential one the law sets is what
+    # reproduces its printed price, and the month billed moves it.
+    vat = 1.0 + VAT_RATE_REDUCED
+    # TTF_RLP in c EUR/kWh is the index in EUR/MWh over 10, and the formula
+    # yields c EUR/kWh: factor / 1000 per EUR/MWh, base / 100, both grossed.
+    base = parse_sign(formula.group(2)) * to_float(formula.group(3))
+    rates = IndexedRates(
+        factor=to_float(formula.group(1)) / 1000.0 * vat,
+        base=base / 100.0 * vat,
+        index=_INDEX,
+        price=price,
+        yearly_fixed_fee=fee,
+        formula=formula.group(0),
+        vat_grossed=("factor", "base"),
+    )
+    estimate = _ESTIMATE_RE.search(text)
+    if estimate is None:
+        raise ExtractorError(
+            "energie.be: the card prints no VNR estimate in c€/kWh to check its formula on"
+        )
+    # The estimate in c EUR/kWh, the factor per EUR/MWh.
+    value = to_float(estimate.group(1)) * 10.0
+    if not formula_gives(price, rates.factor, value, rates.base, tolerance=_FORMULA_TOLERANCE):
+        raise ExtractorError(
+            f"energie.be: the formula gives {rates.at(value) * 100:.2f} c€/kWh at the VNR "
+            f"estimate {value / 10:.2f} where the card prints {price * 100:.2f}"
+        )
+    return rates
+
+
+# "Netbeheerder | Klein verbruik Variabel, Vast | Gemiddeld verbruik
+# Variabel, Vast | Transportkosten | Databeheer": proportional before fixed
+# within each tier, transport in c EUR/kWh on every row.
+_COLUMNS = (T1_PROP, T1_FIXED, T2_PROP, T2_FIXED, TRANSPORT, METERING)
+
+
+def _dsos(text: str) -> dict[str, DsoOverlay]:
+    dsos = read_dsos(
+        text,
+        FLUVIUS_LABELS,
+        _COLUMNS,
+        supplier="energie.be",
+        after="Nettarieven",
+        before="Taksen en heffingen",
+    )
+    require_region(dsos, REGION_FLANDERS, "energie.be")
+    return dsos
+
+
+_EXCISE_RE = re.compile(
+    r"Bijzondere accijns op Energie \(c€/kWh\) (kleiner|groter) dan 12\.000\s*kWh\s+(\d+,\d+)"
+)
+# "0" on the current cards, "0, 1058" (a stray space in the figure) on the
+# ones from before August 2026.
+_CONTRIBUTION_RE = re.compile(
+    r"Bijdrage op de Energie \(c€/kWh\)\s+(\d+(?:,\s?\d+)?)\s*$", re.MULTILINE
+)
+
+
+def _excise(text: str) -> tuple[tuple[float | None, float], ...]:
+    rates = {m.group(1): to_float(m.group(2)) / 100.0 for m in _EXCISE_RE.finditer(text)}
+    if set(rates) != {"kleiner", "groter"}:
+        raise ExtractorError("energie.be: federal excise rows not found")
+    return excise_bands(rates["kleiner"], rates["groter"])
+
+
+def _energy_contribution(text: str, card_month: date) -> float:
+    match = _CONTRIBUTION_RE.search(text)
+    return printed_contribution(
+        None if match is None else match.group(1), card_month, supplier="energie.be"
+    )
+
+
+# ---- index values ------------------------------------------------------------
+
+# "TTF_RLP (c€/kWh)" up to September 2026, "TTF_RLP in c€/kWh (Per maand) -
+# gas" since October; the table starts on the next line.
+_INDEX_HEADING_RE = re.compile(r"TTF_RLP (?:in )?\(?c€/kWh\)?[^\n]*")
+_YEAR_RE = re.compile(r"20\d{2}")
+_VALUE_RE = re.compile(r"\d+,\d+")
+
+
+def parse_index_document(text: str) -> IndexTable:
+    """The TTF_RLP table of the indexation document, in EUR/MWh.
+
+    The table comes out as the year headings, then each month name
+    followed by its values, one per year from the oldest. A month the
+    latest year has not reached yet is simply shorter, so the values fill
+    the years from the left. Read by position that is one row per line. As
+    pypdf extracts it, it is one cell per line up to September 2026 and one
+    row per line since, the October 2026 document printing the first row's
+    values before its label, glued to it ("3,00 4,81 3,41Januari"), so
+    values read before any label are the first label's.
+    """
+    heading = _INDEX_HEADING_RE.search(text)
+    if heading is None:
+        raise ExtractorError("energie.be: TTF_RLP table not found")
+    ends = [
+        i for i in (text.find(s, heading.end()) for s in ("Belpex_SPP", "De parameter")) if i >= 0
+    ]
+    table = text[heading.end() : min(ends, default=len(text))]
+    tokens = re.sub(r"(?<=\d)(?=[A-Za-z])", " ", table).split()
+    years: list[str] = []
+    while tokens and _YEAR_RE.fullmatch(tokens[0]):
+        years.append(tokens.pop(0))
+    rows: list[tuple[int, list[str]]] = []
+    lead: list[str] = []
+    for token in tokens:
+        name = MONTH_NAMES.get(token.lower())
+        if name is not None:
+            rows.append((name, lead))
+            lead = []
+        elif _VALUE_RE.fullmatch(token):
+            (rows[-1][1] if rows else lead).append(token)
+        else:
+            raise ExtractorError(f"energie.be: unexpected {token!r} in the TTF_RLP table")
+    values: dict[str, float] = {}
+    for month, cells in rows:
+        if len(cells) > len(years):
+            raise ExtractorError(f"energie.be: more values than years for month {month}")
+        for year, cell in zip(years, cells, strict=False):
+            # c EUR/kWh to EUR/MWh.
+            values[f"{year}-{month:02d}"] = to_float(cell) * 10.0
+    if not values:
+        raise ExtractorError("energie.be: TTF_RLP table is empty")
+    return {_INDEX: values}
+
+
+async def _own_index(session: aiohttp.ClientSession) -> IndexTable:
+    """The indexation document's table, read by position: a value added to
+    the file since it was laid out sits in its row there, and after the
+    page's footer in the plain text, past the table. pdfplumber splits a
+    figure now and then ("11,2 1"), which the table refuses, and the plain
+    text, which keeps every figure whole, is then read instead."""
+    text = await fetch_pdf_text_layout(session, _INDEX_URL)
+    try:
+        return parse_index_document(text)
+    except ExtractorError:
+        return parse_index_document(await fetch_pdf_text(session, _INDEX_URL))
+
+
+async def fetch_index(session: aiohttp.ClientSession) -> IndexTable:
+    """energie.be's published TTF_RLP values, and Trevion's for the months
+    after energie.be's newest, as a stand-in (``stand_in_name``). Trevion
+    out of reach leaves energie.be's own values, which is what was read
+    before."""
+    table = await _own_index(session)
+    own = table.get(_INDEX)
+    if not own:
+        return table
+    newest = max(own)
+    year, month = int(newest[:4]), int(newest[5:])
+    after = date(year + month // 12, month % 12 + 1, 1)
+    try:
+        stand_in = await trevion.published_since(session, after)
+    except ExtractorError:
+        stand_in = {}
+    if stand_in:
+        table[stand_in_name(_INDEX)] = stand_in
+    return table
+
+
+EXTRACTOR = SupplierExtractor(
+    id="energiebe",
+    label="energie.be",
+    contracts=tuple(
+        Contract(id=c.contract_id, label=c.label, kind=c.kind, regions=_REGIONS) for c in _CONTRACTS
+    ),
+    fetch=fetch,
+    fetch_for_month=fetch_for_month,
+    fetch_index=fetch_index,
+    sweep_cost_s=7.0,
+)

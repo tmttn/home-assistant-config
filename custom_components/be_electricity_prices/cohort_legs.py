@@ -1,0 +1,734 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""The legs a signing cohort is priced on, one builder each.
+
+``_cohort_legs`` in ``cohort.py`` decides which card a signing cohort bills
+on; these build the legs it splices in: the rate the household typed, the
+energy and injection legs read off the archived signing card, a
+month-indexed leg re-priced on its delivery month, and the archived card
+itself. Split out of ``cohort.py``, which keeps the decision.
+"""
+
+from __future__ import annotations
+
+from dataclasses import replace
+from datetime import date
+from typing import Any
+
+from homeassistant.config_entries import ConfigEntry
+
+from .const import (
+    CONF_MANUAL_ENERGY_BASE,
+    CONF_MANUAL_ENERGY_EXCLUSIVE_NIGHT,
+    CONF_MANUAL_ENERGY_FACTOR,
+    CONF_MANUAL_ENERGY_OFFPEAK,
+    CONF_MANUAL_ENERGY_PEAK,
+    CONF_MANUAL_ENERGY_SINGLE,
+    CONF_MANUAL_YEARLY_FEE,
+)
+from .injection import _register_coefficients, _slot_coefficients
+from .providers._rates import (
+    DynamicRates,
+    EnergyRates,
+    FixedRates,
+    ImpactRates,
+    InjectionRates,
+    SpotMonthlyRates,
+    TimeOfUseRates,
+    VariableRates,
+)
+from .providers._settle import _register_indices, settled_registers
+from .providers.base import SupplierSnapshot
+from .snapshot_resolve import _include_vat
+from .spot_stats import spots_available
+
+
+def _manual_energy_leg(
+    entry: ConfigEntry, card: EnergyRates, card_vat_rate: float = 0.0
+) -> EnergyRates | None:
+    """Overlay a hand-entered signing rate onto ``card``, or ``None``.
+
+    The user typed the rate they signed at, so it wins over anything the
+    integration can retrieve: ``card`` is the leg that would otherwise bill
+    (the archived signing-month card when the supplier keeps one, else the
+    current card) and every box the user filled replaces its field. Shaped to
+    match the contract's kind (dynamic and spot-monthly -> factor / base,
+    fixed -> single / peak / offpeak / exclusive night). Per-kWh values are
+    stored as entered
+    (grossed by compute_breakdown at the current card's VAT rate). ``None``
+    when every box was left blank, or the contract carries none of those
+    shapes (TOU / Impact / a plain variable card).
+
+    The fee box is labelled "incl. VAT" and the typed figure is taken at that
+    word, so it has to be put onto whatever basis this entry bills on. That is
+    VAT-inclusive for every residential entry and for a business that does not
+    deduct, and it is EX-VAT for one that does: ``apply_vat`` leaves such an
+    entry's card fees as the professional card printed them. Without the
+    conversion the typed fee stayed gross while every other fee on the same
+    entry was net, so a 121,00 EUR signed fee sat next to a 100,00 EUR card
+    fee. ``card_vat_rate`` is the rate the card was published at, read before
+    ``apply_vat`` resolves it away; 0.0 (the default) means a VAT-inclusive
+    card, where the two bases coincide and nothing changes.
+    """
+    energy = card
+    # Every box on the signed_rate step is optional and the step tells the
+    # user "leave blank to keep the retrieved card's value". Honour that PER
+    # FIELD: a blank box falls back to that card's value, not to zero.
+    # Substituting 0.0 made a user who typed just their locked energy rate
+    # lose the standing charge entirely, and on a dynamic contract silently
+    # zeroed the formula's base. Only an entirely blank step means "no
+    # override at all": no single box is a master switch, so a bi-hourly
+    # customer who has no mono rate to type keeps their day / night rates,
+    # and a fee-only override applies on its own.
+    fee_raw = entry.data.get(CONF_MANUAL_YEARLY_FEE)
+    fee = float(fee_raw) if fee_raw is not None else energy.yearly_fixed_fee
+    if fee_raw is not None and card_vat_rate and not _include_vat(entry):
+        # This entry bills ex-VAT; the box asked for a gross figure.
+        fee /= 1.0 + card_vat_rate
+    if isinstance(energy, DynamicRates):
+        factor = entry.data.get(CONF_MANUAL_ENERGY_FACTOR)
+        base = entry.data.get(CONF_MANUAL_ENERGY_BASE)
+        if factor is None and base is None and fee_raw is None:
+            return None
+        return DynamicRates(
+            factor=float(factor) if factor is not None else energy.factor,
+            base=float(base) if base is not None else energy.base,
+            yearly_fixed_fee=fee,
+            quarter_hourly=energy.quarter_hourly,
+        )
+    if isinstance(energy, SpotMonthlyRates):
+        # Same two boxes as the dynamic leg: this kind is a coefficient pair
+        # too, just resolved against the delivery month's mean instead of the
+        # slot price. Without this branch a spot-monthly customer who signed
+        # at a negotiated coefficient had nowhere to put it.
+        factor = entry.data.get(CONF_MANUAL_ENERGY_FACTOR)
+        base = entry.data.get(CONF_MANUAL_ENERGY_BASE)
+        if factor is None and base is None and fee_raw is None:
+            return None
+        # Everything the step cannot collect is carried through, the same rule
+        # the fixed branch below follows: a typed box replaces its own field
+        # and nothing else. Rebuilding from the two typed values alone dropped
+        # the rest, and this leg is rarely the bare pair the two shipped
+        # spot-monthly cards produce - _cohort_energy_from_archived converts a
+        # month-indexed variable or TOU card into it and fills in the bands,
+        # the night circuit, the TOU schedule and the cohort's ceiling. On a
+        # Mega Flex bi-hourly cohort, typing only a yearly fee billed peak
+        # hours at the mono coefficient (1,1095 against 1,3275, 16% low),
+        # off-peak 18% high, and silently discarded the Mega Cap ceiling.
+        # A typed pair is the formula the card prints. On a card whose first
+        # 1.800 kWh are billed at a flat rate that formula prices only the rest
+        # of the year, and the leg here has the tranche folded in already
+        # (``resolve_volume_tier``), so the typed pair is folded the same way.
+        # Replacing the blend with it dropped the tranche: the GS1800V card's
+        # own pair typed back in moved a 3.500 kWh year by -24 to +104 EUR.
+        share = energy.tier_formula_share or 1.0
+        lift = energy.tier_base or 0.0
+        overrides: dict[str, Any] = {
+            "factor": share * float(factor) if factor is not None else energy.factor,
+            "base": share * float(base) + lift if base is not None else energy.base,
+            "yearly_fixed_fee": fee,
+        }
+        if (
+            factor is not None or base is not None
+        ) and energy.factor_transition is None:
+            # A typed coefficient has to reach the meter the entry bills on.
+            # The step offers this kind ONE factor and ONE base, so the pairs
+            # the card printed per meter would shadow them on a bi-hourly or
+            # night-circuit entry and the typed value would price nothing at
+            # all: the same shadowing the fixed branch below clears when a
+            # general fee is typed over a night-circuit one. Measured on
+            # Energy Knights Essentia, a typed 0,95 moved the mono leg by
+            # 0,0202 EUR/kWh and the other three meters by zero.
+            #
+            # A TOU-scheduled leg is left alone. One number cannot express
+            # three bands, and dropping them would not fall back to the mono
+            # pair, it would re-band the contract onto the plain bi-hourly
+            # clock instead of the schedule it is sold on.
+            overrides.update(
+                factor_peak=None,
+                base_peak=None,
+                factor_offpeak=None,
+                base_offpeak=None,
+                factor_exclusive_night=None,
+                base_exclusive_night=None,
+            )
+        return replace(energy, **overrides)
+    if isinstance(energy, FixedRates):
+        single = entry.data.get(CONF_MANUAL_ENERGY_SINGLE)
+        peak = entry.data.get(CONF_MANUAL_ENERGY_PEAK)
+        offpeak = entry.data.get(CONF_MANUAL_ENERGY_OFFPEAK)
+        night = entry.data.get(CONF_MANUAL_ENERGY_EXCLUSIVE_NIGHT)
+        if (
+            single is None
+            and peak is None
+            and offpeak is None
+            and night is None
+            and fee_raw is None
+        ):
+            return None
+        return FixedRates(
+            single=float(single) if single is not None else energy.single,
+            peak=float(peak) if peak is not None else energy.peak,
+            offpeak=float(offpeak) if offpeak is not None else energy.offpeak,
+            exclusive_night=(
+                float(night) if night is not None else energy.exclusive_night
+            ),
+            yearly_fixed_fee=fee,
+            # A card that prints a separate night-circuit standing charge
+            # bills it instead of the standard one (yearly_fixed_fee_for_meter),
+            # which would swallow a typed fee on an exclusive-night entry. A
+            # signed fee is the whole standing charge, whatever the circuit.
+            yearly_fixed_fee_exclusive_night=(
+                None if fee_raw is not None else energy.yearly_fixed_fee_exclusive_night
+            ),
+            single_under_impact=energy.single_under_impact,
+            day_night_under_impact=energy.day_night_under_impact,
+        )
+    return None
+
+
+def _cohort_energy_from_archived(
+    archived: SupplierSnapshot,
+) -> EnergyRates | None:
+    """The energy leg a signing cohort bills at, from its archived card.
+
+    Fixed / dynamic / spot-monthly: the archived leg is exactly the locked
+    rate or coefficient pair. Variable: re-price the cohort's numeric formula
+    coefficients against the CURRENT month's mean (a SpotMonthlyRates leg)
+    rather than freeze the archived card's stale resolved rate, which would
+    pin the signing-month index.
+
+    A spot-monthly leg is returned whole, ``index_realised`` included, and
+    that value is the SIGNING month's. ``_cohort_legs`` replaces it with the
+    index of the month billed, none on the live tick, and
+    :func:`_effective_snapshot_for_month` does again before pricing a past
+    month, so it never reaches a bill. It would otherwise: a leg carrying
+    an index bills on it without a mean (``pricing._static_monthly``). Said
+    out loud because the paragraph above reads as though the leg carried no
+    index at all.
+    ``None`` when the archived card exposes no re-priceable rate (a variable
+    card whose coefficients couldn't be parsed, a TOU / Impact card that
+    prints resolved bands without a monthly formula behind them, or a
+    variable card whose Impact bands are resolved rates beside its formula),
+    and for a card indexed on a forward price, which each month's card names
+    and :func:`_at_forward_index` re-prices on: a mean of spot prices is a
+    different index altogether.
+    """
+    energy = archived.energy
+    if isinstance(energy, VariableRates) and energy.forward_indexed:
+        return None
+    if isinstance(energy, ImpactRates) and energy.month_indexed:
+        # A Tarif Impact card indexed per band monthly (Cociter trihoraire)
+        # becomes the three-band monthly leg on the CWaPE schedule, carrying
+        # each band's cap, so the same month-mean gates price it.
+        return SpotMonthlyRates(
+            factor=energy.pic_factor or 0.0,
+            base=energy.pic_base or 0.0,
+            factor_pic=energy.pic_factor,
+            base_pic=energy.pic_base,
+            factor_medium=energy.medium_factor,
+            base_medium=energy.medium_base,
+            factor_eco=energy.eco_factor,
+            base_eco=energy.eco_base,
+            ceiling_pic=energy.ceiling_pic,
+            ceiling_medium=energy.ceiling_medium,
+            ceiling_eco=energy.ceiling_eco,
+            rlp_indexed=energy.rlp_indexed,
+            rlp_blend=energy.rlp_blend,
+            yearly_fixed_fee=energy.yearly_fixed_fee,
+        )
+    if isinstance(energy, TimeOfUseRates) and energy.month_indexed:
+        # A TOU card that indexes each band monthly becomes the three-band
+        # monthly leg, so every existing month-mean gate keeps working.
+        return SpotMonthlyRates(
+            factor=energy.formula_factor_peak or 0.0,
+            base=energy.formula_base_peak or 0.0,
+            factor_peak=energy.formula_factor_peak,
+            base_peak=energy.formula_base_peak,
+            factor_transition=energy.formula_factor_transition,
+            base_transition=energy.formula_base_transition,
+            factor_offpeak=energy.formula_factor_offpeak,
+            base_offpeak=energy.formula_base_offpeak,
+            factor_sunday=energy.formula_factor_sunday,
+            base_sunday=energy.formula_base_sunday,
+            weekend_rule=energy.weekend_rule,
+            yearly_fixed_fee=energy.yearly_fixed_fee,
+        )
+    if isinstance(energy, (FixedRates, DynamicRates, SpotMonthlyRates)):
+        # SpotMonthlyRates is already the right shape to carry forward: the
+        # archived card's coefficients are exactly what the cohort signed, and
+        # the leg re-resolves against the CURRENT month's mean every tick, so
+        # nothing pins the signing-month index. Reachable since Energy Knights
+        # Essentia, the first spot-monthly contract with a wired-up archive;
+        # before that no supplier of this kind kept one.
+        return energy
+    if (
+        isinstance(energy, VariableRates)
+        and energy.quarter_indexed
+        and energy.formula_factor is not None
+    ):
+        return _quarter_leg(energy, energy.formula_factor)
+    if isinstance(energy, VariableRates) and energy.formula_factor is not None:
+        if energy.impact_pic is not None and (
+            getattr(energy, "formula_factor_pic", None) is None
+        ):
+            # Impact bands printed as resolved rates with no formula of their
+            # own and no quarterly index table behind them (a Bolt card whose
+            # table did not read): no pair re-priced on one month mean
+            # reproduces them, and the leg below would bill the mono formula
+            # in every CWaPE band and on both bi-hourly registers. The current
+            # card keeps them, the same as an entry that names no signing
+            # month.
+            return None
+        return SpotMonthlyRates(
+            factor=energy.formula_factor,
+            base=energy.formula_base if energy.formula_base is not None else 0.0,
+            # And the bands' own coefficients when the card printed them per
+            # meter, or a bi-hourly cohort is billed the mono formula around
+            # the clock: Mega's peak factor is a fifth above its mono one.
+            factor_peak=energy.formula_factor_peak,
+            base_peak=energy.formula_base_peak,
+            factor_offpeak=energy.formula_factor_offpeak,
+            base_offpeak=energy.formula_base_offpeak,
+            factor_exclusive_night=energy.formula_factor_exclusive_night,
+            base_exclusive_night=energy.formula_base_exclusive_night,
+            # And the CWaPE bands' own formulas, where the card prints them
+            # (OCTA+ in Wallonia), or an Impact entry holding a key is billed
+            # the mono or day/night pair in every band.
+            factor_pic=energy.formula_factor_pic,
+            base_pic=energy.formula_base_pic,
+            factor_medium=energy.formula_factor_medium,
+            base_medium=energy.formula_base_medium,
+            factor_eco=energy.formula_factor_eco,
+            base_eco=energy.formula_base_eco,
+            # From the SIGNING-month card, which is the one that priced this
+            # cohort's guarantee.
+            ceiling_single=energy.ceiling_single,
+            ceiling_peak=energy.ceiling_peak,
+            ceiling_offpeak=energy.ceiling_offpeak,
+            ceiling_exclusive_night=energy.ceiling_exclusive_night,
+            # Which mean the coefficients resolve against travels with them;
+            # the realised index does not, it belongs to a delivery month and
+            # is spliced on per month by _effective_snapshot_for_month.
+            rlp_indexed=energy.rlp_indexed,
+            rlp_blend=energy.rlp_blend,
+            yearly_fixed_fee=energy.yearly_fixed_fee,
+            # Carry the dedicated exclusive-night standing fee so an
+            # exclusive-night meter keeps its own fee instead of falling back to
+            # the standard abonnement (yearly_fixed_fee_for_meter reads it).
+            yearly_fixed_fee_exclusive_night=energy.yearly_fixed_fee_exclusive_night,
+            # And how the card bills its day/night split under Impact, or an
+            # Impact entry holding a key is routed by its meter again.
+            single_under_impact=energy.single_under_impact,
+            day_night_under_impact=energy.day_night_under_impact,
+        )
+    return None
+
+
+def _forward_index(delivery: SupplierSnapshot) -> float | None:
+    """The forward index the card of the month billed names for that month,
+    or ``None`` where the card is not indexed on one or names no value."""
+    energy = delivery.energy
+    if not getattr(energy, "forward_indexed", False):
+        return None
+    return getattr(energy, "index_realised", None)
+
+
+def _at_forward_index(
+    signed: EnergyRates, delivery: SupplierSnapshot
+) -> VariableRates | None:
+    """``signed`` re-priced on the forward index the card of the month billed
+    names, or ``None`` where it names none.
+
+    Engie's Easy Variable formulas are "valables pour tous les contrats
+    conclus en <mois>" and indexed monthly on ENDEX101, the futures average
+    of the month before delivery, which each month's card prints for its own
+    month. So a cohort's month is the pairs it signed for at that printed
+    value: a static rate on every path, which no spot price enters, keyed or
+    not. The signing card's standing charge comes with it. Every band the
+    signing card prints has its own pair, or nothing is re-priced.
+    """
+    index = _forward_index(delivery)
+    if index is None or not (
+        isinstance(signed, VariableRates) and signed.forward_indexed
+    ):
+        return None
+
+    def at(factor: float | None, base: float | None) -> float | None:
+        return None if factor is None or base is None else factor * index + base
+
+    current = at(signed.formula_factor, signed.formula_base)
+    peak = at(signed.formula_factor_peak, signed.formula_base_peak)
+    offpeak = at(signed.formula_factor_offpeak, signed.formula_base_offpeak)
+    night = at(
+        signed.formula_factor_exclusive_night, signed.formula_base_exclusive_night
+    )
+    printed = (signed.peak, signed.offpeak, signed.exclusive_night)
+    if current is None or any(
+        band is not None and rate is None
+        for band, rate in zip(printed, (peak, offpeak, night), strict=True)
+    ):
+        return None
+    return replace(
+        signed,
+        current=current,
+        peak=None if signed.peak is None else peak,
+        offpeak=None if signed.offpeak is None else offpeak,
+        exclusive_night=None if signed.exclusive_night is None else night,
+        index_realised=index,
+    )
+
+
+def _with_standing_charge(energy: EnergyRates, signed: EnergyRates) -> EnergyRates:
+    """``energy`` billing the standing charge of ``signed``, the leg a cohort
+    signed for, the exclusive-night one included where ``energy`` has one."""
+    names = ("yearly_fixed_fee", "yearly_fixed_fee_exclusive_night")
+    fees: dict[str, Any] = {
+        name: getattr(signed, name, None) for name in names if hasattr(energy, name)
+    }
+    return replace(energy, **fees)
+
+
+def _with_billed_impact_rule(leg: EnergyRates, card: EnergyRates) -> EnergyRates:
+    """``leg`` bound by what ``card``, the card of the month billed, says of
+    Tarif Impact as well as by what its own signing card said.
+
+    How an Impact connection's day/night pair is billed is a rule of the
+    delivery month, not a price the contract locked at signing: Impact took
+    effect on 1 January 2026, and Eneco printed its rule from that month's
+    cards and Engie's Walloon cards from April's. A contract signed on an
+    earlier card carried none of it, so its mono answer kept the single rate
+    in every band where the same contract signed a month later was banded,
+    27,20 EUR a year on an Eneco Zon & Wind Vast signed in October 2025 at
+    3500 kWh with a third of it in ECO. Either card stating the rule binds
+    (``day_night_under_impact``), and TotalEnergies' converse
+    (``single_under_impact``) the same way.
+    """
+    if not isinstance(leg, (FixedRates, VariableRates, SpotMonthlyRates)):
+        return leg
+    pair = leg.day_night_under_impact or getattr(card, "day_night_under_impact", False)
+    single = leg.single_under_impact or getattr(card, "single_under_impact", False)
+    if (pair, single) == (leg.day_night_under_impact, leg.single_under_impact):
+        return leg
+    return replace(leg, day_night_under_impact=pair, single_under_impact=single)
+
+
+def _quarter_leg(energy: VariableRates, factor: float) -> SpotMonthlyRates:
+    """The monthly leg of a card indexed on a quarter's per-register indices.
+
+    Bolt prints one formula and bills it on a separate index per meter
+    register and per CWaPE band, "Belpex Q3 2026" 139,36 mono, 147,78 day,
+    132,12 night and 102,42 / 153,31 / 180,89 Eco / Medium / Pic. The leg
+    resolves against the quarter's mono index, and each register keeps the
+    spread the card prints between its index and the mono one: a printed
+    rate less the printed mono rate is the factor times that spread, so it
+    rides on the register's base. Those spreads are the last closed
+    quarter's, which is what the card prints; they moved by 0,6 to 2,4
+    EUR/MWh between the second and third quarter of 2026 (0,06 to 0,32
+    c/kWh, the most on the Eco band), against 39 EUR/MWh for the index. A
+    cohort billed on a settled month of a later quarter is handed its signing
+    card rebuilt on that quarter's indices (:func:`_on_settled_quarter`).
+
+    Luminus's ComfyFlex prints a formula per meter register instead, all on
+    the one quarterly Belpex, and a register with a pair of its own bills it.
+    """
+    base = energy.formula_base or 0.0
+
+    def pair(
+        rate: float | None, own: tuple[float | None, float | None]
+    ) -> tuple[float | None, float | None]:
+        if own[0] is not None and own[1] is not None:
+            return own
+        if rate is None:
+            return None, None
+        return factor, base + rate - energy.current
+
+    (f_peak, b_peak), (f_off, b_off), (f_night, b_night) = (
+        pair(energy.peak, (energy.formula_factor_peak, energy.formula_base_peak)),
+        pair(
+            energy.offpeak, (energy.formula_factor_offpeak, energy.formula_base_offpeak)
+        ),
+        pair(
+            energy.exclusive_night,
+            (
+                energy.formula_factor_exclusive_night,
+                energy.formula_base_exclusive_night,
+            ),
+        ),
+    )
+    (f_pic, b_pic), (f_medium, b_medium), (f_eco, b_eco) = (
+        pair(energy.impact_pic, (None, None)),
+        pair(energy.impact_medium, (None, None)),
+        pair(energy.impact_eco, (None, None)),
+    )
+    return SpotMonthlyRates(
+        factor=factor,
+        base=base,
+        factor_peak=f_peak,
+        base_peak=b_peak,
+        factor_offpeak=f_off,
+        base_offpeak=b_off,
+        factor_exclusive_night=f_night,
+        base_exclusive_night=b_night,
+        factor_pic=f_pic,
+        base_pic=b_pic,
+        factor_medium=f_medium,
+        base_medium=b_medium,
+        factor_eco=f_eco,
+        base_eco=b_eco,
+        rlp_indexed=energy.rlp_indexed,
+        rlp_blend=energy.rlp_blend,
+        quarter_indexed=True,
+        yearly_fixed_fee=energy.yearly_fixed_fee,
+        yearly_fixed_fee_exclusive_night=energy.yearly_fixed_fee_exclusive_night,
+        single_under_impact=energy.single_under_impact,
+        day_night_under_impact=energy.day_night_under_impact,
+    )
+
+
+def _on_settled_quarter(
+    archived: SupplierSnapshot, delivery: SupplierSnapshot
+) -> SupplierSnapshot:
+    """``archived`` with its register rates rebuilt on the indices the
+    quarter of ``delivery`` settled at, where both are Bolt variable cards
+    and that quarter has settled.
+
+    ``_quarter_leg`` reads each register's spread off the card it is given,
+    and the signing card prints the spreads of the quarter before it. A
+    settled month of a later quarter has its own (``settled_registers``), so
+    a cohort's month billed its formula on that quarter's mono index plus
+    another quarter's spreads: 0,06 to 0,32 c/kWh per register between the
+    second and third quarter of 2026. ``archived`` as it is otherwise.
+    """
+    held, energy = delivery.energy, archived.energy
+    if not (
+        isinstance(held, VariableRates)
+        and held.quarter_indexed
+        and held.index_realised is not None
+        and isinstance(energy, VariableRates)
+        and energy.quarter_indexed
+    ):
+        return archived
+    settled = settled_registers(energy, _register_indices(held))
+    return archived if settled is None else replace(archived, energy=settled)
+
+
+def _cohort_injection_from_archived(
+    archived: SupplierSnapshot, delivery: SupplierSnapshot
+) -> InjectionRates | None:
+    """The feed-in leg a signing cohort bills at, or ``None``.
+
+    A contract that locks its offtake formula for the term locks the feed-in
+    formula with it: the customer on issue #85 confirmed both from his own
+    bill, twelve months on the June coefficients while the integration
+    credited him at September's. The energy leg has always been re-priced
+    this way and the feed-in leg never was, so the two halves of one contract
+    were read off two different cards.
+
+    Only the COEFFICIENTS move, on the same principle as
+    ``_cohort_energy_from_archived``: ``factor`` and ``base`` are the
+    contract, while ``current`` is the illustration the supplier printed for
+    that month's new customers and is stale the moment the month turns. They
+    are laid onto ``delivery``, the card of the month being billed: today's
+    on the live tick, the month's own on a year-to-date walk. So a keyless
+    entry, which can only credit the printed figure, credits each month the
+    figure that month's card printed, and a month keeps its own settled index.
+
+    The coefficients are the single pair and, on a card that prints one
+    formula per band (Engie Empower Flextime), the six slot coefficients: the
+    card fixes those per signing month just like the energy formulas beside
+    them, and freezing the pair alone billed an August signer on August's
+    energy and September's feed-in. A card printing one per register of a
+    two-register meter (Luminus's until June 2025) gives the day and night
+    pairs, and the leg credits each register on its own (``bi_hourly``);
+    frozen as the single pair, a bi-hourly meter was credited it on both.
+
+    The formula also brings what it is a formula OF: the index it reads and
+    any floor it promises. Trevion LifePowr moved its feed-in from the
+    quarter-hour Belpex to the month's Belpex_SPP in June 2026, and copying an
+    April signer's coefficients onto September's leg credited them on an index
+    neither card names. A month's settled index is then kept only for a
+    formula that reads a month.
+
+    ``None`` when the archived leg carries no coefficients: a card that
+    publishes only a printed monthly figure re-prices every month by its own
+    terms, and freezing it would invent a lock the contract does not have.
+    Unless the figure IS the contract for the term (``fixed_for_term``:
+    Mega's fixed range, Trevion Groene Energie Vast, EnergyVision's
+    fixed-injection card, Engie's fixed cards): then the signing card's leg stands
+    whole, printed figure included. A January Mega Online Fixed signer was
+    otherwise credited September's 3,56 c/kWh where the contract pays 0,98.
+    """
+    old = archived.injection
+    leg = delivery.injection
+    if old is None or leg is None:
+        return None
+    if old.fixed_for_term:
+        return None if old == leg else old
+    if old.forward_indexed:
+        # Easy Variable credits the pair it signed for at the ENDEX101 the
+        # month's card names, which that card prints once for both legs
+        # (``_at_forward_index``). Only ``current`` is ever credited on such
+        # a leg: the pair is not a formula over a spot price.
+        index = _forward_index(delivery)
+        if index is None or old.factor is None or old.base is None:
+            return None
+        frozen = replace(
+            leg,
+            current=old.factor * index + old.base,
+            factor=old.factor,
+            base=old.base,
+            formula=old.formula,
+        )
+        return None if frozen == leg else frozen
+    slots = _slot_coefficients(old)
+    if slots is None and old.factor is None and old.base is None:
+        return None
+    (f_peak, b_peak), (f_trans, b_trans), (f_off, b_off) = slots or (
+        (None, None),
+        (None, None),
+        (None, None),
+    )
+    registers = _register_coefficients(old)
+    if registers is not None:
+        (f_peak, b_peak), (f_off, b_off) = registers
+    frozen = replace(
+        leg,
+        factor=old.factor,
+        base=old.base,
+        factor_peak=f_peak,
+        base_peak=b_peak,
+        factor_transition=f_trans,
+        base_transition=b_trans,
+        factor_offpeak=f_off,
+        base_offpeak=b_off,
+        formula=old.formula,
+        spp_indexed=old.spp_indexed,
+        month_indexed=old.month_indexed,
+        slot_indexed=old.slot_indexed,
+        floor_at_zero=old.floor_at_zero,
+        minimum=old.minimum,
+        index_realised=(
+            leg.index_realised if old.spp_indexed or old.month_indexed else None
+        ),
+        # The cohort's own formula at that index, not the month's stated
+        # figure (Mega's, the next card's formula at the index).
+        settled_as_stated=False,
+    )
+    if registers is not None and not leg.bi_hourly:
+        # The month's card prints one figure for every register, the one
+        # each is credited without an index to resolve its formula on.
+        frozen = replace(frozen, bi_hourly=True, peak=leg.current, offpeak=leg.current)
+    return None if frozen == leg else frozen
+
+
+def _month_indexed_leg(
+    snapshot: SupplierSnapshot, entry: ConfigEntry
+) -> EnergyRates | None:
+    """The monthly-mean leg for a card whose rate IS the delivery month's index.
+
+    Such a card prints a rate computed from the PREVIOUS month's index and says
+    so. Cociter Tarif Variable is the shape: the footnote reads "le prix
+    indique est calcule avec l'indice BELIX du mois precedent ... renseigne a
+    titre indicatif", while note (7) indexes the contract on "la moyenne
+    arithmetique des cotations journalieres Day Ahead EPEX SPOT Belgium durant
+    le mois de fourniture" and settles the volume retroactively. Billing the
+    printed indicative therefore bills last month's index: measured on the 2026
+    cards, 8,1% under in May and 15,4% over in February on the energy leg.
+
+    BELIX is exactly the arithmetic monthly mean the coordinator already
+    computes, so the coefficients resolve against it without approximation.
+    The trihoraire card is the same contract on the three CWaPE bands, one
+    formula each, and its September 2026 card printed August's index too, so
+    it takes the same leg with the bands in place of the mono pair.
+
+    Bolt's variable cards are the same on the delivery quarter and carry
+    ``quarter_indexed`` instead, leaving ``month_indexed`` False so a version
+    that predates the quarter flag keeps billing their printed rates.
+
+    ``None`` too for a month whose rates are the figures its supplier states
+    it settled at (``settled_as_stated``): they are billed as they stand.
+
+    Returns ``None`` without an ENTSO-E key, which keeps the printed
+    indicative: the key is offered as optional to every contract flagged
+    ``month_indexed_energy`` in the registry, and an entry that skipped it is
+    better served by a rate a month stale than by no energy leg at all. Same
+    reasoning, and the same guard, as the variable cohort below.
+    """
+    energy = snapshot.energy
+    if not isinstance(energy, (VariableRates, TimeOfUseRates, ImpactRates)):
+        return None
+    if not (energy.month_indexed or getattr(energy, "quarter_indexed", False)):
+        return None
+    if not spots_available(entry.data):
+        return None
+    if getattr(energy, "settled_as_stated", False):
+        # The month's rates are what the supplier states it settled at, on
+        # formulas other than its own card's (Mega's next card): they stand.
+        return None
+    return _cohort_energy_from_archived(snapshot)
+
+
+def _cohort_card(
+    start: date,
+    month_now: date,
+    archived: SupplierSnapshot | None,
+    current: SupplierSnapshot,
+    unbilled: str | None = None,
+) -> str:
+    """Which card a contract that names a cohort month ends up billing on.
+
+    The price a cohort entry publishes says nothing about where it came
+    from: ``snapshot_publication`` names the card that was fetched today
+    whether or not the signing month's card was retrieved and spliced in, so
+    "did my start date do anything?" could only be answered from a
+    diagnostics dump. Issue #96 is that question asked from the outside, on
+    a supplier that happened to print the same formula four months running.
+
+    Four answers, one string. The archived card by name when something read
+    off it is billed; the current card by name for a contract signed this
+    month, where the two are the same card; the current card WITH the month
+    that could not be retrieved for a past signing the archive has nothing
+    for, which is the case the entry otherwise hides; and the current card
+    with the archived one and ``unbilled``, which says what is not billed on
+    it and why. A keyless variable cohort is that last case: its signing card
+    is retrieved, but re-pricing it needs spots until the month settles, so
+    the running month bills the current card's printed rate, with only the
+    standing charge off the signing card, and naming the signing card alone
+    answered "did my start date do anything?" with a yes it had not earned.
+    Its settled months do bill on the signing formula, at the index each
+    month closed at, so the label says the card is not re-priced while the
+    month runs rather than not at all.
+    """
+    label = current.publication_label or "the current card"
+    if archived is not None:
+        signing = archived.publication_label or f"{start:%Y-%m}"
+        if unbilled is None:
+            return signing
+        return f"{label} (signing card {signing} {unbilled})"
+    if start >= month_now:
+        return label
+    return f"{label} (no archived card for {start:%Y-%m})"

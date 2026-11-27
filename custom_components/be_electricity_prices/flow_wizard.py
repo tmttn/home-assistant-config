@@ -1,0 +1,985 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""The setup steps the config flow and the options flow share.
+
+``_WizardStepsMixin`` walks the chain both flows present, from the supplier
+and region through to the energy meters: which step comes next, which ones a
+contract skips, and what each one stores. ``config_flow.py`` keeps the two
+flow classes, which differ only in where ``_data`` starts and how the result
+is saved.
+"""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+from typing import TYPE_CHECKING, Any
+
+import voluptuous as vol
+from homeassistant.config_entries import (
+    ConfigFlowResult,
+)
+from homeassistant.core import HomeAssistant
+from homeassistant.util import dt as dt_util
+
+from .const import (
+    CONF_ANALOG_METER,
+    CONF_ANALOG_REPLACED,
+    CONF_ANNUAL_CONSUMPTION_KWH,
+    CONF_API_KEY,
+    CONF_CAPACITY_PEAK_SENSOR,
+    CONF_CONTRACT,
+    CONF_CONTRACT_START_DATE,
+    CONF_DAY_HOURS,
+    CONF_DIRECT_DEBIT,
+    CONF_DSO_TARIFF_MODE,
+    CONF_ENECO_BILL,
+    CONF_INCLUDE_VAT,
+    CONF_KEYLESS_SPOTS,
+    CONF_QUARTER_HOURLY,
+    CONF_REGION,
+    CONF_SOLAR_KVA,
+    CONF_SOLAR_REGIME,
+    CONF_SUPPLIER,
+    CONF_TARIFF_CARD_DATE,
+    CONF_YTD_FROM_CONTRACT_START,
+    DSO_MODE_IMPACT,
+    REGION_BRUSSELS,
+    REGION_FLANDERS,
+    REGION_WALLONIA,
+    SOLAR_REGIME_INJECTION,
+    SPOT_PRICED_CONTRACT_KINDS,
+    SUPPLIER_CUSTOM,
+    SUPPLIER_ENECO,
+)
+from .fees import bills_capacity, compensation_lacks_kva
+from .flow_contracts import (
+    _contract_has_spot_injection,
+    _contract_is_month_indexed,
+    _contract_is_professional,
+    _contract_kind,
+    _contracts_for,
+    _region_mismatch_error,
+)
+from .flow_decimal import reads_decimals
+from .flow_prefill import (
+    _apply_energy_manager_capacity_default,
+    _apply_energy_manager_defaults,
+)
+from .flow_schemas import (
+    _CUSTOM_DSO_FALLBACK_KEYS,
+    _CUSTOM_ENERGY_FALLBACK_KEYS,
+    _analog_replaced_schema,
+    _api_key_schema,
+    _connection_power_schema,
+    _contract_schema,
+    _direct_debit_schema,
+    _drop_blanked,
+    _dso_schema,
+    _dso_tariff_mode_schema,
+    _injection_api_key_schema,
+    _meter_schema,
+    _professional_schema,
+    _settlement_schema,
+    _signed_rate_schema,
+    _user_schema,
+    _validate_entsoe_key,
+)
+from .flow_schemas_custom import (
+    _custom_dso_schema,
+    _custom_energy_schema,
+    _custom_injection_schema,
+    _custom_tax_schema,
+)
+from .flow_schemas_meters import (
+    _METER_SENSOR_KEYS,
+    _capacity_schema,
+    _incomplete_register_pairs,
+    _meters_schema,
+    _reused_meter_sensors,
+    _solar_schema,
+)
+from .flow_switch import (
+    _CONTRACT_DATE_KEYS,
+    _MANUAL_RATE_KEYS,
+    _another_contract,
+    _carried_card_month,
+    _drop_left_contract_answers,
+    _signing_cards_placeholders,
+    _validate_contract_dates,
+)
+from .providers import (
+    offers_direct_debit,
+    offers_quarter_hourly,
+    settlement_answer,
+    takes_signing_rate,
+)
+from .snapshot_resolve import analog_meter, analog_replaced_on, offers_analog_meter
+
+
+def _day_still_billed(data: Mapping[str, Any]) -> bool:
+    """Whether the analog meter's replacement day held falls in this year or
+    the one before, whose days the year-to-date walks and a backfill still
+    price. An older one stays stored for a backfill but is not shown on every
+    edit."""
+    held = analog_replaced_on(data)
+    return held is not None and held.year >= dt_util.now().year - 1
+
+
+class _WizardStepsMixin:
+    """Wizard steps shared by ``BePricesConfigFlow`` and ``BePricesOptionsFlow``.
+
+    Both flows walk supplier -> contract -> dso -> meter -> ... -> meters; only
+    the entry step and ``_finalize`` differ. ``_after_meter`` is overridden in
+    ``BePricesConfigFlow`` to add the install-time unique-id reject.
+    """
+
+    _data: dict[str, Any]
+    # An API key ENTSO-E could not confirm because it was unreachable, held
+    # only for the length of the menu that offers to re-check it. Bare
+    # annotations: a valued class attribute would be shared across flows, and
+    # a key typed in one setup must never reappear in the next.
+    _pending_key: str
+    _pending_key_step: str
+    # The translation key of this flow's entry step. It stays per-flow because
+    # the two are separate strings: config.step.user and options.step.edit.
+    _entry_step_id = "user"
+    # The card month the contract step set aside when it asked again for
+    # another contract (``_carried_card_month``), until it is put back.
+    _left_card_month: str | None = None
+
+    if TYPE_CHECKING:
+        hass: HomeAssistant
+
+        def async_show_form(self, **kwargs: Any) -> ConfigFlowResult: ...
+        def async_abort(self, **kwargs: Any) -> ConfigFlowResult: ...
+        def async_show_menu(self, **kwargs: Any) -> ConfigFlowResult: ...
+        def add_suggested_values_to_schema(
+            self, data_schema: vol.Schema, suggested_values: Any
+        ) -> vol.Schema: ...
+
+    def _seed_data(self) -> dict[str, Any]:
+        """What ``_data`` starts as. Install starts empty; the OptionsFlow
+        starts from the stored entry."""
+        return {}
+
+    def _stored_data(self) -> Mapping[str, Any] | None:
+        """The entry's settings as stored before this flow, ``None`` while
+        installing, where there is no entry yet."""
+        return None
+
+    async def _async_entry_step(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """The supplier / region entry step, shared by both flows.
+
+        The two spelled out the same handler, differing only in the seed and
+        the step id, which is exactly what the mixin's own docstring says
+        distinguishes them.
+        """
+        if not hasattr(self, "_data"):
+            self._data = self._seed_data()
+        if user_input is not None:
+            self._data.update(user_input)
+            errors = _region_mismatch_error(self._data)
+            if errors:
+                return self.async_show_form(
+                    step_id=self._entry_step_id,
+                    data_schema=_user_schema(self._data),
+                    errors=errors,
+                )
+            stored = self._stored_data()
+            if stored is not None:
+                _drop_left_contract_answers(stored, self._data)
+            return await self.async_step_contract()
+        return self.async_show_form(
+            step_id=self._entry_step_id, data_schema=_user_schema(self._data)
+        )
+
+    async def async_step_contract(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        supplier = self._data[CONF_SUPPLIER]
+        region = self._data[CONF_REGION]
+        if not _contracts_for(supplier, region, withdrawn=True):
+            return self.async_abort(reason="supplier_region_unavailable")
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            errors = _validate_contract_dates(
+                user_input, self._data, self._stored_data()
+            )
+            stored = self._stored_data()
+            put_back = False
+            if _carried_card_month(stored, self._data, user_input):
+                # Set aside and asked again, empty: whatever comes back is
+                # this contract's own.
+                self._left_card_month = self._data.pop(CONF_TARIFF_CARD_DATE)
+                user_input = {
+                    key: value
+                    for key, value in user_input.items()
+                    if key != CONF_TARIFF_CARD_DATE
+                }
+                errors[CONF_TARIFF_CARD_DATE] = "card_date_of_other_contract"
+            elif (
+                self._left_card_month is not None
+                and stored is not None
+                and user_input.get(CONF_CONTRACT) == stored.get(CONF_CONTRACT)
+                and CONF_TARIFF_CARD_DATE not in user_input
+            ):
+                # Back on the contract the month was set for, its box emptied
+                # by that question: shown again as it was, to keep or to clear.
+                month = self._left_card_month
+                self._left_card_month = None
+                self._data[CONF_TARIFF_CARD_DATE] = month
+                user_input = {**user_input, CONF_TARIFF_CARD_DATE: month}
+                put_back = True
+            if not errors and not put_back:
+                # A cleared (blanked) optional date is absent from user_input;
+                # drop it so "leave blank" removes the date instead of keeping
+                # the previously stored one.
+                for key in _CONTRACT_DATE_KEYS:
+                    if key not in user_input:
+                        self._data.pop(key, None)
+                self._data.update(user_input)
+                # The year-to-date window can only start at a date the entry
+                # actually holds. Dropping the flag with the date keeps a
+                # stored True from silently waiting to take effect if a start
+                # date is ever added back, which would move the bill for a
+                # reason the user had long forgotten agreeing to.
+                if not self._data.get(CONF_CONTRACT_START_DATE):
+                    self._data.pop(CONF_YTD_FROM_CONTRACT_START, None)
+                return await self._after_contract()
+        schema = _contract_schema(supplier, region, self._data)
+        if user_input is not None:
+            # The frontend fills a re-shown form from its schema, so the
+            # answers go back in or every box reverts to the stored value.
+            # A date left blank stays blank.
+            schema = self.add_suggested_values_to_schema(
+                schema, {**dict.fromkeys(_CONTRACT_DATE_KEYS), **user_input}
+            )
+        return self.async_show_form(
+            step_id="contract",
+            data_schema=schema,
+            errors=errors,
+            description_placeholders=_signing_cards_placeholders(
+                {**self._data, **(user_input or {})}
+            ),
+        )
+
+    async def async_step_settlement(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Ask which settlement this household is on.
+
+        Its own step because of where it has to sit. The contract step cannot
+        carry it (its schema is built before the contract is picked) and the
+        meter step cannot either: on Bolt the answer decides which meters the
+        product is even sold on, and the signing-rate step in between offers a
+        coefficient pair or per-meter rates depending on it.
+        """
+        if user_input is not None:
+            self._data.update(user_input)
+            return await self._after_settlement()
+        return self.async_show_form(
+            step_id="settlement",
+            data_schema=_settlement_schema(self._data),
+        )
+
+    async def _after_settlement(self) -> ConfigFlowResult:
+        ask = self._needs_manual_rate()
+        stored = self._stored_data()
+        # A rate typed for the entry's previous contract has to go. Not asked,
+        # the way _after_contract drops a settlement answer: left behind, it
+        # billed a variable card re-priced on its signing month at the old
+        # contract's coefficients. Asked on another supplier, contract or
+        # region, it was pre-filled as this contract's own and, submitted as
+        # shown, billed the old rate and fee on the new card.
+        if not ask or (stored is not None and _another_contract(stored, self._data)):
+            for key in _MANUAL_RATE_KEYS:
+                self._data.pop(key, None)
+        if ask:
+            return await self.async_step_signed_rate()
+        return await self.async_step_dso()
+
+    def _quarter_hourly(self) -> bool:
+        """This entry's settlement answer, ignored where it cannot apply.
+
+        Gated on the registry flag as well as the stored value, the same pair
+        ``_resolve_snapshot`` uses, so a stored answer left over from another
+        contract never moves the kind.
+        """
+        return settlement_answer(self._data)
+
+    def _needs_manual_rate(self) -> bool:
+        """Offer the signing-rate override for a start date on a fixed /
+        dynamic contract of a real (non-custom) supplier.
+
+        Offered whether or not the supplier keeps an archive: the archive only
+        ever knew the published card, so a promotional, brokered or negotiated
+        rate has to be typed. What the user types wins over the archived card
+        (``_manual_energy_leg``), which is the only reason it is worth asking
+        an archive supplier's customer at all.
+        """
+        if self._data.get(CONF_SUPPLIER) == SUPPLIER_CUSTOM:
+            return False
+        # Either date puts the entry on a signing cohort, so either one is
+        # reason to offer the rate that cohort actually signed at. Gating on
+        # the start date alone would skip the step for a household that knows
+        # its card month and not the day supply began.
+        if not self._data.get(CONF_CONTRACT_START_DATE) and not self._data.get(
+            CONF_TARIFF_CARD_DATE
+        ):
+            return False
+        # A spot-monthly card is a coefficient pair like a dynamic one, so a
+        # negotiated factor / base is just as typeable, and just as invisible
+        # to the integration otherwise. The rule is shared with the runtime,
+        # which must not bill a rate the step would not have asked for.
+        return takes_signing_rate(self._data)
+
+    async def _after_contract(self) -> ConfigFlowResult:
+        if offers_quarter_hourly(
+            self._data.get(CONF_SUPPLIER), self._data.get(CONF_CONTRACT)
+        ):
+            return await self.async_step_settlement()
+        # The box was not asked, so an answer stored against a previous
+        # contract has to go: on a card that fixes its own settlement it is
+        # inert, and it would come back into force the day the user switched
+        # to a supplier that does offer the choice.
+        self._data.pop(CONF_QUARTER_HOURLY, None)
+        return await self._after_settlement()
+
+    @reads_decimals(
+        "signed_rate",
+        _signed_rate_schema,
+        placeholders=lambda flow: flow._signed_rate_placeholders(),
+    )
+    async def async_step_signed_rate(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            # A cleared manual-rate field is absent from user_input; drop it so
+            # blanking the override removes it (and a kind switch drops the
+            # now-irrelevant coefficients).
+            for key in _MANUAL_RATE_KEYS:
+                if key not in user_input:
+                    self._data.pop(key, None)
+            self._data.update(user_input)
+            return await self.async_step_dso()
+        return self.async_show_form(
+            step_id="signed_rate",
+            data_schema=_signed_rate_schema(self._data),
+            description_placeholders=self._signed_rate_placeholders(),
+        )
+
+    def _signed_rate_placeholders(self) -> dict[str, str] | None:
+        """Nothing at setup: the card is not fetched until the entry exists."""
+        return None
+
+    async def async_step_dso(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._data.update(user_input)
+            return await self.async_step_meter()
+        return self.async_show_form(
+            step_id="dso",
+            data_schema=_dso_schema(self._data[CONF_REGION], self._data),
+        )
+
+    async def async_step_meter(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._data.update(user_input)
+            if self._data[CONF_REGION] != REGION_FLANDERS:
+                # Asked of a Flemish entry only. An answer kept from before a
+                # move to another region would be inert, and would come back
+                # into force if the entry moved back without being asked.
+                self._data.pop(CONF_DAY_HOURS, None)
+            stored = self._stored_data() or {}
+            if not offers_analog_meter(self._data):
+                # Likewise, and on the digital meter a dynamic contract needs.
+                # A Flemish entry that was analog, or holds the day it stopped,
+                # is answered "not analog" instead, which a day always follows:
+                # dropped, a social entry never asked would take the kept
+                # contract's answer again (analog_answer) and ignore the day.
+                self._data.pop(CONF_ANALOG_METER, None)
+                if self._data[CONF_REGION] == REGION_FLANDERS and (
+                    analog_meter(stored) or analog_replaced_on(stored)
+                ):
+                    self._data[CONF_ANALOG_METER] = False
+            if self._data[CONF_REGION] != REGION_FLANDERS or self._data.get(
+                CONF_ANALOG_METER
+            ):
+                # Analog again, or another connection after a move: no day of
+                # it is on a meter Fluvius replaced.
+                self._data.pop(CONF_ANALOG_REPLACED, None)
+            elif (
+                analog_meter(stored)
+                or _day_still_billed(self._data)
+                or CONF_ANALOG_REPLACED not in self._data
+            ):
+                # Unticked, or a meter or contract only a digital meter carries
+                # picked: either way Fluvius has replaced the analog one. Shown
+                # again while the day held is still billed, so a wrong one can
+                # be put right. And once where it was never answered, at setup
+                # and on an entry stored before it was asked: a box left
+                # unticked, or never shown, says nothing of a meter Fluvius
+                # replaced this year or the last.
+                return await self.async_step_analog_replaced()
+            return await self._ask_professional()
+        return self.async_show_form(
+            step_id="meter",
+            data_schema=_meter_schema(
+                self._data[CONF_SUPPLIER], self._data[CONF_CONTRACT], self._data
+            ),
+        )
+
+    async def async_step_analog_replaced(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """The day Fluvius put a digital meter in place of the analog one.
+
+        Asked of a Flemish entry whose box is unticked, or not offered on a
+        meter or contract only a digital meter carries: once where it was
+        never answered, at setup and on the first edit of an entry stored
+        before it was asked; when Edit settings unticks a box stored ticked,
+        or moves such an entry onto a digital-only meter or contract; and on
+        every edit while the day held falls in this year or the last, to
+        change it. The answer is one per entry, so without the day every month
+        of the year was billed on the digital meter, the months before it
+        without their analog kWh rate and on the new meter's mean. Every day
+        before it bills as analog (``analog_meter``); one in the future is
+        refused. Left blank, no day is, as for a meter digital all this year
+        and the last or a box ticked by mistake, and the blank is kept as the
+        answer, so the step is not asked again on every edit.
+        """
+        today = dt_util.now().date()
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            if not user_input.get(CONF_ANALOG_REPLACED):
+                self._data[CONF_ANALOG_REPLACED] = None
+                return await self._ask_professional()
+            replaced = analog_replaced_on(user_input)
+            if replaced is not None and replaced <= today:
+                # Not analog since, whatever meter is picked: a social entry
+                # holding no answer would take the kept contract's again
+                # (analog_answer) and ignore the day.
+                self._data[CONF_ANALOG_METER] = False
+                self._data[CONF_ANALOG_REPLACED] = replaced.isoformat()
+                return await self._ask_professional()
+            errors[CONF_ANALOG_REPLACED] = "analog_replaced_in_future"
+        # The day held, else none: a suggested one is billed if accepted, and
+        # today's would put every earlier day of a box ticked by mistake on
+        # the analog meter. A rejected day comes back as typed.
+        held = self._data.get(CONF_ANALOG_REPLACED)
+        shown = user_input or ({CONF_ANALOG_REPLACED: held} if held else {})
+        return self.async_show_form(
+            step_id="analog_replaced",
+            data_schema=self.add_suggested_values_to_schema(
+                _analog_replaced_schema(), shown
+            ),
+            errors=errors,
+        )
+
+    async def _ask_professional(self) -> ConfigFlowResult:
+        """Only a professional contract needs the VAT treatment and the
+        annual volume; a residential card answers both by construction."""
+        if not _contract_is_professional(
+            self._data.get(CONF_SUPPLIER), self._data.get(CONF_CONTRACT)
+        ):
+            # Drop settings carried over from a professional edit, so a
+            # switch back to a residential contract can't leave an
+            # ex-VAT preference silently in force.
+            self._data.pop(CONF_INCLUDE_VAT, None)
+            self._data.pop(CONF_ANNUAL_CONSUMPTION_KWH, None)
+            return await self._ask_direct_debit()
+        return await self.async_step_professional()
+
+    @reads_decimals("professional", _professional_schema)
+    async def async_step_professional(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._data.update(user_input)
+            return await self._ask_direct_debit()
+        return self.async_show_form(
+            step_id="professional", data_schema=_professional_schema(self._data)
+        )
+
+    async def _ask_direct_debit(self) -> ConfigFlowResult:
+        """Only a card that prices a direct-debit payer differently.
+
+        Every other card charges the same standing charge however the invoice
+        is settled, so asking would be a box whose answer changes nothing.
+        """
+        if not offers_direct_debit(
+            self._data.get(CONF_SUPPLIER), self._data.get(CONF_CONTRACT)
+        ):
+            # The box was not asked, so an answer stored against a previous
+            # contract has to go: on a card that grants no reduction it is
+            # inert, and it would come back into force the day the user
+            # switched to one that does.
+            self._data.pop(CONF_DIRECT_DEBIT, None)
+            return await self._after_meter()
+        return await self.async_step_direct_debit()
+
+    async def async_step_direct_debit(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._data.update(user_input)
+            return await self._after_meter()
+        return self.async_show_form(
+            step_id="direct_debit", data_schema=_direct_debit_schema(self._data)
+        )
+
+    async def _offer_unverified_key(self, key: str, came_from: str) -> ConfigFlowResult:
+        """Stash a key ENTSO-E could not confirm and offer a way forward.
+
+        A rejected key and an unreachable ENTSO-E are different answers and
+        only the first is the user's problem. Blocking setup on the second
+        makes a platform outage look like a bad key, and ENTSO-E was down for
+        over a day at the end of August 2026 with nobody able to add a
+        contract in the meantime (discussion #77).
+
+        Deliberately a menu rather than a silent pass. The user is choosing to
+        finish setup on a key nothing has verified, so the choice is put in
+        front of them with the re-check offered first; if the key really is
+        bad, the coordinator's own auth Repairs card says so on the first
+        refresh.
+        """
+        self._pending_key = key
+        self._pending_key_step = came_from
+        return await self.async_step_api_key_unreachable()
+
+    async def async_step_api_key_unreachable(
+        self,
+        user_input: dict[str, Any] | None = None,  # menu
+    ) -> ConfigFlowResult:
+        return self.async_show_menu(
+            step_id="api_key_unreachable",
+            menu_options=["api_key_recheck", "api_key_unverified"],
+        )
+
+    async def async_step_api_key_recheck(
+        self,
+        user_input: dict[str, Any] | None = None,  # menu
+    ) -> ConfigFlowResult:
+        """Ask ENTSO-E again, for a user who would rather wait than proceed."""
+        err = await _validate_entsoe_key(self.hass, self._pending_key)
+        if err is None:
+            return await self._accept_pending_key()
+        if err == "cannot_connect":
+            return await self.async_step_api_key_unreachable()
+        # Still reachable and the key was refused after all: that IS the
+        # user's problem, so put them back on the form with the real error
+        # rather than leaving them a "continue anyway" they should not take.
+        return self.async_show_form(
+            step_id=self._pending_key_step,
+            # The step's own schema: the injection key is optional and stays
+            # so, or the documented "leave blank to skip" exit disappears.
+            data_schema=(
+                _injection_api_key_schema(self._data)
+                if self._pending_key_step == "injection_api_key"
+                else _api_key_schema(self._data)
+            ),
+            errors={CONF_API_KEY: err},
+        )
+
+    async def async_step_api_key_unverified(
+        self,
+        user_input: dict[str, Any] | None = None,  # menu
+    ) -> ConfigFlowResult:
+        """Accept the key unverified and carry on with setup."""
+        return await self._accept_pending_key()
+
+    async def _accept_pending_key(self) -> ConfigFlowResult:
+        self._data[CONF_API_KEY] = self._pending_key
+        if self._pending_key_step == "injection_api_key":
+            return await self.async_step_meters()
+        return await self._after_api_key()
+
+    def _set_keyless(self, user_input: dict[str, Any]) -> None:
+        """Keep the keyless box as answered, stored only when ticked so an
+        entry that never used it carries nothing new."""
+        if user_input.get(CONF_KEYLESS_SPOTS):
+            self._data[CONF_KEYLESS_SPOTS] = True
+        else:
+            self._data.pop(CONF_KEYLESS_SPOTS, None)
+
+    async def async_step_api_key(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            key = (user_input.get(CONF_API_KEY) or "").strip()
+            self._set_keyless(user_input)
+            if not key and self._data.get(CONF_KEYLESS_SPOTS):
+                # The box stands in for the key: no key is kept beside it.
+                self._data.pop(CONF_API_KEY, None)
+                return await self._after_api_key()
+            if not key:
+                # A blank field must not reach the validator. While ENTSO-E is
+                # unreachable every answer is "cannot_connect", so the empty
+                # string would be offered the unverified branch and stored, and
+                # an empty key is the one value nothing recovers from:
+                # _fetch_spot_prices raises "ENTSO-E: missing API key" before
+                # fetch_day_ahead_or_fallback runs, so the keyless
+                # energy-charts source is never even tried. A typed-but-wrong
+                # key at least prices the entry off the fallback until ENTSO-E
+                # is back to reject it.
+                errors[CONF_API_KEY] = "empty_api_key"
+            elif key == self._data.get(CONF_API_KEY):
+                # The stored key, which every options edit of a dynamic or
+                # spot-monthly entry walks through. Asking ENTSO-E about it
+                # again blocked every edit while ENTSO-E answered an exhausted
+                # quota or maintenance, which reads as an invalid key.
+                return await self._after_api_key()
+            else:
+                err = await _validate_entsoe_key(self.hass, key)
+                if err is None:
+                    self._data[CONF_API_KEY] = key
+                    return await self._after_api_key()
+                if err == "cannot_connect":
+                    return await self._offer_unverified_key(key, "api_key")
+                errors[CONF_API_KEY] = err
+        return self.async_show_form(
+            step_id="api_key",
+            data_schema=_api_key_schema(self._data),
+            errors=errors,
+        )
+
+    @reads_decimals("capacity", _capacity_schema)
+    async def async_step_capacity(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            # A blanked picker is absent from user_input; pop it so clearing
+            # the sensor really clears it (the schema only suggests it now).
+            if CONF_CAPACITY_PEAK_SENSOR not in user_input:
+                self._data.pop(CONF_CAPACITY_PEAK_SENSOR, None)
+            self._data.update(user_input)
+            return await self.async_step_solar()
+        defaults = dict(self._data)
+        # Only where the step is new to the entry: at install, or on a move
+        # into Flanders, off a night circuit or off an analog meter, which
+        # never met it. A household that cleared the sensor had it picked
+        # again on every later edit submitted as shown.
+        stored = self._stored_data()
+        if stored is None or not bills_capacity(stored) or analog_meter(stored):
+            await _apply_energy_manager_capacity_default(self.hass, defaults)
+        return self.async_show_form(
+            step_id="capacity", data_schema=_capacity_schema(defaults)
+        )
+
+    @reads_decimals("solar", _solar_schema)
+    async def async_step_solar(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            if not compensation_lacks_kva({**self._data, **user_input}):
+                self._data.update(user_input)
+                return await self._after_solar()
+            return self.async_show_form(
+                step_id="solar",
+                data_schema=_solar_schema({**self._data, **user_input}),
+                errors={CONF_SOLAR_KVA: "compensation_kva_missing"},
+            )
+        return self.async_show_form(
+            step_id="solar", data_schema=_solar_schema(self._data)
+        )
+
+    def _needs_optional_api_key(self) -> bool:
+        """An ENTSO-E key is offered after the solar step, skippable, when
+        the chosen contract prices something off the day-ahead market that
+        its kind does not already collect a key for: an energy leg indexed on
+        the delivery month's mean, on ANY solar regime, or an index-linked
+        feed-in credit on the injection regime. A kind whose key step already
+        ran (dynamic or spot-monthly energy) skips it.
+
+        Asked of the kind, not of a stored key: this step is the only place
+        such a contract's key is entered, so skipping it once one is stored
+        left a rejected key with no way to replace it, while the
+        entsoe_auth_failed Repairs card sends the user here to do exactly that.
+
+        Which products those are is the registry's ``month_indexed_energy``
+        and ``spot_indexed_injection``, not a list kept here: the list ran a
+        supplier behind twice, and a contract missing from it is a household
+        billing last month's index with no step that could fix it."""
+        supplier = self._data[CONF_SUPPLIER]
+        contract = self._data[CONF_CONTRACT]
+        if (
+            _contract_kind(supplier, contract, quarter_hourly=self._quarter_hourly())
+            in SPOT_PRICED_CONTRACT_KINDS
+        ):
+            return False
+        if _contract_is_month_indexed(supplier, contract):
+            return True
+        return self._data.get(
+            CONF_SOLAR_REGIME
+        ) == SOLAR_REGIME_INJECTION and _contract_has_spot_injection(supplier, contract)
+
+    async def _after_solar(self) -> ConfigFlowResult:
+        if self._needs_optional_api_key():
+            return await self.async_step_injection_api_key()
+        if self._is_custom():
+            return await self._custom_tail()
+        return await self.async_step_meters()
+
+    async def _custom_tail(self) -> ConfigFlowResult:
+        # Collect the injection formula (injection regime only), then the
+        # hand-entered DSO + tax overlays, before the meter-sensor step.
+        if self._data.get(CONF_SOLAR_REGIME) == SOLAR_REGIME_INJECTION:
+            return await self.async_step_custom_injection()
+        return await self.async_step_custom_dso()
+
+    async def async_step_injection_api_key(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Optional ENTSO-E key for an index-linked leg the kind does not
+        collect one for: a month-indexed energy leg or spot-indexed injection.
+
+        Unlike the dynamic-energy ``api_key`` step this one is skippable:
+        the card prints a figure to fall back on, so leaving it blank bills
+        that figure (last month's index) until a next card printing the
+        closed month's index settles it or a key is added through Edit
+        settings. A typed key is validated against the live endpoint, except
+        the one already stored, so an edit of some other setting does not
+        fail on it while ENTSO-E is down.
+        """
+        errors: dict[str, str] = {}
+        if user_input is not None:
+            key = (user_input.get(CONF_API_KEY) or "").strip()
+            self._set_keyless(user_input)
+            if not key:
+                self._data.pop(CONF_API_KEY, None)
+                return await self.async_step_meters()
+            if key == self._data.get(CONF_API_KEY):
+                return await self.async_step_meters()
+            err = await _validate_entsoe_key(self.hass, key)
+            if err is None:
+                self._data[CONF_API_KEY] = key
+                return await self.async_step_meters()
+            if err == "cannot_connect":
+                return await self._offer_unverified_key(key, "injection_api_key")
+            errors[CONF_API_KEY] = err
+        return self.async_show_form(
+            step_id="injection_api_key",
+            data_schema=_injection_api_key_schema(self._data),
+            errors=errors,
+        )
+
+    async def async_step_meters(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            # Same as the capacity step: a blanked picker never reaches
+            # user_input, so drop it explicitly to allow unwiring a meter.
+            for key in _METER_SENSOR_KEYS:
+                if key not in user_input:
+                    self._data.pop(key, None)
+            self._data.update(user_input)
+            # The Eneco bill is picked from its own menu item, and checks
+            # nothing on another supplier's contract.
+            if self._data.get(CONF_SUPPLIER) != SUPPLIER_ENECO:
+                self._data.pop(CONF_ENECO_BILL, None)
+            # A day/night pair only works as a pair. _resolve_daily_kwh and
+            # _hourly_consumption_sensors both give up when one half is
+            # missing, and the year cost then silently collapses to the
+            # fees-only floor with no error, no repair and nothing in the log
+            # a user would see. Catch it at the point the mistake is made, and
+            # the same for one sensor picked twice, which bills its kWh twice.
+            errors = _incomplete_register_pairs(self._data)
+            errors.update(_reused_meter_sensors(self._data))
+            if errors:
+                defaults = dict(self._data)
+                return self.async_show_form(
+                    step_id="meters",
+                    data_schema=_meters_schema(defaults),
+                    errors=errors,
+                )
+            return self._finalize()
+        defaults = dict(self._data)
+        # At install only. On an edit every field already holds what the
+        # household chose, and one with all of them cleared had the dashboard's
+        # sensors wired back by any later edit submitted as shown.
+        if self._stored_data() is None:
+            await _apply_energy_manager_defaults(self.hass, defaults)
+        return self.async_show_form(
+            step_id="meters", data_schema=_meters_schema(defaults)
+        )
+
+    async def async_step_dso_tariff_mode(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._data.update(user_input)
+            return await self._after_dso_tariff_mode()
+        return self.async_show_form(
+            step_id="dso_tariff_mode",
+            data_schema=_dso_tariff_mode_schema(self._data),
+        )
+
+    async def _after_meter(self) -> ConfigFlowResult:
+        # Tarif Impact is Wallonia-only; outside Wallonia the
+        # distribution mode question doesn't apply (Brussels has only
+        # Sibelga, Flanders bills via the capacity tariff).
+        if self._data[CONF_REGION] == REGION_WALLONIA:
+            if (
+                _contract_kind(
+                    self._data[CONF_SUPPLIER],
+                    self._data[CONF_CONTRACT],
+                    quarter_hourly=self._quarter_hourly(),
+                )
+                == "tou_impact"
+            ):
+                # Not a question for these products. An Impact card bands its
+                # ENERGY on the CWaPE incitative schedule, which exists only
+                # under that configuration, so offering the standard mode
+                # pre-selected let a user bill the two legs off different
+                # tariff structures: the energy routed by Impact band while
+                # the network took the standard jour/nuit columns.
+                self._data[CONF_DSO_TARIFF_MODE] = DSO_MODE_IMPACT
+                return await self._after_dso_tariff_mode()
+            return await self.async_step_dso_tariff_mode()
+        # Drop a mode carried over from a Walloon edit. Nothing else pops it
+        # and the options flow writes self._data verbatim, so an entry moved
+        # to Flanders or Brussels kept dso_tariff_mode='impact'. The network
+        # side shrugs that off (the overlay has no Impact triplet outside
+        # Wallonia, so network_eur_per_kwh falls through), but _routed_rate
+        # still sends the ENERGY leg through dso_impact_band: 11:00-17:00
+        # then bills off-peak where the region's own schedule says peak, and
+        # 22:00-01:00 bills peak where it says off-peak.
+        self._data.pop(CONF_DSO_TARIFF_MODE, None)
+        return await self._after_dso_tariff_mode()
+
+    async def async_step_connection_power(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._data.update(user_input)
+            return await self.async_step_solar()
+        return self.async_show_form(
+            step_id="connection_power",
+            data_schema=_connection_power_schema(self._data),
+        )
+
+    async def _before_solar(self) -> ConfigFlowResult:
+        # Brussels connections pay a Brugel OSP fee scaled by contractual
+        # connection power, so ask the tier before the solar step. Other
+        # regions have no such fee and go straight to solar.
+        if self._data[CONF_REGION] == REGION_BRUSSELS:
+            return await self.async_step_connection_power()
+        return await self.async_step_solar()
+
+    async def _after_dso_tariff_mode(self) -> ConfigFlowResult:
+        # Dynamic and spot-monthly energy both price off ENTSO-E spots, so
+        # both collect the API key first.
+        if (
+            _contract_kind(
+                self._data[CONF_SUPPLIER],
+                self._data[CONF_CONTRACT],
+                quarter_hourly=self._quarter_hourly(),
+            )
+            in SPOT_PRICED_CONTRACT_KINDS
+        ):
+            return await self.async_step_api_key()
+        return await self._after_energy_key()
+
+    async def _after_api_key(self) -> ConfigFlowResult:
+        return await self._after_energy_key()
+
+    def _is_custom(self) -> bool:
+        return self._data.get(CONF_SUPPLIER) == SUPPLIER_CUSTOM
+
+    async def _after_energy_key(self) -> ConfigFlowResult:
+        # The expert custom supplier types its formula before the network /
+        # solar steps; every other supplier already carries its rates.
+        if self._is_custom():
+            return await self.async_step_custom_energy()
+        return await self._after_energy_collected()
+
+    async def _after_energy_collected(self) -> ConfigFlowResult:
+        # Not on an exclusive-night circuit: its quarter-hours are billed with
+        # the main meter's, on the main entry, so there is no peak to ask for
+        # here and the household's DSMR peak sensor must not be offered again.
+        # Nor on an analog meter, billed the minimum peak with nothing to read.
+        if bills_capacity(self._data) and not analog_meter(self._data):
+            return await self.async_step_capacity()
+        return await self._before_solar()
+
+    @reads_decimals("custom_energy", _custom_energy_schema)
+    async def async_step_custom_energy(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            _drop_blanked(self._data, user_input, _CUSTOM_ENERGY_FALLBACK_KEYS)
+            self._data.update(user_input)
+            return await self._after_energy_collected()
+        return self.async_show_form(
+            step_id="custom_energy",
+            data_schema=_custom_energy_schema(self._data),
+        )
+
+    @reads_decimals("custom_injection", _custom_injection_schema)
+    async def async_step_custom_injection(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._data.update(user_input)
+            return await self.async_step_custom_dso()
+        return self.async_show_form(
+            step_id="custom_injection",
+            data_schema=_custom_injection_schema(self._data),
+        )
+
+    @reads_decimals("custom_dso", _custom_dso_schema)
+    async def async_step_custom_dso(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            _drop_blanked(self._data, user_input, _CUSTOM_DSO_FALLBACK_KEYS)
+            self._data.update(user_input)
+            return await self.async_step_custom_tax()
+        return self.async_show_form(
+            step_id="custom_dso",
+            data_schema=_custom_dso_schema(self._data),
+        )
+
+    @reads_decimals("custom_tax", _custom_tax_schema)
+    async def async_step_custom_tax(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        if user_input is not None:
+            self._data.update(user_input)
+            return await self.async_step_meters()
+        return self.async_show_form(
+            step_id="custom_tax",
+            data_schema=_custom_tax_schema(self._data),
+        )
+
+    def _finalize(self) -> ConfigFlowResult:
+        raise NotImplementedError

@@ -1,0 +1,870 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""What a backfill is run over, and against which recorder rows.
+
+The window it covers once clamped to what exists, the statistic ids it will
+write, the recorder models it needs and the one context object carrying the
+prices, profiles and cards the whole run is priced from. Both halves of a
+backfill are built on this, and neither of them owns it.
+"""
+
+from __future__ import annotations
+
+import asyncio
+from collections.abc import AsyncIterator, Awaitable, Callable
+from dataclasses import dataclass
+from datetime import UTC, date, datetime, timedelta
+from functools import partial
+from itertools import groupby
+from typing import Any, Final
+
+import aiohttp
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ServiceValidationError
+from homeassistant.helpers import entity_registry as er
+from homeassistant.util import dt as dt_util
+
+from .brugel import ensure_power_term
+from .cohort import (
+    _cohort_legs,
+    _month_snapshot_cache,
+    signing_month_snapshot,
+    ytd_window_start,
+)
+from .compare_inputs import _coordinator_rlp_index_weights
+from .const import (
+    CONF_CONTRACT,
+    CONF_DSO,
+    CONF_DSO_TARIFF_MODE,
+    CONF_METER,
+    CONF_REGION,
+    CONF_SOLAR_REGIME,
+    CONF_SUPPLIER,
+    DOMAIN,
+    DSO_MODE_BI_HORAIRE,
+    METER_MONO,
+    REGION_BRUSSELS,
+    REGION_FLANDERS,
+    SOLAR_REGIME_COMPENSATION,
+)
+from .contract_periods import (
+    ContractPeriod,
+    current_period_start,
+    ensure_period_analog_rates,
+    previous_periods,
+)
+from .coordinator import BePricesCoordinator
+from .day_night import day_start_for
+from .fees import FirstYearVolume
+from .first_year import first_year_volume
+from .fluvius import ensure_analog_surcharge, ensure_tariff_sheet
+from .injection import _injection_hourly_on_cohort
+from .period_cards import period_card
+from .pricing import DsoTariffMode, MeterType
+from .providers import get as get_extractor
+from .providers._rates import InjectionRates
+from .providers.base import SupplierSnapshot
+from .signing_month import _tariff_card_month
+from .snapshot_months import (
+    _snapshot_for_month,
+    month_card,
+    month_card_failed,
+    nearer_card_not_read,
+)
+from .snapshot_resolve import (
+    analog_meter,
+    ensure_custom_network,
+    ensure_delivery_year_sheet,
+    entry_annual_injection_kwh,
+    entry_annual_kwh,
+    network_sheet_unread,
+)
+from .spot_stats import (
+    _energy_is_rlp_indexed,
+    _rlp_blend_for,
+    _spp_weighting_enabled,
+    spots_available,
+)
+from .synergrid import RlpWeights, SppWeights
+
+
+def _stat_id(hass: HomeAssistant, entry: ConfigEntry, key: str) -> str | None:
+    """Resolve the entity id (== statistic id) for one of this entry's sensors.
+
+    Looks up the entity registry by unique id. Returns ``None`` when
+    the entity hasn't been registered yet: callers skip silently
+    rather than fabricating a slug from the description key, which
+    would diverge from the user's renamed entity id.
+    """
+    return er.async_get(hass).async_get_entity_id(
+        "sensor", DOMAIN, f"{entry.entry_id}_{key}"
+    )
+
+
+def _hour_iter(start: datetime, end: datetime) -> list[datetime]:
+    """UTC hour anchors in [start, end), aligned to the top of each hour."""
+    cur = start.replace(minute=0, second=0, microsecond=0)
+    if cur < start:
+        cur += timedelta(hours=1)
+    out: list[datetime] = []
+    while cur < end:
+        out.append(cur)
+        cur += timedelta(hours=1)
+    return out
+
+
+# Hours priced between two turns of the event loop. A backfill walks up to a
+# year of them in one coroutine on Home Assistant's own loop, and a day at a
+# time keeps each turn to a few milliseconds.
+_HOURS_PER_TURN = 24
+
+
+async def _in_turns(hours: list[datetime]) -> AsyncIterator[datetime]:
+    """``hours`` one by one, handing the event loop a turn every day of them.
+
+    Neither pass awaits anything that actually waits once the month cards are
+    cached, so each held the loop from its first hour to its last: the whole
+    of Home Assistant stood still for as long as a backfill ran, and a task
+    cancelled on unload could not stop until the pass was over.
+    """
+    for index, hour in enumerate(hours):
+        if index and not index % _HOURS_PER_TURN:
+            await asyncio.sleep(0)
+        yield hour
+
+
+def _floor_to_hour_utc(when: datetime) -> datetime:
+    return when.astimezone(UTC).replace(minute=0, second=0, microsecond=0)
+
+
+# The first month a backfill may start in: the oldest month any configuration
+# can be priced on figures of its own. Measured live on 6 November 2026, one
+# card per month through each supplier's own archive: Luminus's price-list
+# archive serves its ComfyFlex card from February 2022, energy, network and
+# excise all read, and nothing its parser reads for the five months before;
+# Mega, OCTA+ and Cociter give nothing for January 2022 or June 2021, Eneco
+# nothing for January 2022. The card archive keeps November 2023 onwards (the
+# running month and the thirty-six before it), and the CREG's social tariff
+# quarters and the excise held for any month start in October 2022
+# (excise_law.FIRST_MONTH). A day before it could only be priced on today's
+# card. The floor also caps what one call costs: every hour of the window is
+# walked on the event loop, every closed month's card is looked up, and a
+# dynamic contract asks ENTSO-E for every week. A 1900 start meant 1,111,935
+# hours, which held the loop 4.6 s, a lookup for each of 1,522 months and some
+# 6,600 weekly requests.
+_BACKFILL_FIRST_MONTH: Final = date(2022, 2, 1)
+
+
+def _normalize_window(
+    start: datetime | date | None,
+    end: datetime | date | None,
+    default_start: datetime,
+) -> tuple[datetime, datetime]:
+    """Return aware UTC [start_utc, end_utc) clamped to whole-hour buckets.
+
+    The default window is [``default_start``, current hour), which the caller
+    resolves from the entry: local 1 January for almost everyone, the contract
+    start date for an entry that bills its year-to-date from there. End is
+    exclusive so we don't write a row for the in-progress hour the
+    live coordinator is about to fill itself.
+
+    A start before ``_BACKFILL_FIRST_MONTH`` is refused with a
+    ``ServiceValidationError``. Both bounds are compared before anything is
+    converted to UTC: an aware comparison never overflows, where converting a
+    date in year 1 or 9999 can, so no date the service schema accepts raises
+    anything else.
+    """
+    now_local = dt_util.now()
+    if start is None:
+        start_local = default_start
+    elif isinstance(start, datetime):
+        start_local = (
+            start
+            if start.tzinfo is not None
+            else start.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        )
+    else:
+        start_local = datetime.combine(
+            start, datetime.min.time(), tzinfo=dt_util.DEFAULT_TIME_ZONE
+        )
+    if end is None:
+        end_local = now_local
+    elif isinstance(end, datetime):
+        end_local = (
+            end
+            if end.tzinfo is not None
+            else end.replace(tzinfo=dt_util.DEFAULT_TIME_ZONE)
+        )
+    else:
+        end_local = datetime.combine(
+            end, datetime.min.time(), tzinfo=dt_util.DEFAULT_TIME_ZONE
+        )
+    earliest = dt_util.start_of_local_day(_BACKFILL_FIRST_MONTH)
+    if start_local < earliest:
+        raise ServiceValidationError(
+            f"the backfill can start no earlier than {earliest.date().isoformat()}",
+            translation_domain=DOMAIN,
+            translation_key="backfill_start_too_early",
+            translation_placeholders={"earliest": earliest.date().isoformat()},
+        )
+    # A start after now leaves the window empty, as an end before the start
+    # does. Bounded here, before it is converted: a start late in year 9999
+    # has no UTC time, and the conversion raised OverflowError.
+    start_local = min(start_local, now_local)
+    start_utc = _floor_to_hour_utc(start_local)
+    # Clamp the end to the current hour. compute_breakdown happily evaluates a
+    # future hour for a fixed / variable / TOU / Impact contract, so an end
+    # date past now (a mistyped year on the backfill_statistics service, whose
+    # schema has no upper bound) wrote a full year of phantom price rows and
+    # kept the cost sensor's fee, capacity and prosumer accrual running into
+    # hours that have not happened. The None default already stopped at now;
+    # an explicit end now gets the same bound. An end before the start leaves
+    # the window empty, as it always did, and is raised to the start first so
+    # that converting it cannot overflow either.
+    end_local = max(min(end_local, now_local), start_local)
+    end_utc = _floor_to_hour_utc(end_local)
+    return start_utc, end_utc
+
+
+def _newest_statistics_run(hass: HomeAssistant) -> datetime | None:
+    """The start of the newest period the recorder has compiled, read on its
+    own executor."""
+    from homeassistant.components.recorder.db_schema import StatisticsRuns
+    from homeassistant.components.recorder.models import process_timestamp
+    from homeassistant.helpers.recorder import session_scope
+    from sqlalchemy import func
+
+    with session_scope(hass=hass, read_only=True) as session:
+        start: datetime | None = session.query(func.max(StatisticsRuns.start)).scalar()
+    return process_timestamp(start)
+
+
+async def _compiled_until(hass: HomeAssistant) -> datetime:
+    """The end of the newest hour the recorder has compiled.
+
+    The recorder writes an hour's rows when it compiles that hour's last
+    five minutes, ten seconds after the hour, and much later after a
+    restart: its catch-up for the hours Home Assistant was down waits for
+    startup to finish. It inserts those rows without an upsert, so a row a
+    backfill got in first makes the insert fail, and the recorder then rolls
+    back that whole period for every entity, its run marker with it, and
+    never compiles it again. Each compiled period leaves a run marker and
+    the catch-up resumes after the newest one, so every hour that ends by
+    the end of that period is settled. Without the marker, the hour that has
+    just ended is taken as not compiled yet.
+    """
+    hour = _floor_to_hour_utc(dt_util.utcnow())
+    try:
+        from homeassistant.components.recorder import (  # type: ignore[attr-defined]
+            get_instance,
+        )
+        from homeassistant.components.recorder.db_schema import StatisticsShortTerm
+
+        newest = await get_instance(hass).async_add_executor_job(
+            _newest_statistics_run, hass
+        )
+    except Exception:  # recorder may surface anything
+        newest = None
+    if not isinstance(newest, datetime):
+        return hour - timedelta(hours=1)
+    return min(hour, _floor_to_hour_utc(newest + StatisticsShortTerm.duration))
+
+
+async def _existing_stat_window(
+    hass: HomeAssistant, statistic_id: str, anchor: datetime
+) -> bool | None:
+    """Return True when at least one statistic row exists in a short
+    window from ``anchor``, False when none does, and None when the
+    recorder did not answer.
+
+    Used by :func:`backfill_if_missing` to derive the "is the recorder
+    already populated" signal directly from the recorder, so we never
+    need to persist a separate "backfill done" flag that would go
+    stale across DB resets or supplier changes.
+
+    Probes a 2-day window rather than the single anchor hour: a dynamic
+    contract whose Jan 1 00:00 spot is genuinely missing skips that hour
+    during backfill, so a single-hour probe would read empty and re-run
+    the whole-year backfill on every restart. A short window still reads
+    empty after a real DB reset (self-healing preserved) but tolerates a
+    legitimately-absent leading hour.
+
+    A read the recorder failed says nothing about what it holds. Taken for
+    nothing recorded, a busy database at setup started a whole year's
+    backfill over the rows it had, and its meter reads came back empty too.
+    """
+    try:
+        from homeassistant.components.recorder import (  # type: ignore[attr-defined]
+            get_instance,
+        )
+        from homeassistant.components.recorder.statistics import (
+            statistics_during_period,
+        )
+    except ImportError:
+        return None
+    try:
+        rows = await get_instance(hass).async_add_executor_job(
+            statistics_during_period,
+            hass,
+            anchor,
+            anchor + timedelta(days=2),
+            {statistic_id},
+            "hour",
+            None,
+            {"mean"},
+        )
+    except Exception:  # recorder may surface anything
+        return None
+    return bool(rows.get(statistic_id))
+
+
+async def _clear_all(hass: HomeAssistant, statistic_ids: list[str]) -> None:
+    """Delete every statistic row for ``statistic_ids``: the WHOLE series.
+
+    The recorder's ``clear_statistics`` is the only public primitive
+    here and it is series-scoped, not range-scoped. Callers must
+    therefore restrict the use of ``clear=True`` to full-year re-runs;
+    a narrower window with ``clear=True`` would wipe rows OUTSIDE the
+    requested range and leave them gone. The user-facing service
+    description in services.yaml + every locale's strings warn about
+    this destructive scope.
+    """
+    try:
+        from homeassistant.components.recorder import (  # type: ignore[attr-defined]
+            get_instance,
+        )
+        from homeassistant.components.recorder.statistics import clear_statistics
+    except ImportError:
+        return
+    instance = get_instance(hass)
+    await instance.async_add_executor_job(clear_statistics, instance, statistic_ids)
+
+
+@dataclass(frozen=True)
+class _BackfillContext:
+    """Everything both backfill passes resolve before their hour loop.
+
+    The two passes opened with ~33 verbatim identical lines: the lazy recorder
+    imports, the entry unpack, the per-month snapshot cache, the SPP weights
+    and the three per-run caches. A new per-run input had to be added twice.
+    """
+
+    region: str
+    # The hour the day register starts (day_night.day_start_for).
+    day_start: int
+    dso: str
+    meter: MeterType
+    dso_mode: DsoTariffMode
+    regime: str
+    snap_for: Callable[[date], Awaitable[Any]]
+    spp_weights: SppWeights | None
+    # The household's load shape, which a compensation net is spread over.
+    rlp_weights: RlpWeights | None
+    # The index an RLP-indexed month leg resolves against, which is the card's
+    # own blend and can differ from the entry's for a contract held earlier
+    # in the year; ``rlp_weights`` where it is the same.
+    rlp_index_weights: RlpWeights | None
+    month_spp_cache: dict[tuple[int, int, bool], float | None]
+    month_mean_cache: dict[tuple[int, int], float | None]
+    # Whether the feed-in leg an hour credits keeps its per-hour index under a
+    # cohort's monthly energy re-price, judged on today's card.
+    hourly_injection: Callable[[InjectionRates | None], bool]
+    # The card the welcome credit is read off: the signing month's where the
+    # supplier keeps an archive and the entry has a start date, else the
+    # current one. Same resolution the live year-to-date walk makes, so the
+    # backfilled series credits the amount the sensor does.
+    signing: Any
+    # The entry's yearly volume, for the welcome credit's per-kWh term, which
+    # the card measures over the first contract year rather than the window
+    # the series covers. Resolved once here for the same reason everything
+    # else on this class is.
+    annual_kwh: float
+    # A year of the export the household SELLS, for a first-year feed-in
+    # bonus; zero off the injection regime, like the live walk's.
+    annual_injection_kwh: float = 0.0
+    # What the first contract year metered once it has closed, which then
+    # stands for both volumes above, as on the live walk.
+    first_year: FirstYearVolume | None = None
+
+
+def _recorder_models() -> tuple[Any, Any, Any, Any]:
+    """The recorder symbols both passes import, imported lazily.
+
+    Kept inside a function, never at module scope: backfill.py must import
+    cleanly on an installation with no recorder (the annotations live under
+    TYPE_CHECKING for the same reason). mypy --strict needs the ignore because
+    the recorder does not re-export StatisticMeanType via __all__.
+    """
+    from homeassistant.components.recorder.models import (
+        StatisticData,
+        StatisticMetaData,
+    )
+    from homeassistant.components.recorder.statistics import (  # type: ignore[attr-defined]
+        StatisticMeanType,
+        async_import_statistics,
+    )
+
+    return StatisticData, StatisticMetaData, StatisticMeanType, async_import_statistics
+
+
+async def _build_context(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    coordinator: BePricesCoordinator,
+    hours: list[datetime],
+    *,
+    snapshot: SupplierSnapshot | None = None,
+    snapshot_raw: SupplierSnapshot | None = None,
+) -> _BackfillContext:
+    """Resolve the per-run inputs shared by both passes.
+
+    ``_ensure_spp_weights`` must be awaited before ``_spp_weights`` is read;
+    doing it here is what keeps that ordering from having to be remembered at
+    two call sites.
+
+    ``snapshot`` is set for the hours of a contract the household held earlier
+    in the year (``_contract_segments``): its card, with ``entry`` the stand-in
+    holding its settings. The load profile is then read as loaded rather than
+    asked for, because asking for another card's blend would move the one the
+    live coordinator prices its own contract on. ``snapshot_raw`` is the card
+    it was resolved from, which a month no archive holds is resolved from
+    again for that month's federal levies, as the live sensor bills it.
+    """
+    snap = snapshot if snapshot is not None else coordinator._snapshot
+    assert snap is not None
+    extractor = get_extractor(entry.data[CONF_SUPPLIER])
+    contract = entry.data[CONF_CONTRACT]
+    region = entry.data.get(CONF_REGION, "")
+    # The profiles are decided on the leg the live tick decides them on, the
+    # signing cohort's spliced onto today's card, so that a contract signed on
+    # a card indexed otherwise than today's is weighted alike in the
+    # backfilled rows and in current_year_cost. Asked of today's card alone,
+    # a Mega Pro Smart Flex cohort signed on an RLP-indexed card was billed
+    # on the plain mean here and on the weighted one by the sensor.
+    gated = snap
+    if snapshot is None:
+        cohort = await _cohort_legs(
+            hass, coordinator._session, extractor, contract, region, entry, snap
+        )
+        gated = cohort.splice(snap)
+    # The calendar year the hours fall in (_contract_segments cuts at each
+    # 1 January), whose own Synergrid curves weight them.
+    hours_year = dt_util.as_local(hours[0]).year if hours else dt_util.now().year
+    spp_weights = None
+    if _spp_weighting_enabled(entry, gated):
+        await coordinator._ensure_spp_weights()
+        spp_weights = await coordinator.spp_weights_for_year(hours_year)
+    # The RLP profile serves two things here: the month mean of an energy leg
+    # indexed on it, and the allocation of a compensation entry's yearly net
+    # over the year, which is how such a meter is settled. On the entry's own
+    # card both are the entry's blend. An earlier contract's card names its
+    # own blend for the index while the net is still spread over the entry's,
+    # which is how contract_periods prices it live: one blend for both moved
+    # the earlier contract's share of the imported series off the sensor.
+    rlp_weights = None
+    rlp_index_weights = None
+    regime = entry.data.get(CONF_SOLAR_REGIME, "none")
+    indexed = _energy_is_rlp_indexed(gated.energy) and spots_available(entry.data)
+    if snapshot is not None:
+        rlp_index_weights = _coordinator_rlp_index_weights(coordinator.entry, snap)
+        if _energy_is_rlp_indexed(snap.energy) or regime == SOLAR_REGIME_COMPENSATION:
+            rlp_weights = coordinator._rlp_weights or None
+    elif indexed or regime == SOLAR_REGIME_COMPENSATION:
+        blend = _rlp_blend_for(gated.energy)
+        await coordinator._ensure_rlp_weights(blend)
+        rlp_weights = coordinator._rlp_weights or None
+        if indexed:
+            # The index on the curve of the year the hours fall in, one
+            # calendar year's (_contract_segments): the running year's is
+            # held, and a backfill reaching into an earlier one fetches that
+            # year's own. A net is spread over the held one, which is all it
+            # reads: the cost series never reaches into an earlier year.
+            rlp_weights = await coordinator.rlp_weights_for_year(hours_year, blend)
+    # A cache hit whenever the live tick has run, which resolves the same row
+    # to freeze the signed energy rate; identity for an entry with no start
+    # date or a supplier with no archive.
+    signing = await signing_month_snapshot(
+        hass, coordinator._session, extractor, contract, region, entry, snap
+    )
+    # What the first contract year metered once it has closed, for a window
+    # opening on its first hour's day, which is where the cost walk credits
+    # from.
+    first_year = (
+        await first_year_volume(hass, entry, signing, dt_util.as_local(hours[0]).date())
+        if hours
+        else None
+    )
+    # Sibelga's power term for every year this run prices, not just the
+    # current one. _resolve_snapshot asks the cache for the DELIVERY month's
+    # year, so a run reaching back into a finished year found nothing there
+    # and rebuilt those rows without the term, disagreeing with the live
+    # sensor beside them. The coordinator tick only ever fetches this year.
+    years = sorted({dt_util.as_local(hour).year for hour in hours})
+    # The card each contract's own was resolved from, so a month no archive
+    # holds bills its own levies, as the live sensor bills it.
+    raw = (
+        getattr(coordinator, "_snapshot_raw", None)
+        if snapshot is None
+        else snapshot_raw
+    )
+    await ensure_year_sheets(coordinator._session, entry, raw, years)
+    return _BackfillContext(
+        region=region,
+        day_start=day_start_for(entry.data),
+        dso=entry.data[CONF_DSO],
+        meter=entry.data.get(CONF_METER, METER_MONO),
+        dso_mode=entry.data.get(CONF_DSO_TARIFF_MODE, DSO_MODE_BI_HORAIRE),
+        regime=entry.data.get(CONF_SOLAR_REGIME, "none"),
+        # Cache per-month snapshot lookups so a 365-day window touches at
+        # most 12 archive fetches.
+        snap_for=_month_snapshot_cache(
+            hass,
+            coordinator._session,
+            extractor,
+            contract,
+            region,
+            snap,
+            entry,
+            current_raw=raw,
+        ),
+        # Entries whose injection is SPP-weighted - a card that indexes on
+        # Belpex_SPP, or a custom monthly entry that opted in - price the
+        # mean-indexed credit off the Synergrid solar profile; mirror the live
+        # YTD credit so the backfill meets it at the seam.
+        spp_weights=spp_weights,
+        rlp_weights=rlp_weights,
+        rlp_index_weights=(
+            rlp_weights if rlp_index_weights is None else rlp_index_weights
+        ),
+        month_spp_cache={},
+        month_mean_cache={},
+        # A card whose injection is a per-hour spot formula with no printed
+        # indicative (Cociter Tarif Variable) keeps that hourly index even when
+        # a signing cohort re-prices its ENERGY leg to a monthly mean. Same
+        # gate the live tick and the YTD walk apply, asked of each hour's
+        # credited leg.
+        hourly_injection=partial(_injection_hourly_on_cohort, snap, entry=entry),
+        signing=signing,
+        annual_kwh=entry_annual_kwh(entry, coordinator),
+        annual_injection_kwh=entry_annual_injection_kwh(entry, coordinator),
+        first_year=first_year,
+    )
+
+
+async def ensure_year_sheets(
+    session: aiohttp.ClientSession,
+    entry: ConfigEntry,
+    raw: SupplierSnapshot | None,
+    years: list[int],
+) -> None:
+    """Fetch the sheets each of ``years`` is billed off, which the coordinator
+    tick only fetches for the running year: Brussels' power term, the Flemish
+    network ceiling and analog rate, and an entry's network off its region's
+    sheet. ``raw`` is the card the entry's own was resolved from."""
+    region = entry.data.get(CONF_REGION, "")
+    if region == REGION_BRUSSELS:
+        for year in years:
+            await ensure_power_term(session, year)
+    # The VREG network ceiling of a Flemish entry, for the same reason, and an
+    # analog meter's kWh rate off its area's sheet for every year it billed in.
+    if region == REGION_FLANDERS:
+        for year in years:
+            await ensure_tariff_sheet(session, year)
+            if analog_meter(entry.data, date(year, 1, 1)):
+                await ensure_analog_surcharge(session, year, str(entry.data[CONF_DSO]))
+    # An entry's network off its region's sheet, a custom one's or a
+    # withdrawn product's, for the same reason, and that year's sheet for a
+    # card of another year standing in for a month no archive holds.
+    for year in years:
+        await ensure_custom_network(session, entry.data, year)
+        await ensure_delivery_year_sheet(session, entry.data, raw, year)
+
+
+# A piece of the window on one contract: its entry, card and the card that
+# was resolved from (``None`` for the entry's own), and its hours.
+_Segment = tuple[
+    ConfigEntry, SupplierSnapshot | None, SupplierSnapshot | None, list[datetime]
+]
+
+
+async def _contract_segments(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    coordinator: BePricesCoordinator,
+    hours: list[datetime],
+    *,
+    billed_only: bool = False,
+) -> list[_Segment]:
+    """``hours`` cut at each recorded supplier switch and each 1 January,
+    oldest first.
+
+    Each piece is priced on the contract that supplied it: the stand-in entry,
+    card and the card that was resolved from of a contract held earlier in the
+    year (``period_card``), or the entry itself with ``None`` for its own
+    contract and cards. An entry that
+    recorded no switch gets one piece, which is what every run was before. An
+    hour outside every earlier contract's days, including one in a previous
+    year, stays on the entry's own contract, as it always was.
+
+    An earlier contract none of whose cards can be had is priced on the stand-in
+    ``period_card`` hands back, as the live sensor bills it;
+    ``_stand_in_spans`` has already named its days for the response. One whose
+    read just failed only gets here for the cost series, which is one running
+    total: its price hours were left out before the pass began.
+
+    ``billed_only`` leaves out the days inside the window that no contract
+    supplied: before the first day ``previous_periods`` bills when an earlier
+    contract billed the year from its own start date, as ``current_year_cost``
+    leaves them out. The cost
+    series asks for it; a price row for such a day harms nothing.
+
+    The cut at 1 January is for the Synergrid load profile, which is keyed
+    without its year: each piece's RLP index is weighted on its own year's
+    curve (``_build_context``). The cost series stays inside one year anyway.
+    """
+    if not hours:
+        return []
+    today = dt_util.now().date()
+    window_start = ytd_window_start(entry, today)
+    periods = previous_periods(entry.data, window_start, today)
+    if not periods:
+        return _by_year([(entry, None, None, hours)])
+    own_start = current_period_start(entry.data, window_start)
+    segments: list[_Segment] = []
+    owner: int | None = None
+    run: list[datetime] = []
+    for hour in hours:
+        day = dt_util.as_local(hour).date()
+        index = next((i for i, p in enumerate(periods) if p.start <= day <= p.end), -1)
+        if billed_only and index < 0 and window_start <= day < own_start:
+            continue
+        if index != owner and run:
+            segments.append(
+                await _segment_for(hass, entry, coordinator, periods, owner, run)
+            )
+            run = []
+        owner = index
+        run.append(hour)
+    if run:
+        segments.append(
+            await _segment_for(hass, entry, coordinator, periods, owner, run)
+        )
+    return _by_year(segments)
+
+
+def _by_year(segments: list[_Segment]) -> list[_Segment]:
+    """``segments`` cut again at each 1 January of their local hours."""
+    return [
+        (seg_entry, card, raw, list(run))
+        for seg_entry, card, raw, seg_hours in segments
+        for _year, run in groupby(
+            seg_hours, key=lambda hour: dt_util.as_local(hour).year
+        )
+    ]
+
+
+async def _segment_for(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    coordinator: BePricesCoordinator,
+    periods: list[ContractPeriod],
+    index: int | None,
+    hours: list[datetime],
+) -> _Segment:
+    if index is None or index < 0:
+        return entry, None, None, hours
+    # Before the card is resolved, which a month no archive holds takes the
+    # analog kWh rate from (_build_context reads it after).
+    await ensure_period_analog_rates(coordinator._session, [periods[index]])
+    proxy, _extractor, card, _stand_in, _failed, _ocr, raw = await period_card(
+        hass, coordinator._session, coordinator, periods[index]
+    )
+    return proxy, card, raw, hours
+
+
+async def _stand_in_spans(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    coordinator: BePricesCoordinator,
+    first: date,
+    last: date,
+) -> list[tuple[date, date, str, bool]]:
+    """The days in ``[first, last]`` the backfill prices on a stand-in rather
+    than on their own cards, as ``(first day, last day, why, read failed)``.
+
+    Two ways. An earlier contract whose supplier's cards could not be had
+    (``period_card`` hands back the entry's current card in their place), and
+    a closed month whose own card could not be read just now
+    (``_months_not_read``), which the walk bills on the current card. The live
+    sensor bills both on that card too, except that it keeps an earlier
+    contract's last pricing on its own cards through a failed read
+    (``keep_settled``). The last element says a read failed just
+    now and may work an hour later, so the price series leaves those days out
+    for a later run to write; otherwise no archive kept the cards and nothing
+    will change. Asking here also fills the month cache both passes then
+    read.
+    """
+    today = dt_util.now().date()
+    spans: list[tuple[date, date, str, bool]] = []
+    periods = previous_periods(entry.data, ytd_window_start(entry, today), today)
+    # The entry's own contract holds every day no earlier one does.
+    own = [(first, last)]
+    for period in periods:
+        own = [
+            piece
+            for begin, end in own
+            for piece in (
+                (begin, min(end, period.start - timedelta(days=1))),
+                (max(begin, period.end + timedelta(days=1)), end),
+            )
+            if piece[0] <= piece[1]
+        ]
+        if period.end < first or period.start > last:
+            continue
+        proxy, _extractor, card, stand_in, failed, _ocr, _raw = await period_card(
+            hass, coordinator._session, coordinator, period
+        )
+        if stand_in or card is None:
+            spans.append(
+                (
+                    period.start,
+                    period.end,
+                    f"no card of the {period.data.get(CONF_SUPPLIER)} contract"
+                    " held then could be read",
+                    failed,
+                )
+            )
+            continue
+        spans += await _months_not_read(
+            hass,
+            coordinator._session,
+            proxy,
+            card,
+            max(first, period.start),
+            min(last, period.end),
+        )
+    assert coordinator._snapshot is not None
+    for begin, end in own:
+        spans += await _months_not_read(
+            hass, coordinator._session, entry, coordinator._snapshot, begin, end
+        )
+    return spans
+
+
+async def _months_not_read(
+    hass: HomeAssistant,
+    session: aiohttp.ClientSession,
+    entry: ConfigEntry,
+    card: SupplierSnapshot,
+    first: date,
+    last: date,
+) -> list[tuple[date, date, str, bool]]:
+    """The closed months in ``[first, last]`` whose own card could not be read
+    just now (``month_card_failed``), or whose card lacks the entry's network
+    area while a nearer card of its year could not be (``_with_nearest_area``),
+    for one contract, as ``_stand_in_spans`` lists them.
+
+    All of them when the contract's signing month is one: its card is what
+    every month's energy is re-priced from (``_cohort_legs``) and the welcome
+    credit read off. The running month is never one, since the current card
+    is that month's card.
+    """
+    extractor = get_extractor(entry.data[CONF_SUPPLIER])
+    contract = entry.data[CONF_CONTRACT]
+    region = entry.data.get(CONF_REGION, "")
+    this_month = dt_util.now().date().replace(day=1)
+
+    async def failed(month: date) -> bool:
+        await _snapshot_for_month(
+            hass, session, extractor, contract, region, month, card, entry
+        )
+        return month_card_failed(hass, extractor.id, contract, region, month, entry)
+
+    signing = _tariff_card_month(entry)
+    if signing is not None and signing < this_month:
+        # Read as _cohort_legs reads it, for its energy and credit: a network
+        # area it lacks bills nothing, and looking for it fetched its year.
+        await month_card(hass, session, extractor, contract, region, signing, entry)
+        if month_card_failed(hass, extractor.id, contract, region, signing):
+            return [
+                (
+                    first,
+                    last,
+                    f"the {extractor.id} card of {signing:%Y-%m}, the month the"
+                    " contract was signed, could not be read",
+                    True,
+                )
+            ]
+    dso = str(entry.data.get(CONF_DSO, ""))
+    spans: list[tuple[date, date, str, bool]] = []
+    month = first.replace(day=1)
+    while month <= last and month < this_month:
+        following = (month + timedelta(days=31)).replace(day=1)
+        why = None
+        if await failed(month):
+            why = f"the {extractor.id} card of {month:%Y-%m} could not be read"
+        elif stopped := nearer_card_not_read(
+            hass, extractor.id, contract, region, month, dso
+        ):
+            why = (
+                f"the {extractor.id} card of {month:%Y-%m} has no row for {dso},"
+                f" and the card of {stopped:%Y-%m}, the nearest of {month.year}"
+                " that may print it, could not be read"
+            )
+        if why is not None:
+            spans.append(
+                (
+                    max(first, month),
+                    min(last, following - timedelta(days=1)),
+                    why,
+                    True,
+                )
+            )
+        month = following
+    # A custom entry taking its network off its region's sheet, and a withdrawn
+    # product past its last card's year, the running month included: a month
+    # of this year none of it was read for is priced on the figures typed or
+    # the card's own table, which a read that failed just now replaces once it
+    # works, so it is left out for a later run, as a card that failed is.
+    month = first.replace(day=1)
+    while month <= last:
+        following = (month + timedelta(days=31)).replace(day=1)
+        await ensure_custom_network(session, entry.data, month.year)
+        if network_sheet_unread(entry.data, month):
+            spans.append(
+                (
+                    max(first, month),
+                    min(last, following - timedelta(days=1)),
+                    f"the network sheet of {month.year} could not be read",
+                    True,
+                )
+            )
+        month = following
+    return spans
+
+
+_COST_SENSOR_KEY = "current_year_cost"

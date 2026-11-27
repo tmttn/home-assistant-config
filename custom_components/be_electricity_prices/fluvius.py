@@ -1,0 +1,919 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""Fluvius's yearly tariff sheet for the Flemish distribution network.
+
+The periodic distribution tariffs the Vlaamse Nutsregulator approves are
+published by Fluvius as one small workbook per network area and year,
+"Tarieflijst periodieke distributienettarieven <year> - Afname", excluding
+VAT. vreg.be answers nothing from this host, so this is the official copy that
+can be read.
+
+Two figures are taken from it, both rules for the whole of Flanders, so the
+first sheet the year's listing links to answers for every area:
+
+- the "Maximumtarief" of a low-voltage connection with peak metering, the
+  ceiling the capacity term and the per-kWh network term together may not
+  exceed per kWh, which every area's sheet prints identically (0,3276168 in
+  all eight for 2025 and 2026);
+- the minimum monthly peak the capacity term is billed on. The sheet states it
+  as the "minimale bijdrage" in EUR a year, which divided by the area's
+  capacity rate gives 2,50 kW on every sheet from 2023 to 2026.
+
+The rest is the area's own, and read off the entry's area sheet only where an
+entry needs it. A custom entry that takes its network from Fluvius rather than
+typing it reads the whole peak-metered column (:class:`AreaTerms`), which is
+what every card prints for the area, less VAT. An entry on an analog meter
+reads what such a meter pays per kWh over a peak-metered one. Fluvius cannot measure an analog meter's peak, "Je betaalt dan een
+forfaitair bedrag voor 2.5 kW als maandpiek en een aanvullend tarief voor je
+verbruik in kWh": the capacity tariff on the minimum peak, which is the "Vaste
+term" of the sheet's analog column to the cent on every sheet from 2023 to
+2026, and a higher kWh rate. The public service and surcharge rates are the
+same in both columns, so the difference of the two kWh rates is the whole of
+it, on the normal and the exclusive-night kWh alike.
+
+Never raises, for the reason ``brugel.py`` gives: the fetch runs inside the
+coordinator tick, whose only handler is for ``UpdateFailed``. A download or
+parse failure logs and leaves the year unknown, and each figure then stands
+on the latest earlier sheet held. With none held, the card is billed with the
+ceiling it prints and the floor falls back to ``VREG_CAPACITY_FLOOR_KW``, as
+they were before the sheet was read, and an analog meter is billed the
+peak-metered kWh rate. What was read is kept in each entry's store too, so a
+restart while fluvius.be does not answer bills the figures last read.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import logging
+import re
+from collections.abc import Awaitable, Callable, Hashable, Mapping
+from dataclasses import dataclass
+from datetime import datetime
+from typing import Any, Final
+
+import aiohttp
+from homeassistant.util import dt as dt_util
+
+from .const import (
+    DSO_FLUVIUS_ANTWERPEN,
+    DSO_FLUVIUS_HALLE_VILVOORDE,
+    DSO_FLUVIUS_IMEWO,
+    DSO_FLUVIUS_INTERGEM,
+    DSO_FLUVIUS_IVEKA,
+    DSO_FLUVIUS_LIMBURG,
+    DSO_FLUVIUS_WEST,
+    DSO_FLUVIUS_ZENNE_DIJLE,
+    VREG_CAPACITY_FLOOR_KW,
+)
+from .providers._parse import to_float
+from .providers._pdf import USER_AGENT, checked_request, fetch_text, read_capped
+from .synergrid import WorkbookZip, _resolve_sheet_path, _shared_strings, sheet_rows
+
+_LOGGER = logging.getLogger(__name__)
+
+_SITE: Final = "https://www.fluvius.be"
+_LISTING_URL: Final = (
+    f"{_SITE}/nl/factuur-en-tarieven/netkosten/netkosten-afname-elektriciteit"
+)
+# The listing links each area's sheet through a page of its own, named after
+# the year it covers: ...-distributienettarief-afname-elektriciteit-01012026-31122026.
+_PUBLICATION_RE: Final = (
+    r'href="(/nl/publicatie/[a-z0-9-]+-afname-elektriciteit-0101{year}-3112{year})"'
+)
+# One area's page, named the same way. Antwerpen, Limburg and West have one
+# from 2023, the other five from 2025, when they took the names the DSO keys
+# stand for: before it the listing names the merged operators (Iveka,
+# Intergem, Iverlek, ...), which match no key one to one, so an analog meter
+# there is billed the peak-metered kWh rate for those years.
+_AREA_PUBLICATION_RE: Final = (
+    r'href="(/nl/publicatie/fluvius-{area}-distributienettarief-afname-'
+    r'elektriciteit-0101{year}-3112{year})"'
+)
+_AREA_SLUGS: Final[dict[str, str]] = {
+    DSO_FLUVIUS_ANTWERPEN: "antwerpen",
+    DSO_FLUVIUS_HALLE_VILVOORDE: "halle-vilvoorde",
+    DSO_FLUVIUS_IMEWO: "imewo",
+    DSO_FLUVIUS_INTERGEM: "midden-vlaanderen",
+    DSO_FLUVIUS_IVEKA: "kempen",
+    DSO_FLUVIUS_LIMBURG: "limburg",
+    DSO_FLUVIUS_WEST: "west",
+    DSO_FLUVIUS_ZENNE_DIJLE: "zenne-dijle",
+}
+_SHEET_RE: Final = re.compile(r'href="(/sites/fluvius/files/[^"]+\.xlsx)"')
+_TIMEOUT: Final = 30
+_FAILURE_RETRY_S: Final = 6 * 3600
+# How long the listing every sheet is found from is kept, its failure too: the
+# few minutes one tick or one backfill spends reading sheets. The year's sheet
+# and an analog meter's area sheet then cost one listing download between
+# them, and a Fluvius that does not answer one timeout rather than one a sheet.
+_LISTING_TTL_S: Final = 300
+# What reading a sheet may inflate, counted on the bytes read rather than
+# the sizes the zip states (synergrid's WorkbookZip). Measured on 6 November
+# 2026 over the sheets held from 2023 to 2026: about 25 KB zipped, of which
+# the read inflates 39 to 43 KB.
+_MAX_UNPACKED_BYTES: Final = 1024 * 1024
+# Sized on the slip it catches, a factor of ten or a column read as a rate,
+# not on what the tariff ought to be.
+_MIN_CEILING: Final = 0.1
+_MAX_CEILING: Final = 1.0
+_MIN_FLOOR_KW: Final = 0.5
+_MAX_FLOOR_KW: Final = 10.0
+_MAX_ANALOG_SURCHARGE: Final = 0.2
+# The capacity rate's row. Its one figure sits in the column a peak-metered
+# low-voltage connection is billed on, which is N from 2025 and O before,
+# where a second "piekmeting" column for the transformer stations came first.
+_CAPACITY_LABEL: Final = "Gemiddelde maandpiek"
+_CEILING_LABEL: Final = "Maximumtarief"
+# "Laagspanningsklanten met piekmeting betalen een minimale bijdrage van 140,31
+# euro/jaar", in the remarks under the table.
+_MINIMUM_RE: Final = re.compile(r"minimale bijdrage van (\d+(?:,\d+)?) euro/jaar")
+# The analog meter's first row, whose figure sits in the analog column first
+# and the reversing prosumer meter's after it, both "Vaste term" in EUR a year.
+_ANALOG_LABEL: Final = "Vaste term"
+# Two rows carry exactly this label: the peak-metered connection's kWh rate in
+# its column and the analog meter's in its own.
+_KWH_LABEL: Final = "kWh-tarief"
+# Billed on every kWh of both meters, so they have to agree for the two kWh
+# rates to be the whole difference.
+_SHARED_LABELS: Final = (
+    "kWh-tarief normaal",
+    "kWh-tarief exclusief nacht",
+    "Tarieven voor de toeslagen",
+)
+# The data management fee of a low-voltage connection, the "Laagspanningnet"
+# row of its own section.
+_DATA_SECTION_LABEL: Final = "Tarieven voor het databeheer"
+_LOW_VOLTAGE_LABEL: Final = "Laagspanning"
+# Sized on the slip they catch, a factor of ten or a column read as a rate:
+# 0,0553921 EUR/kWh, 56,12 EUR/kW and 17,85 EUR on Zenne-Dijle for 2026.
+_MAX_AREA_KWH: Final = 0.3
+_MIN_AREA_CAPACITY: Final = 10.0
+_MAX_AREA_CAPACITY: Final = 200.0
+_MAX_DATA_MANAGEMENT: Final = 100.0
+
+
+@dataclass(frozen=True)
+class SheetTerms:
+    """What a year's sheet gives: the ceiling in EUR/kWh excl. VAT, and the
+    minimum monthly peak in kW, ``None`` where the sheet states no minimum
+    contribution to derive it from."""
+
+    ceiling: float
+    floor_kw: float | None
+
+
+@dataclass(frozen=True)
+class AreaTerms:
+    """One area's network rates for a peak-metered low-voltage connection, as
+    its sheet gives them, in EUR excluding VAT: the per-kWh rate of the normal
+    and of the exclusive-night register, each the network use, public service
+    and surcharge rates added up, the capacity rate a kW a year and the data
+    management fee a year."""
+
+    kwh_normal: float
+    kwh_exclusive_night: float
+    capacity_per_kw_year: float
+    data_management_per_year: float
+
+    def overlay_fields(self) -> dict[str, float | None]:
+        """The DSO overlay fields these rates set, excluding VAT. Transmission
+        is included in the rates and a peak-metered connection pays one rate
+        day and night, so transport is nothing and the day/night split is
+        dropped for the single rate."""
+        return {
+            "distribution_single": self.kwh_normal,
+            "distribution_peak": None,
+            "distribution_offpeak": None,
+            "distribution_exclusive_night": self.kwh_exclusive_night,
+            "transport": 0.0,
+            "capacity_eur_per_kw_year": self.capacity_per_kw_year,
+            "data_management_per_year": self.data_management_per_year,
+        }
+
+
+# Successes are kept for the life of the process: the figures are set per
+# calendar year. A failure is kept only briefly, so a blocked or slow Fluvius
+# does not cost three downloads every tick while a transient one still heals.
+_cache: dict[int, SheetTerms] = {}
+_failed_at: dict[int, datetime] = {}
+# The analog surcharge, per year and DSO key, kept the same way.
+_analog: dict[tuple[int, str], float] = {}
+_analog_failed_at: dict[tuple[int, str], datetime] = {}
+# An area's network rates, per year and DSO key, kept the same way.
+_area: dict[tuple[int, str], AreaTerms] = {}
+_area_failed_at: dict[tuple[int, str], datetime] = {}
+# What an entry's store kept of the two from before the last restart, beneath
+# them: a year or an area this process has read answers its own figure, so a
+# store never stands in the way of a sheet read again (:func:`restore`).
+_stored: dict[int, SheetTerms] = {}
+_stored_analog: dict[tuple[int, str], float] = {}
+_stored_area: dict[tuple[int, str], AreaTerms] = {}
+# One fetch per sheet at a time, for the reason brugel.py gives.
+_locks: dict[Hashable, asyncio.Lock] = {}
+# The listing as last fetched, or what fetching it raised, and when.
+_listing: tuple[datetime, str | Exception] | None = None
+
+
+def _lock(key: Hashable) -> asyncio.Lock:
+    """The lock for ``key``, created on first use, on the event loop."""
+    lock = _locks.get(key)
+    if lock is None:
+        lock = _locks[key] = asyncio.Lock()
+    return lock
+
+
+def cached_network_ceiling(year: int) -> float | None:
+    """The ceiling for ``year``, EUR/kWh excl. VAT, or ``None`` before any
+    sheet is read.
+
+    The year's sheet, else the latest earlier one held, never a later one, the
+    rule :func:`capacity_floor_kw` follows. Answering only the year's own left
+    the cards that print no ceiling uncapped from 1 January until the new
+    sheet was read, and for a whole year whose sheet stopped reading: 418,94
+    EUR a year of capacity at 600 kWh on an 8 kW peak, where the 2026 ceiling
+    caps it at 176,24. The 2025 and 2026 sheets print the same figure, as the
+    2023 and 2024 ones did, so the year before is the best stand-in there is.
+
+    Synchronous on purpose: the snapshot resolver runs in the pricing path and
+    cannot await. :func:`ensure_tariff_sheet` is what puts a value here, and
+    :func:`restore` what an entry's store kept of it.
+    """
+    sheets = _sheets()
+    held = [held_year for held_year in sheets if held_year <= year]
+    return sheets[max(held)].ceiling if held else None
+
+
+def tariff_sheet_held(year: int) -> bool:
+    """Whether ``year``'s own sheet is held, read or restored, so that what
+    :func:`cached_network_ceiling` answers for it is the year's figure and
+    not an earlier year's standing in."""
+    return year in _sheets()
+
+
+def capacity_floor_kw(year: int | None = None) -> float:
+    """The minimum monthly peak the capacity term is billed on, in kW.
+
+    The year's sheet (this year's by default), else the latest earlier one
+    held, else ``VREG_CAPACITY_FLOOR_KW``: never a later year's, since the rule
+    is applied to the months it was set for.
+    """
+    year = dt_util.now().year if year is None else year
+    held = {
+        held_year: terms.floor_kw
+        for held_year, terms in _sheets().items()
+        if held_year <= year and terms.floor_kw is not None
+    }
+    floor = held[max(held)] if held else None
+    return VREG_CAPACITY_FLOOR_KW if floor is None else floor
+
+
+def cached_analog_surcharge(year: int, dso: str) -> float | None:
+    """What an analog meter in ``dso``'s area pays per kWh over a peak-metered
+    one, EUR/kWh excl. VAT, or ``None`` before any of its sheets is read.
+
+    The year's sheet, else the latest earlier one held, never a later one, the
+    rule :func:`capacity_floor_kw` follows: the year ahead is priced on the
+    card in hand, and the sheet of a year Fluvius has not published yet is
+    best stood in for by the one before it. Synchronous for the reason
+    :func:`cached_network_ceiling` gives.
+    """
+    held = {
+        held_year: surcharge
+        for (held_year, area), surcharge in _analog_rates().items()
+        if area == dso and held_year <= year
+    }
+    return held[max(held)] if held else None
+
+
+def cached_area_terms(year: int, dso: str) -> AreaTerms | None:
+    """``dso``'s network rates for ``year``, or ``None`` before any of its
+    sheets is read: the year's sheet, else the latest earlier one held, never
+    a later one, the rule :func:`cached_analog_surcharge` follows.
+    Synchronous for the reason :func:`cached_network_ceiling` gives."""
+    held = held_area_terms(year, dso)
+    return None if held is None else held[1]
+
+
+def held_area_terms(year: int, dso: str) -> tuple[int, AreaTerms] | None:
+    """What :func:`cached_area_terms` answers, with the year of the sheet it
+    comes off, for a card that has to say when that is an earlier year's."""
+    held = {
+        held_year: terms
+        for (held_year, area), terms in _area_terms().items()
+        if area == dso and held_year <= year
+    }
+    if not held:
+        return None
+    latest = max(held)
+    return latest, held[latest]
+
+
+def _sheets() -> dict[int, SheetTerms]:
+    """Each year's figures held, as read since the start or else as stored."""
+    return {**_stored, **_cache}
+
+
+def _analog_rates() -> dict[tuple[int, str], float]:
+    """Each year's and area's analog surcharge held, the same way."""
+    return {**_stored_analog, **_analog}
+
+
+def _area_terms() -> dict[tuple[int, str], AreaTerms]:
+    """Each year's and area's network rates held, the same way."""
+    return {**_stored_area, **_area}
+
+
+def _area_terms_in_bounds(terms: AreaTerms) -> bool:
+    """Whether ``terms`` read as an area's rates rather than a slip."""
+    return (
+        0.0 < terms.kwh_exclusive_night <= terms.kwh_normal < _MAX_AREA_KWH
+        and _MIN_AREA_CAPACITY <= terms.capacity_per_kw_year <= _MAX_AREA_CAPACITY
+        and 0.0 < terms.data_management_per_year < _MAX_DATA_MANAGEMENT
+    )
+
+
+def restore(table: Mapping[str, Any]) -> None:
+    """Hold ``table`` from an entry's store, beneath what this process reads.
+
+    The figures are module globals, empty after a restart, and the tick reads
+    them again only while fluvius.be answers. Without them a Flemish entry was
+    billed with no ceiling and on the default minimum peak, and an analog
+    meter without its kWh rate, six hours at a time. Several entries restore
+    their own copy at start-up, so a year or area already held from one is
+    kept. A figure outside the bounds a sheet's own is held to is a damaged
+    store rather than a rate, and is skipped.
+    """
+    sheets = table.get("sheets")
+    if isinstance(sheets, Mapping):
+        for label, row in sheets.items():
+            try:
+                year, ceiling = int(label), float(row["ceiling"])
+                floor = row["floor_kw"]
+                floor_kw = None if floor is None else float(floor)
+            except (TypeError, ValueError, KeyError):
+                continue
+            if not _MIN_CEILING <= ceiling <= _MAX_CEILING:
+                continue
+            if floor_kw is not None and not _MIN_FLOOR_KW <= floor_kw <= _MAX_FLOOR_KW:
+                floor_kw = None
+            _stored.setdefault(year, SheetTerms(ceiling, floor_kw))
+    analog = table.get("analog")
+    if isinstance(analog, Mapping):
+        for label, areas in analog.items():
+            if not isinstance(areas, Mapping):
+                continue
+            for dso, rate in areas.items():
+                try:
+                    year, surcharge = int(label), float(rate)
+                except (TypeError, ValueError):
+                    continue
+                if dso in _AREA_SLUGS and 0.0 < surcharge < _MAX_ANALOG_SURCHARGE:
+                    _stored_analog.setdefault((year, dso), surcharge)
+    area = table.get("area")
+    if not isinstance(area, Mapping):
+        return
+    for label, areas in area.items():
+        if not isinstance(areas, Mapping):
+            continue
+        for dso, row in areas.items():
+            try:
+                year = int(label)
+                terms = AreaTerms(
+                    kwh_normal=float(row["kwh_normal"]),
+                    kwh_exclusive_night=float(row["kwh_exclusive_night"]),
+                    capacity_per_kw_year=float(row["capacity_per_kw_year"]),
+                    data_management_per_year=float(row["data_management_per_year"]),
+                )
+            except (TypeError, ValueError, KeyError):
+                continue
+            if dso in _AREA_SLUGS and _area_terms_in_bounds(terms):
+                _stored_area.setdefault((year, dso), terms)
+
+
+def held_table() -> dict[str, Any]:
+    """What is held, read or stored, in the shape :func:`restore` reads, for
+    an entry's store."""
+    analog: dict[str, dict[str, float]] = {}
+    for (year, dso), surcharge in sorted(_analog_rates().items()):
+        analog.setdefault(str(year), {})[dso] = surcharge
+    area: dict[str, dict[str, dict[str, float]]] = {}
+    for (year, dso), terms in sorted(_area_terms().items()):
+        area.setdefault(str(year), {})[dso] = {
+            "kwh_normal": terms.kwh_normal,
+            "kwh_exclusive_night": terms.kwh_exclusive_night,
+            "capacity_per_kw_year": terms.capacity_per_kw_year,
+            "data_management_per_year": terms.data_management_per_year,
+        }
+    return {
+        "sheets": {
+            str(year): {"ceiling": terms.ceiling, "floor_kw": terms.floor_kw}
+            for year, terms in sorted(_sheets().items())
+        },
+        "analog": analog,
+        "area": area,
+    }
+
+
+async def ensure_tariff_sheet(
+    session: aiohttp.ClientSession, year: int
+) -> SheetTerms | None:
+    """Read the year's sheet unless it is held, and return it or ``None``."""
+    return await _held_or_read(
+        year,
+        _cache,
+        _failed_at,
+        lambda: _fetch_sheet(session, year),
+        f"{year} tariff sheet",
+    )
+
+
+async def ensure_analog_surcharge(
+    session: aiohttp.ClientSession, year: int, dso: str
+) -> float | None:
+    """Read the analog surcharge off ``dso``'s own sheet for ``year`` unless it
+    is held, and return it or ``None``, never raising.
+
+    Only for an entry on an analog meter, which nothing else needs the area's
+    own sheet for. ``None`` for a key that is not a Fluvius area. Where the
+    listing has no sheet for the year yet, or the one it has no longer reads,
+    the year before is read off the same listing to stand in
+    (:func:`cached_analog_surcharge`); a network error asks for nothing more.
+    """
+    area = _AREA_SLUGS.get(dso)
+    if area is None:
+        return None
+    return await _held_or_read(
+        (year, dso),
+        _analog,
+        _analog_failed_at,
+        lambda: _fetch_analog_surcharge(session, year, dso, area),
+        f"{year} {area} tariff sheet",
+    )
+
+
+async def ensure_area_terms(
+    session: aiohttp.ClientSession, year: int, dso: str
+) -> AreaTerms | None:
+    """Read ``dso``'s network rates off its own sheet for ``year`` unless they
+    are held, and return them or ``None``, never raising.
+
+    Only for a custom entry that takes its network from Fluvius rather than
+    typing it, a withdrawn product past its last card's year, Wase Wind,
+    whose cards print no network table, and an entry whose card prices a
+    year other than ``year`` (``network_year``). ``None``
+    for a key that is not a Fluvius area. Where the listing has no sheet for
+    the year yet, the year before is read off the same listing to stand in
+    (:func:`cached_area_terms`).
+    """
+    area = _AREA_SLUGS.get(dso)
+    if area is None:
+        return None
+    return await _held_or_read(
+        (year, dso),
+        _area,
+        _area_failed_at,
+        lambda: _fetch_area_terms(session, year, dso, area),
+        f"{year} {area} network rates",
+    )
+
+
+async def _held_or_read[K: Hashable, V](
+    key: K,
+    held: dict[K, V],
+    failed_at: dict[K, datetime],
+    read: Callable[[], Awaitable[V | None]],
+    what: str,
+) -> V | None:
+    """``held[key]``, read once and kept, or ``None`` while the read fails,
+    asking again only after the backoff."""
+    hit = held.get(key)
+    if hit is not None:
+        return hit
+    async with _lock(key):
+        hit = held.get(key)
+        if hit is not None:
+            return hit
+        failed = failed_at.get(key)
+        if failed is not None:
+            if (dt_util.utcnow() - failed).total_seconds() < _FAILURE_RETRY_S:
+                return None
+            del failed_at[key]
+        try:
+            value = await read()
+        except Exception as err:  # the docstring promises no raise
+            _LOGGER.warning("Fluvius %s could not be read: %s", what, err)
+            value = None
+        if value is None:
+            failed_at[key] = dt_util.utcnow()
+            return None
+        held[key] = value
+        return value
+
+
+async def _fetch_sheet(session: aiohttp.ClientSession, year: int) -> SheetTerms | None:
+    """The year's first sheet, read for the rules of the whole of Flanders."""
+    listing = await _fetch_listing(session)
+    payload = await _fetch_workbook(session, listing, _PUBLICATION_RE.format(year=year))
+    if payload is None:
+        _LOGGER.debug("Fluvius gives no %d tariff sheet yet", year)
+        return None
+    # Off the event loop, as every sheet is: a sheet is XML read whole and
+    # walked in Python, and one crafted inside the budget took seconds.
+    terms = await asyncio.to_thread(parse_sheet, payload, year)
+    if terms is not None:
+        _LOGGER.debug(
+            "Fluvius %d maximumtarief %.7f EUR/kWh excl. VAT, minimum peak %s kW",
+            year,
+            terms.ceiling,
+            terms.floor_kw,
+        )
+    return terms
+
+
+async def _fetch_analog_surcharge(
+    session: aiohttp.ClientSession, year: int, dso: str, area: str
+) -> float | None:
+    """The analog surcharge off one area's sheet for ``year``, the year before
+    read in its place where the listing has no sheet for it yet or the one it
+    has no longer reads. A network error asks for nothing more."""
+    listing = await _fetch_listing(session)
+    listed = (
+        re.search(_AREA_PUBLICATION_RE.format(area=area, year=year), listing)
+        is not None
+    )
+    if listed:
+        surcharge = await read_analog_surcharge(session, year, area)
+        if surcharge is not None:
+            return surcharge
+    stand_in = None
+    if re.search(_AREA_PUBLICATION_RE.format(area=area, year=year - 1), listing):
+        stand_in = await ensure_analog_surcharge(session, year - 1, dso)
+    if listed:
+        # The sheet is there and no longer reads: a reader to fix, whatever
+        # stands in meanwhile.
+        _LOGGER.warning(
+            "Fluvius %d tariff sheet for %s gives no analog kWh rate: an analog "
+            "meter there is billed %s",
+            year,
+            area,
+            "the peak-metered one" if stand_in is None else f"the {year - 1} one",
+        )
+    elif stand_in is not None:
+        _LOGGER.debug(
+            "Fluvius gives no %d tariff sheet for %s yet: its %d one stands in",
+            year,
+            area,
+            year - 1,
+        )
+    elif year < dt_util.now().year:
+        # A closed year whose sheet is not coming: nothing heals, so a
+        # backfill reaching it is not warned of every time it runs.
+        _LOGGER.debug(
+            "Fluvius has no %d tariff sheet for %s: an analog meter's kWh "
+            "there are billed the peak-metered rate for that year",
+            year,
+            area,
+        )
+    else:
+        _LOGGER.warning(
+            "Fluvius gives no %d tariff sheet for %s: an analog meter there "
+            "is billed the peak-metered kWh rate until it does",
+            year,
+            area,
+        )
+    return None
+
+
+async def _fetch_area_terms(
+    session: aiohttp.ClientSession, year: int, dso: str, area: str
+) -> AreaTerms | None:
+    """One area's network rates for ``year`` off its sheet, the year before
+    read to stand in where the listing has no sheet for the year yet. A sheet
+    listed that no longer reads is warned of, since the entry then bills the
+    figures it typed, or an earlier year's held."""
+    listing = await _fetch_listing(session)
+    publication = _AREA_PUBLICATION_RE.format(area=area, year=year)
+    if re.search(publication, listing) is not None:
+        terms = await read_area_terms(session, year, area)
+        if terms is None:
+            _LOGGER.warning(
+                "Fluvius %d tariff sheet for %s gives no network rates", year, area
+            )
+        return terms
+    if re.search(_AREA_PUBLICATION_RE.format(area=area, year=year - 1), listing):
+        await ensure_area_terms(session, year - 1, dso)
+        _LOGGER.debug(
+            "Fluvius gives no %d tariff sheet for %s yet: its %d one stands in",
+            year,
+            area,
+            year - 1,
+        )
+    return None
+
+
+async def read_analog_surcharge(
+    session: aiohttp.ClientSession, year: int, area: str
+) -> float | None:
+    """One area's analog surcharge for ``year`` as its sheet gives it, or
+    ``None`` where the listing has no such sheet or it does not read. Raises on
+    a network error, for the live check to tell the two apart."""
+    payload = await _area_workbook(session, year, area)
+    if payload is None:
+        return None
+    return await asyncio.to_thread(parse_analog_surcharge, payload, year)
+
+
+async def read_area_terms(
+    session: aiohttp.ClientSession, year: int, area: str
+) -> AreaTerms | None:
+    """One area's network rates for ``year`` as its sheet gives them, or
+    ``None`` where the listing has no such sheet or it does not read. Raises on
+    a network error, as :func:`read_analog_surcharge` does."""
+    payload = await _area_workbook(session, year, area)
+    if payload is None:
+        return None
+    return await asyncio.to_thread(parse_area_terms, payload, year)
+
+
+async def _area_workbook(
+    session: aiohttp.ClientSession, year: int, area: str
+) -> bytes | None:
+    """One area's workbook for ``year`` off the listing, or ``None``."""
+    listing = await _fetch_listing(session)
+    return await _fetch_workbook(
+        session, listing, _AREA_PUBLICATION_RE.format(area=area, year=year)
+    )
+
+
+async def _fetch_listing(session: aiohttp.ClientSession) -> str:
+    """The listing every sheet is found from, fetched once in a while
+    (``_LISTING_TTL_S``), and what fetching it raised kept as long."""
+    global _listing
+    async with _lock(_LISTING_URL):
+        now = dt_util.utcnow()
+        if (
+            _listing is not None
+            and (now - _listing[0]).total_seconds() < _LISTING_TTL_S
+        ):
+            held = _listing[1]
+            if isinstance(held, Exception):
+                raise held
+            return held
+        try:
+            text = await fetch_text(session, _LISTING_URL, timeout=_TIMEOUT)
+        except Exception as err:
+            _listing = (now, err)
+            raise
+        _listing = (now, text)
+        return text
+
+
+async def _fetch_workbook(
+    session: aiohttp.ClientSession, listing: str, publication_re: str
+) -> bytes | None:
+    """The publication page ``publication_re`` finds on ``listing``, then its
+    workbook, or ``None`` where either link is missing."""
+    publication = re.search(publication_re, listing)
+    if publication is None:
+        return None
+    page = await fetch_text(session, _SITE + publication.group(1), timeout=_TIMEOUT)
+    sheet = _SHEET_RE.search(page)
+    if sheet is None:
+        return None
+    url = _SITE + sheet.group(1)
+    async with checked_request(
+        session, url, timeout=_TIMEOUT, headers={"User-Agent": USER_AGENT}
+    ) as resp:
+        resp.raise_for_status()
+        return await read_capped(resp, url)
+
+
+def _rows(payload: bytes) -> list[dict[str, str]]:
+    """The first worksheet's cells as text, one ``{column: text}`` per row."""
+    with WorkbookZip(payload, _MAX_UNPACKED_BYTES) as z:
+        return sheet_rows(z, _resolve_sheet_path(z, ""), _shared_strings(z))
+
+
+def parse_sheet(payload: bytes, year: int) -> SheetTerms | None:
+    """The maximumtarief and minimum peak a sheet gives a peak-metered
+    connection.
+
+    ``None`` when the workbook is not the year's tariff list, prints no single
+    capacity rate to find the column by or no maximumtarief, or prints a
+    ceiling outside the bounds. A minimum that cannot be read or lands outside
+    its own bounds leaves ``floor_kw`` at ``None`` and the ceiling stands.
+    Raises on a payload that is not a workbook; the caller logs it.
+    """
+    rows = _rows(payload)
+    if not _is_years_sheet(rows, year):
+        return None
+    capacity = _labelled_row(rows, _CAPACITY_LABEL)
+    ceiling_row = _labelled_row(rows, _CEILING_LABEL)
+    if capacity is None or ceiling_row is None:
+        return None
+    column = _number_column(capacity)
+    if column is None:
+        return None
+    try:
+        ceiling = float(ceiling_row[column])
+        rate = float(capacity[column])
+    except (KeyError, ValueError):
+        return None
+    if not _MIN_CEILING <= ceiling <= _MAX_CEILING:
+        return None
+    return SheetTerms(ceiling, _floor_kw(rows, rate))
+
+
+def parse_analog_surcharge(payload: bytes, year: int) -> float | None:
+    """What an analog meter pays per kWh over a peak-metered one, EUR/kWh excl.
+    VAT: the analog column's kWh rate less the peak-metered column's.
+
+    ``None`` when the workbook is not the year's tariff list, when either kWh
+    rate cannot be found by its column, when the public service or surcharge
+    rates differ between the two columns (the difference would no longer be
+    the kWh rates' alone), or when the figure lands outside its bounds. Raises
+    on a payload that is not a workbook; the caller logs it.
+    """
+    rows = _rows(payload)
+    if not _is_years_sheet(rows, year):
+        return None
+    capacity = _labelled_row(rows, _CAPACITY_LABEL)
+    fixed = _labelled_row(rows, _ANALOG_LABEL)
+    if capacity is None or fixed is None:
+        return None
+    digital = _number_column(capacity)
+    analog = next(iter(_number_columns(fixed)), None)
+    if digital is None or analog is None:
+        return None
+    for label in _SHARED_LABELS:
+        row = _labelled_row(rows, label)
+        if row is None or _value(row, digital) != _value(row, analog):
+            return None
+    kwh = [row for row in rows if _KWH_LABEL in row.values()]
+    own = next((_value(row, analog) for row in kwh if analog in row), None)
+    peak = next((_value(row, digital) for row in kwh if digital in row), None)
+    if own is None or peak is None:
+        return None
+    # The sheet states its rates to the seventh decimal.
+    surcharge = round(own - peak, 7)
+    return surcharge if 0.0 < surcharge < _MAX_ANALOG_SURCHARGE else None
+
+
+def parse_area_terms(payload: bytes, year: int) -> AreaTerms | None:
+    """A peak-metered low-voltage connection's network rates off an area's
+    sheet, EUR excluding VAT: each register's kWh rate is the network use kWh
+    rate, the register's public service rate and the surcharge rate added up,
+    which is what the cards print for the area, less VAT.
+
+    ``None`` when the workbook is not the year's tariff list, when a rate
+    cannot be found in the column the capacity rate is in, or when a figure
+    lands outside its bounds. Raises on a payload that is not a workbook; the
+    caller logs it.
+    """
+    rows = _rows(payload)
+    if not _is_years_sheet(rows, year):
+        return None
+    capacity = _labelled_row(rows, _CAPACITY_LABEL)
+    column = None if capacity is None else _number_column(capacity)
+    if capacity is None or column is None:
+        return None
+    kwh = next(
+        (
+            _value(row, column)
+            for row in rows
+            if _KWH_LABEL in row.values() and column in row
+        ),
+        None,
+    )
+    normal, night, surcharges = (
+        _labelled_value(rows, label, column) for label in _SHARED_LABELS
+    )
+    rate = _value(capacity, column)
+    data = _data_management(rows, column)
+    if (
+        kwh is None
+        or normal is None
+        or night is None
+        or surcharges is None
+        or rate is None
+        or data is None
+    ):
+        return None
+    # The sheet states its rates to the seventh decimal.
+    terms = AreaTerms(
+        kwh_normal=round(kwh + normal + surcharges, 7),
+        kwh_exclusive_night=round(kwh + night + surcharges, 7),
+        capacity_per_kw_year=rate,
+        data_management_per_year=data,
+    )
+    return terms if _area_terms_in_bounds(terms) else None
+
+
+def _data_management(rows: list[dict[str, str]], column: str) -> float | None:
+    """The low-voltage row of the data management section, at ``column``."""
+    start = _labelled_index(rows, _DATA_SECTION_LABEL)
+    if start is None:
+        return None
+    for row in rows[start + 1 :]:
+        if any(text.startswith(_LOW_VOLTAGE_LABEL) for text in row.values()):
+            return _value(row, column)
+        if row.get("A"):
+            # The next numbered section: the rows of this one are over.
+            return None
+    return None
+
+
+def _labelled_value(
+    rows: list[dict[str, str]], label: str, column: str
+) -> float | None:
+    """The number at ``column`` of the first row labelled ``label``."""
+    row = _labelled_row(rows, label)
+    return None if row is None else _value(row, column)
+
+
+def _labelled_index(rows: list[dict[str, str]], label: str) -> int | None:
+    """The index of the first row a cell of which starts with ``label``."""
+    return next(
+        (
+            i
+            for i, row in enumerate(rows)
+            if any(text.startswith(label) for text in row.values())
+        ),
+        None,
+    )
+
+
+def _value(row: dict[str, str], column: str) -> float | None:
+    """The number in ``row`` at ``column``, or ``None``."""
+    try:
+        return float(row[column])
+    except (KeyError, ValueError):
+        return None
+
+
+def _is_years_sheet(rows: list[dict[str, str]], year: int) -> bool:
+    """Whether ``rows`` are the tariff list of ``year``."""
+    title = f"periodieke distributienettarieven {year}"
+    return any(title in text for row in rows for text in row.values())
+
+
+def _floor_kw(rows: list[dict[str, str]], rate: float) -> float | None:
+    """The minimum contribution over the capacity rate, to the hundredth of a
+    kW the contribution's cents allow, or ``None``."""
+    for row in rows:
+        for text in row.values():
+            match = _MINIMUM_RE.search(text)
+            if match is None or rate <= 0.0:
+                continue
+            floor = round(to_float(match.group(1)) / rate, 2)
+            return floor if _MIN_FLOOR_KW <= floor <= _MAX_FLOOR_KW else None
+    return None
+
+
+def _labelled_row(rows: list[dict[str, str]], label: str) -> dict[str, str] | None:
+    """The first row a cell of which starts with ``label``."""
+    return next(
+        (row for row in rows if any(text.startswith(label) for text in row.values())),
+        None,
+    )
+
+
+def _number_column(row: dict[str, str]) -> str | None:
+    """The column of the only number in ``row``, or ``None``."""
+    numbers = _number_columns(row)
+    return numbers[0] if len(numbers) == 1 else None
+
+
+def _number_columns(row: dict[str, str]) -> list[str]:
+    """The columns of the numbers in ``row``, left to right."""
+    numbers = []
+    for col, text in row.items():
+        try:
+            float(text)
+        except ValueError:
+            continue
+        numbers.append(col)
+    return sorted(numbers, key=lambda col: (len(col), col))

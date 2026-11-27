@@ -1,0 +1,758 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""EnergyVision gas tariff card extractor, Brusol in Brussels.
+
+EnergyVision sells gas only alongside an electricity contract ("Fossiel gas
+mogelijk: in combinatie"), in two products: GSG, "Goedkope stroom - Gas",
+indexed monthly, and GS1JVG, "Goedkope stroom 1 jaar vast - gas", fixed for
+a year. Both have a Flemish card in Dutch and a Walloon one in French,
+filed as
+
+    /sites/default/files/inline-files/EV-<MMYY>-<CODE>-<nl|WAL-fr>[_N].pdf
+
+``_N`` is Drupal's suffix for a re-upload. Since 30 October 2026 the
+listing, https://www.energyvision.be/nl-be/tariefkaart, links no card: its
+script (``/sites/default/files/ftp/tariefkaarten.min.js``) builds these
+names for the month and shows the newest upload that answers, else last
+month's card, and the current card is found the same way here. From its
+version of 2 November 2026 the script asks Drupal's upload folders first,
+the delivery month's and then the month before's, and ``inline-files``
+last, taking the first that holds an upload; the cards are asked in the
+same order from November 2026 (``_UPLOAD_FOLDERS_FROM``).
+
+A card uploaded again within its month can carry another price: the
+one-year fixed card of November 2026 went up on the 4th at 9,95 c EUR/kWh
+and again on the 10th, stamped "V10/11/2026", at 9,20. From November 2026 a
+past month's card is the newest upload made by its last day, which is what
+the listing showed while the month ran, and a contract signed on a given
+day is priced on the newest one made by that day (``fetch_on_day``), each
+upload dated by its Last-Modified read in Belgium.
+
+In Brussels the company sells as Brusol, on brusol.be, and only GSG,
+alongside its "Goedkope Stroom" electricity, which is "exclusief
+voorbehouden aan eigenaars van Brusol-zonnepanelen". The Brussels card is
+linked from the Goedkope Stroom signup page and filed under the month it was
+uploaded: ``/sites/default/files/<YYYY-MM>/EV-<MMYY>-GSG-BXL-nl.pdf``.
+
+GSG bills "1,02 x ZTP-RLP-M + 4,5 EUR/MWh", excluding VAT: the card states
+only that its prices include 6%, and EnergyVision's parameter document says
+the formulas on its cards are "steeds weergegeven exclusief btw". ZTP-RLP-M
+is the RLP-weighted ZTP EGSI day-ahead mean of the delivery month. The price
+the card prints is not the formula at the last known value but the VNR's
+yearly estimate of it: 7,20 in September 2026 is the formula at 62,209, the
+estimate the parameter document gives beside August's realised 61,822.
+
+The realised values are published in that parameter document,
+``inline-files/EV-<MMYY>-Indexatieparameters-nl.pdf``, linked from
+https://www.energyvision.be/nl-be/indexatieparameters: page 5, "Fossiel gas
+ZTP-RLP-M (EUR/MWh)", one row per month with the VNR estimate beside it.
+
+Past cards resolve under their plain name: EnergyVision's for every month
+from November 2025 on but GSG's January 2026, Brusol's in the upload folder
+of the delivery month or of the month before. Where a month was uploaded
+twice the two differ. EnergyVision's history page links a re-upload of the
+August 2026 Walloon card (``_0``) that has the new excise but no connection
+fee row, while the plain name has both old federal levies and the fee;
+Brusol's August card sits in both folders and the later upload has the new
+excise. The later Brusol one is tried first, the plain EnergyVision one is
+the only one tried, and the law corrects the federal levies of both either
+way.
+
+Card errors this reads as printed and does not correct:
+
+  - The Walloon cards from September 2026, October included, print the
+    connection fee as 0,07500 c EUR/kWh, ten times the regulated 0,0075
+    that every other supplier prints and EnergyVision's own Walloon cards
+    printed from November 2025 to August 2026: the Walloon order of 19 June
+    2003 sets 0,00075 EUR/kWh for low-voltage electricity and 0,000075 for
+    gas. The law's rate is billed for the months const.py knows it for
+    (_resolve.py).
+  - The Walloon GS1JVG cards from August 2026, October included, print a
+    single "Accise speciale 4,876 c EUR/kWh" instead of the two gas bands:
+    the residential electricity excise since 1 August 2026, not a gas rate.
+    The August one also has no connection fee row, which reads as zero, the
+    law's fee being billed whatever a card prints. The rate is not read: the
+    card gives no gas excise, so its months are billed at the law's rate,
+    and not at all while the law has never been read.
+  - The Walloon distribution terms are cut to two decimals rather than
+    rounded (ORES 4,28 where the CWaPE grid says 4,28944), and TECTEO RESA
+    prints 5,25 / 3,14 / 2,86 on the February, May and June 2026 cards
+    against 4,63 / 2,52 / 2,24 in the months between: the terms plus the
+    supplement CWaPE sets for networks fed by trucked gas.
+  - The Flemish GS1JVG card of April 2026 prints the excise the law set
+    from August (1,09286 / 1,18296) and no energy contribution.
+  - EnergyVision's cards before February 2026 print no transport term at
+    all, so they are refused; Brusol's January 2026 card prints it and is
+    read. The Walloon GSG cards of December 2025 and February 2026 also
+    exist in Dutch (``WAL-nl``); the French February card is read.
+"""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
+from datetime import UTC, date, datetime, timedelta, tzinfo
+from email.utils import parsedate_to_datetime
+from urllib.parse import urljoin
+
+import aiohttp
+from homeassistant.util import dt as dt_util
+from yarl import URL
+
+from ..const import (
+    DSO_ORES,
+    DSO_RESA,
+    DSO_SIBELGA,
+    REGION_BRUSSELS,
+    REGION_FLANDERS,
+    REGION_WALLONIA,
+)
+from ._network import (
+    FLUVIUS_LABELS,
+    METERING,
+    T1_FIXED,
+    T1_PROP,
+    T2_FIXED,
+    T2_PROP,
+    T3_FIXED,
+    T3_PROP,
+    TRANSPORT,
+    excise_bands,
+    osp_table,
+    read_dsos,
+    require_region,
+    signing_dsos,
+)
+from ._parse import NUMBER_START, elements, fold_accents, require_contract, to_float
+from ._pdf import (
+    MONTH_NAMES,
+    fetch_pdf_text_layout,
+    fetch_text,
+    head_freshness_key,
+    head_or_raise,
+    is_missing_card_error,
+    on_site,
+    printed_vat_rate,
+)
+from ._rates import Contract, FixedRates, IndexedRates, TariffKind
+from ._validity import end_of_month, month_card
+from .base import (
+    DsoOverlay,
+    ExtractorError,
+    IndexTable,
+    SupplierExtractor,
+    SupplierSnapshot,
+    TaxOverlay,
+)
+
+_SITE = "https://www.energyvision.be"
+_LISTING_URL = f"{_SITE}/nl-be/tariefkaart"
+_INDEX_PAGE_URL = f"{_SITE}/nl-be/indexatieparameters"
+_BRUSOL_SITE = "https://www.brusol.be"
+_BRUSOL_PAGE_URL = (
+    f"{_BRUSOL_SITE}/nl/elektriciteit-en-gas/schrijf-je-in-voor-goedkope-stroom-van-brusol"
+)
+_INDEX = "ZTP-RLP-M"
+# The zone a card's upload day is read in, whatever Home Assistant's is.
+_BELGIUM = "Europe/Brussels"
+
+
+@dataclass(frozen=True)
+class _Card:
+    """Where one region's card of a product is published."""
+
+    # The file name token after the product code.
+    token: str
+    site: str
+    # The page that links the current card, or None where the card is found
+    # by its name, as EnergyVision's own listing finds it.
+    page: str | None = None
+    # Brusol files a card under the month it uploaded it; EnergyVision keeps
+    # every month in one folder, asked after the upload folders from
+    # November 2026.
+    upload_folders: bool = False
+
+
+_FLANDERS_CARD = _Card("nl", _SITE)
+_WALLONIA_CARD = _Card("WAL-fr", _SITE)
+_BRUSSELS_CARD = _Card("BXL-nl", _BRUSOL_SITE, _BRUSOL_PAGE_URL, upload_folders=True)
+
+
+@dataclass(frozen=True)
+class _ContractDef:
+    contract_id: str
+    label: str
+    kind: TariffKind
+    code: str
+    cards: Mapping[str, _Card]
+
+
+_CONTRACTS: tuple[_ContractDef, ...] = (
+    _ContractDef(
+        "energyvision_gas",
+        "EnergyVision Goedkope stroom - Gas",
+        "indexed",
+        "GSG",
+        {
+            REGION_FLANDERS: _FLANDERS_CARD,
+            REGION_WALLONIA: _WALLONIA_CARD,
+            REGION_BRUSSELS: _BRUSSELS_CARD,
+        },
+    ),
+    # Not in Brussels: Brusol's page links no GS1JVG card and the name it
+    # would carry answers 404 in both upload folders.
+    _ContractDef(
+        "energyvision_gas_1_jaar_vast",
+        "EnergyVision Goedkope stroom 1 jaar vast - Gas",
+        "fixed",
+        "GS1JVG",
+        {REGION_FLANDERS: _FLANDERS_CARD, REGION_WALLONIA: _WALLONIA_CARD},
+    ),
+)
+_CONTRACTS_BY_ID = {c.contract_id: c for c in _CONTRACTS}
+
+
+def _contract(contract_id: str, region: str) -> tuple[_ContractDef, _Card]:
+    contract = require_contract(_CONTRACTS_BY_ID, contract_id, "EnergyVision")
+    card = contract.cards.get(region)
+    if card is None:
+        raise ExtractorError(f"EnergyVision {contract_id}: not sold in region {region!r}")
+    return contract, card
+
+
+# A page is remote text. Each href is read to its closing quote and the file
+# it names looked for inside it: one pattern running from an href through
+# "[^"]*?" to a card's name and on to ".pdf" read the rest of the page again
+# from every name, 15 s for 128 kB of names behind one href.
+_HREF_RE = re.compile('href="')
+_QUOTE_RE = re.compile('"')
+_FILES_RE = re.compile(r"(?:https?://[^/]+)?/sites/default/files/")
+
+
+def _linked_file(href: str, name: re.Pattern[str]) -> re.Match[str] | None:
+    """Where ``name`` first reads in the file name of ``href``, a PDF under
+    Drupal's files folder on whatever host, or None for any other link."""
+    file = href.rpartition("/")[2]
+    found = name.search(file) if _FILES_RE.match(href) else None
+    if found is None or not file.endswith(".pdf") or found.end() > len(file) - len(".pdf"):
+        return None
+    return found
+
+
+def _linked_card(html: str, contract: _ContractDef, token: str, page: str) -> tuple[str, date]:
+    """The newest card of ``contract`` with ``token`` that ``html``, the
+    page at ``page``, links, and the month its file name prices.
+
+    Brusol's page links it by an absolute href, which has ended in a space
+    ("EV-1026-GSG-BXL-nl.pdf "). A name whose month is no month is passed
+    over, and so is a link off the page's own site.
+    """
+    name = re.compile(rf"EV-(\d{{2}})(\d{{2}})-{contract.code}-{re.escape(token)}")
+    site = str(URL(page).origin())
+    found: dict[date, str] = {}
+    for _opened, href, _closed in elements(html, _HREF_RE, _QUOTE_RE, attributes=False):
+        href = href.rstrip()
+        card = _linked_file(href, name)
+        if card is None:
+            continue
+        month, year = card.groups()
+        url = urljoin(page, href)
+        if 1 <= int(month) <= 12 and on_site(url, site):
+            found[date(2000 + int(year), int(month), 1)] = url
+    if not found:
+        raise ExtractorError(f"EnergyVision: no {contract.code} {token} card linked from {page}")
+    month = max(found)
+    return found[month], month
+
+
+# The last re-upload the listing's script asks for ("maxSuffix": 9).
+_MAX_SUFFIX = 9
+
+
+async def _uploads(session: aiohttp.ClientSession, url: str) -> list[tuple[str, str | None]]:
+    """Every upload of the card filed at ``url`` that answers, the first
+    one first, each with its Last-Modified.
+
+    Drupal stores a card uploaded again as ``<name>_0.pdf``, then ``_1``
+    and so on, and keeps the earlier files. The listing's script takes the
+    newest of the plain name, ``_0`` and ``_1`` that answers and, past
+    ``_1``, each next one for as long as it answers; the same names are
+    asked here in the same order. A failure other than a name that is not
+    there raises, so a site that is down is not taken for a month without
+    a card.
+    """
+    stem = url.removesuffix(".pdf")
+    names = (url, *(f"{stem}_{n}.pdf" for n in range(_MAX_SUFFIX + 1)))
+    found: list[tuple[str, str | None]] = []
+    for asked, name in enumerate(names):
+        try:
+            modified = await head_or_raise(session, name)
+        except ExtractorError as err:
+            if not is_missing_card_error(str(err)):
+                raise
+            # From _1 on, the first name missing ends the walk.
+            if asked >= 2:
+                break
+            continue
+        found.append((name, modified))
+    return found
+
+
+async def _current_upload(
+    session: aiohttp.ClientSession, contract: _ContractDef, card: _Card
+) -> tuple[str, str | None]:
+    """The card the listing shows today and its Last-Modified: the newest
+    upload of this month's card, else of last month's, which the listing
+    goes on showing until this month's is up.
+
+    The month is Home Assistant's, which the coordinator holds a card's
+    validity to; the listing's script takes the one in Brussels.
+    """
+    first = dt_util.now().date().replace(day=1)
+    for month in (first, (first - timedelta(days=1)).replace(day=1)):
+        for url in _month_urls(contract, card, month):
+            found = await _uploads(session, url)
+            if found:
+                return found[-1]
+    raise ExtractorError(
+        f"EnergyVision: no {contract.code} {card.token} card for {first:%Y-%m} or the month before"
+    )
+
+
+async def fetch(session: aiohttp.ClientSession, contract_id: str, region: str) -> SupplierSnapshot:
+    """The card the region's listing shows today."""
+    contract, card = _contract(contract_id, region)
+    if card.page is None:
+        url, _ = await _current_upload(session, contract, card)
+        return await _read(session, contract_id, region, url)
+    html = await fetch_text(session, card.page)
+    url, linked = _linked_card(html, contract, card.token, card.page)
+    # The page can lag the upload: on 3 November 2026 Brusol's still linked
+    # October's card while November's had sat in its 2026-10 folder since 30
+    # October. A card for a month before this one sends the fetch to where
+    # this month's card would be filed, and back to the linked card when
+    # nothing is there yet or the lookup fails.
+    running = dt_util.now().date().replace(day=1)
+    if linked < running:
+        try:
+            newer = await fetch_for_month(session, contract_id, region, running)
+        except ExtractorError:
+            newer = None
+        if newer is not None:
+            return newer
+    return await _read(session, contract_id, region, url)
+
+
+async def _read(
+    session: aiohttp.ClientSession, contract_id: str, region: str, url: str
+) -> SupplierSnapshot:
+    text = await fetch_pdf_text_layout(session, url)
+    return parse_snapshot(contract_id, region, text, source_url=url)
+
+
+async def probe(session: aiohttp.ClientSession, contract_id: str, region: str) -> str | None:
+    """The current card's URL and Last-Modified, which a new month and a
+    card uploaded again both move. Brusol's page sends neither ETag nor
+    Last-Modified, which leaves Brussels on the time-based refresh."""
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    card = None if contract is None else contract.cards.get(region)
+    if contract is None or card is None:
+        return None
+    if card.page is not None:
+        return await head_freshness_key(session, card.page, prefer=("ETag", "Last-Modified"))
+    try:
+        url, modified = await _current_upload(session, contract, card)
+    except ExtractorError:
+        return None
+    return f"{url} {modified}"
+
+
+# EnergyVision's listing has asked the upload folders before inline-files
+# since its script of 2 November 2026, when the corrected Flemish 1.800 kWh
+# electricity card sat in 2026-11 alone. The folders also hold drafts of
+# earlier months, which were sold off inline-files, so those stay there.
+_UPLOAD_FOLDERS_FROM = date(2026, 11, 1)
+
+
+def _month_urls(contract: _ContractDef, card: _Card, month: date) -> tuple[str, ...]:
+    """Where the card for ``month`` (a first of the month) can sit, in the
+    order to try them: the delivery month's upload folder, the month
+    before's, then for EnergyVision ``inline-files``, which alone is asked
+    for EnergyVision before ``_UPLOAD_FOLDERS_FROM``."""
+    name = f"EV-{month:%m%y}-{contract.code}-{card.token}.pdf"
+    inline = f"{card.site}/sites/default/files/inline-files/{name}"
+    if not card.upload_folders and month < _UPLOAD_FOLDERS_FROM:
+        return (inline,)
+    previous = month - timedelta(days=1)
+    folders = tuple(
+        f"{card.site}/sites/default/files/{folder:%Y-%m}/{name}" for folder in (month, previous)
+    )
+    return folders if card.upload_folders else (*folders, inline)
+
+
+def _made_by(uploads: list[tuple[str, str | None]], day: date, belgium: tzinfo) -> list[str]:
+    """The uploads made by the end of ``day`` in Belgium, the newest first:
+    the cards the listing had shown by then. The earliest upload alone where
+    every one came later, a card published after its month began; all of
+    them as they come where one bears no date to tell by, or one no zone
+    can hold: the last hour of year 9999 has no day in Belgium."""
+    dated: list[tuple[datetime, str]] = []
+    for url, modified in uploads:
+        try:
+            stamp = parsedate_to_datetime(modified or "").astimezone(belgium)
+        except (ValueError, OverflowError):
+            return [url for url, _ in uploads]
+        dated.append((stamp, url))
+    made = [upload for upload in dated if upload[0].date() <= day]
+    made.sort(key=lambda upload: upload[0], reverse=True)
+    if not made and dated:
+        made = [min(dated, key=lambda upload: upload[0])]
+    return [url for _, url in made]
+
+
+async def _fetch_in_force(
+    session: aiohttp.ClientSession, contract_id: str, region: str, day: date
+) -> SupplierSnapshot | None:
+    """The card of ``day``'s month in force on ``day``, or None.
+
+    A name that does not resolve, a card that does not parse and a card for
+    another month all move on to the next candidate; a transient failure
+    raises so the month cache retries the month.
+
+    From November 2026 EnergyVision's listing shows the newest upload of a
+    month's card, and it has uploaded one again within its month at another
+    price: the one-year fixed card of November 2026 on the 10th. So there
+    the uploads of every folder are read, those made by ``day``, the newest
+    first. Drupal files an upload under the month it is made in: a card put
+    up before its month began sits in the month before's folder, and one
+    uploaded again within the month under the plain name in the delivery
+    month's, so the folder asked first can hold nothing made by ``day``. An
+    earlier month, sold off the list the listing's script carries, and a
+    Brusol card, which its page links by name, are asked by the plain name
+    as they always were.
+    """
+    contract = _CONTRACTS_BY_ID.get(contract_id)
+    card = None if contract is None else contract.cards.get(region)
+    if contract is None or card is None:
+        return None
+    first = day.replace(day=1)
+    by_upload = card.page is None and first >= _UPLOAD_FOLDERS_FROM
+    belgium = await dt_util.async_get_time_zone(_BELGIUM) or UTC
+    names = list(_month_urls(contract, card, first))
+    if by_upload:
+        # Each folder's newest name first, the order uploads of one moment
+        # and uploads without a date are read in.
+        uploads = [upload for url in names for upload in reversed(await _uploads(session, url))]
+        names = _made_by(uploads, day, belgium)
+    for name in names:
+        snapshot = await month_card(_read(session, contract_id, region, name), first)
+        if snapshot is not None:
+            return snapshot
+    return None
+
+
+async def fetch_for_month(
+    session: aiohttp.ClientSession,
+    contract_id: str,
+    region: str,
+    year_month: date,
+) -> SupplierSnapshot | None:
+    """The card published for ``year_month``, or None: the one in force on
+    its last day (:func:`_fetch_in_force`), which is the card :func:`fetch`
+    read while the month ran."""
+    last = end_of_month(year_month.year, year_month.month)
+    return await _fetch_in_force(session, contract_id, region, last)
+
+
+async def fetch_on_day(
+    session: aiohttp.ClientSession, contract_id: str, region: str, day: date
+) -> SupplierSnapshot | None:
+    """The card in force on ``day``, for a contract signed that day in a
+    month whose card was uploaded again (:func:`_fetch_in_force`)."""
+    return await _fetch_in_force(session, contract_id, region, day)
+
+
+_INDEX_PDF_RE = re.compile(r"EV-\d{4}-Indexatieparameters-nl")
+
+
+async def fetch_index(session: aiohttp.ClientSession) -> IndexTable:
+    """ZTP-RLP-M by month, off the first parameter document the index page
+    links on EnergyVision's own site."""
+    page = await fetch_text(session, _INDEX_PAGE_URL)
+    for _opened, href, _closed in elements(page, _HREF_RE, _QUOTE_RE, attributes=False):
+        if _linked_file(href, _INDEX_PDF_RE) is None:
+            continue
+        url = urljoin(_INDEX_PAGE_URL, href)
+        if on_site(url, _SITE):
+            return parse_index_document(await fetch_pdf_text_layout(session, url))
+    raise ExtractorError("EnergyVision: no parameter document linked")
+
+
+# One month of the gas table: the realised value, then the VNR estimate.
+# Months not published yet print nothing and the oldest print "/ /". A row
+# with a single figure would not say which column it is in, so it does not
+# match.
+_INDEX_ROW_RE = re.compile(r"^([A-Za-z]+) (20\d{2}) (\d+[.,]\d+) (\d+[.,]\d+)$", re.MULTILINE)
+
+
+def parse_index_document(text: str) -> IndexTable:
+    """The gas table of the parameter document as pdfplumber lays it out.
+
+    The electricity tables before it have rows of the same shape, so the
+    read starts at the gas heading and stops at that page's footer. A value
+    may be printed with a dot ("Maart 2026 50.358").
+    """
+    start = text.find("ZTP-RLP-M (EUR/MWh)")
+    if start < 0:
+        raise ExtractorError("EnergyVision: gas index table not found")
+    end = text.find("EnergyVision NV", start)
+    values: dict[str, float] = {}
+    for name, year, realised, _estimate in _INDEX_ROW_RE.findall(
+        text[start : end if end >= 0 else None]
+    ):
+        month = MONTH_NAMES.get(name.lower())
+        if month is not None:
+            values[f"{year}-{month:02d}"] = to_float(realised)
+    if not values:
+        raise ExtractorError("EnergyVision: gas index table has no values")
+    return {_INDEX: values}
+
+
+def parse_snapshot(
+    contract_id: str,
+    region: str,
+    text: str,
+    *,
+    source_url: str = _LISTING_URL,
+) -> SupplierSnapshot:
+    """Parse one card's text as pdfplumber lays it out."""
+    contract, _card = _contract(contract_id, region)
+    card_month = _card_month(text)
+    vat_rate = printed_vat_rate(text, *_VAT_RES)
+    if vat_rate is None:
+        raise ExtractorError("EnergyVision: VAT statement not found")
+    return SupplierSnapshot(
+        supplier="energyvision",
+        contract=contract_id,
+        energy=_energy(text, contract, 1.0 + vat_rate),
+        dsos=signing_dsos(lambda: _dsos(text, region), card_month, _TRANSPORT_COLUMN),
+        taxes=TaxOverlay(
+            excise_bands=_excise(text),
+            energy_contribution=_energy_contribution(text),
+            connection_fee=_connection_fee(text) if region == REGION_WALLONIA else 0.0,
+            osp_by_caliber=_osp(text) if region == REGION_BRUSSELS else None,
+            card_vat_rate=vat_rate,
+        ),
+        source_url=source_url,
+        publication_label=f"{card_month:%Y-%m}",
+        valid_until=end_of_month(card_month.year, card_month.month),
+    )
+
+
+# "Tariefkaart september 2026" or "Carte tarifaire septembre 2026".
+_CARD_MONTH_RE = re.compile(r"(?:Tariefkaart|Carte tarifaire)\s+([A-Za-zÀ-ÿ]+)\s+(20\d{2})")
+
+
+def _card_month(text: str) -> date:
+    match = _CARD_MONTH_RE.search(text)
+    month = MONTH_NAMES.get(fold_accents(match.group(1))) if match else None
+    if match is None or month is None:
+        raise ExtractorError("EnergyVision: card month not found")
+    return date(int(match.group(2)), month, 1)
+
+
+# "Alle prijzen en tarieven zijn inclusief 6% BTW", "Tous les prix et tarifs
+# incluent la TVA à 6 %".
+_VAT_RES = (re.compile(r"inclusief (\d+)\s*% BTW"), re.compile(r"TVA à (\d+)\s*%"))
+# "Fossiel gas – variabel 7,20€cent/kWh", "Gaz fossile – fixe 7,96 €cent/kWh";
+# Brusol prints a hyphen for the dash.
+_ENERGY_RE = re.compile(
+    r"(?:Fossiel gas|Gaz fossile)\s*[–-]\s*(variabel|variable|vast|fixe)\s+(\d+,\d+)\s*€cent/kWh"
+)
+_FEE_RE = re.compile(r"(?:Vaste vergoeding|Frais fixes)\s+(\d+(?:,\d+)?)\s*€/(?:jaar|an)")
+_FORMULA_RE = re.compile(
+    NUMBER_START + r"(\d+(?:,\d+)?)\s*x\s*ZTP-RLP-M\s*\+\s*(\d+(?:,\d+)?)\s*EUR/MWh"
+)
+
+
+def _energy(text: str, contract: _ContractDef, vat: float) -> FixedRates | IndexedRates:
+    energy = _ENERGY_RE.search(text)
+    fee = _FEE_RE.search(text)
+    if energy is None or fee is None:
+        raise ExtractorError("EnergyVision: energy price or fixed fee not found")
+    # The price row names the product's kind, which is what tells the fixed
+    # card from the variable one; the history page has filed one as the other.
+    fixed = energy.group(1) in ("vast", "fixe")
+    if fixed != (contract.kind == "fixed"):
+        raise ExtractorError(f"EnergyVision: {energy.group(0)!r} is not a {contract.code} card")
+    price = to_float(energy.group(2)) / 100.0
+    if fixed:
+        return FixedRates(price=price, yearly_fixed_fee=to_float(fee.group(1)))
+    formula = _FORMULA_RE.search(text)
+    if formula is None:
+        raise ExtractorError("EnergyVision: ZTP-RLP-M formula not found")
+    # EUR/MWh excluding VAT: per EUR/MWh of index the factor is a thousandth
+    # of a EUR/kWh, grossed by the card's rate.
+    return IndexedRates(
+        factor=to_float(formula.group(1)) * vat / 1000.0,
+        base=to_float(formula.group(2)) * vat / 1000.0,
+        index=_INDEX,
+        price=price,
+        yearly_fixed_fee=to_float(fee.group(1)),
+        formula=formula.group(0),
+    )
+
+
+_WALLONIA_LABELS = {
+    "BRABANT WALLON": DSO_ORES,
+    "HAINAUT GAZ": DSO_ORES,
+    "ORES LUXEMBOURG": DSO_ORES,
+    "MOUSCRON": DSO_ORES,
+    "NAMUR": DSO_ORES,
+    "TECTEO RESA": DSO_RESA,
+}
+# Each region's table in its own column order. Flanders: per tier "Vaste
+# vergoeding" then "Afname", then databeheer and transport. Wallonia: per
+# tier "Consommation" then "Terme fixe", then transport, no metering.
+# Brussels: per tier "Afname" then "Vaste vergoeding", then transport and
+# the metering fee last.
+_TABLES: dict[str, tuple[str, Mapping[str, str], Sequence[str]]] = {
+    REGION_FLANDERS: (
+        "Vlaams Gewest",
+        FLUVIUS_LABELS,
+        (T1_FIXED, T1_PROP, T2_FIXED, T2_PROP, T3_FIXED, T3_PROP, METERING, TRANSPORT),
+    ),
+    REGION_WALLONIA: (
+        "la Région Wallonne",
+        _WALLONIA_LABELS,
+        (T1_PROP, T1_FIXED, T2_PROP, T2_FIXED, T3_PROP, T3_FIXED, TRANSPORT),
+    ),
+    REGION_BRUSSELS: (
+        "Transport- en distributiekosten",
+        {"SIBELGA": DSO_SIBELGA},
+        (T1_PROP, T1_FIXED, T2_PROP, T2_FIXED, T3_PROP, T3_FIXED, TRANSPORT, METERING),
+    ),
+}
+
+
+# The first card printing the transport column. The ones before price each
+# DSO without it, and are read for their energy leg alone.
+_TRANSPORT_COLUMN = date(2026, 2, 1)
+
+
+def _dsos(text: str, region: str) -> dict[str, DsoOverlay]:
+    after, labels, columns = _TABLES[region]
+    dsos = read_dsos(text, labels, columns, supplier="EnergyVision", after=after)
+    require_region(dsos, region, "EnergyVision")
+    return dsos
+
+
+# The two bands, worded differently over the months: "Verbruik tussen 0 &
+# 12.000 kWh", then "Verbruik boven 12.000 kWh", "Verbruik tussen 12.000 &
+# 150.000 kWh", "Consommation au-dessus de 12 000 kWh" and more. The first
+# "12.000" of the second line is taken for good, which reads the same: a
+# later one only leaves less of the line to find the rate in, and trying
+# every pair of the two took time growing with the square of the line. The
+# first rate's decimals are read whole too: the rest of its line follows
+# them however many are read, and trying each count scanned the line again.
+_EXCISE_RE = re.compile(
+    r"^(?:Verbruik|Consommation) (?:tussen|entre) 0 & 12[ .]000 kWh (\d+,(?>\d+))[^\n]*\n"
+    r"(?:Verbruik|Consommation) (?>[^\n]*?12[ .]000)[^\n]*? kWh (\d+,\d+)",
+    re.MULTILINE,
+)
+_SINGLE_EXCISE_RE = re.compile(r"Accise spéciale (\d+,\d+)\s*€cent/kWh")
+# A single rate past this is no gas excise: the highest the law has voted
+# for gas is under 1,6 c EUR/kWh with VAT, the electricity one 4,876.
+_GAS_EXCISE_MAX = 0.02
+
+
+def _excise(text: str) -> tuple[tuple[float | None, float], ...]:
+    bands = _EXCISE_RE.search(text)
+    if bands is not None:
+        return excise_bands(to_float(bands.group(1)) / 100.0, to_float(bands.group(2)) / 100.0)
+    single = _SINGLE_EXCISE_RE.search(text)
+    if single is None:
+        raise ExtractorError("EnergyVision: federal excise rows not found")
+    rate = to_float(single.group(1)) / 100.0
+    if rate > _GAS_EXCISE_MAX:
+        # The Walloon fixed card's electricity excise (see the module
+        # docstring): no gas excise is printed.
+        return ()
+    return excise_bands(rate, None)
+
+
+_CONTRIBUTION_RE = re.compile(r"(?:Energiebijdrage|Contribution énergétique) (\d+,\d+)")
+
+
+def _energy_contribution(text: str) -> float:
+    """0,10577 up to July 2026 on every card but the April GS1JVG one. The
+    law zeroed the levy from August and the cards dropped the row, so a
+    missing row is zero."""
+    match = _CONTRIBUTION_RE.search(text)
+    return 0.0 if match is None else to_float(match.group(1)) / 100.0
+
+
+_CONNECTION_FEE_RE = re.compile(r"Redevance de raccordement (\d+,\d+)")
+
+
+def _connection_fee(text: str) -> float:
+    """The Walloon connection fee as printed, which from September 2026 is
+    ten times the regulated one; see the module docstring. The August 2026
+    fixed card prints none: the law's fee is billed whatever a card prints,
+    so a missing row reads as zero."""
+    match = _CONNECTION_FEE_RE.search(text)
+    return 0.0 if match is None else to_float(match.group(1)) / 100.0
+
+
+# "<= 10 m3/h 2 3,56": the smallest caliber carries its footnote digit
+# inline, so the amount is the row's last figure. The first "m3/h" is taken
+# for good, as the excise's "12.000" is.
+_OSP_ROW_RE = re.compile(r"^(?:<=|Tussen|>)(?>[^\n]*?m3/h)[^\n]*?\s(\d+,\d+)\s*$", re.MULTILINE)
+
+
+def _osp(text: str) -> dict[str, float]:
+    start = text.find("openbaredienstverplichtingen")
+    if start < 0:
+        raise ExtractorError("EnergyVision: Brussels levy table not found")
+    amounts = [to_float(value) for value in _OSP_ROW_RE.findall(text[start:])]
+    return osp_table(amounts, supplier="EnergyVision")
+
+
+EXTRACTOR = SupplierExtractor(
+    id="energyvision",
+    label="EnergyVision",
+    contracts=tuple(
+        Contract(id=c.contract_id, label=c.label, kind=c.kind, regions=frozenset(c.cards))
+        for c in _CONTRACTS
+    ),
+    fetch=fetch,
+    probe=probe,
+    fetch_for_month=fetch_for_month,
+    fetch_on_day=fetch_on_day,
+    fetch_index=fetch_index,
+    sweep_cost_s=4.5,
+)

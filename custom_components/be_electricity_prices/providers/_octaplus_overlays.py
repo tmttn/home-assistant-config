@@ -1,0 +1,422 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""OCTA+: the regulated legs its card reprints.
+
+The distribution and transport tariffs, the levies and the prosumer tariff the
+supplier states itself. None of it is the supplier's own price: it is the
+regulator's, reprinted on the supplier's card.
+"""
+
+from __future__ import annotations
+
+import re
+from collections.abc import Iterable
+
+from ..const import (
+    DSO_AIEG,
+    DSO_AIESH,
+    DSO_ORES,
+    DSO_RESA,
+    DSO_REW,
+    FLUVIUS_CARD_LABELS,
+    REGION_WALLONIA,
+)
+from ._parse import (
+    LINE_BREAK,
+    TIER_BOUND,
+    excise_tier_bands,
+    ores_sub_areas_split,
+    to_float,
+)
+from ._rates import TariffKind
+from .base import DsoOverlay, ExtractorError, walloon_dso_overlay
+
+
+def _extract_supplier_prosumer(text: str, kind: TariffKind) -> float | None:
+    """OCTA+ supplier-side compensation-regime PV forfait.
+
+    Fixed and variable cards print "+ 4,77 EUR/kVA par mois" (the "Forfait
+    panneaux solaires", applicable only under the compensation regime). It
+    is TVAC (the card header is 6% TVAC; the unrelated AMR fallback is the
+    "1,50 EUR/kVA HTVA par mois"), so it must NOT be VAT-scaled. It is
+    billed on top of the DSO prosumer column by _compute_prosumer, exactly
+    like the Cociter Variable and Mega forfaits. The card value is per
+    MONTH, so annualise it (*12) to match supplier_prosumer_eur_per_kva_year
+    (the coordinator divides by 12). The SMR3 dynamic product drops the
+    compensation regime and omits the line; everywhere else it is
+    mandatory, so a miss is a layout drift and we raise.
+    """
+    if kind == "dynamic":
+        return None
+    # Anchor on "<value> EUR/kVA par mois" without the "HTVA" the AMR
+    # fallback carries, so a single regex picks the 4,77 forfait and never
+    # the 1,50 AMR rate. The value is read from the start of its digits:
+    # tried from each digit of a long run, the run was read again from every
+    # one.
+    match = re.search(r"(?<![\d.,])([\d.,]+)\s*€/kVA\s+par\s+mois", text)
+    if match is None:
+        raise ExtractorError("OCTA+: supplier PV compensation forfait not found")
+    return to_float(match.group(1)) * 12.0
+
+
+def _extract_taxes(
+    text: str, region: str
+) -> tuple[float, float, float, tuple[tuple[float, float], ...] | None]:
+    """Return (federal_excise, energy_contribution, region_connection_fee,
+    federal_excise_bands).
+
+    OCTA+ prints four federal-tax tier rows on the second page:
+
+      ``Consommation entre 0 & 3.000 kWh 5,0329 0,2042``
+
+    The first tier, the one from 0 kWh whatever its upper bound (3.000 kWh so
+    far, 20.000 kWh on the table the law of 25 October 2026 set), is the
+    excise and energy contribution the card bills; until July 2026 the excise falls further on the tiers below
+    it, which are read into bands. Wallonia adds a one-line connection fee
+    (``Redevance raccordement Wallonie (c€/kWh) 0,075``).
+    """
+    # Anchor on the kWh range; the leading "Consommation" word can be
+    # mangled on Flanders cards where the federal column shares its row
+    # bucket with the Fonds Energie sidebar (e.g. "CCCConsommaaaation").
+    tier1 = re.search(
+        rf"0\s*&\s*{TIER_BOUND}\s*kWh\s+([\d.,]+)\s+([\d.,]+)",
+        text,
+    )
+    if tier1 is None:
+        # Mandatory federal charges; a miss is a layout drift that would
+        # silently under-price every kWh. Fail loud (matching
+        # _extract_yearly_fee) rather than default to 0.
+        raise ExtractorError("OCTA+: federal tax tier (the one from 0 kWh) not found")
+    federal_excise = to_float(tier1.group(1)) / 100.0
+    energy_contribution = to_float(tier1.group(2)) / 100.0
+
+    region_connection_fee = 0.0
+    if region == REGION_WALLONIA:
+        # The gap to the figure stops at the next label, whose own gap reaches
+        # the same figure, and is not given back: run on to the figure from
+        # each, a run of labels with none after them was read to the end
+        # again from every one.
+        fee = re.search(
+            r"Redevance\s+raccordement\s+Wallonie"
+            r"(?:(?!Redevance\s+raccordement\s+Wallonie)[^0-9])*+([\d.,]+)",
+            text,
+        )
+        if fee is None:
+            # Mandatory Walloon levy: every sibling extractor raises here
+            # rather than return 0, because a per-kWh charge zeroed on a
+            # label drift under-bills every Walloon entry silently and the
+            # coordinator would rather keep the last good snapshot.
+            raise ExtractorError("OCTA+: Wallonia connection fee row not found")
+        region_connection_fee = to_float(fee.group(1)) / 100.0
+    return (
+        federal_excise,
+        energy_contribution,
+        region_connection_fee,
+        excise_tier_bands(
+            text, federal_excise, start=tier1.start(), within=tier1.end()
+        ),
+    )
+
+
+def _extract_wallonia_renewables(text: str) -> float:
+    # The green-energy rate sits within a few dozen chars of the "Région
+    # wallonne" header: on the "Coûts énergie verte" line on most cards,
+    # or on its own line just above that header on Smart Variable. Anchor
+    # on "Région wallonne" and take its first numeric neighbour, but bound
+    # the non-digit run so a layout drift can't silently grab a far-away
+    # digit (it then misses and raises below). [^\d] already crosses
+    # newlines, so the old re.S flag was inert. Called only for Wallonia,
+    # where the ~3.1 c€/kWh surcharge is mandatory; raise on a miss.
+    match = re.search(r"Région\s+wallonne[^\d]{0,80}?([\d.,]+)", text)
+    if match is None:
+        raise ExtractorError("OCTA+: Wallonia green-energy surcharge not found")
+    return to_float(match.group(1)) / 100.0
+
+
+def _row_value(text: str, label: str) -> re.Match[str] | None:
+    """The number belonging to ``label``, printed after it or above it.
+
+    The column reconstruction does not always keep a value on its label's
+    line. On the January to May 2026 Smart Variable cards the Flemish block
+    reads "Region flamande / 1,166 / Couts energie verte / Couts cogeneration
+    0,430": the cogeneration value follows its label and the green-energy one
+    sits on the line before. Reading only the first form dropped 1,166 c€/kWh
+    and billed the cogeneration row alone, about 41 EUR a year at 3500 kWh.
+
+    The value-above form is anchored on the label with nothing but whitespace
+    between them, so a figure belonging to another row cannot be picked up.
+    The same label also heads the block and opens the footnote that explains
+    it, and there it is followed by its unit or by prose rather than by a
+    figure; those occurrences are skipped, or the number ending the tax table
+    just above the heading would be read as the row (measured: 0,2042 picked
+    up as the green-energy cost).
+    """
+    after = re.search(rf"{label}\s+(\d+(?:[.,]\d+)?)", text)
+    if after is not None:
+        return after
+    # Read from the start of the digits, and the line break between figure
+    # and label one way: tried from each digit of a long run, or with two
+    # runs of blanks free to share the blank lines, each read its run again
+    # from every place in it.
+    for match in re.finditer(rf"(?<!\d)(\d+(?:[.,]\d+)?){LINE_BREAK}{label}", text):
+        tail = text[match.end() : match.end() + 12].lstrip()
+        if tail.startswith("(") or tail[:3].lower() == "les":
+            continue
+        return match
+    return None
+
+
+def _extract_flanders_renewables(text: str) -> float:
+    """Flanders cards split renewables across two rows:
+    ``Coûts énergie verte`` and ``Coûts cogénération``.
+    """
+    green = _row_value(text, "Coûts énergie verte")
+    cogen = _row_value(text, "Coûts cogénération")
+    if green is None and cogen is None:
+        # Called only for Flanders, where the green-energy / cogeneration
+        # surcharge is mandatory; both gone means the block drifted, so
+        # raise rather than silently zero ~1.6 c€/kWh.
+        raise ExtractorError("OCTA+: Flanders green-energy surcharge not found")
+    total = 0.0
+    if green:
+        total += to_float(green.group(1))
+    if cogen:
+        total += to_float(cogen.group(1))
+    return total / 100.0
+
+
+def _extract_wallonia_dsos(text: str) -> dict[str, DsoOverlay]:
+    """Wallonia rows (10 numbers each) in the aligned output:
+
+    mono | jour | nuit | PIC | MEDIUM | ECO | excl_nuit | terme_fixe
+    (€/an) | prosumer (€/kVA/an) | transport (c€/kWh)
+
+    A card where no row of this layout reads is read as the one printed
+    before the Impact tariff (``_extract_wallonia_2025_dsos``).
+    """
+    out: dict[str, DsoOverlay] = {}
+    for pattern, key in _WALLONIA_LABELS:
+        # The row is read from the start of its first figure's digits, and the
+        # gap to it stops at the next label on the line, which reaches the
+        # same figures: tried from each digit of a long run, or run on to the
+        # line's end from every label, a long line was read again from each.
+        match = re.search(
+            rf"{pattern}(?:(?!{pattern})[^\n])*?(?<![\d.,])"
+            + r"([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+"
+            + r"([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+"
+            + r"([\d.,]+)\s+([\d.,]+)",
+            text,
+            re.IGNORECASE,
+        )
+        if not match:
+            continue
+        mono = to_float(match.group(1))
+        peak = to_float(match.group(2))
+        offpeak = to_float(match.group(3))
+        pic = to_float(match.group(4))
+        medium = to_float(match.group(5))
+        eco = to_float(match.group(6))
+        excl_night = to_float(match.group(7))
+        terme_fixe = to_float(match.group(8))
+        # Cols 9/10 are the prosumer forfait (€/kVA/an) and the transport
+        # rate (c€/kWh), but the 2026 template swapped their order.
+        # Disambiguate by magnitude: the prosumer forfait (~80-100) always
+        # dwarfs the transport rate (~2-3 c€/kWh).
+        col_a = to_float(match.group(9))
+        col_b = to_float(match.group(10))
+        prosumer = max(col_a, col_b)
+        transport = min(col_a, col_b)
+        out[key] = walloon_dso_overlay(
+            mono=mono,
+            peak=peak,
+            offpeak=offpeak,
+            excl_night=excl_night,
+            pic=pic,
+            medium=medium,
+            eco=eco,
+            transport=transport,
+            terme_fixe=terme_fixe,
+            prosumer=prosumer,
+        )
+    return out or _extract_wallonia_2025_dsos(text)
+
+
+# One whole figure of a network table: a digit first, after the blank that
+# ends the previous cell.
+_FIGURE = r"[^\S\n]+(\d{1,3},\d{2})"
+
+
+def _extract_wallonia_2025_dsos(text: str) -> dict[str, DsoOverlay]:
+    """The Walloon rows of a card from before the Impact tariff.
+
+    The cards up to December 2025 print seven figures under "Distribution
+    Monohoraire | Bihoraire jour | Bihoraire nuit | Exclusif nuit | Location
+    compteur (€/an) | Transport | Tarif prosumer (€/kVA/an)". On most of
+    them the aligned text loses glyphs from the table: the first digit of a
+    column (",00" for the 7,00 of AIEG's exclusive night), a figure smeared
+    into "22222222222,98", the first letters of the labels. So a row is read
+    only when it ends in seven whole figures and holds nothing else, and a
+    damaged row is left out rather than read short. A card whose aligned
+    text reads no row is read again from pypdf's render of the same bytes,
+    which prints the table whole (``fetch_for_month``, ``octaplus.py``). A
+    row read is the card's own figures, which differ from Engie's and
+    Eneco's of the same month where docs/providers/octaplus.md says.
+
+    The cards up to January 2024 print each ORES sub-area on a distribution
+    tariff of its own, and those leave ORES out (``ores_sub_areas_split``).
+
+    The gap after the label runs to the line's first digit, which a blank
+    must precede, and stops at the next label, which reaches the same
+    figures. Spelt as a gap and then the blanks, a long run of blanks was
+    split between the two in every way, and run on from every label, a line
+    naming the label over and over was read to its first digit from each.
+    """
+    out: dict[str, DsoOverlay] = {}
+    for pattern, key in _WALLONIA_LABELS:
+        match = re.search(
+            rf"^[^\d\n]*?(?:{pattern})(?:(?!{pattern})[^\d\n])*(?<=[^\S\n])"
+            rf"(\d{{1,3}},\d{{2}}){_FIGURE * 6}[^\S\n]*$",
+            text,
+            re.MULTILINE | re.IGNORECASE,
+        )
+        if match is None:
+            continue
+        mono, peak, offpeak, excl_night, terme_fixe, transport, prosumer = (
+            to_float(value) for value in match.groups()
+        )
+        out[key] = walloon_dso_overlay(
+            mono=mono,
+            peak=peak,
+            offpeak=offpeak,
+            excl_night=excl_night,
+            transport=transport,
+            terme_fixe=terme_fixe,
+            prosumer=prosumer,
+        )
+    if ores_sub_areas_split(text):
+        out.pop(DSO_ORES, None)
+    return out
+
+
+def _extract_flanders_dsos(text: str) -> dict[str, DsoOverlay]:
+    """Flanders rows. The digital-meter row carries:
+
+      dist_normal | dist_excl_night | data_mgmt_qh (€/an) |
+      data_mgmt_year (€/an) | capacity (€/kW/yr) | - | -
+
+    A second analog-meter row carries the prosumer rate as the last
+    column. Some cards (Dynamic Flanders) prepend extra column-header
+    glyphs to one digital row and strip the leading 'F' from the rest,
+    so the digital regex is anchored on the unique sub-area suffix
+    rather than the full ``Fluvius X`` label and tolerates multi-glyph
+    cell separators (``-------- --------``).
+    """
+    prosumer_by_key: dict[str, float] = {}
+    # Second row: 'Fluvius X 8,09 7,55 18,92 - - 130,92 54,63', read only
+    # when it is whole figures to its end and the last has two or three
+    # digits before the comma. The aligned text of some Dynamic cards smears
+    # the column's leading digits into the first row ('566665768,43') and
+    # drops them from the others ('5,46'): such a row stores nothing. A dash
+    # cell is smeared the same way, so a row may print one dash. The label
+    # ends where the blanks before the figures start: ended inside them, a
+    # long run of blanks was walked again from each place in it, and a label
+    # of blanks alone names no area.
+    for m in re.finditer(
+        rf"^(Fluvius [^\n]+?)(?<![^\S\n]){_FIGURE * 3}[^\S\n]+-+(?:[^\S\n]+-+)?{_FIGURE}"
+        + r"[^\S\n]+(?P<prosumer>\d{2,3},\d{2})[^\S\n]*$",
+        text,
+        re.MULTILINE,
+    ):
+        label = m.group(1).strip()
+        if label in _FLANDERS_LABELS:
+            prosumer_by_key[_FLANDERS_LABELS[label]] = to_float(m["prosumer"])
+
+    out: dict[str, DsoOverlay] = {}
+    for label, key in _FLANDERS_LABELS.items():
+        # Strip the "Fluvius " prefix so a digital row labelled "luvius
+        # Halle-Vilvoorde" still matches against the suffix.
+        suffix = label.removeprefix("Fluvius ")
+        match = re.search(
+            rf"{re.escape(suffix)}\s+"
+            + r"([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)\s+([\d.,]+)"
+            + r"(?:\s+-+\s+-+)?",
+            text,
+        )
+        if not match:
+            continue
+        dist_normal = to_float(match.group(1))
+        dist_excl_night = to_float(match.group(2))
+        # group(3) is the card's "quart-horaire" data-management column
+        # (~61 EUR). It is deliberately NOT used for the SMR3 dynamic
+        # product: Fluvius has billed every low-voltage metering regime one
+        # data-management fee since 2025, 17,85 EUR excluding VAT in 2026,
+        # so billing the dynamic at it would over-charge ~42 EUR/yr. The
+        # mensuel/annuel value (group 4, 18,92 EUR) is that fee, so it is
+        # used for all meter regimes.
+        data_mgmt_year = to_float(match.group(4))
+        capacity = to_float(match.group(5))
+        out[key] = DsoOverlay(
+            distribution_single=dist_normal / 100.0,
+            distribution_exclusive_night=dist_excl_night / 100.0,
+            transport=0.0,
+            data_management_per_year=data_mgmt_year,
+            capacity_eur_per_kw_year=capacity,
+            prosumer_eur_per_kva_year=prosumer_by_key.get(key),
+        )
+    return out
+
+
+def _areas(region: str) -> Iterable[str]:
+    """The areas a card read for ``region`` must hold.
+
+    Asked of the live card and the running month's (see ``require_every_area``):
+    a past month's card keeps a short table and still gives a signing cohort
+    its energy, as the Walloon cards up to January 2024 do, which leave ORES
+    out (``ores_sub_areas_split``).
+    """
+    if region == REGION_WALLONIA:
+        return [key for _, key in _WALLONIA_LABELS]
+    return _FLANDERS_LABELS.values()
+
+
+# Matched case-insensitively (see _extract_wallonia_dsos): the 2026
+# template recased the labels from ALLCAPS to title case and renamed two
+# of them ("TECTEO - RESA" -> "RESA", "REGIEDEWAVRE" -> "Régie de Wavre").
+_WALLONIA_LABELS: tuple[tuple[str, str], ...] = (
+    ("AIEG", DSO_AIEG),
+    ("AIESH", DSO_AIESH),
+    # Eight ORES sub-areas share the same tariff line; match the first.
+    # ``ORES`` may or may not have a space before the opening paren
+    # depending on which OCTA+ card we hit.
+    (r"ORES\s*\(", DSO_ORES),
+    # Older cards prefixed this "TECTEO - RESA"; the bare "RESA" token
+    # anchors both spellings.
+    ("RESA", DSO_RESA),
+    # Older cards printed "REGIEDEWAVRE" (no spaces); the accent class and
+    # optional spacing anchor both.
+    (r"R[ée]gie\s*de\s*Wavre", DSO_REW),
+)
+_FLANDERS_LABELS = FLUVIUS_CARD_LABELS

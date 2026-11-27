@@ -1,0 +1,53 @@
+refresh:
+  fields:
+    entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: be_gas_prices
+backfill_statistics:
+  fields:
+    entry_id:
+      required: false
+      selector:
+        config_entry:
+          integration: be_gas_prices
+    start_date:
+      required: false
+      selector:
+        date:
+    clear:
+      required: false
+      default: false
+      selector:
+        boolean:
+bill_cost:
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: be_gas_prices
+    start:
+      required: true
+      selector:
+        date:
+    end:
+      required: true
+      selector:
+        date:
+energy_rate:
+  fields:
+    entry_id:
+      required: true
+      selector:
+        config_entry:
+          integration: be_gas_prices
+    start:
+      required: true
+      selector:
+        date:
+    end:
+      required: true
+      selector:
+        date:

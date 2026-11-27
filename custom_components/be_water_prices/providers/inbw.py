@@ -1,0 +1,204 @@
+# Copyright (c) 2026, Renaud Allard <renaud@allard.it>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice,
+#    this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+
+"""inBW (ex-IECBW) -- water utility for Brabant Wallon (27 communes).
+
+Source: https://eau.inbw.be/prix-de-leau
+
+The page exposes one ``<table class="table">`` with the full per-tier
+breakdown of an example 100 m³ residential bill. Each row carries the
+unit price ("Prix unitaire" column), so we read CVD straight off the
+"Consommation entre 30 et 5000 m³" row (= full CVD) and cross-check
+against the "Redevance annuelle (20 x CVD)" row. CVA / FSE are the
+SPGE flat-Wallonia figures, read off the same table.
+
+inBW's server does not send its GoDaddy intermediate certificate, so the
+default trust path fails. GoDaddy's public intermediates ship in
+``certs/godaddy_intermediates.pem`` and are added, for this fetch alone,
+to a context on certifi's roots, the ones Home Assistant's own client
+context trusts; verification is never turned off.
+The file holds "Go Daddy Secure Certificate Authority - G2", which issued
+the certificate served on 10 November 2026, and "GoDaddy TLS Intermediate
+CA DV - R1v1" with its R1 root cross-signed by the G2 root, which GoDaddy
+issues from since, for the renewal due by 16 December 2026.
+
+Tariff structure is the standard Wallonia residential model; see
+:func:`pricing.compute_annual_cost` for the math.
+"""
+
+from __future__ import annotations
+
+import asyncio
+import functools
+import re
+import ssl
+from pathlib import Path
+
+import aiohttp
+import certifi
+from bs4 import BeautifulSoup, Tag
+
+from ..const import REGION_WALLONIA
+from ._html import extract_amounts, fetch_html
+from ._walloon_simple import build_tariff, detect_published_year, spge_components, stated_vat_rate
+from .base import ExtractorError, WaterExtractor, WaterTariff, belgian_today
+
+UTILITY_ID = "inbw"
+LABEL = "inBW"
+SOURCE_URL = "https://eau.inbw.be/prix-de-leau"
+_INTERMEDIATES = Path(__file__).parent.parent / "certs" / "godaddy_intermediates.pem"
+
+# The row "Redevance annuelle (20 x CVD)", lowercased. The gap after the
+# label is bounded, at nine times the page's: unbounded, it read on to the
+# end of the row from every "redevance" in it, the square of its length.
+_REDEVANCE_ROW_RE = re.compile(r"redevance.{0,100}?20\s*[x×*]\s*cvd")
+
+
+def _row_amount_after_label(table: Tag, label_keywords: tuple[str, ...]) -> float | None:
+    """Return the *Prix unitaire* (3rd cell) for the row whose first cell
+    contains every keyword in ``label_keywords`` (case-insensitive).
+
+    The inBW table layout::
+
+        | Rubrique | Quantité | Prix unitaire | Hors TVA | TVAC |
+
+    Section headings (Coût Vérité Distribution, Fonds Social) sit on a
+    row with the label in column 0 and the rest empty; the matching
+    data row immediately below has an empty column 0. When the matched
+    row carries no amount in *Prix unitaire*, fall through to the next
+    row's *Prix unitaire* so the "Fonds Social" heading still resolves
+    to the 0,0339 €/m³ rate published just below it.
+    """
+    needles = tuple(k.lower() for k in label_keywords)
+    rows = list(table.find_all("tr"))
+    for idx, tr in enumerate(rows):
+        cells = [c.get_text(" ", strip=True) for c in tr.find_all(["td", "th"])]
+        if len(cells) < 3:
+            continue
+        rubrique = cells[0].lower()
+        if all(n in rubrique for n in needles):
+            amounts = extract_amounts(cells[2])
+            if amounts:
+                return amounts[0]
+            for next_tr in rows[idx + 1 :]:
+                next_cells = [c.get_text(" ", strip=True) for c in next_tr.find_all(["td", "th"])]
+                if len(next_cells) < 3:
+                    continue
+                if next_cells[0].strip():
+                    # Different labelled row; bail out rather than reaching
+                    # across into an unrelated section.
+                    break
+                amounts = extract_amounts(next_cells[2])
+                if amounts:
+                    return amounts[0]
+            return None
+    return None
+
+
+def parse_tariff(html: str, year: int | None = None) -> WaterTariff:
+    """Parse a captured ``eau.inbw.be/prix-de-leau`` page."""
+    soup = BeautifulSoup(html, "html.parser")
+    table = soup.find("table")
+    if not isinstance(table, Tag):
+        raise ExtractorError("could not locate inBW tariff table")
+
+    cvd = _row_amount_after_label(table, ("consommation", "30", "5000"))
+    if cvd is None:
+        raise ExtractorError("could not find inBW full-CVD row (Consommation entre 30 et 5000 m³)")
+
+    # Cross-check: row "0 et 30 m³" should be exactly half the full CVD.
+    half_cvd = _row_amount_after_label(table, ("consommation", "entre 0", "30"))
+    if half_cvd is not None and abs(half_cvd - 0.5 * cvd) > 0.005:
+        raise ExtractorError(
+            f"inBW first-block rate {half_cvd} is not 0.5×{cvd} (CWaPE residential rule)"
+        )
+
+    # Cross-check the redevance: should equal 20·CVD.
+    redevance_cvd_text = None
+    for tr in table.find_all("tr"):
+        text = tr.get_text(" ", strip=True).lower()
+        if _REDEVANCE_ROW_RE.search(text):
+            cells = [c.get_text(" ", strip=True) for c in tr.find_all(["td", "th"])]
+            if len(cells) >= 4:
+                amts = extract_amounts(cells[3])  # Hors TVA total
+                if amts:
+                    redevance_cvd_text = amts[0]
+            break
+    if redevance_cvd_text is not None and abs(redevance_cvd_text - 20.0 * cvd) > 0.05:
+        raise ExtractorError(
+            f"inBW redevance {redevance_cvd_text} does not equal 20·CVD ({20 * cvd:.2f})"
+        )
+
+    # The page says "Tarifs YYYY": date the card from that rather than the
+    # clock, so a page still on last year's card in January looks stale
+    # instead of being relabelled as this year's.
+    target = year or detect_published_year(soup.get_text(" ", strip=True)) or belgian_today().year
+    # Both SPGE figures appear in the table (CVA in the "30 x CVA" row's
+    # Prix unitaire, FSE in the "Fonds Social" row's Prix unitaire). The
+    # redevance cell shows 30 x CVA, not the CVA itself; dividing it back
+    # is rounded to the 4 decimals the figures are published to, as 82,44
+    # over 30 is 2,7479999 in floating point.
+    cva_row = _row_amount_after_label(table, ("redevance", "30", "cva"))
+    cva, fse = spge_components(
+        cva=round(cva_row / 30.0, 4) if cva_row is not None else None,
+        fse=_row_amount_after_label(table, ("fonds social",)),
+        label="inBW",
+    )
+    return build_tariff(
+        utility_id=UTILITY_ID,
+        cvd=cvd,
+        source_url=SOURCE_URL,
+        publication_label=f"inBW prix de l'eau {target}",
+        year=target,
+        cva=cva,
+        fse=fse,
+        vat_rate=stated_vat_rate(soup.get_text(" ", strip=True), label="inBW"),
+    )
+
+
+@functools.cache
+def ssl_context() -> ssl.SSLContext:
+    """A client context on certifi's roots, as Home Assistant's is, also
+    trusting the intermediates inBW does not send. Not Home Assistant's own
+    helper: the live check and the card archive load this module without
+    Home Assistant. Blocking: it reads the CA bundle and the certificates
+    from disk, so it is built in a worker thread, once."""
+    context = ssl.create_default_context(cafile=certifi.where())
+    context.load_verify_locations(cadata=_INTERMEDIATES.read_text(encoding="ascii"))
+    return context
+
+
+async def fetch(session: aiohttp.ClientSession) -> WaterTariff:
+    context = await asyncio.to_thread(ssl_context)
+    html = await fetch_html(session, SOURCE_URL, ssl_context=context)
+    return await asyncio.to_thread(parse_tariff, html)
+
+
+EXTRACTOR = WaterExtractor(
+    id=UTILITY_ID,
+    label=LABEL,
+    region=REGION_WALLONIA,
+    fetch=fetch,
+)
