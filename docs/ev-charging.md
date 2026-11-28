@@ -60,7 +60,7 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 | ------ | ------- |
 | `input_boolean.ev_smart_charging` | Master switch for solar/night charging. Off = the car charges natively on plug-in. |
 | `input_boolean.ev_charge_full_now` | Boost: keep the car charging up to its charge limit now (or from the next plug-in at home), at peak-safe amps. Turns itself off when the session ends. |
-| `input_select.ev_charging_session` | Current session: `idle`, `solar`, `night`, `boost`. Restart-safe state. |
+| `input_select.ev_charging_session` | Current session: `idle`, `solar`, `grid`, `boost`. Restart-safe state. `grid` = charging from the grid under the monthly peak: at night, or below the minimum battery at any time of day. Until 2026-11-28 this option was called `night`, which read oddly on a daytime top-up. |
 | `input_number.ev_minimum_battery` | Floor (60 % since 2026-11-16, was 30 %): below it the car charges from the grid at once, day or night, up to this level; above it, daytime charging only uses solar surplus. |
 | `input_number.ev_morning_target_battery` | Morning target: the battery has at least this much by the morning target time (default 50 %). |
 | `input_datetime.ev_morning_target_time` | Time the morning target must be reached (default 06:00). |
@@ -82,18 +82,18 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
     so a 0.5–1.2 kW surplus was exported all day.
   - Night (22:00–07:00): when the battery is below the minimum or the morning target, or the forecast is below the minimum; ends at 07:00 once the battery is above the minimum and the morning target.
   - Minimum battery at any time (since 2026-11-16): plugged in at home below `ev_minimum_battery` (60 %), a grid
-    session (session `night`, peak-safe amps) starts at once, also during the day, and stops as soon as the battery
+    session (session `grid`, peak-safe amps) starts at once, also during the day, and stops as soon as the battery
     is above the minimum and the morning target. The rest up to the charge limit (82 %) comes from solar surplus.
     Before, below the minimum the car only charged at night (22:00–07:00) or on the morning-target deadline.
     Changing the minimum while plugged in re-checks at once. At night with a good forecast the session now also
     stops at the minimum when that is above the morning target (trigger `battery_ok` on the target-reached stop).
   - Morning target (since 2026-11-15): plugged in at home with less than `ev_morning_target_battery`, the car reaches it by
-    `ev_morning_target_time`. A night session starts at 22:00, or earlier (at the price of day-rate power) as soon as
+    `ev_morning_target_time`. A grid session starts at 22:00, or earlier (at the price of day-rate power) as soon as
     `binary_sensor.ev_morning_target_charge_needed` turns on, also checked after an HA restart. When the coming day's
-    forecast is at least the minimum, the night session stops as soon as the target is reached, so the rest comes from
+    forecast is at least the minimum, the grid session stops as soon as the target is reached, so the rest comes from
     solar; with a poor forecast it keeps charging until 07:00 as before.
   - Missed morning target (since 2026-11-16): plugged in too late or too low to make it (e.g. 16 % at 22:32 with a
-    60 % target: 13 A ≈ 3.6 %/h gave 43 % by 06:00, 47 % by 07:00), the night session no longer stops at 07:00 but
+    60 % target: 13 A ≈ 3.6 %/h gave 43 % by 06:00, 47 % by 07:00), the grid session no longer stops at 07:00 but
     keeps charging at peak-safe amps until the target is reached, then stops whatever the forecast. The night
     plug-in push estimates the battery at the target time (same ~0.28 %/h per amp model as the deadline sensor) and
     says when the target will not be made in time.
@@ -106,17 +106,17 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
   - Plugged in at home with no need → native charging is paused and a push
     (`notify.all`, tag `ev_plugged_in`) offers **Nu volladen** (`EV_CHARGE_FULL`), which turns boost on.
   - Every plug-in at home gets one push on tag `ev_plugged_in` (since 2026-11-15; before, only the paused
-    case did, so a plug-in that started a night session stayed silent): paused waiting for sun, charging
-    now on solar (start amps), charging now in a night session (battery, the reasons: below minimum /
+    case did, so a plug-in that started a grid session stayed silent): paused waiting for sun, charging
+    now on solar (start amps), charging now in a grid session (battery, the reasons: below minimum /
     below morning target / poor forecast / deadline, and whether it stops at the target or runs to 07:00),
-    or charging full under boost. Solar and night pushes also offer **Nu volladen**.
-    Bodies stay short (~150-200 chars, since 2026-11-28): iOS cut the ~330-char night push off before
+    or charging full under boost. Solar and grid pushes also offer **Nu volladen**.
+    Bodies stay short (~150-200 chars, since 2026-11-28): iOS cut the ~330-char grid push off before
     its end in the expanded view. No closing question; the **Nu volladen** button says it. Equal minimum
-    and morning target read as one clause. By day (07:00-22:00) the night push only names the minimum: the
+    and morning target read as one clause. By day (07:00-22:00) the grid push only names the minimum: the
     morning target only when it raises the stop level (target > minimum) or the deadline started the
     session, and never the solar forecast (by day the session stops at the minimum whatever the sun).
   - Ends on unplug, `complete`, car leaving home.
-- **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min, never above the charger max. Target 0 W rounded to the nearest amp (solar, since 2026-11-28; was −100 W rounded down, which left up to ~330 W export) or the peak cap rounded down (night, boost). Each change is one Teslemetry command credit.
+- **Energy: EV charging amps follow** — every minute in solar/grid/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min, never above the charger max. Target 0 W rounded to the nearest amp (solar, since 2026-11-28; was −100 W rounded down, which left up to ~330 W export) or the peak cap rounded down (grid, boost). Each change is one Teslemetry command credit.
 - **Energy: EV charging amps too high** — push (`notify.all`) when the car charges at home above `sensor.ev_peak_safe_charging_amps` for 3 min while charging natively (`idle`), with a button to lower to the peak-safe amps or to pause. Boost no longer pushes here: it pauses itself. Max one push per 30 min.
 - **Energy: EV charging amps too high actions** — handles `EV_LOWER_AMPS` / `EV_PAUSE_CHARGING`.
 - **Energy: grid export too high** — skips its nag while smart charging can absorb the surplus.
@@ -125,7 +125,7 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 ## Capacity tariff
 
 Flemish grid costs include a capacity tariff on the highest 15-minute average import of each month
-(`sensor.p1_meter_peak_demand_current_month`, minimum 2.5 kW). Night and boost charging stay
+(`sensor.p1_meter_peak_demand_current_month`, minimum 2.5 kW). Grid and boost charging stay
 300 W under that peak, so charging the car never raises it. When even 5 A does not fit (early in the month, when
 the peak is still near the 2.5 kW minimum, plus a big load such as the oven), boost pauses instead of setting a new peak.
 Native charging (smart charging off, session `idle`) is not steered; it only gets the amps-too-high push.
