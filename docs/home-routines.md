@@ -94,6 +94,11 @@ sent ~500 pushes from "Adaptive lighting: notify manual_control" and hit the Mob
 pushes for the rest of the day), and queued 300+ hour-long runs of "reset manual_control after 1 hour". Both
 automations now skip events while `input_boolean.wake_up_light` is on.
 
+As a general guard, "Adaptive lighting: notify manual_control" is rate-limited: mode `single` with
+`max_exceeded: silent` and a 5-minute `delay` after the push, so any burst of events gives at most one push per
+5 minutes (≤288 a day). The push lists every light the switch currently holds as manual, so lights from dropped
+events still show up.
+
 pyscript cannot run generator expressions (`any(x for x in ...)`): the first run on 2026-11-27 crashed after one step on that, so use plain loops.
 
 ## Night mode: ask to sleep when a Sleep focus starts
