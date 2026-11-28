@@ -77,9 +77,10 @@ as "Onbekende taak": re-add "Perform Action" `input_datetime.set_datetime` with 
 
 ## Alarm clock: wake-up light in the guest bedroom
 
-`pyscript.wake_up_light` (`pyscript/wake_up_light.py`) raises `light.guest_bedroom_lights` over 600 s from dim red
-to warm white; Home Assistant converts the colour for the colour-temperature ceiling lights and the
-brightness-only bedside lamp. `input_boolean.wake_up_light` is on while it runs. Turning the light off stops the
+`pyscript.wake_up_light` (`pyscript/wake_up_light.py`) raises only `light.guest_bedroom_bedside` over 600 s from
+brightness 2 (barely on) to full; the ceiling lights stay off (Tom's choice, 2026-11-28; until then it drove the
+whole `light.guest_bedroom_lights` group). The bedside lamp is brightness-only, so Home Assistant drops the script's
+red-to-warm-white colour. `input_boolean.wake_up_light` is on while it runs. Turning the light off stops the
 sunrise, and it is skipped in guest mode. Until 2026-11-27 nothing ran it: the automation only turned the boolean
 on, which an AppDaemon app removed in November 2023 used to watch.
 
