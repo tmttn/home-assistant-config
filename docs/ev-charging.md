@@ -110,6 +110,9 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
     now on solar (start amps), charging now in a night session (battery, the reasons: below minimum /
     below morning target / poor forecast / deadline, and whether it stops at the target or runs to 07:00),
     or charging full under boost. Solar and night pushes also offer **Nu volladen**.
+    Bodies stay short (~150-200 chars, since 2026-11-28): iOS cut the ~330-char night push off before
+    its end in the expanded view. No closing question; the **Nu volladen** button says it. Equal minimum
+    and morning target read as "onder minimum en ochtenddoel (06:00)" instead of two clauses.
   - Ends on unplug, `complete`, car leaving home.
 - **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min, never above the charger max. Target 0 W rounded to the nearest amp (solar, since 2026-11-28; was −100 W rounded down, which left up to ~330 W export) or the peak cap rounded down (night, boost). Each change is one Teslemetry command credit.
 - **Energy: EV charging amps too high** — push (`notify.all`) when the car charges at home above `sensor.ev_peak_safe_charging_amps` for 3 min while charging natively (`idle`), with a button to lower to the peak-safe amps or to pause. Boost no longer pushes here: it pauses itself. Max one push per 30 min.
