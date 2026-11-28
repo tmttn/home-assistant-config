@@ -77,16 +77,29 @@ as "Onbekende taak": re-add "Perform Action" `input_datetime.set_datetime` with 
 
 ## Alarm clock: wake-up light in the guest bedroom
 
-`pyscript.wake_up_light` (`pyscript/wake_up_light.py`) raises `light.guest_bedroom_lights` over 600 s from dim red
-to warm white; Home Assistant converts the colour for the colour-temperature ceiling lights and the
-brightness-only bedside lamp. `input_boolean.wake_up_light` is on while it runs. Turning the light off stops the
+`pyscript.wake_up_light` (`pyscript/wake_up_light.py`) raises only `light.guest_bedroom_bedside` over 600 s from
+brightness 2 (barely on) to full; the ceiling lights stay off (Tom's choice, 2026-11-28; until then it drove the
+whole `light.guest_bedroom_lights` group). The bedside lamp is brightness-only, so Home Assistant drops the script's
+red-to-warm-white colour. `input_boolean.wake_up_light` is on while it runs. Turning the light off stops the
 sunrise, and it is skipped in guest mode. Until 2026-11-27 nothing ran it: the automation only turned the boolean
 on, which an AppDaemon app removed in November 2023 used to watch.
 
 Before the first step it marks the lights as manually controlled in Adaptive Lighting, so AL does not hold them at
 its sleep brightness during the sunrise. At the alarm the sleep mode change hands them back to AL (sleep mode
-changes reset manual control); turning the light off does too. pyscript cannot run generator expressions
-(`any(x for x in ...)`): the first run on 2026-11-27 crashed after one step on that, so use plain loops.
+changes reset manual control); turning the light off does too.
+
+Every sunrise step (~256 `light.turn_on` calls, one per 2 s) makes Adaptive Lighting fire another
+`adaptive_lighting.manual_control` event per lamp, even though the lights are already marked. On 2026-11-28 that
+sent ~500 pushes from "Adaptive lighting: notify manual_control" and hit the Mobile App's daily push limit (no
+pushes for the rest of the day), and queued 300+ hour-long runs of "reset manual_control after 1 hour". Both
+automations now skip events while `input_boolean.wake_up_light` is on.
+
+As a general guard, "Adaptive lighting: notify manual_control" is rate-limited: mode `single` with
+`max_exceeded: silent` and a 5-minute `delay` after the push, so any burst of events gives at most one push per
+5 minutes (≤288 a day). The push lists every light the switch currently holds as manual, so lights from dropped
+events still show up.
+
+pyscript cannot run generator expressions (`any(x for x in ...)`): the first run on 2026-11-27 crashed after one step on that, so use plain loops.
 
 ## Night mode: ask to sleep when a Sleep focus starts
 
