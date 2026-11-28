@@ -85,8 +85,15 @@ on, which an AppDaemon app removed in November 2023 used to watch.
 
 Before the first step it marks the lights as manually controlled in Adaptive Lighting, so AL does not hold them at
 its sleep brightness during the sunrise. At the alarm the sleep mode change hands them back to AL (sleep mode
-changes reset manual control); turning the light off does too. pyscript cannot run generator expressions
-(`any(x for x in ...)`): the first run on 2026-11-27 crashed after one step on that, so use plain loops.
+changes reset manual control); turning the light off does too.
+
+Every sunrise step (~256 `light.turn_on` calls, one per 2 s) makes Adaptive Lighting fire another
+`adaptive_lighting.manual_control` event per lamp, even though the lights are already marked. On 2026-11-28 that
+sent ~500 pushes from "Adaptive lighting: notify manual_control" and hit the Mobile App's daily push limit (no
+pushes for the rest of the day), and queued 300+ hour-long runs of "reset manual_control after 1 hour". Both
+automations now skip events while `input_boolean.wake_up_light` is on.
+
+pyscript cannot run generator expressions (`any(x for x in ...)`): the first run on 2026-11-27 crashed after one step on that, so use plain loops.
 
 ## Night mode: ask to sleep when a Sleep focus starts
 
