@@ -66,12 +66,20 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
 | `input_datetime.ev_morning_target_time` | Time the morning target must be reached (default 06:00). |
 | `binary_sensor.ev_morning_target_charge_needed` | Template helper: on once charging must start to reach the morning target in time. Assumes ~0.28 %/h per amp (measured 2026-11-10: ~12 A gave ~3.75 %/h) at the amps that fit under this month's peak minus 300 W and ~400 W house load (5 A up to the charger max), plus 30 min margin. At 13 A: 5 % → start 17:08, 15 % → 19:53, 25 % → 22:37. |
 | `input_number.ev_minimum_solar_forecast` | Night fallback when the coming day's Forecast.Solar estimate is below this (default 8 kWh). |
+| `sensor.ev_solar_surplus` | Template helper (since 2026-11-28): solar left over for the car, in W = car charging power (`sensor.bizzylectric_charger_current` × 230 W while charging) minus grid power (`sensor.p1_meter_active_power`). With the car off it equals the export. |
+| `sensor.ev_solar_surplus_2_min_average` | Statistics helper: 2-min time-weighted average (`average_linear`) of `sensor.ev_solar_surplus`. The P1 meter shows ~1 kW spikes for 5 s every 20–40 s (an appliance cycling), which reset any `for:` timer on the raw value; the solar start/stop rules use this average. |
+| `input_number.ev_solar_start_surplus` | A solar session starts once `sensor.ev_solar_surplus` stays above this for 5 min (default 500 W). |
+| `input_number.ev_solar_stop_surplus` | A solar session stops once `sensor.ev_solar_surplus` stays below this for 10 min (default 200 W). |
 | `sensor.ev_peak_safe_charging_amps` | Template helper: highest amps that keep grid import under this month's peak demand (min 2.5 kW) minus 300 W, capped at the charger's max. House load = grid minus `sensor.bizzylectric_charger_current` × 230 W while charging. |
 
 ## Automations
 
 - **Energy: EV smart charging** — session state machine.
-  - Solar: start after 5 min of >1.2 kW export, stop after 10 min of >300 W import.
+  - Solar (goal: never export): start once `sensor.ev_solar_surplus_2_min_average` stays above `ev_solar_start_surplus` (500 W)
+    for 5 min, stop once it stays below `ev_solar_stop_surplus` (200 W) for 10 min. The car's minimum is 5 A
+    (~1.15 kW, 1 phase), so with a small surplus the rest comes from the grid rather than exporting the surplus.
+    Until 2026-11-28 a session only started after 5 min of >1.2 kW export and stopped after 10 min of >300 W import,
+    so a 0.5–1.2 kW surplus was exported all day.
   - Night (22:00–07:00): when the battery is below the minimum or the morning target, or the forecast is below the minimum; ends at 07:00 once the battery is above the minimum and the morning target.
   - Minimum battery at any time (since 2026-11-16): plugged in at home below `ev_minimum_battery` (60 %), a grid
     session (session `night`, peak-safe amps) starts at once, also during the day, and stops as soon as the battery
@@ -103,7 +111,7 @@ logging in again; the old automation configs are in the ha-mcp `edits` backups o
     below morning target / poor forecast / deadline, and whether it stops at the target or runs to 07:00),
     or charging full under boost. Solar and night pushes also offer **Nu volladen**.
   - Ends on unplug, `complete`, car leaving home.
-- **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min, never above the charger max. Target −100 W (solar) or the peak cap (night, boost). Each change is one Teslemetry command credit.
+- **Energy: EV charging amps follow** — every minute in solar/night/boost sessions: amps += (target − grid) / 230 W; down at once, up ≤3 A/min, never above the charger max. Target 0 W rounded to the nearest amp (solar, since 2026-11-28; was −100 W rounded down, which left up to ~330 W export) or the peak cap rounded down (night, boost). Each change is one Teslemetry command credit.
 - **Energy: EV charging amps too high** — push (`notify.all`) when the car charges at home above `sensor.ev_peak_safe_charging_amps` for 3 min while charging natively (`idle`), with a button to lower to the peak-safe amps or to pause. Boost no longer pushes here: it pauses itself. Max one push per 30 min.
 - **Energy: EV charging amps too high actions** — handles `EV_LOWER_AMPS` / `EV_PAUSE_CHARGING`.
 - **Energy: grid export too high** — skips its nag while smart charging can absorb the surplus.
