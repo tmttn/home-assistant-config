@@ -26,8 +26,8 @@
 """Pure cost-projection helpers (no Home Assistant imports).
 
 Kept separate from :mod:`coordinator` so the math is unit-testable from
-a plain venv. The coordinator imports both helpers and applies them to
-the user's stored options:
+a plain venv. The coordinator imports the first two helpers and applies
+them to the user's stored options:
 
   * :func:`compute_annual_cost` -- the full-year projection that powers
     ``sensor.<utility>_projected_annual_cost``. Pro-rates nothing.
@@ -36,6 +36,8 @@ the user's stored options:
     the same; only the annual fees (vastrecht / redevance) are
     pro-rated by the elapsed fraction of the calendar year so the
     sensor sits at ~0 on Jan 1 and grows to the full fee by Dec 31.
+  * :func:`period_cost` -- a run of days on one card, unrounded, for the
+    bill_cost action, which rounds once over the whole window.
 """
 
 from __future__ import annotations
@@ -44,7 +46,7 @@ from .const import FLANDERS_KORTING_MAX_RESIDENTS
 from .providers.base import WaterTariff
 
 
-def _compute_bill(
+def _bill(
     tariff: WaterTariff,
     consumption_m3: float,
     persons: int,
@@ -52,8 +54,9 @@ def _compute_bill(
     *,
     social_tariff: bool,
 ) -> float | None:
-    """Internal: same regional bill math, with the annual fee scaled by
-    ``fee_factor`` (1.0 for the full-year projection, 0..1 for YTD).
+    """Internal: the regional bill math, unrounded, with the annual fee
+    scaled by ``fee_factor`` (1.0 for the full-year projection, 0..1 for
+    YTD).
 
     Returns ``None`` when the tariff is shaped for a region whose math
     is not yet wired in.
@@ -112,7 +115,7 @@ def _compute_bill(
                 + (persons - 1) * tariff.social_intervention_per_extra_person
             )
             total = max(0.0, total - fee_factor * intervention)
-        return round(total, 2)
+        return total
 
     if tariff.region == "wallonia":
         cvd = tariff.cvd_eur_per_m3
@@ -130,7 +133,7 @@ def _compute_bill(
         # 376.85 EUR out at 6000 m3 on CILE's rates.
         top = max(0.0, consumption_m3 - 5000.0) * (0.9 * cvd + cva + fse)
         ex_vat = first_block + middle + top + fee_factor * tariff.yearly_fixed_fee
-        return round(ex_vat * (1.0 + tariff.vat_rate), 2)
+        return ex_vat * (1.0 + tariff.vat_rate)
 
     if tariff.region == "flanders":
         if tariff.basis_eur_per_m3 is None:
@@ -157,9 +160,22 @@ def _compute_bill(
         total = ex_vat * (1.0 + tariff.vat_rate)
         if social_tariff:
             total *= 0.20  # VMM social tariff = 80% reduction on the post-calc total.
-        return round(total, 2)
+        return total
 
     return None
+
+
+def _compute_bill(
+    tariff: WaterTariff,
+    consumption_m3: float,
+    persons: int,
+    fee_factor: float,
+    *,
+    social_tariff: bool,
+) -> float | None:
+    """Internal: :func:`_bill` rounded to the cent."""
+    total = _bill(tariff, consumption_m3, persons, fee_factor, social_tariff=social_tariff)
+    return None if total is None else round(total, 2)
 
 
 def compute_annual_cost(
@@ -171,7 +187,7 @@ def compute_annual_cost(
 ) -> float | None:
     """Return the full-year projected VAT-incl bill in EUR (annual fees at 100 %).
 
-    See :func:`_compute_bill` for the per-region math.
+    See :func:`_bill` for the per-region math.
     """
     return _compute_bill(tariff, consumption_m3, persons, 1.0, social_tariff=social_tariff)
 
@@ -199,3 +215,26 @@ def compute_ytd_cost(
     return _compute_bill(
         tariff, consumption_m3_ytd, persons, fee_factor, social_tariff=social_tariff
     )
+
+
+def period_cost(
+    tariff: WaterTariff,
+    consumption_m3: float,
+    days: int,
+    persons: int,
+    *,
+    social_tariff: bool = False,
+) -> float | None:
+    """Return the unrounded VAT-incl bill in EUR of ``days`` days on
+    ``tariff`` that drew ``consumption_m3``.
+
+    Every annual allowance and annual fee counts for ``days / 365`` of
+    itself. The bill is piecewise linear in the volume and in the fee, so
+    that is the year's bill at the volume those days draw over 365 of them,
+    scaled back by ``days / 365``. Left unrounded, so a window of several
+    runs is rounded once, on its total.
+    """
+    if days <= 0:
+        raise ValueError("a run of days holds at least one day")
+    annual = _bill(tariff, consumption_m3 * 365 / days, persons, 1.0, social_tariff=social_tariff)
+    return None if annual is None else annual * days / 365

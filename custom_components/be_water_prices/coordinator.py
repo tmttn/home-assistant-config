@@ -566,6 +566,25 @@ class WaterCoordinator(_MeterMixin, _YtdMixin, DataUpdateCoordinator[Coordinator
             return
         self._last_good = (tariff, fetched_at)
 
+    def archive_key(self) -> str:
+        """The commune the card archive files this entry's rows under."""
+        return self._fetched_commune() or "default"
+
+    def archived_tariff(self, row: dict[str, Any]) -> WaterTariff:
+        """The card an archive row of this entry holds, its commune
+        labelled as a fetch labels it.
+
+        Raises KeyError, TypeError or ValueError for a row that holds no
+        card.
+        """
+        tariff = tariff_from_dict(row)
+        key = self.archive_key()
+        if key != "default":
+            tariff = relabel_with_human_commune(
+                tariff, commune_id=key, commune_label=self.entry.options.get(CONF_COMMUNE_LABEL)
+            )
+        return tariff
+
     async def _from_card_archive(self) -> tuple[WaterTariff, datetime] | None:
         """The last card the project's archive holds for this entry and the
         moment it was captured; None when the archive is switched off,
@@ -583,7 +602,7 @@ class WaterCoordinator(_MeterMixin, _YtdMixin, DataUpdateCoordinator[Coordinator
         """
         if not self.entry.options.get(CONF_CARD_ARCHIVE, DEFAULT_CARD_ARCHIVE):
             return None
-        key = self._fetched_commune() or "default"
+        key = self.archive_key()
         session = async_get_clientsession(self.hass)
         month = dt_util.now().date()
         row: dict[str, Any] | None = None
@@ -608,14 +627,10 @@ class WaterCoordinator(_MeterMixin, _YtdMixin, DataUpdateCoordinator[Coordinator
         if row is None:
             return None
         try:
-            tariff = tariff_from_dict(row)
+            tariff = self.archived_tariff(row)
             seen_on = date.fromisoformat(str(row["_seen_on"]))
         except (KeyError, TypeError, ValueError):
             return None
-        if key != "default":
-            tariff = relabel_with_human_commune(
-                tariff, commune_id=key, commune_label=self.entry.options.get(CONF_COMMUNE_LABEL)
-            )
         # The archive walks at 05:23 UTC; the hour only feeds the age. A
         # row written today can be read before that hour, and a manual run
         # writes at any hour, so never date the capture after now: a

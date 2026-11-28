@@ -77,6 +77,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     from homeassistant.helpers import config_validation as cv
     from homeassistant.helpers.service import async_register_admin_service
 
+    from .bill_cost import async_register_bill_cost
     from .coordinator import loaded_entries
     from .statistics import async_register_services
 
@@ -103,6 +104,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         schema=vol.Schema({vol.Optional("entry_id"): cv.string}),
     )
     async_register_services(hass)
+    async_register_bill_cost(hass)
     return True
 
 

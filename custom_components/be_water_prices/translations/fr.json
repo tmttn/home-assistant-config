@@ -189,6 +189,28 @@
           "description": "Si actif, efface les long-term-statistics existantes pour les capteurs ciblés avant l'import. Désactivé par défaut. Nécessite une entrée de configuration : tout effacer d'un coup est irréversible, cette combinaison est donc refusée."
         }
       }
+    },
+    "bill_cost": {
+      "name": "Coût d'une facture",
+      "description": "Calcule le coût d'un volume d'eau consommé sur une suite de jours terminés comme le coût de l'année est calculé, pour le comparer à une facture de la compagnie. Renvoie le coût TVA comprise et la carte de chaque période. Réservé aux administrateurs.",
+      "fields": {
+        "entry_id": {
+          "name": "Entrée de configuration",
+          "description": "L'entrée de configuration dont le tarif et le ménage sont utilisés."
+        },
+        "start": {
+          "name": "Date de début",
+          "description": "Le premier jour facturé. Pas avant le 1er janvier d'il y a deux ans."
+        },
+        "end": {
+          "name": "Date de fin",
+          "description": "Le dernier jour facturé, avant aujourd'hui."
+        },
+        "volume": {
+          "name": "Volume",
+          "description": "Les m³ que la facture compte sur ces jours."
+        }
+      }
     }
   },
   "issues": {
@@ -239,6 +261,24 @@
     },
     "refresh_pressed_recently": {
       "message": "Le tarif a été récupéré pour la dernière fois à {last} ; la prochaine récupération peut commencer à partir de {next}."
+    },
+    "window_reversed": {
+      "message": "La date de fin précède la date de début."
+    },
+    "window_not_closed": {
+      "message": "La date de fin doit être avant aujourd'hui : seuls les jours terminés sont calculés."
+    },
+    "bill_start_too_early": {
+      "message": "La date de début ne peut pas précéder le {earliest}."
+    },
+    "nothing_priced_yet": {
+      "message": "L'entrée n'a pas encore calculé sa carte ; réessayez après sa première mise à jour."
+    },
+    "archive_unreachable": {
+      "message": "L'archive des cartes est injoignable ; réessayez plus tard."
+    },
+    "window_not_priced": {
+      "message": "La carte en vigueur du {start} au {end} ne permet pas de calculer la facture de ce ménage."
     }
   }
 }

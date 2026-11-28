@@ -189,6 +189,28 @@
           "description": "Indien aan, wis de bestaande long-term-statistics voor de gekozen sensoren voordat de import gebeurt. Standaard uit. Vereist een configuratie-invoer: alle geladen invoeren tegelijk wissen is onomkeerbaar, dus die combinatie wordt geweigerd."
         }
       }
+    },
+    "bill_cost": {
+      "name": "Kosten van een factuur",
+      "description": "Bereken wat een volume water over een reeks afgesloten dagen kost, zoals de kosten van het jaar berekend worden, om een factuur van de maatschappij naast te leggen. Geeft de kosten inclusief btw en de kaart van elke periode terug. Alleen een beheerder kan deze uitvoeren.",
+      "fields": {
+        "entry_id": {
+          "name": "Configuratie-invoer",
+          "description": "De configuratie-invoer waarvan het tarief en het gezin gebruikt worden."
+        },
+        "start": {
+          "name": "Startdatum",
+          "description": "De eerste gefactureerde dag. Niet vroeger dan 1 januari twee jaar terug."
+        },
+        "end": {
+          "name": "Einddatum",
+          "description": "De laatste gefactureerde dag, vóór vandaag."
+        },
+        "volume": {
+          "name": "Volume",
+          "description": "De m³ die de factuur over die dagen aanrekent."
+        }
+      }
     }
   },
   "issues": {
@@ -239,6 +261,24 @@
     },
     "refresh_pressed_recently": {
       "message": "Het tarief werd het laatst opgehaald om {last}; vanaf {next} kan het opnieuw worden opgehaald."
+    },
+    "window_reversed": {
+      "message": "De einddatum ligt vóór de startdatum."
+    },
+    "window_not_closed": {
+      "message": "De einddatum moet vóór vandaag liggen: alleen afgesloten dagen worden berekend."
+    },
+    "bill_start_too_early": {
+      "message": "De startdatum kan niet vroeger zijn dan {earliest}."
+    },
+    "nothing_priced_yet": {
+      "message": "De invoer heeft zijn kaart nog niet berekend; probeer opnieuw na de eerste update."
+    },
+    "archive_unreachable": {
+      "message": "Het kaartarchief was niet bereikbaar; probeer het later opnieuw."
+    },
+    "window_not_priced": {
+      "message": "De kaart die van {start} tot {end} geldt, kan de factuur van dit gezin niet berekenen."
     }
   }
 }

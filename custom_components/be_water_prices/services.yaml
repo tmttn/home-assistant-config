@@ -60,3 +60,45 @@ backfill_prices:
       default: false
       selector:
         boolean:
+bill_cost:
+  name: Bill cost
+  description: >
+    Price a volume of water drawn over a closed run of days the way the
+    year's cost is priced, to hold a utility's bill against. Each day is
+    billed on the card in force that day. Only answers, and only an
+    administrator can run it.
+  fields:
+    entry_id:
+      name: Config entry
+      description: The config entry whose tariff and household are used.
+      required: true
+      example: 01H8WZK0WZK0WZK0WZK0WZK0WZ
+      selector:
+        config_entry:
+          integration: be_water_prices
+    start:
+      name: Start date
+      description: >
+        The first day billed. No earlier than 1 January two years back.
+      required: true
+      example: "2025-11-20"
+      selector:
+        date:
+    end:
+      name: End date
+      description: The last day billed, before today.
+      required: true
+      example: "2026-11-18"
+      selector:
+        date:
+    volume:
+      name: Volume
+      description: The m³ the bill charges over those days.
+      required: true
+      example: 174
+      selector:
+        number:
+          min: 0
+          step: 0.001
+          mode: box
+          unit_of_measurement: m³

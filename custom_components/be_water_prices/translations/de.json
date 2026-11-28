@@ -189,6 +189,28 @@
           "description": "Wenn aktiv, werden die bestehenden Long-Term-Statistics für die gewählten Sensoren vor dem Import gelöscht. Standardmäßig deaktiviert. Erfordert einen Konfigurationseintrag: alle geladenen Einträge auf einmal zu löschen ist unumkehrbar, daher wird diese Kombination abgelehnt."
         }
       }
+    },
+    "bill_cost": {
+      "name": "Rechnungskosten",
+      "description": "Berechnet, was eine Wassermenge über eine Reihe abgeschlossener Tage kostet, so wie die Kosten des Jahres berechnet werden, um eine Rechnung des Versorgers damit zu vergleichen. Gibt die Kosten inklusive MwSt. und die Karte jedes Zeitraums zurück. Nur Administratoren können ihn ausführen.",
+      "fields": {
+        "entry_id": {
+          "name": "Konfigurationseintrag",
+          "description": "Der Konfigurationseintrag, dessen Tarif und Haushalt verwendet werden."
+        },
+        "start": {
+          "name": "Startdatum",
+          "description": "Der erste abgerechnete Tag. Nicht früher als der 1. Januar vor zwei Jahren."
+        },
+        "end": {
+          "name": "Enddatum",
+          "description": "Der letzte abgerechnete Tag, vor heute."
+        },
+        "volume": {
+          "name": "Menge",
+          "description": "Die m³, die die Rechnung für diese Tage berechnet."
+        }
+      }
     }
   },
   "issues": {
@@ -239,6 +261,24 @@
     },
     "refresh_pressed_recently": {
       "message": "Der Tarif wurde zuletzt um {last} abgerufen; ab {next} kann er erneut abgerufen werden."
+    },
+    "window_reversed": {
+      "message": "Das Enddatum liegt vor dem Startdatum."
+    },
+    "window_not_closed": {
+      "message": "Das Enddatum muss vor heute liegen: nur abgeschlossene Tage werden berechnet."
+    },
+    "bill_start_too_early": {
+      "message": "Das Startdatum kann nicht vor dem {earliest} liegen."
+    },
+    "nothing_priced_yet": {
+      "message": "Der Eintrag hat seine Karte noch nicht berechnet; versuchen Sie es nach seiner ersten Aktualisierung erneut."
+    },
+    "archive_unreachable": {
+      "message": "Das Kartenarchiv war nicht erreichbar; versuchen Sie es später erneut."
+    },
+    "window_not_priced": {
+      "message": "Die vom {start} bis zum {end} geltende Karte kann die Rechnung dieses Haushalts nicht berechnen."
     }
   }
 }

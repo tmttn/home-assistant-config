@@ -165,6 +165,28 @@
           "description": "If on, wipe the existing long-term statistics for the targeted sensors before importing. Off by default. Requires a config entry: clearing every loaded entry at once is irreversible, so the service refuses that combination."
         }
       }
+    },
+    "bill_cost": {
+      "name": "Bill cost",
+      "description": "Price a volume of water drawn over a closed run of days the way the year's cost is priced, to hold a utility's bill against. Returns the cost with VAT and the card each period is billed on. Only an administrator can run it.",
+      "fields": {
+        "entry_id": {
+          "name": "Config entry",
+          "description": "The config entry whose tariff and household are used."
+        },
+        "start": {
+          "name": "Start date",
+          "description": "The first day billed. No earlier than 1 January two years back."
+        },
+        "end": {
+          "name": "End date",
+          "description": "The last day billed, before today."
+        },
+        "volume": {
+          "name": "Volume",
+          "description": "The m³ the bill charges over those days."
+        }
+      }
     }
   },
   "issues": {
@@ -215,6 +237,24 @@
     },
     "refresh_pressed_recently": {
       "message": "The tariff was last fetched at {last}; the next fetch can start from {next}."
+    },
+    "window_reversed": {
+      "message": "The end date comes before the start date."
+    },
+    "window_not_closed": {
+      "message": "The end date has to be before today: only closed days are priced."
+    },
+    "bill_start_too_early": {
+      "message": "The start date can be no earlier than {earliest}."
+    },
+    "nothing_priced_yet": {
+      "message": "The entry has not priced its card yet; try again after its first update."
+    },
+    "archive_unreachable": {
+      "message": "The card archive could not be reached; try again later."
+    },
+    "window_not_priced": {
+      "message": "The card in force from {start} to {end} cannot price this household."
     }
   }
 }
