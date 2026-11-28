@@ -24,6 +24,10 @@ contract entry needs no template edit:
 | `sensor.monthly_power_cost` | `*_current_month_cost` − its `standing_charges_mtd_eur` attribute |
 | `sensor.daily_energy_fixed_cost` (+ monthly, last period) | gas `*_fixed_costs_per_year` + electricity `standing_charges_ytd_eur` annualised |
 
+When the lookup finds nothing it falls back to `default('')`, which `states()` reads as `unknown` and `float(0)` as 0.
+Don't use an entity-shaped placeholder such as `'sensor.none'`: Spook reads it as a reference to a missing entity and
+raises an "Unknown entities used in template helper" repair for every helper that has it.
+
 The Energy dashboard water source is priced with `sensor.de_watergroep_all_in_basis_rate` (basis block; the comfort
 block starts above 30 + 30 × residents m³ a year).
 
